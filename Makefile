@@ -92,8 +92,8 @@ ice_functions_rundir: inidata bin/nemo_ice_gprof.exe bin/xios_server.exe
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	# Copy jobscript
-	cp cfg/trace/jobscript.cmd $@
-	cp cfg/trace/gthrottling.sh $@
+	cp cfg/gprof/jobscript.cmd $@
+	cp cfg/gprof/gthrottling.sh $@
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 
 oce_functions_rundir: inidata bin/nemo_oce_gprof.exe bin/xios_server.exe
@@ -109,8 +109,8 @@ oce_functions_rundir: inidata bin/nemo_oce_gprof.exe bin/xios_server.exe
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	# Copy jobscript
-	cp cfg/trace/jobscript.cmd $@
-	cp cfg/trace/gthrottling.sh $@
+	cp cfg/gprof/jobscript.cmd $@
+	cp cfg/gprof/gthrottling.sh $@
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 
 # Recipe for preparing the function lists
