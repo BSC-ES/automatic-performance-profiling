@@ -2,12 +2,15 @@
 ###############################################################################
 #                             VERY BASIC NEMO RUN
 ###############################################################################
-#SBATCH --ntasks 48
+#SBATCH --ntasks %CORES%
 #SBATCH -J nemo-test
 #SBATCH --output log_%j.out
 #SBATCH --error  log_%j.err
 #SBATCH --time 02:00:00
 #SBATCH --qos=debug
+
+
+number_of_cores=%CORES%
 
 # Load environment
 source modules.env
@@ -38,7 +41,7 @@ nemo_bin=nemo
 ./generate_function_list.sh ${nemo_bin} extrae_functions.txt 
 
 # Spinup run
-time mpirun -n 48 ./${trace} ./${nemo_bin}
+time mpirun -n ${number_of_cores} ./${trace} ./${nemo_bin}
 
 
 # Create list extrae_functions.txt
