@@ -79,7 +79,7 @@ bin/nemo_ice_gprof.exe: bin compilation_workdir
 # Recipes to prepare functions file for tracing
 
 # TODO: find a better way of prepare these rundirs without repeating code
-ice_functions_rundir: inidata bin/nemo_ice_gprof.exe bin/xios_server.exe
+ice_functions: inidata bin/nemo_ice_gprof.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
@@ -115,11 +115,11 @@ oce_functions_rundir: inidata bin/nemo_oce_gprof.exe bin/xios_server.exe
 
 # Recipe for preparing the function lists
 # TODO: Maybe we can generate this list only once with the configuration using ICE.
-extrae_functions_ice.txt: ice_functions_rundir
+extrae_functions_ice.txt: ice_functions
+	# Clean unnecessary netcdf
+	#rm -rf $</*nc 
 	# Copy functions list
 	cp $</extrae_functions.txt $@
-	# Clean unnecessary netcdf
-	rm -rf $</*nc 
 
 extrae_functions_oce.txt: oce_functions_rundir
 	# Copy functions list
@@ -184,7 +184,7 @@ test_oce: inidata_oce
 	cp cfg/test/jobscript.cmd $@
 	sbatch --chdir $@ $@/jobscript.cmd
 
-test_ice: inidata_ice
+test_ice: inidata
 	mkdir $@
 	cp -r $</* $@
 	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 120
@@ -201,7 +201,7 @@ bin/xios_server.exe:
 	# HARDCODED dependency that at some point should be replaced with xios compilation
 	cp /gpfs/projects/bsc32/bsc32870/xios/2.5/mn4-r1650-prod/bin/xios_server.exe bin/xios_server.exe
 # REBUILD NEMO tool
-bin/rebuild_nemo.exe: bin reference_workdir
+bin/rebuild_nemo.exe: bin compilation_workdir
 	cd reference_workdir/tools; ./maketools -n REBUILD_NEMO -m mn4
 	cp reference_workdir/tools/REBUILD_NEMO/rebuild_nemo* bin/
 
@@ -228,8 +228,5 @@ hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
 	rm -rf inidata InitialConditions.nc 
-model_factors.csv:
-	$(MAKE) trace_ice_24
-	$(MAKE) trace_ice_48
-	$(MAKE) trace_ice_96
+model_factors.csv: trace_ice_24 trace_ice_48 trace_ice_96
 	cfg/model_factors/wrapper.sh ice_trace_24.prv ice_trace_48.prv ice_trace_96.prv
