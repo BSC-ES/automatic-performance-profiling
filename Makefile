@@ -128,7 +128,7 @@ extrae_functions_oce.txt: oce_functions_rundir
 	rm -rf $</*nc 
 
 # Recipe to make traces
-trace_ice: extrae_functions_ice.txt bin/nemo_ice_trace.exe 
+trace_ice_%: extrae_functions_ice.txt bin/nemo_ice_trace.exe 
 	# Create folder
 	mkdir $@
 	# Link inidata
@@ -138,14 +138,18 @@ trace_ice: extrae_functions_ice.txt bin/nemo_ice_trace.exe
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 120
+	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 20
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
+	# Set ice frequency to 1
+	cfg/replace_namelist_parameter $@/namelist_ref nn_fsbc 1
 	# Copy jobscript and trace utils
 	cp cfg/trace/* $@
 	# Copy function list for traces
 	cp $< $@/extrae_functions.txt
-	
+
+	# Replace number of cores in the jobscript
+	sed -i "s/%CORES%/$*/g" $@/jobscript.cmd
 	# Launch jobscript
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 	# Clean a little bit
@@ -153,7 +157,7 @@ trace_ice: extrae_functions_ice.txt bin/nemo_ice_trace.exe
 	# Magic Cut
 	cd $@; magicCut nemo.prv
 	mv $@/nemo.best_cut.* .
-	rename nemo.best_cut ice_trace nemo.best_cut.*
+	rename nemo.best_cut ice_trace_$* nemo.best_cut.*
 
 
 ####################################################
@@ -223,5 +227,9 @@ clean:
 hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
-	rm -rf inidata InitialConditions.nc spinup
-
+	rm -rf inidata InitialConditions.nc 
+model_factors.csv:
+	$(MAKE) trace_ice_24
+	$(MAKE) trace_ice_48
+	$(MAKE) trace_ice_96
+	cfg/model_factors/wrapper.sh ice_trace_24.prv ice_trace_48.prv ice_trace_96.prv
