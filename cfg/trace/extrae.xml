@@ -7,7 +7,7 @@
  xml-parser-id="Id: xml-parse.c 3269 2015-04-23 15:12:21Z harald $"
 >
 
-  <mpi enabled="no">
+  <mpi enabled="yes">
     <counters enabled="yes" />
   </mpi>
 
