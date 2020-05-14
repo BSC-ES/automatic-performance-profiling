@@ -4,6 +4,11 @@
 config_file=param.cfg
 nemo_branch=$(shell grep "nemo_branch"  ${config_file} )
 $(eval ${nemo_branch})
+configuration_name=$(shell grep "configuration_name"  ${config_file} )
+$(eval ${configuration_name})
+configuration_details=$(shell grep "configuration_details"  ${config_file} )
+$(eval ${configuration_details})
+
 # If we want to add some user defined parameter we can do it with the following approach:
 # We add in the config file something like:
 #
@@ -38,103 +43,63 @@ nemo_mirror:
 ####################################################
 # Recipes to compile different NEMO versions
 # Vanilla versions
-bin/nemo_oce.exe: bin compilation_workdir
+bin/nemo.exe: bin compilation_workdir
 	# Compile NEMO
-	compilation_workdir/makenemo -n OCE -r ORCA2_ICE_PISCES -d OCE -m mn4 del_key "key_si3 key_top" -j 16
+	compilation_workdir/makenemo -m mn4 -n ${configuration_name} ${configuration_details} -j 16
 	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/OCE/EXP00/nemo $@
+	cp compilation_workdir/cfgs/${configuration_name}/EXP00/nemo $@
 	
-bin/nemo_ice.exe: bin compilation_workdir
-	# Compile NEMO
-	compilation_workdir/makenemo -n ICE -r ORCA2_ICE_PISCES -d "OCE ICE" -m mn4 del_key "key_top" -j 16
-	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/ICE/EXP00/nemo $@
-
 # Tracing versions
-bin/nemo_oce_trace.exe: bin compilation_workdir
+bin/nemo_trace.exe: bin compilation_workdir
 	# Compile NEMO
-	compilation_workdir/makenemo -n OCE_trace -r ORCA2_ICE_PISCES -d OCE -m mn4_trace del_key "key_si3 key_top" -j 16
+	compilation_workdir/makenemo -m mn4_trace -n ${configuration_name}_trace ${configuration_details} -j 16
 	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/OCE_trace/EXP00/nemo $@
+	cp compilation_workdir/cfgs/${configuration_name}_trace/EXP00/nemo $@
 	
-bin/nemo_ice_trace.exe: bin compilation_workdir
-	# Compile NEMO
-	compilation_workdir/makenemo -n ICE_trace -r ORCA2_ICE_PISCES -d "OCE ICE" -m mn4_trace del_key "key_top" -j 16
-	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/ICE_trace/EXP00/nemo $@
-
 # Gprof versions to find which functions do we want to trace
-bin/nemo_oce_gprof.exe: bin compilation_workdir
+bin/nemo_gprof.exe: bin compilation_workdir
 	# Compile NEMO
-	compilation_workdir/makenemo -n OCE_gprof -r ORCA2_ICE_PISCES -d OCE -m mn4_gprof del_key "key_si3 key_top" -j 16
+	compilation_workdir/makenemo -m mn4_gprof -n ${configuration_name}_gprof ${configuration_details} -j 16
 	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/ICE_gprof/EXP00/nemo $@
-bin/nemo_ice_gprof.exe: bin compilation_workdir
-	# Compile NEMO
-	compilation_workdir/makenemo -n ICE_gprof -r ORCA2_ICE_PISCES -d "OCE ICE" -m mn4_gprof del_key "key_top" -j 16
-	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/ICE_gprof/EXP00/nemo $@
+	cp compilation_workdir/cfgs/${configuration_name}_gprof/EXP00/nemo $@
 
 ####################################################
 # Recipes to prepare functions file for tracing
 
 # TODO: find a better way of prepare these rundirs without repeating code
-ice_functions: inidata bin/nemo_ice_gprof.exe bin/xios_server.exe
+functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/cfgs/ICE_gprof/EXP00/* $@
+	cp --remove-destination compilation_workdir/cfgs/${configuration_name}_gprof/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 120
+	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 480
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	# Copy jobscript
 	cp cfg/gprof/jobscript.cmd $@
 	cp cfg/gprof/gthrottling.sh $@
 	sbatch --wait --chdir $@ $@/jobscript.cmd
-
-oce_functions_rundir: inidata bin/nemo_oce_gprof.exe bin/xios_server.exe
-	mkdir $@
-	# Link inidata
-	ln -rsf inidata/* $@
-	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/cfgs/OCE_gprof/EXP00/* $@
-	# Copy xios server
-	cp --remove-destination bin/xios_server.exe $@
-	# Fix namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 120
-	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
-	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
-	# Copy jobscript
-	cp cfg/gprof/jobscript.cmd $@
-	cp cfg/gprof/gthrottling.sh $@
-	sbatch --wait --chdir $@ $@/jobscript.cmd
+	# Clean unnecessary netcdf
+	rm -rf $@/*nc 
 
 # Recipe for preparing the function lists
 # TODO: Maybe we can generate this list only once with the configuration using ICE.
-extrae_functions_ice.txt: ice_functions
-	# Clean unnecessary netcdf
-	#rm -rf $</*nc 
+extrae_functions.txt: functions_dir
 	# Copy functions list
 	cp $</extrae_functions.txt $@
-
-extrae_functions_oce.txt: oce_functions_rundir
-	# Copy functions list
-	cp $</extrae_functions.txt $@
-	# Clean unnecessary netcdf
-	rm -rf $</*nc 
 
 # Recipe to make traces
-trace_ice_%: extrae_functions_ice.txt bin/nemo_ice_trace.exe 
+trace_%: extrae_functions.txt bin/nemo_trace.exe 
 	# Create folder
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/cfgs/ICE_trace/EXP00/* $@
+	cp --remove-destination compilation_workdir/cfgs/${configuration_name}_trace/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
@@ -145,7 +110,7 @@ trace_ice_%: extrae_functions_ice.txt bin/nemo_ice_trace.exe
 	cfg/replace_namelist_parameter $@/namelist_ref nn_fsbc 1
 	# Copy jobscript and trace utils
 	cp cfg/trace/* $@
-	# Copy function list for traces
+	# Copy function list to trace.
 	cp $< $@/extrae_functions.txt
 
 	# Replace number of cores in the jobscript
@@ -157,7 +122,7 @@ trace_ice_%: extrae_functions_ice.txt bin/nemo_ice_trace.exe
 	# Magic Cut
 	cd $@; magicCut nemo.prv
 	mv $@/nemo.best_cut.* .
-	rename nemo.best_cut ice_trace_$* nemo.best_cut.*
+	rename nemo.best_cut trace_$* nemo.best_cut.*
 
 
 ####################################################
@@ -175,18 +140,15 @@ inidata:
 
 ####################################################
 # Recipes to launch some basic tests
-test_oce: inidata_oce
+test: inidata
 	mkdir $@
-	cp -r $</* $@
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 120
-	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
-	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
-	cp cfg/test/jobscript.cmd $@
-	sbatch --chdir $@ $@/jobscript.cmd
-
-test_ice: inidata
-	mkdir $@
-	cp -r $</* $@
+	# Link inidata
+	ln -rsf inidata/* $@
+	# Copy everything from reference folder
+	cp --remove-destination compilation_workdir/cfgs/${configuration_name}/EXP00/* $@
+	# Copy xios server
+	cp --remove-destination bin/xios_server.exe $@
+	# Change namelist parameters
 	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 120
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
@@ -228,11 +190,12 @@ hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
 	rm -rf inidata InitialConditions.nc 
-modelfactors.csv: trace_ice_24 trace_ice_48 trace_ice_96
-	cfg/model_factors/wrapper.sh ice_trace_24.prv ice_trace_48.prv ice_trace_96.prv
+
+modelfactors.csv: trace_24 trace_48 trace_96
+	cfg/model_factors/wrapper.sh $? 
 
 # Trace Analysis
-histogram_%.txt: ice_trace_%.prv
+histogram_%.txt: trace_%.prv
 	paramedir $< cfg/trace_analysis/FunctionTimeHistogram.cfg 
 	mv FunctionTimeHistogram histogram_$*.txt
 
