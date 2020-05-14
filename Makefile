@@ -228,5 +228,13 @@ hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
 	rm -rf inidata InitialConditions.nc 
-model_factors.csv: trace_ice_24 trace_ice_48 trace_ice_96
+modelfactors.csv: trace_ice_24 trace_ice_48 trace_ice_96
 	cfg/model_factors/wrapper.sh ice_trace_24.prv ice_trace_48.prv ice_trace_96.prv
+
+# Trace Analysis
+histogram_%.txt: ice_trace_%.prv
+	paramedir $< cfg/trace_analysis/FunctionTimeHistogram.cfg 
+	mv FunctionTimeHistogram histogram_$*.txt
+
+histograms: histogram_24.txt histogram_48.txt histogram_96.txt
+	
