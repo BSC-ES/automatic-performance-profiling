@@ -9,6 +9,8 @@ $(eval ${configuration_name})
 configuration_details=$(shell grep "configuration_details"  ${config_file} )
 $(eval ${configuration_details})
 
+arch_file_prefix=$(shell grep "arch_file_prefix"  ${config_file} )
+$(eval ${arch_file_prefix})
 # If we want to add some user defined parameter we can do it with the following approach:
 # We add in the config file something like:
 #
@@ -45,21 +47,21 @@ nemo_mirror:
 # Vanilla versions
 bin/nemo.exe: bin compilation_workdir
 	# Compile NEMO
-	compilation_workdir/makenemo -m mn4 -n ${configuration_name} ${configuration_details} -j 16
+	compilation_workdir/makenemo -m ${arch_file_prefix} -n ${configuration_name} ${configuration_details} -j 16
 	# Copy binary into bin folder
 	cp compilation_workdir/cfgs/${configuration_name}/EXP00/nemo $@
 	
 # Tracing versions
 bin/nemo_trace.exe: bin compilation_workdir
 	# Compile NEMO
-	compilation_workdir/makenemo -m mn4_trace -n ${configuration_name}_trace ${configuration_details} -j 16
+	compilation_workdir/makenemo -m ${arch_file_prefix}_trace -n ${configuration_name}_trace ${configuration_details} -j 16
 	# Copy binary into bin folder
 	cp compilation_workdir/cfgs/${configuration_name}_trace/EXP00/nemo $@
 	
 # Gprof versions to find which functions do we want to trace
 bin/nemo_gprof.exe: bin compilation_workdir
 	# Compile NEMO
-	compilation_workdir/makenemo -m mn4_gprof -n ${configuration_name}_gprof ${configuration_details} -j 16
+	compilation_workdir/makenemo -m ${arch_file_prefix}_gprof -n ${configuration_name}_gprof ${configuration_details} -j 16
 	# Copy binary into bin folder
 	cp compilation_workdir/cfgs/${configuration_name}_gprof/EXP00/nemo $@
 
@@ -164,7 +166,7 @@ bin/xios_server.exe:
 	cp /gpfs/projects/bsc32/bsc32870/xios/2.5/mn4-r1650-prod/bin/xios_server.exe bin/xios_server.exe
 # REBUILD NEMO tool
 bin/rebuild_nemo.exe: bin compilation_workdir
-	cd reference_workdir/tools; ./maketools -n REBUILD_NEMO -m mn4
+	cd reference_workdir/tools; ./maketools -n REBUILD_NEMO -m ${arch_file_prefix}
 	cp reference_workdir/tools/REBUILD_NEMO/rebuild_nemo* bin/
 
 # Binary folder
@@ -184,20 +186,22 @@ bin:
 # Clean recipes
 # Delete (almost)-everything
 clean:
-	rm -rf reference_workdir nemo_source
+	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin
 
 hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
 	rm -rf inidata InitialConditions.nc 
 
-modelfactors.csv: trace_24 trace_48 trace_96
-	cfg/model_factors/wrapper.sh $? 
 
 # Trace Analysis
-histogram_%.txt: trace_%.prv
-	paramedir $< cfg/trace_analysis/FunctionTimeHistogram.cfg 
+modelfactors.csv: trace_24 trace_48 trace_96
+	cfg/trace_analysis/modelfactors trace_24.prv trace_48.prv trace_96.prv 
+
+histogram_%.txt: trace_%
+	cfg/trace_analysis/paramedir $<.prv cfg/trace_analysis/FunctionTimeHistogram.cfg 
 	mv FunctionTimeHistogram histogram_$*.txt
 
 histograms: histogram_24.txt histogram_48.txt histogram_96.txt
-	
+
+analysis: histograms modelfactors.csv	
