@@ -2,25 +2,8 @@
 
 # Reading some parameters from the config file
 config_file=param.cfg
-nemo_branch=$(shell grep "nemo_branch"  ${config_file} )
-$(eval ${nemo_branch})
-configuration_name=$(shell grep "configuration_name"  ${config_file} )
-$(eval ${configuration_name})
-configuration_details=$(shell grep "configuration_details"  ${config_file} )
-$(eval ${configuration_details})
+include ${config_file}
 
-arch_file_prefix=$(shell grep "arch_file_prefix"  ${config_file} )
-$(eval ${arch_file_prefix})
-# If we want to add some user defined parameter we can do it with the following approach:
-# We add in the config file something like:
-#
-#    var_name=var_value
-#
-# and then add in this Makefile two lines like:
-#
-#    var_name=$(shell grep "var_name"  ${config_file} )
-#    $(eval ${var_name})
-#
 
 # Help
 ####################################################
@@ -49,21 +32,21 @@ bin/nemo.exe: bin compilation_workdir
 	# Compile NEMO
 	compilation_workdir/makenemo -m ${arch_file_prefix} -n ${configuration_name} ${configuration_details} -j 16
 	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/${configuration_name}/EXP00/nemo $@
+	cp compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/nemo $@
 	
 # Tracing versions
 bin/nemo_trace.exe: bin compilation_workdir
 	# Compile NEMO
 	compilation_workdir/makenemo -m ${arch_file_prefix}_trace -n ${configuration_name}_trace ${configuration_details} -j 16
 	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/${configuration_name}_trace/EXP00/nemo $@
+	cp compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/nemo $@
 	
 # Gprof versions to find which functions do we want to trace
 bin/nemo_gprof.exe: bin compilation_workdir
 	# Compile NEMO
 	compilation_workdir/makenemo -m ${arch_file_prefix}_gprof -n ${configuration_name}_gprof ${configuration_details} -j 16
 	# Copy binary into bin folder
-	cp compilation_workdir/cfgs/${configuration_name}_gprof/EXP00/nemo $@
+	cp compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/nemo $@
 
 ####################################################
 # Recipes to prepare functions file for tracing
@@ -74,7 +57,7 @@ functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
 	# Link inidata
 	ln -rsf inidata/* $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/cfgs/${configuration_name}_gprof/EXP00/* $@
+	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
@@ -101,7 +84,7 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	# Link inidata
 	ln -rsf inidata/* $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/cfgs/${configuration_name}_trace/EXP00/* $@
+	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
@@ -147,7 +130,7 @@ test: inidata
 	# Link inidata
 	ln -rsf inidata/* $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/cfgs/${configuration_name}/EXP00/* $@
+	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Change namelist parameters
@@ -194,14 +177,21 @@ hard_clean:
 	rm -rf inidata InitialConditions.nc 
 
 
+####################################################
 # Trace Analysis
-modelfactors.csv: trace_24 trace_48 trace_96
-	cfg/trace_analysis/modelfactors trace_24.prv trace_48.prv trace_96.prv 
 
+# Model factors
+modelfactors_dependencies=$(foreach var, $(number_of_processes), trace_$(var))
+modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var).prv)
+
+modelfactors.csv: $(modelfactors_dependencies)
+	cfg/trace_analysis/modelfactors $(modelfactors_traces)
+# Function histograms
 histogram_%.txt: trace_%
 	cfg/trace_analysis/paramedir $<.prv cfg/trace_analysis/FunctionTimeHistogram.cfg 
 	mv FunctionTimeHistogram histogram_$*.txt
 
-histograms: histogram_24.txt histogram_48.txt histogram_96.txt
+histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).txt)
+histograms: $(histogram_dependencies)
 
 analysis: histograms modelfactors.csv	
