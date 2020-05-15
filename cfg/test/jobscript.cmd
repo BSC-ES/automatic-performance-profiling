@@ -2,7 +2,7 @@
 ###############################################################################
 #                             VERY BASIC NEMO RUN
 ###############################################################################
-#SBATCH --ntasks 48
+#SBATCH --ntasks %CORES%
 #SBATCH -J nemo-test
 #SBATCH --output log_%j.out
 #SBATCH --error  log_%j.err
@@ -12,13 +12,13 @@
 # Load environment
 source modules.env
 
+number_of_cores=%CORES%
+
 set -xuve
 nemo_bin=nemo
 xios_bin=xios_server.exe
 # Spinup run
-time mpirun \
-            -n 20 ./${nemo_bin} : -n 4 ./${xios_bin} \
-          : -n 20 ./${nemo_bin} : -n 4 ./${xios_bin}
+time mpirun -n ${number_of_cores} ./${nemo_bin} 
 
 rm ORCA2_000?????_restart_????.nc
 

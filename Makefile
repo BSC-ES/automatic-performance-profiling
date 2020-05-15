@@ -93,6 +93,10 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	# Set ice frequency to 1
 	cfg/replace_namelist_parameter $@/namelist_ref nn_fsbc 1
+	# Disable output
+	if [ $(output) == FALSE ] ; then \
+	   sed -i "s/^.*file_definition.*$$//g" $@/context_nemo.xml ; \
+	fi
 	# Copy jobscript and trace utils
 	cp cfg/trace/* $@
 	# Copy function list to trace.
@@ -125,7 +129,7 @@ inidata:
 
 ####################################################
 # Recipes to launch some basic tests
-test: inidata
+test_%: inidata bin/nemo.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
@@ -134,11 +138,19 @@ test: inidata
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Change namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 120
+	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 1200
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
+	cfg/replace_namelist_parameter $@/namelist_ref ln_timing   .true.
+	# Disable output
+	if [ $(output) == FALSE ] ; then \
+	   sed -i "s/^.*file_definition.*$$//g" $@/context_nemo.xml ; \
+	fi
 	cp cfg/test/jobscript.cmd $@
-	sbatch --chdir $@ $@/jobscript.cmd
+	# Replace number of cores in the jobscript
+	sed -i "s/%CORES%/$*/g" $@/jobscript.cmd
+	# Launch job
+	sbatch --wait --chdir $@ $@/jobscript.cmd
 
 ####################################################
 # Some other recipes
@@ -169,7 +181,7 @@ bin:
 # Clean recipes
 # Delete (almost)-everything
 clean:
-	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin
+	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
 
 hard_clean:
 	-chmod +w inidata
@@ -194,4 +206,11 @@ histogram_%.txt: trace_%
 histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).txt)
 histograms: $(histogram_dependencies)
 
+scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
+scalability: $(scalability_dependencies)
+	@echo "Scalability tests done"
+
 analysis: histograms modelfactors.csv	
+
+
+
