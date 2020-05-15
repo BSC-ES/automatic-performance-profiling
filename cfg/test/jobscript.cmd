@@ -14,12 +14,15 @@ source modules.env
 
 number_of_cores=%CORES%
 
+if [ ! -z ${HALF_FILLED_NODES} ] ; then
+   echo "Using half filled nodes"
+   number_of_cores=$( echo ${number_of_cores} / 2 | bc )
+fi
 set -xuve
 nemo_bin=nemo
 xios_bin=xios_server.exe
 # Spinup run
 time mpirun -n ${number_of_cores} ./${nemo_bin} 
 
-rm ORCA2_000?????_restart_????.nc
 
 set +xuve

@@ -4,7 +4,6 @@
 config_file=param.cfg
 include ${config_file}
 
-
 # Help
 ####################################################
 help:
@@ -13,6 +12,7 @@ help:
 	@echo ""
 	@echo "Modify the file param.cfg to select the branch inside the nemo mirror that you would like to profile."
 	@echo ""
+	echo $(word 1, ${number_of_processes} )
 
 ####################################################
 # NEMO Sources
@@ -67,6 +67,12 @@ functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
 	# Copy jobscript
 	cp cfg/gprof/jobscript.cmd $@
 	cp cfg/gprof/gthrottling.sh $@
+	# Disable output
+	if [ $(output) == FALSE ] ; then \
+	   sed -i "s/^.*file_definition.*$$//g" $@/context_nemo.xml ; \
+	fi
+	# Replace number of cores in the jobscript
+	sed -i "s/%CORES%/$(word 1, ${number_of_processes} )/g" $@/jobscript.cmd
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 	# Clean unnecessary netcdf
 	rm -rf $@/*nc 

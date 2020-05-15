@@ -12,16 +12,19 @@
 # Load environment
 source modules.env
 
+number_of_cores=%CORES%
+
+if [ ! -z ${HALF_FILLED_NODES} ] ; then
+   echo "Using half filled nodes"
+   number_of_cores=$( echo ${number_of_cores} / 2 | bc )
+fi
 set -xuve
 nemo_bin=nemo
 xios_bin=xios_server.exe
 export GMON_OUT_PREFIX='gmon.out-'`/bin/uname -n`
 # Spinup run
-time mpirun \
-            -n 20 ./${nemo_bin} : -n 4 ./${xios_bin} \
-          : -n 20 ./${nemo_bin} : -n 4 ./${xios_bin}
+time mpirun -n ${number_of_cores} ./${nemo_bin} 
 
-rm ORCA2_000?????_restart_????.nc
 
 
 # Create list extrae_functions.txt
