@@ -33,13 +33,18 @@ bin/nemo.exe: bin compilation_workdir
 	compilation_workdir/makenemo -m ${arch_file_prefix} -n ${configuration_name} ${configuration_details} -j 16
 	# Copy binary into bin folder
 	cp compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/nemo $@
-	
+ifdef configuration_resolution
+	cp compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/namelist_cfg
+endif	
 # Tracing versions
 bin/nemo_trace.exe: bin compilation_workdir
 	# Compile NEMO
 	compilation_workdir/makenemo -m ${arch_file_prefix}_trace -n ${configuration_name}_trace ${configuration_details} -j 16
 	# Copy binary into bin folder
 	cp compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/nemo $@
+ifdef configuration_resolution
+	 cp compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/namelist_cfg
+endif
 	
 # Gprof versions to find which functions do we want to trace
 bin/nemo_gprof.exe: bin compilation_workdir
@@ -47,6 +52,9 @@ bin/nemo_gprof.exe: bin compilation_workdir
 	compilation_workdir/makenemo -m ${arch_file_prefix}_gprof -n ${configuration_name}_gprof ${configuration_details} -j 16
 	# Copy binary into bin folder
 	cp compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/nemo $@
+ifdef configuration_resolution
+	 cp compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/namelist_cfg
+endif
 
 ####################################################
 # Recipes to prepare functions file for tracing
@@ -56,6 +64,7 @@ functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
+	rsync -rv --exclude=.nc inidata/ $@
 	# Copy everything from reference folder
 	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/* $@
 	# Copy xios server
@@ -89,6 +98,7 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
+	rsync -rv --exclude=.nc inidata/ $@
 	# Copy everything from reference folder
 	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* $@
 	# Copy xios server
@@ -125,6 +135,11 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 inidata:
 	# Download data, put it in inidata and remove write permissions to avoid undesired modifications
 	mkdir inidata
+ifdef configuration_resolution
+        # It is BENCH, copy the namelist into the configuration namelist_cfg
+	cp cfg/utils/iodef.xml  inidata
+	cp cfg/utils/context_nemo.xml  inidata
+else
 	wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar
 	tar -xf ORCA2_ICE_v4.0.tar -C inidata
 	gunzip inidata/*
@@ -132,13 +147,14 @@ inidata:
 	chmod -w inidata 
 	# Remove compressed file
 	rm ORCA2_ICE_v4.0.tar
-
+endif
 ####################################################
 # Recipes to launch some basic tests
 test_%: inidata bin/nemo.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
-	ln -rsf inidata/* $@
+	ln -rsf inidata/*  $@
+	rsync -rv --exclude=.nc inidata/ $@
 	# Copy everything from reference folder
 	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/* $@
 	# Copy xios server
@@ -217,6 +233,5 @@ scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
 
 analysis: histograms modelfactors.csv	
-
 
 
