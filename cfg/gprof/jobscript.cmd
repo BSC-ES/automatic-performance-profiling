@@ -2,7 +2,8 @@
 ###############################################################################
 #                             VERY BASIC NEMO RUN
 ###############################################################################
-#SBATCH --ntasks 48
+#SBATCH --ntasks %CORES%
+#SBATCH --ntasks-per-node %PROCESSES_PER_NODE%
 #SBATCH -J nemo-test
 #SBATCH --output log_%j.out
 #SBATCH --error  log_%j.err
@@ -23,8 +24,7 @@ nemo_bin=nemo
 xios_bin=xios_server.exe
 export GMON_OUT_PREFIX='gmon.out-'`/bin/uname -n`
 # Spinup run
-time mpirun -n ${number_of_cores} ./${nemo_bin} 
-
+time mpirun -genv I_MPI_DEBUG=4 -n ${number_of_cores} ./${nemo_bin} 
 
 
 # Create list extrae_functions.txt

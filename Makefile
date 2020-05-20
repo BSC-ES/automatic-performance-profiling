@@ -4,6 +4,12 @@
 config_file=param.cfg
 include ${config_file}
 
+# Variables that can be overwritten in param.cfg
+# and will be taking this value only if are not defined
+test_steps?=1200
+trace_steps?=40
+processes_per_node?=24
+
 # Help
 ####################################################
 help:
@@ -26,39 +32,19 @@ nemo_mirror:
 	cfg/clone_nemo.sh nemo_mirror $(nemo_branch)
 
 ####################################################
-# Recipes to compile different NEMO versions
-# Vanilla versions
-bin/nemo.exe: bin compilation_workdir
+# Recipe to compile different NEMO versions
+# The subscript indicates the version that we are compiling (vanilla, trace or gprof)
+bin/nemo_%.exe: bin compilation_workdir
 	# Compile NEMO
-	compilation_workdir/makenemo -m ${arch_file_prefix} -n ${configuration_name} ${configuration_details} -j 16
+	compilation_workdir/makenemo -m ${arch_file_prefix}_$* -n ${configuration_name}_$* ${configuration_details} -j 16
 	# Copy binary into bin folder
-	cp compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/nemo $@
+	cp compilation_workdir/${configuration_folder}/${configuration_name}_$*/EXP00/nemo $@
 ifdef configuration_resolution
-	cp compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/namelist_cfg
-endif	
-# Tracing versions
-bin/nemo_trace.exe: bin compilation_workdir
-	# Compile NEMO
-	compilation_workdir/makenemo -m ${arch_file_prefix}_trace -n ${configuration_name}_trace ${configuration_details} -j 16
-	# Copy binary into bin folder
-	cp compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/nemo $@
-ifdef configuration_resolution
-	 cp compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/namelist_cfg
-endif
-	
-# Gprof versions to find which functions do we want to trace
-bin/nemo_gprof.exe: bin compilation_workdir
-	# Compile NEMO
-	compilation_workdir/makenemo -m ${arch_file_prefix}_gprof -n ${configuration_name}_gprof ${configuration_details} -j 16
-	# Copy binary into bin folder
-	cp compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/nemo $@
-ifdef configuration_resolution
-	 cp compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/namelist_cfg
+	cp compilation_workdir/${configuration_folder}/${configuration_name}_$*/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}_$*/EXP00/namelist_cfg
 endif
 
 ####################################################
 # Recipes to prepare functions file for tracing
-
 # TODO: find a better way of prepare these rundirs without repeating code
 functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
 	mkdir $@
@@ -82,12 +68,12 @@ functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
 	fi
 	# Replace number of cores in the jobscript
 	sed -i "s/%CORES%/$(word 1, ${number_of_processes} )/g" $@/jobscript.cmd
+	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" $@/jobscript.cmd
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 	# Clean unnecessary netcdf
 	rm -rf $@/*nc 
 
 # Recipe for preparing the function lists
-# TODO: Maybe we can generate this list only once with the configuration using ICE.
 extrae_functions.txt: functions_dir
 	# Copy functions list
 	cp $</extrae_functions.txt $@
@@ -104,7 +90,7 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 20
+	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend ${trace_steps}
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	# Set ice frequency to 1
@@ -117,9 +103,9 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	cp cfg/trace/* $@
 	# Copy function list to trace.
 	cp $< $@/extrae_functions.txt
-
 	# Replace number of cores in the jobscript
 	sed -i "s/%CORES%/$*/g" $@/jobscript.cmd
+	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" $@/jobscript.cmd
 	# Launch jobscript
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 	# Clean a little bit
@@ -128,6 +114,8 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	cd $@; magicCut nemo.prv
 	mv $@/nemo.best_cut.* .
 	rename nemo.best_cut trace_$* nemo.best_cut.*
+	# Make paraver image
+	cfg/trace_analysis/paraver -i trace_$*.prv cfg/trace_analysis/cfgs/UserFunctions.cfg	
 
 
 ####################################################
@@ -150,20 +138,21 @@ else
 endif
 ####################################################
 # Recipes to launch some basic tests
-test_%: inidata bin/nemo.exe bin/xios_server.exe
+test_%: inidata bin/nemo_vanilla.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/*  $@
 	rsync -rv --exclude=.nc inidata/ $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}/EXP00/* $@
+	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_vanilla/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Change namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 1200
+	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend ${test_steps}
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_timing   .true.
+	cfg/replace_namelist_parameter $@/namelist_cfg ln_timing   .true.
 	# Disable output
 	if [ $(output) == FALSE ] ; then \
 	   sed -i "s/^.*file_definition.*$$//g" $@/context_nemo.xml ; \
@@ -171,6 +160,7 @@ test_%: inidata bin/nemo.exe bin/xios_server.exe
 	cp cfg/test/jobscript.cmd $@
 	# Replace number of cores in the jobscript
 	sed -i "s/%CORES%/$*/g" $@/jobscript.cmd
+	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" $@/jobscript.cmd
 	# Launch job
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 
@@ -179,7 +169,7 @@ test_%: inidata bin/nemo.exe bin/xios_server.exe
 
 # Xios server
 bin/xios_server.exe:
-	# HARDCODED dependency that at some point should be replaced with xios compilation
+	# TODO: HARDCODED dependency that at some point should be replaced with xios compilation
 	cp /gpfs/projects/bsc32/bsc32870/xios/2.5/mn4-r1650-prod/bin/xios_server.exe bin/xios_server.exe
 # REBUILD NEMO tool
 bin/rebuild_nemo.exe: bin compilation_workdir
@@ -195,10 +185,6 @@ bin:
 	rsync -av --exclude='doc*' --exclude='*.svn*' nemo_source/* $@
 	cp cfg/arch/arch-* $@/arch/
 
-#%_rundir: inidata
-#	mkdir -p $@
-#	ln -rsf inidata/* $@
-	
 ####################################################
 # Clean recipes
 # Delete (almost)-everything
@@ -218,11 +204,11 @@ hard_clean:
 modelfactors_dependencies=$(foreach var, $(number_of_processes), trace_$(var))
 modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var).prv)
 
-modelfactors.csv: $(modelfactors_dependencies)
+modelfactors: $(modelfactors_dependencies)
 	cfg/trace_analysis/modelfactors $(modelfactors_traces)
 # Function histograms
 histogram_%.txt: trace_%
-	cfg/trace_analysis/paramedir $<.prv cfg/trace_analysis/FunctionTimeHistogram.cfg 
+	cfg/trace_analysis/paramedir $<.prv cfg/trace_analysis/cfgs/FunctionTimeHistogram.cfg 
 	mv FunctionTimeHistogram histogram_$*.txt
 
 histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).txt)
@@ -232,6 +218,6 @@ scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
 
-analysis: histograms modelfactors.csv	
+analysis: histograms modelfactors scalability	
 
 

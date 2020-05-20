@@ -3,6 +3,7 @@
 #                             VERY BASIC NEMO RUN
 ###############################################################################
 #SBATCH --ntasks %CORES%
+#SBATCH --ntasks-per-node %PROCESSES_PER_NODE%
 #SBATCH -J nemo-test
 #SBATCH --output log_%j.out
 #SBATCH --error  log_%j.err
@@ -41,7 +42,7 @@ nemo_bin=nemo
 ./generate_function_list.sh ${nemo_bin} extrae_functions.txt 
 
 # Spinup run
-time mpirun -n ${number_of_cores} ./${trace} ./${nemo_bin}
+time mpirun -genv I_MPI_DEBUG=4 -n ${number_of_cores} ./${nemo_bin} 
 
 
 # Create list extrae_functions.txt
