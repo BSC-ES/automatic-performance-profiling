@@ -217,6 +217,7 @@ histograms: $(histogram_dependencies)
 scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
+	python cfg/parser/launcher.py test_*/timing.output	
 
 analysis: histograms modelfactors scalability	
 
