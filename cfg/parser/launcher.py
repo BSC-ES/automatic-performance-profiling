@@ -35,6 +35,6 @@ if __name__ == "__main__":
     # Process the info of the experiments provided
     experiment_results = TimingInformation(files)
     # Prepare and print some summaries
-    experiment_results.simulated_years_per_day_summary().print()
     experiment_results.function_summary().print()
+    experiment_results.simulated_years_per_day_summary().print()
 
