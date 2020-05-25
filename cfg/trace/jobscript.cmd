@@ -42,7 +42,7 @@ nemo_bin=nemo
 ./generate_function_list.sh ${nemo_bin} extrae_functions.txt 
 
 # Spinup run
-time mpirun -genv I_MPI_DEBUG=4 -n ${number_of_cores} ./${nemo_bin} 
+time mpirun -genv I_MPI_DEBUG=4 -n ${number_of_cores} ./${trace} ./${nemo_bin} 
 
 
 # Create list extrae_functions.txt
