@@ -219,7 +219,6 @@ scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
 	python cfg/parser/launcher.py test_*/timing.output > scalability_report.txt	
 	cat scalability_report.txt
-
 analysis: histograms modelfactors scalability	
 
 ############
