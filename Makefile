@@ -219,6 +219,8 @@ scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
 	python cfg/parser/launcher.py test_*/timing.output > scalability_report.txt	
 	cat scalability_report.txt
+dimemas_dependencies=$(foreach var, $(number_of_processes), $(var).ideal.prv)
+dimemas_experiments: $(dimemas_dependencies)
 analysis: histograms modelfactors scalability	
 
 ############
