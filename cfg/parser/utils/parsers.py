@@ -8,6 +8,7 @@ class DistributedVariable:
     """
     Object to store values of magnitudes that come from different processes.
     """
+
     def __init__(self, values):
         self.values = values
         self.average = np.average(self.values)
@@ -20,6 +21,7 @@ def parse_timing_files(files):
     :param files: List of files to process
     :return: Results object with the info parsed.
     """
+
     def parse_communication_time(lines):
         """
         Parses the section containing computing and communication time, where also the SYPD is provided
@@ -68,6 +70,7 @@ def parse_timing_files(files):
                 return None, None, None
             else:
                 raise AssertionError
+
         for l in lines:
             # For each line in the file see if it matches any of the different kinds of patterns
             computing_time, rank = get_from_pattern(computing_time_pattern, l)
@@ -111,6 +114,7 @@ def parse_timing_files(files):
         :param lines: Lines of a file
         :return: Nested dictionary with
         """
+
         def parse_time_by_process_line(groups):
             process = groups[0]
             values = [float(v) for v in groups[1:]]
@@ -130,7 +134,6 @@ def parse_timing_files(files):
                 process_data[process] = {}
                 for label, value in zip(labels, values):
                     process_data[process][label] = value
-
 
         number_of_processes = len(process_data.keys())
         return number_of_processes, process_data
@@ -152,6 +155,7 @@ def parse_timing_files(files):
         :param lines:
         :return: Dictionary with function information.
         """
+
         def parse_function_line(groups):
             section = groups[0]
             values = [float(v) for v in groups[1:]]
@@ -245,12 +249,15 @@ class TimingInformation:
     |---'TimeStepTime'
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
-    def __init__(self, files):
+
+    def __init__(self, experiment_name, files, cores_per_node=48):
         if not files:
             raise AssertionError("Empty list of files")
+        self.experiment_name = experiment_name
         self.data = parse_timing_files(files)
         self.cases = list(sorted(self.data.keys()))
         self.base_case = min(self.cases)
+        self.processes_per_node = cores_per_node
 
         self.functions = self.find_functions()
 
@@ -282,23 +289,3 @@ class TimingInformation:
 
     def simulated_years_per_day_summary(self):
         return simulated_years_per_day_summary(self)
-
-
-
-    '''
-    # Do something with the results
-    cases = results.keys()
-
-    # ref
-    ref_num_proc = min(cases)
-    ref_ts, ref_ts_std = results[ref_num_proc]["TimeStepTime"]
-    
-    for case in cases:
-        ts, ts_std = results[case]["TimeStepTime"]
-        speed_up = ref_ts/ts
-        resources = case/ref_num_proc
-        efficiency = speed_up/resources * 100.
-        print("Cores: %i\tResources: %.2f\tSpeed-up: %.2f\tEfficiency: %.2f%%" % (case, resources, speed_up, efficiency))
-    
-
-'''

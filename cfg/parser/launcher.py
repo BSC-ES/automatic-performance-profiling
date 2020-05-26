@@ -1,4 +1,6 @@
 from cfg.parser.utils.parsers import TimingInformation
+from cfg.parser.utils.curation import experiment_comparison, fit_step_time_to_model, fit_functions_to_model
+import pickle
 
 
 def get_file_list_from_command_line_arguments():
@@ -10,6 +12,8 @@ def get_file_list_from_command_line_arguments():
     import glob
     # Parse and assert command line options
     parser = OptionParser()
+    parser.add_option("-n", "--name", dest="experiment_name",
+                      help="Experiment name", default="Experiment")
     (options, args) = parser.parse_args()
 
     # Using the glob library to make it possible to use wildcards
@@ -26,15 +30,14 @@ def get_file_list_from_command_line_arguments():
     if not files:
         parser.print_help()
         exit(0)
-    return files
+    return files, options
 
 
 if __name__ == "__main__":
     # Get files from command line
-    files = get_file_list_from_command_line_arguments()
+    files, options = get_file_list_from_command_line_arguments()
+    experiment_name = options.experiment_name
     # Process the info of the experiments provided
-    experiment_results = TimingInformation(files)
-    # Prepare and print some summaries
-    experiment_results.simulated_years_per_day_summary().print()
-    experiment_results.function_summary().print()
+    results = TimingInformation(experiment_name=experiment_name, files=files)
 
+    results.simulated_years_per_day_summary()
