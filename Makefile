@@ -8,7 +8,14 @@ include ${config_file}
 # and will be taking this value only if are not defined
 test_steps?=1200
 trace_steps?=40
-processes_per_node?=24
+processes_per_node?=48
+
+
+
+# Tools folder
+analysis_tools=cfg/trace_analysis/
+
+
 
 # Help
 ####################################################
@@ -23,6 +30,7 @@ help:
 ####################################################
 # NEMO Sources
 # The sources are prepared downloading the corresponding branch from the BSC Earth Sciences gitlab mirror
+
 nemo_source: nemo_mirror
 	# Download NEMO sources from svn repository
 	ln -sf $< $@
@@ -115,9 +123,12 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	mv $@/nemo.best_cut.* .
 	rename nemo.best_cut trace_$* nemo.best_cut.*
 	# Make paraver image
-	cfg/trace_analysis/paraver -i trace_$*.prv cfg/trace_analysis/cfgs/UserFunctions.cfg	
+	${analysis_tools}/paraver -i trace_$*.prv ${analysis_tools}/cfgs/UserFunctions.cfg	
 
-
+%.dim: trace_%
+	${analysis_tools}/prv2dim $<.prv $@
+%.ideal.prv: %.dim
+	${analysis_tools}/Dimemas -S 32k --dim $< -p $@ --config-file ${analysis_tools}/cfgs/ideal.cfg 
 ####################################################
 # Recipes to prepare inidata
 inidata:
@@ -205,10 +216,10 @@ modelfactors_dependencies=$(foreach var, $(number_of_processes), trace_$(var))
 modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var).prv)
 
 modelfactors: $(modelfactors_dependencies)
-	cfg/trace_analysis/modelfactors $(modelfactors_traces)
+	${analysis_tools}/modelfactors $(modelfactors_traces)
 # Function histograms
 histogram_%.txt: trace_%
-	cfg/trace_analysis/paramedir $<.prv cfg/trace_analysis/cfgs/FunctionTimeHistogram.cfg 
+	${analysis_tools}/paramedir $<.prv ${analysis_tools}/cfgs/FunctionTimeHistogram.cfg 
 	mv FunctionTimeHistogram histogram_$*.txt
 
 histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).txt)
@@ -224,3 +235,6 @@ dimemas_experiments: $(dimemas_dependencies)
 analysis: histograms modelfactors scalability	
 
 ############
+# Intermediate files that won't be removed automatically
+binaries=bin/nemo_gprof.exe bin/nemo_trace.exe bin/nemo_vanilla.exe
+.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim
