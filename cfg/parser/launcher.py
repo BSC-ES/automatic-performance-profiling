@@ -38,6 +38,6 @@ if __name__ == "__main__":
     files, options = get_file_list_from_command_line_arguments()
     experiment_name = options.experiment_name
     # Process the info of the experiments provided
-    results = TimingInformation(experiment_name=experiment_name, files=files)
-
-    results.simulated_years_per_day_summary()
+    experiment_results = TimingInformation(experiment_name=experiment_name, files=files)
+    experiment_results.simulated_years_per_day_summary().print()
+    experiment_results.function_summary().print()
