@@ -15,8 +15,6 @@ processes_per_node?=48
 # Tools folder
 analysis_tools=cfg/trace_analysis/
 
-
-
 # Help
 ####################################################
 help:
@@ -25,7 +23,7 @@ help:
 	@echo ""
 	@echo "Modify the file param.cfg to select the branch inside the nemo mirror that you would like to profile."
 	@echo ""
-	echo $(word 1, ${number_of_processes} )
+	@echo 
 
 ####################################################
 # NEMO Sources
@@ -127,8 +125,18 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 
 %.dim: trace_%
 	${analysis_tools}/prv2dim $<.prv $@
-%.ideal.prv: %.dim
-	${analysis_tools}/Dimemas -S 32k --dim $< -p $@ --config-file ${analysis_tools}/cfgs/ideal.cfg 
+
+
+dimemas_configurations=$(wildcard cfg/dimemas/cfgs/*)
+.dimemas_experiment_%.done: %.dim
+	mkdir -p dimemas_traces
+	for cfg in ${dimemas_configurations} ; do \
+	        sufix=$$(basename $${cfg}) ; \
+	        sufix=$${sufix//dimemas./} ;\
+	        sufix=$${sufix//.cfg/} ;\
+		${analysis_tools}/Dimemas -S 32k --dim $< -p dimemas_traces/dimemas_$*_$${sufix}.prv --config-file $${cfg} ;\
+	done
+	touch $@
 ####################################################
 # Recipes to prepare inidata
 inidata:
@@ -230,7 +238,7 @@ scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
 	python cfg/parser/launcher.py test_*/timing.output > scalability_report.txt	
 	cat scalability_report.txt
-dimemas_dependencies=$(foreach var, $(number_of_processes), $(var).ideal.prv)
+dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
 dimemas_experiments: $(dimemas_dependencies)
 analysis: histograms modelfactors scalability	
 
