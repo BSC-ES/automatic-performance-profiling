@@ -52,22 +52,22 @@ endif
 ####################################################
 # Recipes to prepare functions file for tracing
 # TODO: find a better way of prepare these rundirs without repeating code
-functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
+functions_dir: inidata bin/nemo_trace.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
 	rsync -rv --exclude=.nc inidata/ $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/* $@
+	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 480
+	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 400
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	# Copy jobscript
-	cp cfg/gprof/jobscript.cmd $@
-	cp cfg/gprof/gthrottling.sh $@
+	cp cfg/generate_func_list/* $@  
+        
 	# Disable output
 	if [ $(output) == FALSE ] ; then \
 	   sed -i "s/^.*file_definition.*$$//g" $@/context_nemo.xml ; \
