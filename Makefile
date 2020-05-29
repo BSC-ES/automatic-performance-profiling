@@ -118,17 +118,19 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	rm -rf $@/set-* $@/*.nc
 	# Magic Cut
 	cd $@; magicCut nemo.prv
-	mv $@/nemo.best_cut.* .
-	rename nemo.best_cut trace_$* nemo.best_cut.*
-	# Make paraver image
-	${analysis_tools}/paraver -i trace_$*.prv ${analysis_tools}/cfgs/UserFunctions.cfg	
+	rename nemo.best_cut trace_$* $@/nemo.best_cut.*
 
 
-paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/cfgs/*)
+paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/*)
+paramedir_test:
+	@echo ${paramedir_configurations}
 .paramedir_%.done: trace_%
-	mkdir -p dimemas_traces
+	# Make paraver image
+	cd $<; ../${analysis_tools}/paraver -i $<.prv ../${analysis_tools}/cfgs/UserFunctions.cfg	
+	# Enter directory and process all paramedir configurations
+	cd $<; \
 	for cfg in ${paramedir_configurations} ; do \
-	        ${analysis_tools}/paramedir $<.prv $${cfg} ;\
+	        ../${analysis_tools}/paramedir $<.prv ../$${cfg} ;\
 	done
 	touch $@
 
@@ -252,6 +254,8 @@ dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_
 dimemas_experiments: $(dimemas_dependencies)
 analysis: histograms modelfactors scalability	
 
+paramedir_dependencies=$(foreach var, $(number_of_processes), .paramedir_$(var).done)
+paramedir_experiment: $(paramedir_dependencies)
 ############
 # Intermediate files that won't be removed automatically
 binaries=bin/nemo_gprof.exe bin/nemo_trace.exe bin/nemo_vanilla.exe
