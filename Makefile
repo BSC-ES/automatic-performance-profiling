@@ -123,6 +123,16 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	# Make paraver image
 	${analysis_tools}/paraver -i trace_$*.prv ${analysis_tools}/cfgs/UserFunctions.cfg	
 
+
+paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/cfgs/*)
+.paramedir_%.done: trace_%
+	mkdir -p dimemas_traces
+	for cfg in ${paramedir_configurations} ; do \
+	        ${analysis_tools}/paramedir $<.prv $${cfg} ;\
+	done
+	touch $@
+
+
 %.dim: trace_%
 	${analysis_tools}/prv2dim $<.prv $@
 
