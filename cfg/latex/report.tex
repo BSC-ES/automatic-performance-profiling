@@ -1,0 +1,27 @@
+\documentclass[11pt,a4paper,oldfontcommands]{report}
+
+\usepackage{graphicx}
+\usepackage{csvsimple} % For csv importing.
+\input{variables.tex}
+\begin{document}
+\begin{titlepage}
+	\vspace*{\stretch{1.0}}
+	\begin{center}
+		\Large\textbf{Report on Nemo, version: \nemoversion}\\
+		\large\textit{Automatically generated with nemo\_performance\_profile package}
+	\end{center}
+	\vspace*{\stretch{2.0}}
+\end{titlepage}
+\begin{section}{Model Factors}
+	
+
+	\csvautotabular{modelfactors.csv}
+	
+	\begin{figure}
+		\includegraphics[width=\linewidth]{images/modelfactors.png}
+		\caption{Model Factors.}
+		\label{fig:boat1}
+	\end{figure}
+\end{section}
+
+\end{document}

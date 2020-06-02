@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 # Makefile to prepare all the necessary elements to launch a performance analysis on NEMO
 
 # Reading some parameters from the config file
@@ -14,7 +15,9 @@ processes_per_node?=48
 
 # Tools folder
 analysis_tools=cfg/trace_analysis/
-
+latex_folder=cfg/latex
+latex_folder_img=cfg/latex/images
+trace_folder_prefix=trace
 # Help
 ####################################################
 help:
@@ -40,11 +43,12 @@ nemo_mirror:
 ####################################################
 # Recipe to compile different NEMO versions
 # The subscript indicates the version that we are compiling (vanilla, trace or gprof)
-bin/nemo_%.exe: bin compilation_workdir
+bin/nemo_%.exe: compilation_workdir | bin
 	# Compile NEMO
 	compilation_workdir/makenemo -m ${arch_file_prefix}_$* -n ${configuration_name}_$* ${configuration_details} -j 16
 	# Copy binary into bin folder
 	cp compilation_workdir/${configuration_folder}/${configuration_name}_$*/EXP00/nemo $@
+	
 ifdef configuration_resolution
 	cp compilation_workdir/${configuration_folder}/${configuration_name}_$*/EXP00/namelist_cfg_${configuration_resolution}_like  compilation_workdir/${configuration_folder}/${configuration_name}_$*/EXP00/namelist_cfg
 endif
@@ -79,63 +83,83 @@ functions_dir: inidata bin/nemo_trace.exe bin/xios_server.exe
 	# Clean unnecessary netcdf
 	rm -rf $@/*nc 
 
-# Recipe for preparing the function lists
+# Recip for preparing the function lists
 extrae_functions.txt: functions_dir
 	# Copy functions list
 	cp $</extrae_functions.txt $@
 
 # Recipe to make traces
-trace_%: extrae_functions.txt bin/nemo_trace.exe 
+.Trace_%.done: extrae_functions.txt bin/nemo_trace.exe
+	# Variable which contains traces' folder name
+	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Create folder
-	mkdir $@
+	mkdir $($@_trace_folder)
 	# Link inidata
-	ln -rsf inidata/* $@
-	rsync -rv --exclude=.nc inidata/ $@
+	ln -rsf inidata/* $($@_trace_folder) 
+	rsync -rv --exclude=.nc inidata/ $($@_trace_folder)
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* $@
+	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* $($@_trace_folder)
 	# Copy xios server
-	cp --remove-destination bin/xios_server.exe $@
+	cp --remove-destination bin/xios_server.exe $($@_trace_folder)
 	# Fix namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend ${trace_steps}
-	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
-	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
+	cfg/replace_namelist_parameter $($@_trace_folder)/namelist_cfg nn_itend ${trace_steps}
+	cfg/replace_namelist_parameter $($@_trace_folder)/namelist_cfg ln_icebergs .false.
+	cfg/replace_namelist_parameter $($@_trace_folder)/namelist_ref ln_meshmask .false.
 	# Set ice frequency to 1
-	cfg/replace_namelist_parameter $@/namelist_ref nn_fsbc 1
+	cfg/replace_namelist_parameter $($@_trace_folder)/namelist_ref nn_fsbc 1
 	# Disable output
 	if [ $(output) == FALSE ] ; then \
-	   sed -i "s/^.*file_definition.*$$//g" $@/context_nemo.xml ; \
+	   sed -i "s/^.*file_definition.*$$//g" $($@_trace_folder)/context_nemo.xml ; \
 	fi
 	# Copy jobscript and trace utils
-	cp cfg/trace/* $@
+	cp cfg/trace/* $($@_trace_folder)
 	# Copy function list to trace.
-	cp $< $@/extrae_functions.txt
+	cp $< $($@_trace_folder)/extrae_functions.txt
 	# Replace number of cores in the jobscript
-	sed -i "s/%CORES%/$*/g" $@/jobscript.cmd
-	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" $@/jobscript.cmd
+	sed -i "s/%CORES%/$*/g" $($@_trace_folder)/jobscript.cmd
+	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" $($@_trace_folder)/jobscript.cmd
 	# Launch jobscript
-	sbatch --wait --chdir $@ $@/jobscript.cmd
+	sbatch --wait --chdir $($@_trace_folder) $($@_trace_folder)/jobscript.cmd
 	# Clean a little bit
-	rm -rf $@/set-* $@/*.nc
+	rm -rf $($@_trace_folder)/set-* $($@_trace_folder)/*.nc
+	touch $@
+
+# Cut the trace
+.trace_cut_%.done: .Trace_%.done
+	# Variable which contains traces' folder name
+	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Magic Cut
-	cd $@; magicCut nemo.prv
-	rename nemo.best_cut trace_$* $@/nemo.best_cut.*
+	cd $($@_trace_folder); magicCut nemo.prv
+	rename nemo.best_cut $($@_trace_folder)  $($@_trace_folder)/nemo.best_cut.*
+	touch $@ 
 
 
 paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/*)
-paramedir_test:
-	@echo ${paramedir_configurations}
-.paramedir_%.done: trace_%
+
+paramedir_test_%: 	
+	$(eval $@_folder := $(shell echo ${trace_folder_prefix}_$*))
+	@echo $($@_folder)
+
+.paramedir_%.done: .Trace_%.done
+
+	# Variable which contains traces' folder name
+	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
+
 	# Make paraver image
-	cd $<; ../${analysis_tools}/paraver -i $<.prv ../${analysis_tools}/cfgs/UserFunctions.cfg	
+	cd $($@_trace_folder); ../${analysis_tools}/paraver -i $($@_trace_folder).prv ../${analysis_tools}/cfgs/UserFunctions.cfg
+	# Name of generated trace picture
+	$(eval $@_picture := $(shell echo $($@_trace_folder)/NEMO_function_x_thread@trace_$*.png))
+	# Copy it to latex image folder
+	cp $($@_picture) ${latex_folder_img}/trace_userFunctions_$*.png
 	# Enter directory and process all paramedir configurations
-	cd $<; \
+	cd $($@_trace_folder); \
 	for cfg in ${paramedir_configurations} ; do \
-	        ../${analysis_tools}/paramedir $<.prv ../$${cfg} ;\
+	        ../${analysis_tools}/paramedir $($@_trace_folder).prv ../$${cfg} ;\
 	done
 	touch $@
 
 
-%.dim: trace_%
+%.dim: .trace_%.done
 	${analysis_tools}/prv2dim $<.prv $@
 
 
@@ -232,13 +256,20 @@ hard_clean:
 # Trace Analysis
 
 # Model factors
-modelfactors_dependencies=$(foreach var, $(number_of_processes), trace_$(var))
-modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var).prv)
+modelfactors_dependencies=$(foreach var, $(number_of_processes), .trace_cut_$(var).done)
+modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var)/trace_$(var).prv)
 
 modelfactors: $(modelfactors_dependencies)
 	${analysis_tools}/modelfactors $(modelfactors_traces)
+	sed -i '2s/^/set terminal png\n/' modelfactors.gp
+	sed -i '3s/^/set output "modelfactors.png"\n/' modelfactors.gp
+	sed -i 's/dt 2//g' modelfactors.gp
+	sed -i 's/pause -1//g' modelfactors.gp
+	gnuplot -p modelfactors.gp
+	cp ./modelfactors.csv ${latex_folder}
+	cp ./modelfactors.png ${latex_folder_img}
 # Function histograms
-histogram_%.txt: trace_%
+histogram_%.txt: .Trace_%.done
 	${analysis_tools}/paramedir $<.prv ${analysis_tools}/cfgs/FunctionTimeHistogram.cfg 
 	mv FunctionTimeHistogram histogram_$*.txt
 
@@ -257,6 +288,14 @@ analysis: histograms modelfactors scalability
 paramedir_dependencies=$(foreach var, $(number_of_processes), .paramedir_$(var).done)
 paramedir_experiment: $(paramedir_dependencies)
 ############
-# Intermediate files that won't be removed automatically
-binaries=bin/nemo_gprof.exe bin/nemo_trace.exe bin/nemo_vanilla.exe
-.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim
+# Create a latex report
+report: cfg/latex/report.pdf
+cfg/latex/report.pdf: modelfactors paramedir_experiment
+	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -10 | grep 'git-svn-id:' | awk '{print $$2}'| awk -F / '{print $$NF}' ))
+	cp ${latex_folder}/variables_orig.tex ${latex_folder}/variables.tex
+	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
+	cd ${latex_folder}; ./gen_report.sh
+############         #
+# Intermediate files #that won't be removed automatically
+binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
+.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim *.done

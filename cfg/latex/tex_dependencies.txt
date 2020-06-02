@@ -1,0 +1,3 @@
+modelfactors.csv
+images/modelfactors.png
+variables.tex
