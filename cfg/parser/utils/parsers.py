@@ -4,15 +4,8 @@ import numpy as np
 from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary
 
 
-class DistributedVariable:
-    """
-    Object to store values of magnitudes that come from different processes.
-    """
-
-    def __init__(self, values):
-        self.values = values
-        self.average = np.average(self.values)
-        self.std = np.std(self.values)
+def distributed_variable(values):
+    return {"values": values, "average": np.average(values), "std": np.std(values)}
 
 
 def parse_timing_files(files):
@@ -93,13 +86,13 @@ def parse_timing_files(files):
 
         # Return a dictionary with the information
         return {
-            "sypd": DistributedVariable(sypds),
-            "total_time": DistributedVariable(total_times),
-            "computing_time": DistributedVariable(computing_times),
-            "p2p_time": DistributedVariable(p2p_times),
-            "p2p_pct": DistributedVariable(p2p_pcts),
-            "collective_time": DistributedVariable(collective_times),
-            "collective_pct": DistributedVariable(collective_pcts),
+            "sypd": distributed_variable(sypds),
+            "total_time": distributed_variable(total_times),
+            "computing_time": distributed_variable(computing_times),
+            "p2p_time": distributed_variable(p2p_times),
+            "p2p_pct": distributed_variable(p2p_pcts),
+            "collective_time": distributed_variable(collective_times),
+            "collective_pct": distributed_variable(collective_pcts),
         }
 
     # Few functions used to parse a file
@@ -250,16 +243,21 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, experiment_name, files, cores_per_node=48):
-        if not files:
-            raise AssertionError("Empty list of files")
-        self.experiment_name = experiment_name
-        self.data = parse_timing_files(files)
-        self.cases = list(sorted(self.data.keys()))
-        self.base_case = min(self.cases)
-        self.processes_per_node = cores_per_node
+    def __init__(self, experiment_name=None, files=None, cores_per_node=48, json_file=None):
+        # Init class variables
+        self.experiment_name = None
+        self.data = None
+        self.cases = None
+        self.base_case = None
+        self.processes_per_node = None
+        self.functions = None
 
-        self.functions = self.find_functions()
+        # Update values with the provided files
+        if json_file is not None:
+            import json
+            self.load_json(json_file)
+        else:
+            self.load_timings(files, experiment_name, cores_per_node)
 
     def __getitem__(self, item):
         return self.data[item]
@@ -269,7 +267,7 @@ class TimingInformation:
         for case in self.cases:
             functions.append(list(self.data[case]["FunctionInfo"].keys()))
         functions = sum(functions, [])
-        return set(functions)
+        return list(set(functions))
 
     def get_function_info(self, function, cases=None):
         # Convert it to a list in case it is not
@@ -289,3 +287,46 @@ class TimingInformation:
 
     def simulated_years_per_day_summary(self):
         return simulated_years_per_day_summary(self)
+
+    def save_json(self, filename=None):
+        import json
+        if filename is None:
+            filename = self.experiment_name+".json"
+
+        dictionary_to_save = {}
+        dictionary_to_save["experiment_name"] = self.experiment_name
+        dictionary_to_save["data"] = self.data
+        dictionary_to_save["cases"] = self.cases
+        dictionary_to_save["base_case"] = self.base_case
+        dictionary_to_save["processes_per_node"] = self.processes_per_node
+        dictionary_to_save["functions"] = self.functions
+
+        with open(filename, "w") as f:
+            json.dump(dictionary_to_save, f)
+
+    def load_json(self, filename):
+        import json
+
+        def json_keys2int(x):
+            if isinstance(x, dict):
+                return {int(k): v for k, v in x.items()}
+            return x
+        with open(filename, "r") as f:
+            json_data = json.load(f, object_hook=json_keys2int)
+            self.experiment_name = json_data["experiment_name"]
+            self.data = json_data["data"]
+            self.cases = json_data["cases"]
+            self.base_case = json_data["base_case"]
+            self.processes_per_node = json_data["processes_per_node"]
+            self.functions = json_data["functions"]
+
+    def load_timings(self, files, experiment_name, cores_per_node):
+        if not files:
+            raise AssertionError("Empty list of files")
+        self.experiment_name = experiment_name
+        self.data = parse_timing_files(files)
+        self.cases = list(sorted(self.data.keys()))
+        self.base_case = min(self.cases)
+        self.processes_per_node = cores_per_node
+
+        self.functions = self.find_functions()

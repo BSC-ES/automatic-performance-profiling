@@ -72,7 +72,7 @@ def simulated_years_per_day_summary(experiment_data):
     plot_data = {x_label: [], y_label: []}
 
     base_case = experiment_data.base_case
-    base_case_speed = experiment_data[base_case]["Communication"]["sypd"].average
+    base_case_speed = experiment_data[base_case]["Communication"]["sypd"]["average"]
 
     plot_data[x_label].append(base_case)
     plot_data[y_label].append(base_case_speed)
@@ -80,11 +80,10 @@ def simulated_years_per_day_summary(experiment_data):
     log.add("Base case with %4i processes has an speed of %.1f SYPD" %
             (base_case, base_case_speed))
 
-
     for case in experiment_data.cases:
         if case == experiment_data.base_case:
             continue
-        speed = experiment_data[case]["Communication"]["sypd"].average
+        speed = experiment_data[case]["Communication"]["sypd"]["average"]
         speedup = speed / base_case_speed
         resource_increase = case / base_case
         efficiency = speedup / resource_increase
@@ -259,7 +258,7 @@ def get_functions_data(experiments, function_name=None):
     for experiment in experiments:
         base_case = experiment.base_case
         if function_name is None:
-            my_fun = list(experiment.data[base_case][fun_key].keys())[0]
+            my_fun = list(experiment.data[base_case][fun_key].labels())[0]
         else:
             my_fun = function_name
         for case in experiment.cases:
@@ -279,7 +278,7 @@ def oversimplified_memory_model(experiments):
         print("Overall model:")
         print("MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" % (100.*mb/tt, 100.*cb/tt, 100.*error/tt))
         print("Top10 Functions:")
-        functions = list(experiments[0].data[experiments[0].base_case]["FunctionInfo"].keys())
+        functions = list(experiments[0].data[experiments[0].base_case]["FunctionInfo"].labels())
         functions = functions[:10]
         for function in functions:
             error, parameters = fit_functions_to_model(experiments, function_name=function)
