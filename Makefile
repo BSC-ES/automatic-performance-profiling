@@ -8,7 +8,12 @@ include ${config_file}
 # and will be taking this value only if are not defined
 test_steps?=1200
 trace_steps?=40
-processes_per_node?=24
+processes_per_node?=48
+
+
+
+# Tools folder
+analysis_tools=cfg/trace_analysis/
 
 # Help
 ####################################################
@@ -18,11 +23,12 @@ help:
 	@echo ""
 	@echo "Modify the file param.cfg to select the branch inside the nemo mirror that you would like to profile."
 	@echo ""
-	echo $(word 1, ${number_of_processes} )
+	@echo 
 
 ####################################################
 # NEMO Sources
 # The sources are prepared downloading the corresponding branch from the BSC Earth Sciences gitlab mirror
+
 nemo_source: nemo_mirror
 	# Download NEMO sources from svn repository
 	ln -sf $< $@
@@ -46,22 +52,22 @@ endif
 ####################################################
 # Recipes to prepare functions file for tracing
 # TODO: find a better way of prepare these rundirs without repeating code
-functions_dir: inidata bin/nemo_gprof.exe bin/xios_server.exe
+functions_dir: inidata bin/nemo_trace.exe bin/xios_server.exe
 	mkdir $@
 	# Link inidata
 	ln -rsf inidata/* $@
 	rsync -rv --exclude=.nc inidata/ $@
 	# Copy everything from reference folder
-	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_gprof/EXP00/* $@
+	cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* $@
 	# Copy xios server
 	cp --remove-destination bin/xios_server.exe $@
 	# Fix namelist parameters
-	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 480
+	cfg/replace_namelist_parameter $@/namelist_cfg nn_itend 400
 	cfg/replace_namelist_parameter $@/namelist_cfg ln_icebergs .false.
 	cfg/replace_namelist_parameter $@/namelist_ref ln_meshmask .false.
 	# Copy jobscript
-	cp cfg/gprof/jobscript.cmd $@
-	cp cfg/gprof/gthrottling.sh $@
+	cp cfg/generate_func_list/* $@  
+        
 	# Disable output
 	if [ $(output) == FALSE ] ; then \
 	   sed -i "s/^.*file_definition.*$$//g" $@/context_nemo.xml ; \
@@ -112,12 +118,37 @@ trace_%: extrae_functions.txt bin/nemo_trace.exe
 	rm -rf $@/set-* $@/*.nc
 	# Magic Cut
 	cd $@; magicCut nemo.prv
-	mv $@/nemo.best_cut.* .
-	rename nemo.best_cut trace_$* nemo.best_cut.*
+	rename nemo.best_cut trace_$* $@/nemo.best_cut.*
+
+
+paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/*)
+paramedir_test:
+	@echo ${paramedir_configurations}
+.paramedir_%.done: trace_%
 	# Make paraver image
-	cfg/trace_analysis/paraver -i trace_$*.prv cfg/trace_analysis/cfgs/UserFunctions.cfg	
+	cd $<; ../${analysis_tools}/paraver -i $<.prv ../${analysis_tools}/cfgs/UserFunctions.cfg	
+	# Enter directory and process all paramedir configurations
+	cd $<; \
+	for cfg in ${paramedir_configurations} ; do \
+	        ../${analysis_tools}/paramedir $<.prv ../$${cfg} ;\
+	done
+	touch $@
 
 
+%.dim: trace_%
+	${analysis_tools}/prv2dim $<.prv $@
+
+
+dimemas_configurations=$(wildcard cfg/dimemas/cfgs/*)
+.dimemas_experiment_%.done: %.dim
+	mkdir -p dimemas_traces
+	for cfg in ${dimemas_configurations} ; do \
+	        sufix=$$(basename $${cfg}) ; \
+	        sufix=$${sufix//dimemas./} ;\
+	        sufix=$${sufix//.cfg/} ;\
+		${analysis_tools}/Dimemas -S 32k --dim $< -p dimemas_traces/dimemas_$*_$${sufix}.prv --config-file $${cfg} ;\
+	done
+	touch $@
 ####################################################
 # Recipes to prepare inidata
 inidata:
@@ -205,10 +236,10 @@ modelfactors_dependencies=$(foreach var, $(number_of_processes), trace_$(var))
 modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var).prv)
 
 modelfactors: $(modelfactors_dependencies)
-	cfg/trace_analysis/modelfactors $(modelfactors_traces)
+	${analysis_tools}/modelfactors $(modelfactors_traces)
 # Function histograms
 histogram_%.txt: trace_%
-	cfg/trace_analysis/paramedir $<.prv cfg/trace_analysis/cfgs/FunctionTimeHistogram.cfg 
+	${analysis_tools}/paramedir $<.prv ${analysis_tools}/cfgs/FunctionTimeHistogram.cfg 
 	mv FunctionTimeHistogram histogram_$*.txt
 
 histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).txt)
@@ -219,7 +250,13 @@ scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
 	python cfg/parser/launcher.py test_*/timing.output > scalability_report.txt	
 	cat scalability_report.txt
-
+dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
+dimemas_experiments: $(dimemas_dependencies)
 analysis: histograms modelfactors scalability	
 
+paramedir_dependencies=$(foreach var, $(number_of_processes), .paramedir_$(var).done)
+paramedir_experiment: $(paramedir_dependencies)
 ############
+# Intermediate files that won't be removed automatically
+binaries=bin/nemo_gprof.exe bin/nemo_trace.exe bin/nemo_vanilla.exe
+.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim
