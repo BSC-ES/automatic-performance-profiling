@@ -21,24 +21,23 @@ else
   # Checkout and copy tools/
   mkdir _tools
   git checkout svn/utils/tools
-  mv [a-Z]* _tools
-
+  mv [a-zA-Z]* _tools
   # Checkout and copy ext/
   mkdir -p _ext/AGRIF
   git checkout svn/vendors/AGRIF
-  mv [a-Z]* _ext/AGRIF/
+  mv [a-zA-Z]* _ext/AGRIF/
   mkdir -p _ext/FCM
   git checkout svn/vendors/FCM
-  mv [a-Z]* _ext/FCM/
+  mv [a-zA-Z]* _ext/FCM/
   git checkout svn/vendors/IOIPSL
   mkdir -p _ext/IOIPSL
-  mv [a-Z]* _ext/IOIPSL/
+  mv [a-zA-Z]* _ext/IOIPSL/
   git checkout svn/vendors/IOIPSL
 
   # Checkout and copy arch/ and makenemo
   mkdir _build
   git checkout svn/utils/build
-  mv [a-Z]* _build
+  mv [a-zA-Z]* _build
 
   # Checkout NEMO revision
   git checkout $2
