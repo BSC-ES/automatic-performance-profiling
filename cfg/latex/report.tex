@@ -1,18 +1,35 @@
-\documentclass[11pt,a4paper,oldfontcommands]{report}
+\documentclass[11pt,a4paper,oldfontcommands]{article}
 
 \usepackage{graphicx}
 \usepackage{csvsimple} % For csv importing.
 \input{variables.tex}
-\begin{document}
-\begin{titlepage}
-	\vspace*{\stretch{1.0}}
+\title{Report on Nemo, version: \nemoversion}
+\author{Author}
+\date{\today}
+
+% Definition of \maketitle
+\makeatletter
+\def\@maketitle{
 	\begin{center}
-		\Large\textbf{Report on Nemo, version: \nemoversion}\\
-		\large\textit{Automatically generated with nemo\_performance\_profile package}
-	\end{center}
-	\vspace*{\stretch{2.0}}
-\end{titlepage}
-\begin{section}{Model Factors}
+		{\Huge \bfseries \sffamily \@title }\\[4ex]
+		{\Large  \@author}\\[4ex]
+		\@date\\[8ex]
+		\includegraphics[width = 40mm]{images/BSC_Logo.png}
+	\end{center}}
+	\makeatother
+\begin{document}
+	\maketitle
+	\newpage
+\section{Introduction}
+	This is an automatically generated report on Nemo code.
+
+\section{Trace on \ncores cores}
+	\begin{figure}
+		\includegraphics[width=\linewidth]{images/trace_userFunctions_trace_\ncores.png}
+		\caption{User functions on \ncores cores.}
+		\label{fig:trace_userFunction}
+	\end{figure}
+\section{Model Factors}
 	
 
 	\csvautotabular{modelfactors.csv}
@@ -20,8 +37,8 @@
 	\begin{figure}
 		\includegraphics[width=\linewidth]{images/modelfactors.png}
 		\caption{Model Factors.}
-		\label{fig:boat1}
+		\label{fig:modelfactors}
 	\end{figure}
-\end{section}
+
 
 \end{document}
