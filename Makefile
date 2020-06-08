@@ -299,6 +299,7 @@ cfg/latex/report.pdf: modelfactors paramedir_experiment scalability
 	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
 	# Defines the name of plot.png through a latex newcommand
 	sed -i 's/SCALING_PLOT/${configuration_name}/g' ${latex_folder}/variables.tex
+	sed -i 's/SCALING_PLOT/${configuration_name}/g' ${latex_folder}/tex_dependencies.txt
 	cd ${latex_folder}; ./gen_report.sh
 ############         #
 # Intermediate files #that won't be removed automatically
