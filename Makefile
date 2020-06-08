@@ -279,7 +279,7 @@ histograms: $(histogram_dependencies)
 scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
-	python cfg/parser/launcher.py test_*/timing.output > scalability_report.txt	
+	python cfg/parser/launcher.py test_*/timing.output  -n ${configuration_name} -s  > scalability_report.txt
 	cat scalability_report.txt
 dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
 dimemas_experiments: $(dimemas_dependencies)
