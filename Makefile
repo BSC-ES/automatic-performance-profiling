@@ -280,6 +280,7 @@ scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 scalability: $(scalability_dependencies)
 	@echo "Scalability tests done"
 	python cfg/parser/launcher.py test_*/timing.output  -n ${configuration_name} -s  > scalability_report.txt
+	cp ${configuration_name}.png ${latex_folder_img}
 	cat scalability_report.txt
 dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
 dimemas_experiments: $(dimemas_dependencies)
@@ -290,12 +291,16 @@ paramedir_experiment: $(paramedir_dependencies)
 ############
 # Create a latex report
 report: cfg/latex/report.pdf
-cfg/latex/report.pdf: modelfactors paramedir_experiment
+cfg/latex/report.pdf: modelfactors paramedir_experiment scalability
 	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -10 | grep 'git-svn-id:' | awk '{print $$2}'| awk -F / '{print $$NF}' ))
+	# Avoid overwriting variables templates
 	cp ${latex_folder}/variables_orig.tex ${latex_folder}/variables.tex
+	# Defines nemo version as a latex newcommand
 	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
+	# Defines the name of plot.png through a latex newcommand
+	sed -i 's/SCALING_PLOT/${configuration_name}/g' ${latex_folder}/variables.tex
 	cd ${latex_folder}; ./gen_report.sh
 ############         #
 # Intermediate files #that won't be removed automatically
 binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
-.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim *.done
+.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim %.done
