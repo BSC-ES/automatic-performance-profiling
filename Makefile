@@ -259,7 +259,9 @@ hard_clean:
 modelfactors_dependencies=$(foreach var, $(number_of_processes), .trace_cut_$(var).done)
 modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var)/trace_$(var).prv)
 
-modelfactors: $(modelfactors_dependencies)
+modelfactors: .modelfactors.done
+
+.modelfactors.done: $(modelfactors_dependencies)
 	${analysis_tools}/modelfactors $(modelfactors_traces)
 	sed -i '2s/^/set terminal png\n/' modelfactors.gp
 	sed -i '3s/^/set output "modelfactors.png"\n/' modelfactors.gp
@@ -268,6 +270,8 @@ modelfactors: $(modelfactors_dependencies)
 	gnuplot -p modelfactors.gp
 	cp ./modelfactors.csv ${latex_folder}
 	cp ./modelfactors.png ${latex_folder_img}
+	touch $@
+
 # Function histograms
 histogram_%.txt: .Trace_%.done
 	${analysis_tools}/paramedir $<.prv ${analysis_tools}/cfgs/FunctionTimeHistogram.cfg 
@@ -277,11 +281,15 @@ histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).
 histograms: $(histogram_dependencies)
 
 scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
-scalability: $(scalability_dependencies)
+
+scalability: .scalability.done
+
+.scalability.done: $(scalability_dependencies)
 	@echo "Scalability tests done"
 	python cfg/parser/launcher.py test_*/timing.output  -n ${configuration_name} -s  > scalability_report.txt
 	cp ${configuration_name}.png ${latex_folder_img}
 	cat scalability_report.txt
+	touch $@
 dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
 dimemas_experiments: $(dimemas_dependencies)
 analysis: histograms modelfactors scalability	
