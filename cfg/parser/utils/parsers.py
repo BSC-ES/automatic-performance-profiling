@@ -1,7 +1,8 @@
 # This script takes several timing.output logs and computes several stats
 import re
 import numpy as np
-from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary
+from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary,\
+                                      save_function_summary_csv
 
 
 def distributed_variable(values):
@@ -284,6 +285,10 @@ class TimingInformation:
     # Adding calls to different ways of processing the data
     def function_summary(self):
         return function_curated_summary(self)
+
+    # Saves functions' info to csv
+    def function_info_csv(self, csv_folder):
+        save_function_summary_csv(self, csv_folder)
 
     def simulated_years_per_day_summary(self):
         return simulated_years_per_day_summary(self)

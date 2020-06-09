@@ -1,5 +1,11 @@
 #!/bin/bash
+latex_file=$1
 
+if [[ ! -e ${latex_file} ]]
+then
+  echo -e "latex report structure '${latex_file}' not found.\nAbort"
+  exit 1
+fi
 module load LATEX/20150523
 if [[ ! -e tex_dependencies.txt ]]
 then
@@ -17,10 +23,5 @@ do
   fi
 done
 
-csv_in=modelfactors.csv
-latex_file=report.tex
-
-sed -i 's/#//g'  ${csv_in}
-sed -i 's/;/,/g' ${csv_in}
 pdflatex ${latex_file}
 evince ${latex_file//.tex}.pdf 

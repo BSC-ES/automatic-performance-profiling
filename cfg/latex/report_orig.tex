@@ -1,7 +1,8 @@
 \documentclass[11pt,a4paper,oldfontcommands]{article}
-
+\maxdeadcycles=2000
 \usepackage{graphicx}
 \usepackage{csvsimple} % For csv importing.
+\usepackage{booktabs}
 \input{variables.tex}
 \title{Report on Nemo, version: \nemoversion}
 \author{Author}
@@ -39,13 +40,14 @@
 \section{Model Factors}
 	
 
-	\csvautotabular{modelfactors.csv}
+	\csvautotabular{MODELFACTORS_TABLE_PLACEHOLDER}
 	
 	\begin{figure}
 		\includegraphics[width=\linewidth]{images/modelfactors.png}
 		\caption{Model Factors.}
 		\label{fig:modelfactors}
 	\end{figure}
-
-
+\section{Function Report}
+\clearpage
+CSV_INFO_FUNCTION_PLACEHOLDER
 \end{document}
