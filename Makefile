@@ -350,7 +350,7 @@ report: .latex_report.done
 	cd ${latex_folder};  ./function_info2tex.sh $($@_LATEX_REPORT) ${latex_function_csv}
 
 	# Clean latex old log
-	cd ${latex_folder}; rm *.aux *.log
+	cd ${latex_folder}; rm -f *.aux *.log
 
 	# Compile the latex template
 	cd ${latex_folder}; ./gen_report.sh $($@_LATEX_REPORT)
