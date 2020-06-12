@@ -8,7 +8,7 @@
 #SBATCH --output log_%j.out
 #SBATCH --error  log_%j.err
 #SBATCH --time 02:00:00
-#SBATCH --qos=debug
+##SBATCH --qos=debug
 
 set -xuve
 number_of_cores=%CORES%
