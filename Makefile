@@ -304,10 +304,14 @@ analysis: histograms modelfactors scalability
 
 paramedir_dependencies=$(foreach var, $(number_of_processes), .paramedir_$(var).done)
 paramedir_experiment: $(paramedir_dependencies)
+
+paraver_dependencies=$(foreach var, $(number_of_processes), .paraver_$(var).done)
+paraver_experiment: $(paraver_dependencies)
+
 ############
 # Create a latex report
 report: cfg/latex/report.pdf
-cfg/latex/report.pdf: modelfactors paramedir_experiment scalability
+cfg/latex/report.pdf: modelfactors paramedir_experiment paraver_experiment scalability
 	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -10 | grep 'git-svn-id:' | awk '{print $$2}'| awk -F / '{print $$NF}' ))
 	# Avoid overwriting variables templates
 	cp ${latex_folder}/variables_orig.tex ${latex_folder}/variables.tex
