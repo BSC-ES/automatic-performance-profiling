@@ -141,25 +141,33 @@ paramedir_test_%:
 	@echo $($@_folder)
 
 .paramedir_%.done: .Trace_%.done
-
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
+	# Enter directory and process all paramedir configurations
+	cd $($@_trace_folder); \
+	for cfg in ${paramedir_configurations} ; do \
+	        ../${analysis_tools}/paramedir $($@_trace_folder).prv ../$${cfg} ;\
+	done
+	# Rename files
+	cd $< ; for file in *pm ; do \
+	   mv $${file} $*_$${file} ;\
+	done
 
+	touch $@
+
+.paraver_%.done: .Trace_%.done
+	# Variable which contains traces' folder name
+	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Make paraver image
 	cd $($@_trace_folder); ../${analysis_tools}/paraver -i $($@_trace_folder).prv ../${analysis_tools}/cfgs/UserFunctions.cfg
 	# Name of generated trace picture
 	$(eval $@_picture := $(shell echo $($@_trace_folder)/NEMO_function_x_thread@trace_$*.png))
 	# Copy it to latex image folder
 	cp $($@_picture) ${latex_folder_img}/trace_userFunctions_$*.png
-	# Enter directory and process all paramedir configurations
-	cd $($@_trace_folder); \
-	for cfg in ${paramedir_configurations} ; do \
-	        ../${analysis_tools}/paramedir $($@_trace_folder).prv ../$${cfg} ;\
-	done
-	touch $@
 
 
-%.dim: .trace_%.done
+%.dim: .Trace_%.done
+
 	${analysis_tools}/prv2dim $<.prv $@
 
 
