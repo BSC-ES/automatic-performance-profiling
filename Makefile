@@ -150,7 +150,7 @@ paramedir_test_%:
 	        ../${analysis_tools}/paramedir $($@_trace_folder).prv ../$${cfg} ;\
 	done
 	# Rename files
-	cd $< ; for file in *pm ; do \
+	cd $($@_trace_folder); for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
 
