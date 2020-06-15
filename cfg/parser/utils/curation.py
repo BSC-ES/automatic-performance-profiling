@@ -150,8 +150,8 @@ def experiment_comparison(experiment1, experiment2):
     log = Log()
 
     # Simulated Years per Day
-    exp1_base_case_speed = experiment1[base_case]["Communication"]["sypd"].average
-    exp2_base_case_speed = experiment2[base_case]["Communication"]["sypd"].average
+    exp1_base_case_speed = experiment1[base_case]["Communication"]["sypd"]["average"]
+    exp2_base_case_speed = experiment2[base_case]["Communication"]["sypd"]["average"]
     ratio = exp2_base_case_speed / exp1_base_case_speed
     log.add(
         "Base case experiment %4i processes  speed :  %5.1f|%5.1f SYPD                                                    -> %.2f ratio.  " %
@@ -160,10 +160,10 @@ def experiment_comparison(experiment1, experiment2):
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_speed = experiment1[case]["Communication"]["sypd"].average
+        exp1_speed = experiment1[case]["Communication"]["sypd"]["average"]
         exp1_speedup = exp1_speed / exp1_base_case_speed
         exp1_efficiency = exp1_speedup / resource_increase
-        exp2_speed = experiment2[case]["Communication"]["sypd"].average
+        exp2_speed = experiment2[case]["Communication"]["sypd"]["average"]
         exp2_speedup = exp2_speed / exp2_base_case_speed
         exp2_efficiency = exp2_speedup / resource_increase
         ratio = exp2_speed / exp1_speed
