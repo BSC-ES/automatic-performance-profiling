@@ -2,6 +2,42 @@
 import re
 import numpy as np
 from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary
+from os.path import basename
+from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
+
+
+def parse_paramedir_filename(filename):
+    """
+    It parses a filename and gives the core count and the information type that the corresponds to the file
+    :param filename:
+    :return: number of cores, information type
+    """
+    pattern = "([0-9]+)_([a-zA-Z]+).pm"
+    filename = basename(filename)
+    m = re.match(pattern, filename)
+
+    cores = int(m.group(1))
+    information_type = m.group(2)
+    return cores, information_type
+
+
+def merge_dictionaries(dict_one, dict_two):
+    """
+    Takes two dictionaries and puts the information of both in a new dictionary
+    :param dict_one:
+    :param dict_two:
+    :return: new_dict
+    """
+    new_dict = dict_one.copy()
+    for key in dict_two.keys():
+        try:
+            if isinstance(new_dict[key], dict):
+                new_dict[key] = merge_dictionaries(new_dict[key], dict_two[key])
+            else:
+                new_dict[key] = [new_dict[key], dict_two[key]]
+        except KeyError:
+            new_dict[key] = dict_two[key]
+    return new_dict
 
 
 def distributed_variable(values):
@@ -208,6 +244,41 @@ def parse_timing_files(files):
     return results
 
 
+def parse_paramedir_files(files):
+    """
+    Takes a list of filenames corresponding to outputs of paramedir runs and process it returning a dictionary with
+    the data
+    :param files:
+    :return:
+    """
+    results = {}
+    for filename in files:
+        # Get core count and information type from filename
+        cores, information_type = parse_paramedir_filename(filename)
+        # Initialize dictionary in case it does not exists
+        try:
+            results[cores]
+        except KeyError:
+            results[cores] = {}
+
+        try:
+            results[cores]["Counters"]
+        except KeyError:
+            results[cores]["Counters"] = {}
+
+        try:
+            results[cores]["Counters"][information_type]
+        except KeyError:
+            results[cores]["Counters"][information_type] = {}
+        # Open the file and process the contents
+        with open(filename) as f:
+            text = f.read()
+            histograms = split_3d_histogram(text)
+            for function_name, histogram in histograms.items():
+                results[cores]["Counters"][information_type][function_name] = process_category_histogram(histogram)
+    return results
+
+
 class TimingInformation:
     """
     Class to store the information of one experiment in a nested dictionary
@@ -243,7 +314,7 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, experiment_name=None, files=None, cores_per_node=48, json_file=None):
+    def __init__(self, experiment_name=None, timing_files=None, paramedir_files=None, cores_per_node=48, json_file=None):
         # Init class variables
         self.experiment_name = None
         self.data = None
@@ -252,12 +323,24 @@ class TimingInformation:
         self.processes_per_node = None
         self.functions = None
 
+        if not timing_files and not paramedir_files and not json_file:
+            raise AssertionError("No files provided")
+
         # Update values with the provided files
         if json_file is not None:
             import json
             self.load_json(json_file)
-        else:
-            self.load_timings(files, experiment_name, cores_per_node)
+        if timing_files is not None:
+            self.load_timings(timing_files)
+        if paramedir_files is not None:
+            self.load_paramedir(paramedir_files)
+
+        # If an experiment name is provided update it (it might overwrite a name loaded from a json experiment).
+        if experiment_name is not None:
+            self.experiment_name = experiment_name
+        # If the property processes_per_node hasn't been set, we set it here. (It won't overwrite the value from a json)
+        if self.processes_per_node is None:
+            self.processes_per_node = cores_per_node
 
     def __getitem__(self, item):
         return self.data[item]
@@ -320,13 +403,26 @@ class TimingInformation:
             self.processes_per_node = json_data["processes_per_node"]
             self.functions = json_data["functions"]
 
-    def load_timings(self, files, experiment_name, cores_per_node):
+    def load_timings(self, files):
         if not files:
             raise AssertionError("Empty list of files")
-        self.experiment_name = experiment_name
-        self.data = parse_timing_files(files)
+        if self.data is None:
+            self.data = parse_timing_files(files)
+        else:
+            timing_info = parse_timing_files(files)
+            self.data = merge_dictionaries(self.data, timing_info)
         self.cases = list(sorted(self.data.keys()))
         self.base_case = min(self.cases)
-        self.processes_per_node = cores_per_node
 
         self.functions = self.find_functions()
+
+    def load_paramedir(self, files):
+        if not files:
+            raise AssertionError("Empty list of files")
+        if self.data is None:
+            self.data = parse_paramedir_files(files)
+        else:
+            paramedir_info = parse_paramedir_files(files)
+            self.data = merge_dictionaries(self.data, paramedir_info)
+
+        pass

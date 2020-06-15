@@ -3,8 +3,6 @@
 
 from os.path import join
 import re
-data_folder = "../../data/"
-
 
 # List of different accumulated results given by paramedir
 paramedir_labels = ("Total",
@@ -13,7 +11,7 @@ paramedir_labels = ("Total",
                     "Minimum",
                     "StDev",
                     "Avg/Max",
-          )
+                    )
 
 
 def split_3d_histogram(text3d):
@@ -34,7 +32,7 @@ def split_3d_histogram(text3d):
     histograms = {}
     # For each histogram
     for s, e in zip(starts, ends):
-        case_lines = [l for l in lines[s:e+1] if l.strip()]
+        case_lines = [l for l in lines[s:e + 1] if l.strip()]
         name = case_lines[0].strip()
         histogram = "\n".join(case_lines[1:])
         histograms[name] = histogram
@@ -113,6 +111,7 @@ def compute_histogram_data(histogram_files):
 
 if __name__ == "__main__":
     # Read function file
+    data_folder = "../../data/"
     function_file = "extrae_functions.txt"
     function_file_path = join(data_folder, function_file)
 
@@ -201,14 +200,6 @@ if __name__ == "__main__":
     for label in paramedir_labels:
         totals[label] = sum([function_data[function]["times"][label] for function in function_data.keys()])
 
-    # Print some info
-    # for function in function_data.keys():
-    #     print(function)
-    #     for label in labels:
-    #         print("\t%20s: %.1f %.1f%%" % (label, function_data[function]["times"][label],
-    #                                        100. * function_data[function]["times"][label]/totals[label]))
-
-
 
     cases = (
         48,
@@ -220,7 +211,6 @@ if __name__ == "__main__":
         histogram_files[case] = {}
         histogram_files[case]["instructions"] = "trace_%i_Instructions_by_function" % case
         histogram_files[case]["cycles"] = "trace_%i_Cycles_by_function" % case
-
 
     histogram_data = {}
     for key in histogram_files.keys():
@@ -239,10 +229,10 @@ if __name__ == "__main__":
         ys = []
         for case in cases:
             try:
-                instructions = histogram_data[case]["instructions"][function]["Average"]/10.**6
-                cycles = histogram_data[case]["cycles"][function]["Average"]/10.**6
-                instructions_per_cycle = instructions/cycles
-                xs.append(cycles/100.)
+                instructions = histogram_data[case]["instructions"][function]["Average"] / 10. ** 6
+                cycles = histogram_data[case]["cycles"][function]["Average"] / 10. ** 6
+                instructions_per_cycle = instructions / cycles
+                xs.append(cycles / 100.)
                 ys.append(instructions_per_cycle)
                 # print("Case: %i INS: %.1e  CYC: %.1e  IPC:  %.2f" % (case, instructions, cycles, instructions_per_cycle))
             except KeyError:
@@ -251,13 +241,13 @@ if __name__ == "__main__":
 
         if len(xs) != 3:
             continue
-        for i in range(len(xs)-1):
-            plt.arrow(xs[i], ys[i], xs[i+1]-xs[i], ys[i+1]-ys[i], alpha=.25, width=.001)
+        for i in range(len(xs) - 1):
+            plt.arrow(xs[i], ys[i], xs[i + 1] - xs[i], ys[i + 1] - ys[i], alpha=.25, width=.001)
         plt.scatter(xs, ys, alpha=.5)
         counter += 1
         if counter >= number_of_functions_to_print:
             break
-        #plt.text(xs[0], ys[0],function,size=5)
+        # plt.text(xs[0], ys[0],function,size=5)
 
     plt.xlabel("Cycles (x10^8)")
     plt.ylabel("IPC")
