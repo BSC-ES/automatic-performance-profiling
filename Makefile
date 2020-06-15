@@ -136,10 +136,6 @@ extrae_functions.txt: functions_dir
 
 paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/*)
 
-paramedir_test_%: 	
-	$(eval $@_folder := $(shell echo ${trace_folder_prefix}_$*))
-	@echo $($@_folder)
-
 .paramedir_%.done: .Trace_%.done | images_folder
 
 	# Variable which contains traces' folder name
@@ -150,7 +146,7 @@ paramedir_test_%:
 	        ../${analysis_tools}/paramedir $($@_trace_folder).prv ../$${cfg} ;\
 	done
 	# Rename files
-	cd $< ; for file in *pm ; do \
+	cd $($@_trace_folder) ; for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
 
@@ -227,6 +223,8 @@ test_%: inidata bin/nemo_vanilla.exe bin/xios_server.exe
 	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" $@/jobscript.cmd
 	# Launch job
 	sbatch --wait --chdir $@ $@/jobscript.cmd
+	# Rename timing output
+	mv $@/timing.output $@/$@.timing
 
 ####################################################
 # Some other recipes
@@ -297,10 +295,6 @@ scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 scalability: .scalability.done
 
 .scalability.done: $(scalability_dependencies) | function_csv_folder images_folder
-	@echo "Scalability tests done"
-	python cfg/parser/launcher.py test_*/timing.output -f ${latex_folder}/${latex_function_csv} -n ${configuration_name} -s  > scalability_report.txt
-	cp ${configuration_name}.png ${latex_images_folder}
-	cat scalability_report.txt
 	touch $@
 dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
 dimemas_experiments: $(dimemas_dependencies)
@@ -311,6 +305,11 @@ paramedir_experiment: $(paramedir_dependencies)
 
 paraver_dependencies=$(foreach var, $(number_of_processes), .paraver_$(var).done)
 paraver_experiment: $(paraver_dependencies)
+
+.json.done: .scalability.done paramedir_experiment
+	python cfg/parser/launcher.py test_*/*.timing trace_*/*pm -f ${latex_folder}/${latex_function_csv} -n ${configuration_name}
+	touch $@
+json: .json.done
 
 ############
 # Create a latex report

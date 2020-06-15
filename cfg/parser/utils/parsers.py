@@ -418,7 +418,6 @@ class TimingInformation:
             self.data = merge_dictionaries(self.data, timing_info)
         self.cases = list(sorted(self.data.keys()))
         self.base_case = min(self.cases)
-        self.processes_per_node = cores_per_node
 
         self.functions = self.find_functions()
 
