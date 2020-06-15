@@ -1,7 +1,7 @@
 # This script takes several timing.output logs and computes several stats
 import re
 import numpy as np
-from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary,
+from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary,\
                                       save_function_summary_csv
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
