@@ -397,7 +397,10 @@ class TimingInformation:
 
         def json_keys2int(x):
             if isinstance(x, dict):
-                return {int(k): v for k, v in x.items()}
+                try:
+                    return {int(k): v for k, v in x.items()}
+                except ValueError:
+                    return {k: v for k, v in x.items()}
             return x
         with open(filename, "r") as f:
             json_data = json.load(f, object_hook=json_keys2int)
