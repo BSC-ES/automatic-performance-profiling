@@ -1,7 +1,8 @@
 # This script takes several timing.output logs and computes several stats
 import re
 import numpy as np
-from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary
+from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary,
+                                      save_function_summary_csv
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
 
@@ -368,6 +369,10 @@ class TimingInformation:
     def function_summary(self):
         return function_curated_summary(self)
 
+    # Saves functions' info to csv
+    def function_info_csv(self, csv_folder):
+        save_function_summary_csv(self, csv_folder)
+
     def simulated_years_per_day_summary(self):
         return simulated_years_per_day_summary(self)
 
@@ -413,6 +418,7 @@ class TimingInformation:
             self.data = merge_dictionaries(self.data, timing_info)
         self.cases = list(sorted(self.data.keys()))
         self.base_case = min(self.cases)
+        self.processes_per_node = cores_per_node
 
         self.functions = self.find_functions()
 

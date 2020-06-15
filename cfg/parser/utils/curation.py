@@ -55,6 +55,54 @@ def function_curated_summary(experiment_data):
         log.add("_" * 30)
     return log
 
+def save_function_summary_csv(experiment_data, csv_folder):
+    """
+    Function to save the results as a csv which will be used in the latex report
+    :param experiment_data:
+    """
+    import numpy as np
+    fun_results = {}
+    log = Log()
+    for function in experiment_data.functions:
+        fun_results[function] = {}
+        for c, r in experiment_data.get_function_info(function):
+            fun_results[function][c] = r
+
+    key = 'Elap. Time(s)'
+
+    fun_results = {k: v for k, v in
+                   sorted(fun_results.items(), key=lambda item: item[1][experiment_data.base_case][key])}
+    for k, v in fun_results.items():
+
+        # List to store data
+        resources = []
+        speedup = []
+        efficiency = []
+
+        base_result = fun_results[k][experiment_data.base_case][key]
+
+        # Fill list with formatted data
+        for case in experiment_data.cases:
+            if case == experiment_data.base_case:
+                continue
+            resource_increase = case / experiment_data.base_case
+            try:
+                resources.append("{:.0f}".format(resource_increase))
+                speedup.append("{:.2f}".format(base_result / fun_results[k][case][key]))
+                efficiency.append("{:.2f}".format((base_result / fun_results[k][case][key]) / resource_increase))
+            except KeyError:
+                pass
+        # Declare array to be saved in csv
+        header = np.array(['resources', 'speedup', 'efficiency'], dtype=str)
+
+        data = np.empty((3, len(resources)))
+        data[0, :] = resources
+        data[1, :] = speedup
+        data[2, :] = efficiency
+
+        final_table = np.column_stack((header, data))
+        np.savetxt(csv_folder + '/' + k + '.csv', final_table, delimiter=',', fmt="%s")
+    return log
 
 def simulated_years_per_day_summary(experiment_data):
     from cfg.parser.utils.plotter import plotter

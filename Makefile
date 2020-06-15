@@ -1,4 +1,3 @@
-SHELL := /bin/bash
 # Makefile to prepare all the necessary elements to launch a performance analysis on NEMO
 
 # Reading some parameters from the config file
@@ -16,7 +15,8 @@ processes_per_node?=48
 # Tools folder
 analysis_tools=cfg/trace_analysis/
 latex_folder=cfg/latex
-latex_folder_img=cfg/latex/images
+latex_images_folder=${latex_folder}/images
+latex_function_csv=function_csv
 trace_folder_prefix=trace
 # Help
 ####################################################
@@ -140,26 +140,35 @@ paramedir_test_%:
 	$(eval $@_folder := $(shell echo ${trace_folder_prefix}_$*))
 	@echo $($@_folder)
 
-.paramedir_%.done: .Trace_%.done
+.paramedir_%.done: .Trace_%.done | images_folder
 
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
-
-	# Make paraver image
-	cd $($@_trace_folder); ../${analysis_tools}/paraver -i $($@_trace_folder).prv ../${analysis_tools}/cfgs/UserFunctions.cfg
-	# Name of generated trace picture
-	$(eval $@_picture := $(shell echo $($@_trace_folder)/NEMO_function_x_thread@trace_$*.png))
-	# Copy it to latex image folder
-	cp $($@_picture) ${latex_folder_img}/trace_userFunctions_$*.png
 	# Enter directory and process all paramedir configurations
 	cd $($@_trace_folder); \
 	for cfg in ${paramedir_configurations} ; do \
 	        ../${analysis_tools}/paramedir $($@_trace_folder).prv ../$${cfg} ;\
 	done
+	# Rename files
+	cd $< ; for file in *pm ; do \
+	   mv $${file} $*_$${file} ;\
+	done
+
 	touch $@
 
+.paraver_%.done: .Trace_%.done
+	# Variable which contains traces' folder name
+	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
+	# Make paraver image
+	cd $($@_trace_folder); ../${analysis_tools}/paraver -i $($@_trace_folder).prv ../${analysis_tools}/cfgs/UserFunctions.cfg
+	# Name of generated trace picture
+	$(eval $@_picture := $(shell echo $($@_trace_folder)/NEMO_function_x_thread@trace_$*.png))
+	# Copy it to latex image folder
+	cp $($@_picture) ${latex_images_folder}/trace_userFunctions_$*.png
 
-%.dim: .trace_%.done
+
+%.dim: .Trace_%.done
+
 	${analysis_tools}/prv2dim $<.prv $@
 
 
@@ -261,15 +270,18 @@ modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var)/trace_$(
 
 modelfactors: .modelfactors.done
 
-.modelfactors.done: $(modelfactors_dependencies)
+.modelfactors.done: $(modelfactors_dependencies) | images_folder
 	${analysis_tools}/modelfactors $(modelfactors_traces)
 	sed -i '2s/^/set terminal png\n/' modelfactors.gp
 	sed -i '3s/^/set output "modelfactors.png"\n/' modelfactors.gp
-	sed -i 's/dt 2//g' modelfactors.gp
+	sed -i 's/dt\s\+[0-9]//g' modelfactors.gp
 	sed -i 's/pause -1//g' modelfactors.gp
 	gnuplot -p modelfactors.gp
 	cp ./modelfactors.csv ${latex_folder}
-	cp ./modelfactors.png ${latex_folder_img}
+	# Remove character that will not be parsed by latex
+	sed -i 's/#//g'  ${latex_folder}/modelfactors.csv
+	sed -i 's/;/,/g' ${latex_folder}/modelfactors.csv
+	cp ./modelfactors.png ${latex_images_folder}
 	touch $@
 
 # Function histograms
@@ -284,10 +296,10 @@ scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 
 scalability: .scalability.done
 
-.scalability.done: $(scalability_dependencies)
+.scalability.done: $(scalability_dependencies) | function_csv_folder images_folder
 	@echo "Scalability tests done"
-	python cfg/parser/launcher.py test_*/timing.output  -n ${configuration_name} -s  > scalability_report.txt
-	cp ${configuration_name}.png ${latex_folder_img}
+	python cfg/parser/launcher.py test_*/timing.output -f ${latex_folder}/${latex_function_csv} -n ${configuration_name} -s  > scalability_report.txt
+	cp ${configuration_name}.png ${latex_images_folder}
 	cat scalability_report.txt
 	touch $@
 dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
@@ -296,20 +308,56 @@ analysis: histograms modelfactors scalability
 
 paramedir_dependencies=$(foreach var, $(number_of_processes), .paramedir_$(var).done)
 paramedir_experiment: $(paramedir_dependencies)
+
+paraver_dependencies=$(foreach var, $(number_of_processes), .paraver_$(var).done)
+paraver_experiment: $(paraver_dependencies)
+
 ############
 # Create a latex report
-report: cfg/latex/report.pdf
-cfg/latex/report.pdf: modelfactors paramedir_experiment scalability
+images_folder:
+	make -p ${latex_images_folder}
+function_csv_folder:
+	cd ${latex_folder}; mkdir -p ${latex_function_csv}
+
+report: .latex_report.done
+.latex_report.done: modelfactors paramedir_experiment scalability
+	# Stores the nemo commit tag to a variable
 	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -10 | grep 'git-svn-id:' | awk '{print $$2}'| awk -F / '{print $$NF}' ))
+
 	# Avoid overwriting variables templates
 	cp ${latex_folder}/variables_orig.tex ${latex_folder}/variables.tex
-	# Defines nemo version as a latex newcommand
+
+	# Copy latex template to a new one which will be modified
+	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION).tex))
+	cp ${latex_folder}/report_orig.tex ${latex_folder}/$($@_LATEX_REPORT)
+
+	# Format modelfactors file and defines it in latex report
+	$(eval $@_MODELFATCTORS_CSV_TABLE := $(shell echo "modelfactors"))
+	cd ${latex_folder}; python csv_formatter.py -i $($@_MODELFATCTORS_CSV_TABLE).csv -o  $($@_MODELFATCTORS_CSV_TABLE)_fmt.csv
+	sed -i 's/MODELFACTORS_TABLE_PLACEHOLDER/$($@_MODELFATCTORS_CSV_TABLE)_fmt.csv/g' ${latex_folder}/$($@_LATEX_REPORT)
+
+	# Defines nemo version var
 	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
-	# Defines the name of plot.png through a latex newcommand
+
+	# Defines some variables as latex newcommand to be used in report
+	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
 	sed -i 's/SCALING_PLOT/${configuration_name}/g' ${latex_folder}/variables.tex
+
+	# Add some dependencies
 	sed -i 's/SCALING_PLOT/${configuration_name}/g' ${latex_folder}/tex_dependencies.txt
-	cd ${latex_folder}; ./gen_report.sh
-############         #
+
+	# Insert function info section into latex template
+	cd ${latex_folder};  ./function_info2tex.sh $($@_LATEX_REPORT) ${latex_function_csv}
+
+	# Clean latex old log
+	cd ${latex_folder}; rm -f *.aux *.log
+
+	# Compile the latex template
+	cd ${latex_folder}; ./gen_report.sh $($@_LATEX_REPORT)
+
+	# Generate the target
+	touch $@
+############
 # Intermediate files #that won't be removed automatically
 binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
 .PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim %.done

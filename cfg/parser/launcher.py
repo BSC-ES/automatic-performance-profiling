@@ -1,4 +1,5 @@
 from cfg.parser.utils.parsers import TimingInformation
+from cfg.parser.utils.curation import experiment_comparison, fit_step_time_to_model, fit_functions_to_model
 
 
 def get_file_list_from_command_line_arguments():
@@ -12,6 +13,8 @@ def get_file_list_from_command_line_arguments():
     parser = OptionParser()
     parser.add_option("-n", "--name", dest="experiment_name",
                       help="Experiment name", default="Experiment")
+    parser.add_option("-f", "--csv_folder", dest="csv_function_folder",
+                      help="folder to save csv files with functions' info ", default=None)
     parser.add_option("-s", "--save", dest="save_experiment",
                       help="Save a json file with the experiment data.", default=True, action="store_false")
     (options, args) = parser.parse_args()
@@ -38,6 +41,7 @@ if __name__ == "__main__":
     files, options = get_file_list_from_command_line_arguments()
     experiment_name = options.experiment_name
     save_experiment = options.save_experiment
+    csv_function_folder = options.csv_function_folder
     # Process the info of the experiments provided
     timing_files = [f for f in files if f.count(".timing")]
     paramedir_files = [f for f in files if f.count(".pm")]
@@ -45,6 +49,9 @@ if __name__ == "__main__":
                                            timing_files=timing_files,
                                            paramedir_files=paramedir_files,
                                            )
+    if csv_function_folder is not None:
+        experiment_results.function_info_csv(csv_folder=csv_function_folder)
+
 
     if save_experiment:
         experiment_results.save_json()
