@@ -146,7 +146,7 @@ paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/
 	        ../${analysis_tools}/paramedir $($@_trace_folder).prv ../$${cfg} ;\
 	done
 	# Rename files
-	cd $($@_trace_folder) ; for file in *pm ; do \
+	cd $($@_trace_folder); for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
 
