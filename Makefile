@@ -134,8 +134,8 @@ extrae_functions.txt: functions_dir
 	touch $@ 
 
 
-paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/*)
 
+paramedir_configurations=$(wildcard ../${analysis_tools}/paramedir_configurations/*)
 .paramedir_%.done: .Trace_%.done | images_folder
 
 	# Variable which contains traces' folder name
@@ -152,16 +152,22 @@ paramedir_configurations=$(wildcard cfg/trace_analysis/paramedir_configurations/
 
 	touch $@
 
-.paraver_%.done: .Trace_%.done
+paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
+.paraver_%.done: .trace_cut_%.done | images_folder
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
-	# Make paraver image
-	cd $($@_trace_folder); ../${analysis_tools}/paraver -i $($@_trace_folder).prv ../${analysis_tools}/cfgs/UserFunctions.cfg
-	# Name of generated trace picture
-	$(eval $@_picture := $(shell echo $($@_trace_folder)/NEMO_function_x_thread@trace_$*.png))
-	# Copy it to latex image folder
-	cp $($@_picture) ${latex_images_folder}/trace_userFunctions_$*.png
-
+	# Make paraver images
+	cd $($@_trace_folder); \
+	for cfg in ${paraver_configurations} ; do \
+		../${analysis_tools}/paraver -i $($@_trace_folder).prv ../$${cfg} ;\
+		cfg_name=$${cfg##*/} ;\
+		picture_name=$${cfg_name%.cfg} ;\
+		mv *.code.png ../${latex_images_folder}/$${picture_name}_trace_$*_legend.png 2>/dev/null ;\
+		mv *nn_gradient.png ../${latex_images_folder}/$${picture_name}_trace_$*_legend.png 2>/dev/null ;\
+		rm -f *w_legend* ;\
+		mv $${picture_name}* ../${latex_images_folder}/$${picture_name}_trace_$*.png ;\
+	done
+	touch $@
 
 %.dim: .Trace_%.done
 
