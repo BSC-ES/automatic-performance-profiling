@@ -1,5 +1,5 @@
 
-def plotter(experiment_name, data):
+def plotter(data, experiment_name, filename=None):
     try:
         import matplotlib
         matplotlib.use('Agg')
@@ -38,5 +38,6 @@ def plotter(experiment_name, data):
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_ticks_position('bottom')
 
-    filename = experiment_name + ".png"
+    if filename is None:
+        filename = experiment_name + ".png"
     plt.savefig(filename)

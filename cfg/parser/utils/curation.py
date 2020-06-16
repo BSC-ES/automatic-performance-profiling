@@ -16,6 +16,13 @@ class Log:
     def print(self):
         print(self.text)
 
+    def save(self, filename=None):
+        if filename is None:
+            self.print()
+        else:
+            with open(filename, "w") as f:
+                f.write(self.text)
+
 
 def function_curated_summary(experiment_data):
     """
@@ -54,6 +61,7 @@ def function_curated_summary(experiment_data):
         log.add("%20s\tEfficiency: %s" % ("", efficiency))
         log.add("_" * 30)
     return log
+
 
 def save_function_summary_csv(experiment_data, csv_folder):
     """
@@ -104,6 +112,7 @@ def save_function_summary_csv(experiment_data, csv_folder):
         np.savetxt(csv_folder + '/' + k + '.csv', final_table, delimiter=',', fmt="%s")
     return log
 
+
 def simulated_years_per_day_summary(experiment_data):
     from cfg.parser.utils.plotter import plotter
     """
@@ -114,16 +123,9 @@ def simulated_years_per_day_summary(experiment_data):
     """
     # Log object to output the text
     log = Log()
-    # Data to plot
-    x_label = "Number of processes"
-    y_label = "Simulated Years Per Day "
-    plot_data = {x_label: [], y_label: []}
 
     base_case = experiment_data.base_case
     base_case_speed = experiment_data[base_case]["Communication"]["sypd"]["average"]
-
-    plot_data[x_label].append(base_case)
-    plot_data[y_label].append(base_case_speed)
 
     log.add("Base case with %4i processes has an speed of %.1f SYPD" %
             (base_case, base_case_speed))
@@ -137,11 +139,42 @@ def simulated_years_per_day_summary(experiment_data):
         efficiency = speedup / resource_increase
         log.add("               %4i processes        speed :  %.1f SYPD   SpeedUp:   %.1fx   Efficiency: %.2f" %
                 (case, speed, speedup, efficiency))
+
+    return log
+
+
+def simulated_years_per_day_plot(experiment_data, filename):
+    from cfg.parser.utils.plotter import plotter
+    """
+    Produces a simple log showing the simulated years per day of the different cases contained in the experiment,
+    with the speed up and the efficiency respect to the base case.
+    :param experiment_data:
+    :return:  Log object with a summary of the simulated years per day and few more metrics.
+    """
+    # Data to plot
+    x_label = "Number of processes"
+    y_label = "Simulated Years Per Day "
+    plot_data = {x_label: [], y_label: []}
+
+    base_case = experiment_data.base_case
+    base_case_speed = experiment_data[base_case]["Communication"]["sypd"]["average"]
+
+    plot_data[x_label].append(base_case)
+    plot_data[y_label].append(base_case_speed)
+
+    for case in experiment_data.cases:
+        if case == experiment_data.base_case:
+            continue
+        speed = experiment_data[case]["Communication"]["sypd"]["average"]
+        speedup = speed / base_case_speed
+        resource_increase = case / base_case
+        efficiency = speedup / resource_increase
         plot_data[x_label].append(case)
         plot_data[y_label].append(speed)
 
-    plotter(experiment_name=experiment_data.experiment_name, data=plot_data)
-    return log
+    plotter(experiment_name=experiment_data.experiment_name, data=plot_data, filename=filename)
+
+
 
 
 def experiment_comparison(experiment1, experiment2):
@@ -310,29 +343,31 @@ def get_functions_data(experiments, function_name=None):
         else:
             my_fun = function_name
         for case in experiment.cases:
-            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case][fun_key][my_fun]['Elap. Time(s)'])
+            to_append = (
+            ceil(case / experiment.processes_per_node), case, experiment[case][fun_key][my_fun]['Elap. Time(s)'])
             data.append(to_append)
     return (data)
 
 
 def oversimplified_memory_model(experiments):
-        model_parameters = fit_step_time_to_model(experiments)
-        error, parameters = model_parameters
-        import numpy as np
+    model_parameters = fit_step_time_to_model(experiments)
+    error, parameters = model_parameters
+    import numpy as np
+    error = np.sqrt(abs(error))
+    mb, cb, nc, cc, r = parameters
+    cb = cb / 48.
+    tt = mb + cb + nc + cc + r
+    print("Overall model:")
+    print("MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" % (100. * mb / tt, 100. * cb / tt, 100. * error / tt))
+    print("Top10 Functions:")
+    functions = list(experiments[0].data[experiments[0].base_case]["FunctionInfo"].labels())
+    functions = functions[:10]
+    for function in functions:
+        error, parameters = fit_functions_to_model(experiments, function_name=function)
         error = np.sqrt(abs(error))
-        mb, cb, nc, cc, r = parameters
-        cb = cb/48.
-        tt = mb+cb+nc+cc+r
-        print("Overall model:")
-        print("MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" % (100.*mb/tt, 100.*cb/tt, 100.*error/tt))
-        print("Top10 Functions:")
-        functions = list(experiments[0].data[experiments[0].base_case]["FunctionInfo"].labels())
-        functions = functions[:10]
-        for function in functions:
-            error, parameters = fit_functions_to_model(experiments, function_name=function)
-            error = np.sqrt(abs(error))
-            mb_time, cb_time, internode, intranode, residual = parameters
-            cb_time = cb_time/48
-            total_time = mb_time + cb_time + internode + intranode + residual
-            print("Function: %20s\tTime(s): %.1f\t MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" %
-                  (function, total_time, 100.*mb_time/total_time, 100.*cb_time/total_time, 100.*abs(error/total_time)))
+        mb_time, cb_time, internode, intranode, residual = parameters
+        cb_time = cb_time / 48
+        total_time = mb_time + cb_time + internode + intranode + residual
+        print("Function: %20s\tTime(s): %.1f\t MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" %
+              (function, total_time, 100. * mb_time / total_time, 100. * cb_time / total_time,
+               100. * abs(error / total_time)))

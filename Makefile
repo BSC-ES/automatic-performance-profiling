@@ -306,10 +306,21 @@ paramedir_experiment: $(paramedir_dependencies)
 paraver_dependencies=$(foreach var, $(number_of_processes), .paraver_$(var).done)
 paraver_experiment: $(paraver_dependencies)
 
+# Collect information and produce a json file with it.
 .json.done: .scalability.done paramedir_experiment
-	python cfg/parser/launcher.py test_*/*.timing trace_*/*pm -f ${latex_folder}/${latex_function_csv} -n ${configuration_name}
+	python cfg/parser/collector.py test_*/*.timing trace_*/*pm -n ${configuration_name}
 	touch $@
 json: .json.done
+
+# Make reports
+.info_report.done: .json.done
+	python cfg/parser/reporter.py \
+                                    ${configuration_name}.json \
+                                    -f ${latex_folder}/${latex_function_csv} \
+                                    --sypd sypd.txt \
+                                    --sypd-plot ${configuration_name}.png \
+                                    --functions functions_summary.txt
+	touch $@
 
 ############
 # Create a latex report
@@ -319,7 +330,7 @@ function_csv_folder:
 	cd ${latex_folder}; mkdir -p ${latex_function_csv}
 
 report: .latex_report.done
-.latex_report.done: modelfactors paramedir_experiment scalability
+.latex_report.done: modelfactors paramedir_experiment scalability .info_report.done
 	# Stores the nemo commit tag to a variable
 	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -10 | grep 'git-svn-id:' | awk '{print $$2}'| awk -F / '{print $$NF}' ))
 

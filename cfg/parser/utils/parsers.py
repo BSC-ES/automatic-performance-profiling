@@ -2,7 +2,7 @@
 import re
 import numpy as np
 from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary,\
-                                      save_function_summary_csv
+                                      save_function_summary_csv, simulated_years_per_day_plot
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
 
@@ -375,6 +375,9 @@ class TimingInformation:
 
     def simulated_years_per_day_summary(self):
         return simulated_years_per_day_summary(self)
+
+    def simulated_years_per_day_plot(self, filename=None):
+        return simulated_years_per_day_plot(self, filename)
 
     def save_json(self, filename=None):
         import json
