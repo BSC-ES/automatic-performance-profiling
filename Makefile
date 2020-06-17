@@ -18,6 +18,7 @@ latex_folder=cfg/latex
 latex_images_folder=${latex_folder}/images
 latex_function_csv=function_csv
 trace_folder_prefix=trace
+modelfactors_folder=modelfactors
 # Help
 ####################################################
 help:
@@ -270,22 +271,15 @@ hard_clean:
 
 # Model factors
 modelfactors_dependencies=$(foreach var, $(number_of_processes), .trace_cut_$(var).done)
-modelfactors_traces=$(foreach var, $(number_of_processes), trace_$(var)/trace_$(var).prv)
+modelfactors_traces=$(foreach var, $(number_of_processes), ../trace_$(var)/trace_$(var).prv)
 
 modelfactors: .modelfactors.done
 
-.modelfactors.done: $(modelfactors_dependencies) | images_folder
-	${analysis_tools}/modelfactors $(modelfactors_traces)
-	sed -i '2s/^/set terminal png\n/' modelfactors.gp
-	sed -i '3s/^/set output "modelfactors.png"\n/' modelfactors.gp
-	sed -i 's/dt\s\+[0-9]//g' modelfactors.gp
-	sed -i 's/pause -1//g' modelfactors.gp
-	gnuplot -p modelfactors.gp
-	cp ./modelfactors.csv ${latex_folder}
-	# Remove character that will not be parsed by latex
-	sed -i 's/#//g'  ${latex_folder}/modelfactors.csv
-	sed -i 's/;/,/g' ${latex_folder}/modelfactors.csv
-	cp ./modelfactors.png ${latex_images_folder}
+.modelfactors.done: ${modelfactors_dependencies} | images_folder
+	mkdir ${modelfactors_folder}
+	cd ${modelfactors_folder} ;\
+	../${analysis_tools}/modelfactors $(modelfactors_traces) ;\
+	cp ./*.png ../${latex_images_folder} ;\
 	touch $@
 
 # Function histograms

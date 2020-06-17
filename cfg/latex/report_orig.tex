@@ -23,8 +23,8 @@
 	\newpage
 \section{Introduction}
 	This is an automatically generated report on Nemo code.
-
-\section{Trace on \ncores cores}
+\clearpage
+\section{Extrae insights for race on \ncores cores}
 	\begin{figure}
 		\includegraphics[width=\linewidth]{images/UserFunctions_trace_\ncores.png}
 		\caption{User functions on \ncores cores.}
@@ -65,21 +65,52 @@
 		\caption{Point to point connectivity grouped by node on \ncores cores.}
 		\label{fig:P2P_node}
 		\end{figure}
+\clearpage
 \section{Scaling}
+
 	\begin{figure}
 			\includegraphics[width=\linewidth]{images/\scalingplot.png}
 			\caption{Scaling function of the \scalingplot configuration.}
 			\label{fig:scaling_plot}
 	\end{figure}
-
+\clearpage
 \section{Model Factors}
-	
+\clearpage
 	\begin{figure}
-		\includegraphics[width=\linewidth]{images/modelfactors.png}
-		\caption{Model Factors.}
-		\label{fig:modelfactors}
+		\includegraphics[width=\linewidth]{images/efficiency_table-global-matplot.png}
+		\caption{Global Model Factors table.}
 	\end{figure}
+	\begin{figure}
+		\includegraphics[width=\linewidth]{images/modelfactors-global-matplot.png}
+		\caption{Global Model Factors Plot.} 
+	\end{figure}
+	\begin{figure}
+		\includegraphics[width=\linewidth]{images/efficiency_table-hybrid-matplot.png}
+		\caption{Hybrid Model Factors Table.}
+	\end{figure}
+	\begin{figure}
+		\includegraphics[width=\linewidth]{images/modelfactors-hybrid-matplot.png}
+		\caption{Hybrid Model Factors Plot.}
+	\end{figure}
+	\begin{figure}
+		\includegraphics[scale=0.8]{images/modelfactors-scale-matplot}
+		\caption{Model factors scaling.} 
+	\end{figure}
+		\begin{figure}
+			\includegraphics[scale=0.8]{images/modelfactors-mpi-matplot.png}
+			\caption{Modelfactors MPI.} 
+		\end{figure}
+	\begin{figure}
+		\includegraphics[scale=0.8]{images/efficiency-matplot.png}
+		\caption{Parallel efficiency.}
+	\end{figure}
+	\begin{figure}
+		\includegraphics[scale=0.8]{images/speedup-matplot.png}
+		\caption{Parallel speedup.} 
+	\end{figure}
+
+\clearpage
 \section{Function Report}
 \clearpage
-
+CSV_INFO_FUNCTION_PLACEHOLDER
 \end{document}
