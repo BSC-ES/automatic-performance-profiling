@@ -24,6 +24,24 @@
 \section{Introduction}
 	This is an automatically generated report on Nemo code.
 \clearpage
+\section{Hardware Benchmarks}
+\subsection{OSU Benchmark}
+\begin{figure}
+	\includegraphics[width=\linewidth]{images/OSU/MPI_Multiple_Bandwidth_Message_Rate.png}
+	\label{fig:MPI_Multiple_Bandwidth_Message_Rate}
+\end{figure}
+\begin{figure}
+	\includegraphics[width=\linewidth]{images/OSU/MPI_Multi_Latency.png}
+	\label{fig:MPI_Multi_Latency}
+\end{figure}
+\begin{figure}
+	\includegraphics[width=\linewidth]{images/OSU/MPI_Allgather_Latency.png}
+	\label{fig:MPI_Allgather_Latency}
+\end{figure}
+\clearpage
+\subsection{STREAM Benchmark}
+\csvautotabular{images/STREAM/stream_\ncores_fmt.csv}
+\clearpage
 \section{Extrae insights for race on \ncores cores}
 	\begin{figure}
 		\includegraphics[width=\linewidth]{images/UserFunctions_trace_\ncores.png}

@@ -143,9 +143,8 @@ extrae_functions.txt: functions_dir
 
 
 
-paramedir_configurations=$(wildcard ../${analysis_tools}/paramedir_configurations/*)
+paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
 .paramedir_%.done: .Trace_%.done | images_folder
-
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Enter directory and process all paramedir configurations
@@ -157,7 +156,8 @@ paramedir_configurations=$(wildcard ../${analysis_tools}/paramedir_configuration
 	cd $($@_trace_folder); for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
-
+	mkdir -p ../${latex_images_folder}/call_profile
+	cp $($@_trace_folder)/$*_MPI_call_profile.pm ${latex_images_folder}/call_profile
 	touch $@
 
 paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
@@ -266,7 +266,8 @@ bin:
 # Delete (almost)-everything
 clean:
 	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
-
+	rm -rf OSU* osu* bin/osu_bench cfg/latex/images/OSU .osu*
+	rm -rf STREAM* stream* bin/stream_bench cfg/latex/images/STREAM .stream*
 hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
@@ -337,9 +338,9 @@ function_csv_folder:
 	cd ${latex_folder}; mkdir -p ${latex_function_csv}
 
 report: .latex_report.done
-.latex_report.done: modelfactors paramedir_experiment scalability .info_report.done
+.latex_report.done: modelfactors paramedir_experiment scalability .info_report.done hardware_benchmarks 
 	# Stores the nemo commit tag to a variable
-	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -10 | grep 'git-svn-id:' | awk '{print $$2}'| awk -F / '{print $$NF}' ))
+		$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -50 | grep 'git-svn-id:'| head -1 | awk '{print $$2}'| awk -F / '{print $$NF}' ))
 
 	# Avoid overwriting variables templates
 	cp ${latex_folder}/variables_orig.tex ${latex_folder}/variables.tex
@@ -347,14 +348,6 @@ report: .latex_report.done
 	# Copy latex template to a new one which will be modified
 	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION).tex))
 	cp ${latex_folder}/report_orig.tex ${latex_folder}/$($@_LATEX_REPORT)
-
-	# Format modelfactors file and defines it in latex report
-	$(eval $@_MODELFATCTORS_CSV_TABLE := $(shell echo "modelfactors"))
-	cd ${latex_folder}; python csv_formatter.py -i $($@_MODELFATCTORS_CSV_TABLE).csv -o  $($@_MODELFATCTORS_CSV_TABLE)_fmt.csv
-	sed -i 's/MODELFACTORS_TABLE_PLACEHOLDER/$($@_MODELFATCTORS_CSV_TABLE)_fmt.csv/g' ${latex_folder}/$($@_LATEX_REPORT)
-
-	# Defines nemo version var
-	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
 
 	# Defines some variables as latex newcommand to be used in report
 	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
@@ -365,7 +358,8 @@ report: .latex_report.done
 
 	# Insert function info section into latex template
 	cd ${latex_folder};  ./function_info2tex.sh $($@_LATEX_REPORT) ${latex_function_csv}
-
+	python ${latex_folder}/csv_formatter.py \
+	-i ${latex_images_folder}/call_profile/48_MPI_call_profile.pm  -c -s
 	# Clean latex old log
 	cd ${latex_folder}; rm -f *.aux *.log
 
@@ -374,6 +368,86 @@ report: .latex_report.done
 
 	# Generate the target
 	touch $@
+
+##########################
+#Run some standard benchmark
+.stream_ready: | bin
+	git clone https://github.com/jeffhammond/STREAM.git
+	cd STREAM; gcc -fopenmp -D_OPENMP stream.c -o stream 
+	mkdir bin/STREAM
+	cp STREAM/stream bin/STREAM/
+	touch $@
+.stream_run_%.done: .stream_ready
+	mkdir -p STREAM_RUN/$*
+	mkdir -p cfg/benchmarks/STREAM/DATA
+	cp bin/STREAM/* STREAM_RUN/$*
+	cp cfg/benchmarks/STREAM/jobscript.cmd STREAM_RUN/$*
+	sed -i "s/%CORES%/$*/g" STREAM_RUN/$*/jobscript.cmd ;\
+	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" STREAM_RUN/$*/jobscript.cmd ;\
+	sbatch --wait --chdir STREAM_RUN/$* STREAM_RUN/$*/jobscript.cmd ;\
+	cp STREAM_RUN/$*/*txt cfg/benchmarks/STREAM/DATA ;\
+
+	touch $@
+
+stream_harvest_dep=$(foreach var, $(number_of_processes), .stream_run_$(var).done) 
+n_cores=$(foreach var, $(number_of_processes), $(var))
+.stream_harvest.done: $(stream_harvest_dep)
+	for core in ${n_cores} ; do \
+		file_in=cfg/benchmarks/STREAM/DATA/stream_$${core}.txt ;\
+		file_out=$${file_in%.txt}.csv ;\
+		python cfg/benchmarks/STREAM/STREAM_data_parser.py -i $${file_in} -o $${file_out} ;\
+		python ${latex_folder}/csv_formatter.py -i $${file_out} ;\
+ 		mkdir -p ${latex_images_folder}/STREAM ;\
+		fmt_file=$${file_out%.csv}_fmt.csv;\
+		mv $${fmt_file} ${latex_images_folder}/STREAM ;\
+	done
+	touch $@
+
+.osu_ready: | bin
+	wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
+
+	osu_folder=osu-micro-benchmarks-5.6.3 ;\
+	tar -xvf $${osu_folder}.tar.gz ;\
+	rm $${osu_folder}.tar.gz ;\
+	cd $${osu_folder} ;\
+	./configure CC=`which mpicxx` CXX=`which mpicc` --prefix=`pwd`;\
+	make install;\
+	make
+	# Instrallation finished
+	mkdir bin/osu_bench
+	cp ./osu-micro-benchmarks-5.6.3/mpi/pt2pt/{osu_multi_lat,osu_mbw_mr} bin/osu_bench
+	cp ./osu-micro-benchmarks-5.6.3/mpi/collective/osu_allgather bin/osu_bench
+	touch $@
+
+osu_test=$(wildcard bin/osu_bench/*)
+.osu_run_%.done: .osu_ready
+	mkdir -p OSU_RUN/$*
+	mkdir -p cfg/benchmarks/OSU/DATA
+	for test in ${osu_test} ; do \
+		test_name=$${test##bin/osu_bench/} ;\
+		cp $${test} OSU_RUN/$* ;\
+		cp cfg/benchmarks/OSU/jobscript.cmd OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
+		sed -i "s/%CORES%/$*/g" OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
+		sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
+		sed -i "s/%TEST%/$${test_name}/g" OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
+		sbatch --wait --chdir OSU_RUN/$* OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
+		cp OSU_RUN/$*/*txt cfg/benchmarks/OSU/DATA ;\
+	done
+	touch $@
+
+osu_harvest_dep=$(foreach var, $(number_of_processes), .osu_run_$(var).done)
+
+.osu_harvest.done: $(osu_harvest_dep)
+	for test in ${osu_test} ; do \
+	test_name=$${test##bin/osu_bench/} ;\
+	python cfg/benchmarks/OSU/OSU_test_plots.py cfg/benchmarks/OSU/DATA/$${test_name}* ;\
+        done
+	mkdir -p ${latex_images_folder}/OSU
+	mv ./*.png ${latex_images_folder}/OSU
+	touch $@
+
+
+hardware_benchmarks: .stream_harvest.done .osu_harvest.done
 ############
 # Intermediate files #that won't be removed automatically
 binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
