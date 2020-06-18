@@ -28,6 +28,13 @@ help:
 	@echo "Modify the file param.cfg to select the branch inside the nemo mirror that you would like to profile."
 	@echo ""
 	@echo 
+###################################################
+# Experiment recipes specified in param.cfg file
+experiment:
+	for recipe in ${experiment_recipes} ; do \
+                echo $${recipe} ; \
+                $(MAKE) $${recipe} ; \
+        done
 
 ####################################################
 # NEMO Sources
