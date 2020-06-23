@@ -1,4 +1,0 @@
-modelfactors.csv
-images/modelfactors.png
-images/SCALING_PLOT.png
-variables.tex

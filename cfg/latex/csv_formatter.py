@@ -33,7 +33,7 @@ def get_command_line_arguments():
     return options
 
 
-class paraver_file:
+class ParaverFile:
     def __init__(self, _name):
         self.name = _name
         self.lines = self.get_lines()
@@ -102,7 +102,7 @@ class paraver_file:
 
 
 def converter(input_file, summary=False):
-    file = paraver_file(input_file)
+    file = ParaverFile(input_file)
     fmt_file = file.print_csv(summary)
     return fmt_file
 
@@ -121,20 +121,3 @@ def formatter(input_file, output_file):
                 except ValueError:
                     continue
             csv_output.writerow(row)
-
-
-if __name__ == "__main__":
-    # Get files from command line
-    options = get_command_line_arguments()
-    file_in = options.input_file
-    file_out = options.output_file
-    convert_file = options.convert_file
-    summary = options.print_summary
-    if convert_file:
-        converted_file = converter(file_in, summary=summary)
-        file_in = converted_file
-    if file_out is None:
-        file_in_extension = file_in.split(".")[-1]
-        file_out = file_in.replace(".", "").replace(file_in_extension, "_fmt.csv")
-    # Call formatter
-    formatter(file_in, file_out)

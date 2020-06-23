@@ -69,6 +69,17 @@ def save_function_summary_csv(experiment_data, csv_folder):
     :param experiment_data:
     """
     import numpy as np
+    from os import mkdir
+    import errno
+
+    # Try and create output dir
+    try:
+        mkdir(csv_folder)
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            raise
+        pass
+
     fun_results = {}
     log = Log()
     for function in experiment_data.functions:

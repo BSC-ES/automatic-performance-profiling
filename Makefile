@@ -15,10 +15,7 @@ processes_per_node?=48
 # Tools folder
 analysis_tools=cfg/trace_analysis/
 latex_folder=cfg/latex
-latex_images_folder=${latex_folder}/images
-latex_function_csv=function_csv
 trace_folder_prefix=trace
-modelfactors_folder=modelfactors
 # Help
 ####################################################
 help:
@@ -142,11 +139,12 @@ extrae_functions.txt: functions_dir
 	touch $@ 
 
 
-
 paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
 .paramedir_%.done: .trace_cut_%.done | images_folder
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
+	# Remove eventual old results
+	rm $($@_trace_folder)/*.pm
 	# Enter directory and process all paramedir configurations
 	cd $($@_trace_folder); \
 	for cfg in ${paramedir_configurations} ; do \
@@ -156,8 +154,7 @@ paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*
 	cd $($@_trace_folder); for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
-	mkdir -p ../${latex_images_folder}/call_profile
-	cp $($@_trace_folder)/$*_MPI_call_profile.pm ${latex_images_folder}/call_profile
+	python ${latex_folder}/report_gen.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPI_call_profile.pm --c
 	touch $@
 
 paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
@@ -170,10 +167,11 @@ paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
 		../${analysis_tools}/paraver -i $($@_trace_folder).prv ../$${cfg} ;\
 		cfg_name=$${cfg##*/} ;\
 		picture_name=$${cfg_name%.cfg} ;\
-		mv *.code.png ../${latex_images_folder}/$${picture_name}_trace_$*_legend.png 2>/dev/null ;\
-		mv *nn_gradient.png ../${latex_images_folder}/$${picture_name}_trace_$*_legend.png 2>/dev/null ;\
+		rm -f *.code.png ;\
+		rm -f *nn_gradient.png ;\
 		rm -f *w_legend* ;\
-		mv $${picture_name}* ../${latex_images_folder}/$${picture_name}_trace_$*.png ;\
+		mv $${picture_name}* $${picture_name}_trace_$*.png ;\
+                python ${latex_folder}/report_gen.py -O report.pkl -S "Paraver" --add-image  $${picture_name}_trace_$*.png ;\
 	done
 	touch $@
 
@@ -266,8 +264,9 @@ bin:
 # Delete (almost)-everything
 clean:
 	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
-	rm -rf OSU* osu* bin/osu_bench cfg/latex/images/OSU .osu*
-	rm -rf STREAM* stream* bin/stream_bench cfg/latex/images/STREAM .stream*
+	rm -rf OSU* osu* bin/osu_bench .osu*
+	rm -rf STREAM* stream* bin/stream_bench .stream*
+	rm -rf *.pkl
 hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
@@ -284,10 +283,11 @@ modelfactors_traces=$(foreach var, $(number_of_processes), ../trace_$(var)/trace
 modelfactors: .modelfactors.done
 
 .modelfactors.done: ${modelfactors_dependencies} | images_folder
-	mkdir ${modelfactors_folder}
-	cd ${modelfactors_folder} ;\
-	../${analysis_tools}/modelfactors $(modelfactors_traces) ;\
-	cp ./*.png ../${latex_images_folder} ;\
+	mkdir modelfactors
+	cd modelfactors  ;\
+	../${analysis_tools}/modelfactors $(modelfactors_traces) 
+	# Add produced pictures to latex report
+	python ${latex_folder}/report_gen.py -O report.pkl -S "Model Factors" --add-img  modelfactors;\
 	touch $@
 
 # Function histograms
@@ -302,7 +302,7 @@ scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 
 scalability: .scalability.done
 
-.scalability.done: $(scalability_dependencies) | function_csv_folder images_folder
+.scalability.done: $(scalability_dependencies)
 	touch $@
 dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
 dimemas_experiments: $(dimemas_dependencies)
@@ -321,50 +321,40 @@ paraver_experiment: $(paraver_dependencies)
 json: .json.done
 
 # Make reports
-.info_report.done: .json.done
+.info_report.done: .json.done 
 	python cfg/parser/reporter.py \
                                     ${configuration_name}.json \
-                                    -f ${latex_folder}/${latex_function_csv} \
+                                    -f function_csv \
                                     --sypd sypd.txt \
                                     --sypd-plot ${configuration_name}.png \
                                     --functions functions_summary.txt
+	python ${latex_folder}/report_gen.py -O report.pkl -S "Functions detailed report" --add-csv function_csv
+	python ${latex_folder}/report_gen.py -O report.pkl -S "Scalability" --add-img ${configuration_name}.png
 	touch $@
 
 ############
 # Create a latex report
-images_folder:
-	make -p ${latex_images_folder}
-function_csv_folder:
-	cd ${latex_folder}; mkdir -p ${latex_function_csv}
 
 report: .latex_report.done
 .latex_report.done: modelfactors paramedir_experiment scalability .info_report.done hardware_benchmarks 
 	# Stores the nemo commit tag to a variable
-		$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | head -50 | grep 'git-svn-id:'| head -1 | awk '{print $$2}'| awk -F / '{print $$NF}' ))
-
-	# Avoid overwriting variables templates
-	cp ${latex_folder}/variables_orig.tex ${latex_folder}/variables.tex
-
+	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | grep 'git-svn-id:'| head -1 | awk '{print $$2}'| awk -F / '{print $$NF}' ))
 	# Copy latex template to a new one which will be modified
-	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION).tex))
-	cp ${latex_folder}/report_orig.tex ${latex_folder}/$($@_LATEX_REPORT)
-
-	# Defines some variables as latex newcommand to be used in report
-	sed -i 's/NEMO_VERSION/$($@_NEMO_VERSION)/g' ${latex_folder}/variables.tex
-	sed -i 's/SCALING_PLOT/${configuration_name}/g' ${latex_folder}/variables.tex
-
-	# Add some dependencies
-	sed -i 's/SCALING_PLOT/${configuration_name}/g' ${latex_folder}/tex_dependencies.txt
-
-	# Insert function info section into latex template
-	cd ${latex_folder};  ./function_info2tex.sh $($@_LATEX_REPORT) ${latex_function_csv}
-	python ${latex_folder}/csv_formatter.py \
-	-i ${latex_images_folder}/call_profile/48_MPI_call_profile.pm  -c -s
-	# Clean latex old log
-	cd ${latex_folder}; rm -f *.aux *.log
-
-	# Compile the latex template
-	cd ${latex_folder}; ./gen_report.sh $($@_LATEX_REPORT)
+	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION)))
+	#python ${latex_folder}/report_gen.py -O report.pkl --section-title "Introduction" --section-number 1 -T Introduction.txt
+	python ${latex_folder}/report_gen.py report_gen.py -O report.pkl --report-title "Report Nemo version "$($@_NEMO_VERSION)
+	python ${latex_folder}/report_gen.py report_gen.py -O report.pkl --report-authors "O. Tinto Primis"
+	python ${latex_folder}/report_gen.py report_gen.py -O report.pkl --report-authors "Stella V. Paronuzzi Ticco"
+	# Remove old report folders
+	rm -rf $($@_LATEX_REPORT)
+	# Create a new one
+	mkdir $($@_LATEX_REPORT)
+	# Copy the report in the appropriate folder
+	cp report.pkl $($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl
+	# Create the tex file
+	python ${latex_folder}/report_gen.py -O ./$($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl --dump-to-file
+	# Compile the report
+	cd $($@_LATEX_REPORT); module load LATEX/20150523; pdflatex $($@_LATEX_REPORT).tex && evince $($@_LATEX_REPORT).pdf
 
 	# Generate the target
 	touch $@
@@ -379,13 +369,13 @@ report: .latex_report.done
 	touch $@
 .stream_run_%.done: .stream_ready
 	mkdir -p STREAM_RUN/$*
-	mkdir -p cfg/benchmarks/STREAM/DATA
+	mkdir -p STREAM_RUN/DATA
 	cp bin/STREAM/* STREAM_RUN/$*
 	cp cfg/benchmarks/STREAM/jobscript.cmd STREAM_RUN/$*
 	sed -i "s/%CORES%/$*/g" STREAM_RUN/$*/jobscript.cmd ;\
 	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" STREAM_RUN/$*/jobscript.cmd ;\
 	sbatch --wait --chdir STREAM_RUN/$* STREAM_RUN/$*/jobscript.cmd ;\
-	cp STREAM_RUN/$*/*txt cfg/benchmarks/STREAM/DATA ;\
+	cp STREAM_RUN/$*/*txt STREAM_RUN/DATA ;\
 
 	touch $@
 
@@ -393,13 +383,10 @@ stream_harvest_dep=$(foreach var, $(number_of_processes), .stream_run_$(var).don
 n_cores=$(foreach var, $(number_of_processes), $(var))
 .stream_harvest.done: $(stream_harvest_dep)
 	for core in ${n_cores} ; do \
-		file_in=cfg/benchmarks/STREAM/DATA/stream_$${core}.txt ;\
+		file_in=STREAM_RUN/DATA/stream_$${core}.txt ;\
 		file_out=$${file_in%.txt}.csv ;\
 		python cfg/benchmarks/STREAM/STREAM_data_parser.py -i $${file_in} -o $${file_out} ;\
-		python ${latex_folder}/csv_formatter.py -i $${file_out} ;\
- 		mkdir -p ${latex_images_folder}/STREAM ;\
-		fmt_file=$${file_out%.csv}_fmt.csv;\
-		mv $${fmt_file} ${latex_images_folder}/STREAM ;\
+		python ${latex_folder}/report_gen.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-csv $${file_out};\
 	done
 	touch $@
 
@@ -422,7 +409,7 @@ n_cores=$(foreach var, $(number_of_processes), $(var))
 osu_test=$(wildcard bin/osu_bench/*)
 .osu_run_%.done: .osu_ready
 	mkdir -p OSU_RUN/$*
-	mkdir -p cfg/benchmarks/OSU/DATA
+	mkdir -p OSU_RUN/DATA
 	for test in ${osu_test} ; do \
 		test_name=$${test##bin/osu_bench/} ;\
 		cp $${test} OSU_RUN/$* ;\
@@ -431,7 +418,7 @@ osu_test=$(wildcard bin/osu_bench/*)
 		sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
 		sed -i "s/%TEST%/$${test_name}/g" OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
 		sbatch --wait --chdir OSU_RUN/$* OSU_RUN/$*/$${test_name}_jobscript.cmd ;\
-		cp OSU_RUN/$*/*txt cfg/benchmarks/OSU/DATA ;\
+		cp OSU_RUN/$*/*txt OSU_RUN/DATA ;\
 	done
 	touch $@
 
@@ -439,11 +426,10 @@ osu_harvest_dep=$(foreach var, $(number_of_processes), .osu_run_$(var).done)
 
 .osu_harvest.done: $(osu_harvest_dep)
 	for test in ${osu_test} ; do \
-	test_name=$${test##bin/osu_bench/} ;\
-	python cfg/benchmarks/OSU/OSU_test_plots.py cfg/benchmarks/OSU/DATA/$${test_name}* ;\
-        done
-	mkdir -p ${latex_images_folder}/OSU
-	mv ./*.png ${latex_images_folder}/OSU
+		test_name=$${test##bin/osu_bench/} ;\
+		python cfg/benchmarks/OSU/OSU_test_plots.py -i OSU_RUN/DATA/$${test_name}* -o OSU_RUN/IMAGE;\
+	done
+	python ${latex_folder}/report_gen.py -O report.pkl -S "Hardware Benchmarks" -s "OSU Benchmark" --add-img  OSU_RUN/IMAGE
 	touch $@
 
 
@@ -451,4 +437,4 @@ hardware_benchmarks: .stream_harvest.done .osu_harvest.done
 ############
 # Intermediate files #that won't be removed automatically
 binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
-.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim %.done
+.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim .Trace_%.done
