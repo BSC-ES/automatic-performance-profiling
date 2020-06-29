@@ -31,8 +31,8 @@
 
 %FC                  mpiifort
 %CC                  icc
-%CFLAGS              -O3
-%FCFLAGS             -ip -r8 -Ofast -fp-model fast=2 -extend-source 132 -heap-arrays
+%CFLAGS              -O1
+%FCFLAGS             -r8 -O1 -fp-model strict -extend-source 132 -heap-arrays -g -finstrument-functions
 %FFFLAGS             %FCFLAGS
 %LD                  mpiifort
 %FPPFLAGS            -P
