@@ -15,7 +15,7 @@ n_functions=80
 
 # Load EXTRAE module and create wrapper
 module load gcc/8.1.0
-module load EXTRAE
+module load EXTRAE/3.7.1
 
 trace=./trace.sh
 cat << EOF > $trace

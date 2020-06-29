@@ -144,7 +144,7 @@ extrae_functions.txt: functions_dir
 
 
 paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
-.paramedir_%.done: .Trace_%.done | images_folder
+.paramedir_%.done: .trace_cut_%.done | images_folder
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Enter directory and process all paramedir configurations
