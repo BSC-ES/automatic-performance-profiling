@@ -144,7 +144,7 @@ paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Remove eventual old results
-	rm $($@_trace_folder)/*.pm
+	rm -f $($@_trace_folder)/*.pm
 	# Enter directory and process all paramedir configurations
 	cd $($@_trace_folder); \
 	for cfg in ${paramedir_configurations} ; do \
