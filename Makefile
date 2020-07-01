@@ -264,9 +264,12 @@ bin:
 # Delete (almost)-everything
 clean:
 	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
+	rm -rf function_csv/
 	rm -rf OSU* osu* bin/osu_bench .osu*
 	rm -rf STREAM* stream* bin/stream_bench .stream*
 	rm -rf *.pkl
+	rm -rf .*.done
+	rm -rf report_*
 hard_clean:
 	-chmod +w inidata
 	-chmod +w InitialConditions.nc
