@@ -140,7 +140,7 @@ extrae_functions.txt: functions_dir
 
 
 paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
-.paramedir_%.done: .trace_cut_%.done | images_folder
+.paramedir_%.done: .trace_cut_%.done
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Remove eventual old results
@@ -158,7 +158,7 @@ paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*
 	touch $@
 
 paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
-.paraver_%.done: .trace_cut_%.done | images_folder
+.paraver_%.done: .trace_cut_%.done
 	# Variable which contains traces' folder name
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
 	# Make paraver images
@@ -285,7 +285,7 @@ modelfactors_traces=$(foreach var, $(number_of_processes), ../trace_$(var)/trace
 
 modelfactors: .modelfactors.done
 
-.modelfactors.done: ${modelfactors_dependencies} | images_folder
+.modelfactors.done: ${modelfactors_dependencies}
 	mkdir modelfactors
 	cd modelfactors  ;\
 	../${analysis_tools}/modelfactors $(modelfactors_traces) 
