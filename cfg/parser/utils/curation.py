@@ -1,3 +1,6 @@
+# Imports
+import numpy as np
+
 class Log:
     """
     Object to store the Logs (info to be printed).
@@ -186,8 +189,6 @@ def simulated_years_per_day_plot(experiment_data, filename):
     plotter(experiment_name=experiment_data.experiment_name, data=plot_data, filename=filename)
 
 
-
-
 def experiment_comparison(experiment1, experiment2):
     cases_to_compare = list(sorted([c for c in experiment1.cases if c in experiment2.cases]))
     base_case = min(cases_to_compare)
@@ -229,6 +230,69 @@ def experiment_comparison(experiment1, experiment2):
         exp2_length = experiment2[case]["TimeStepTime"][0]
         log.add("                              %4i processes:    %4.2f | %4.2f" % (case, exp1_length, exp2_length))
     return log
+
+
+def multiexperiment_comparison(experiments, field1="Communication", field2="sypd", field3="average"):
+    # Find cases that are common in all the experiments
+    common_cases = set(experiments[0].cases)
+    for experiment in experiments[1:]:
+        common_cases.intersection_update(experiment.cases)
+    cases_to_compare = list(common_cases)
+    log = Log()
+    base_case = min(cases_to_compare)
+
+    # Simulated Years per Day
+    base_case_speed = [experiment[base_case][field1][field2][field3] for experiment in experiments]
+    # Find index of slower experiment
+    slowest_index = np.argmin(base_case_speed)
+
+    ratios = [bcs / base_case_speed[slowest_index] for bcs in base_case_speed]
+
+    log_text = "%s %s %s" % (field1, field2, field3)
+    log.add(log_text)
+    log_text = "Experiment names:"
+    for index, experiment in enumerate(experiments):
+        log_text += ", %s " % experiment.experiment_name
+    log.add(log_text)
+
+    log_text = "%4i processes" % base_case
+    for index, experiment in enumerate(experiments):
+        log_text += ",%5.2f " % base_case_speed[index]
+
+    log.add(log_text)
+
+    for case in cases_to_compare:
+        if case == base_case:
+            continue
+        resource_increase = case / base_case
+        exp_speeds = [experiment[case][field1][field2][field3] for experiment in experiments]
+        exp_speedups = [exp_speeds[i]/base_case_speed[i] for i in range(len(experiments))]
+        exp_efficiency = [es / resource_increase for es in exp_speedups]
+
+        ratios = [es / exp_speeds[slowest_index] for es in exp_speeds]
+
+        log_text = "%4i processes" % case
+        for index, experiment in enumerate(experiments):
+            log_text += ", %5.2f " % exp_speeds[index]
+        log.add(log_text)
+    return log
+
+
+def find_common_cases_and_functions(experiments):
+    # Find cases that are common in all the experiments
+    common_cases = set(experiments[0].cases)
+    for experiment in experiments[1:]:
+        common_cases.intersection_update(experiment.cases)
+    common_cases = list(common_cases)
+    base_case = min(common_cases)
+
+    # Search common functions
+    common_functions = set(experiments[0][base_case]["FunctionInfo"].keys())
+    for experiment in experiments[1:]:
+        common_functions.intersection_update(experiment[base_case]["FunctionInfo"].keys())
+    common_functions = list(common_functions)
+
+    return common_cases, common_functions
 
 
 def extract_data_from_experiments(experiments):
