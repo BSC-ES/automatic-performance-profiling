@@ -267,6 +267,7 @@ clean:
 	rm -rf function_csv/
 	rm -rf OSU* osu* bin/osu_bench .osu*
 	rm -rf STREAM* stream* bin/stream_bench .stream*
+	rm -rf *.json
 	rm -rf *.pkl
 	rm -rf .*.done
 	rm -rf report_*
