@@ -154,7 +154,7 @@ paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*
 	cd $($@_trace_folder); for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
-	python ${latex_folder}/report_gen.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPI_call_profile.pm --c
+	python ${latex_folder}/report_gen.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPIcallprofile.pm --c
 	touch $@
 
 paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
