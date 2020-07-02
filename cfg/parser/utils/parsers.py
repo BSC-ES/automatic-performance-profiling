@@ -16,8 +16,12 @@ def parse_paramedir_filename(filename):
     pattern = "([0-9]+)_([a-zA-Z]+).pm"
     filename = basename(filename)
     m = re.match(pattern, filename)
+    try:
+        cores = m.group(1)
+    except AttributeError:
+        raise AttributeError("Filename %s does not have the expected format", filename)
 
-    cores = int(m.group(1))
+    cores = int(cores)
     information_type = m.group(2)
     return cores, information_type
 
@@ -133,7 +137,7 @@ def parse_timing_files(files):
         }
 
     # Few functions used to parse a file
-    def parse_time_by_process_info(lines):
+    def parse_time_by_process_info(lines, filename):
         """
         Parses the info for each process and returns a dictionary with the following keys and data for each process:
         "Elapsed Time(s)"
@@ -165,8 +169,16 @@ def parse_timing_files(files):
                 for label, value in zip(labels, values):
                     process_data[process][label] = value
 
-        number_of_processes = len(process_data.keys())
-        return number_of_processes, process_data
+        pattern = "([0-9]+)_([a-zA-Z]+).timing"
+        filename = basename(filename)
+        m = re.match(pattern, filename)
+        try:
+            cores = m.group(1)
+        except AttributeError:
+            raise AttributeError("Filename %s does not have the expected format", filename)
+        cores = int(cores)
+
+        return cores, process_data
 
     def parse_function_info(lines):
         """
@@ -231,7 +243,7 @@ def parse_timing_files(files):
             lines = [l for l in f]
 
             # Get number of processes and detailed process data
-            number_of_processes, process_data = parse_time_by_process_info(lines)
+            number_of_processes, process_data = parse_time_by_process_info(lines, filename)
             # Save case results
             results[number_of_processes] = {"ProcessInfo": process_data}
             # Get function info
@@ -315,14 +327,16 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, experiment_name=None, timing_files=None, paramedir_files=None, cores_per_node=48, json_file=None):
+    def __init__(self, experiment_name=None, timing_files=None,
+                 paramedir_files=None, cores_per_node=48, json_file=None, param_file=None):
         # Init class variables
-        self.experiment_name = None
+        self.experiment_name = experiment_name
         self.data = None
         self.cases = None
         self.base_case = None
         self.processes_per_node = None
         self.functions = None
+        self.param_file = self.get_param_info(param_file)
 
         if not timing_files and not paramedir_files and not json_file:
             raise AssertionError("No files provided")
@@ -336,9 +350,6 @@ class TimingInformation:
         if paramedir_files is not None:
             self.load_paramedir(paramedir_files)
 
-        # If an experiment name is provided update it (it might overwrite a name loaded from a json experiment).
-        if experiment_name is not None:
-            self.experiment_name = experiment_name
         # If the property processes_per_node hasn't been set, we set it here. (It won't overwrite the value from a json)
         if self.processes_per_node is None:
             self.processes_per_node = cores_per_node
@@ -364,6 +375,25 @@ class TimingInformation:
                 yield case, self[case]["FunctionInfo"][function]
             except KeyError:
                 pass
+
+    def get_param_info(self, param_file):
+        from os.path import isfile
+        if param_file is None:
+            return None
+
+        try:
+            assert isfile(param_file)
+        except AssertionError:
+            raise AssertionError("parameter file %s not found", param_file)
+
+        f = open(param_file, "r")
+        param = [l.replace("\n","") for l in f if l.count("#") == 0 and l != "\n"]
+        param_dictionary = {}
+        for line in param:
+            key, val = line.split("=")
+            param_dictionary[key.strip()] = val.strip().split(" ")
+        return param_dictionary
+
 
     # Adding calls to different ways of processing the data
     def function_summary(self):
@@ -391,6 +421,8 @@ class TimingInformation:
         dictionary_to_save["base_case"] = self.base_case
         dictionary_to_save["processes_per_node"] = self.processes_per_node
         dictionary_to_save["functions"] = self.functions
+        dictionary_to_save["param_file"] = self.param_file
+
 
         with open(filename, "w") as f:
             json.dump(dictionary_to_save, f)
@@ -413,6 +445,10 @@ class TimingInformation:
             self.base_case = json_data["base_case"]
             self.processes_per_node = json_data["processes_per_node"]
             self.functions = json_data["functions"]
+            try:
+                self.param_file = json_data["param_file"]
+            except KeyError:
+                pass
 
     def load_timings(self, files):
         if not files:

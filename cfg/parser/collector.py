@@ -1,4 +1,5 @@
 from cfg.parser.utils.parsers import TimingInformation
+from os.path import isfile
 
 
 def expand_arguments(arguments):
@@ -24,6 +25,8 @@ def get_file_list_from_command_line_arguments():
     parser = OptionParser()
     parser.add_option("-n", "--name", dest="experiment_name",
                       help="Experiment name", default="Experiment")
+    parser.add_option("-p", "--param-file", dest="param_file",
+                      help="Parameter file to supply some infos", default=None)
     (options, args) = parser.parse_args()
 
     files = expand_arguments(args)
@@ -39,9 +42,15 @@ if __name__ == "__main__":
     # Get files from command line
     files, options = get_file_list_from_command_line_arguments()
     experiment_name = options.experiment_name
+    param_file = options.param_file
+    if param_file is not None:
+        try:
+            assert isfile(param_file)
+        except AssertionError:
+            raise AssertionError("parameter file %s not found", param_file)
 
     # Split the files between timing and paramedir  outputs.
-    #
+
     timing_files = [f for f in files if f.count(".timing")]
     paramedir_files = [f for f in files if f.count(".pm")]
 
@@ -50,6 +59,7 @@ if __name__ == "__main__":
         experiment_name=experiment_name,
         timing_files=timing_files,
         paramedir_files=paramedir_files,
+        param_file=param_file
     )
     # Save json file
     experiment_results.save_json()

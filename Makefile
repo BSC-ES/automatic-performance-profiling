@@ -236,7 +236,7 @@ test_%: inidata bin/nemo_vanilla.exe bin/xios_server.exe
 	# Launch job
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 	# Rename timing output
-	mv $@/timing.output $@/$@.timing
+	mv $@/timing.output $@/test_$*.timing
 
 ####################################################
 # Some other recipes

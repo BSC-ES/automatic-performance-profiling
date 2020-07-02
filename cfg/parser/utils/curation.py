@@ -1,6 +1,7 @@
 # Imports
 import numpy as np
 
+
 class Log:
     """
     Object to store the Logs (info to be printed).
@@ -266,7 +267,7 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
             continue
         resource_increase = case / base_case
         exp_speeds = [experiment[case][field1][field2][field3] for experiment in experiments]
-        exp_speedups = [exp_speeds[i]/base_case_speed[i] for i in range(len(experiments))]
+        exp_speedups = [exp_speeds[i] / base_case_speed[i] for i in range(len(experiments))]
         exp_efficiency = [es / resource_increase for es in exp_speedups]
 
         ratios = [es / exp_speeds[slowest_index] for es in exp_speeds]
@@ -275,6 +276,24 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
         for index, experiment in enumerate(experiments):
             log_text += ", %5.2f " % exp_speeds[index]
         log.add(log_text)
+    return log
+
+
+def weakscaling_compute(experiment):
+    # Get used configurations
+    configurations = [exp.param_file["configuration_name"][0] for exp in experiment]
+    # Get tail sizes for configurations
+    tile_size = [exp.param_file["tile_size"] for exp in experiment]
+    # Get number of cores
+    number_of_processes = [exp.param_file["number_of_processes"] for exp in experiment]
+    # Get average duration of the timesteps with this config
+    TimeStepTime = [[exp.data[core]["TimeStepTime"][0] for core in exp.data] for exp in experiment]
+    log = Log()
+    log.add("Config:, Tile Size, Ncores, Timestep per second ")
+    for index_conf, conf in enumerate(configurations):
+        for index_size, size in enumerate(tile_size):
+            log.add(conf + "," + size[index_conf] + "," + number_of_processes[index_conf][index_size] +
+                    ", %5.2f " % TimeStepTime[index_conf][index_size])
     return log
 
 
@@ -419,7 +438,7 @@ def get_functions_data(experiments, function_name=None):
             my_fun = function_name
         for case in experiment.cases:
             to_append = (
-            ceil(case / experiment.processes_per_node), case, experiment[case][fun_key][my_fun]['Elap. Time(s)'])
+                ceil(case / experiment.processes_per_node), case, experiment[case][fun_key][my_fun]['Elap. Time(s)'])
             data.append(to_append)
     return (data)
 
