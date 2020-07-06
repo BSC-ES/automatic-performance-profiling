@@ -25,11 +25,6 @@ help:
 	@echo "Modify the file param.cfg to select the branch inside the nemo mirror that you would like to profile."
 	@echo ""
 	@echo 
-###################################################
-# Load necessary modules
-environment.cfg:
-	cp cfg/environment.cfg .
-	source environment.cfg
 	
 
 ###################################################
@@ -269,7 +264,6 @@ bin:
 # Clean recipes
 # Delete (almost)-everything
 clean:
-	rm -rf environment.cfg
 	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
 	rm -rf function_csv/
 	rm -rf OSU* osu* bin/osu_bench .osu*
