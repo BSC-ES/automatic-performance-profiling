@@ -26,6 +26,13 @@ help:
 	@echo ""
 	@echo 
 ###################################################
+# Load necessary modules
+environment.cfg:
+	cp cfg/environment.cfg .
+	source environment.cfg
+	
+
+###################################################
 # Experiment recipes specified in param.cfg file
 experiment:
 	for recipe in ${experiment_recipes} ; do \
@@ -236,8 +243,7 @@ test_%: inidata bin/nemo_vanilla.exe bin/xios_server.exe
 	# Launch job
 	sbatch --wait --chdir $@ $@/jobscript.cmd
 	# Rename timing output
-	mv $@/timing.output $@/test_$*.timing
-
+	mv $@/timing.output $@/$*_test.timing
 ####################################################
 # Some other recipes
 
@@ -263,6 +269,7 @@ bin:
 # Clean recipes
 # Delete (almost)-everything
 clean:
+	rm -rf environment.cfg
 	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
 	rm -rf function_csv/
 	rm -rf OSU* osu* bin/osu_bench .osu*
