@@ -28,23 +28,25 @@ def dictionary_pointer(dictionary, address):
     return dictionary
 
 
+def parse_filename(filename, pattern):
+    filename = basename(filename)
+    m = re.match(pattern, filename)
+    try:
+        m.group(1)
+    except AttributeError:
+        raise AttributeError("Filename %s does not have the expected format", filename)
+    return m.groups()
+
+
 def parse_paramedir_filename(filename):
     """
     It parses a filename and gives the core count and the information type that the corresponds to the file
     :param filename:
     :return: number of cores, information type
     """
+    # The pattern of the paramedir filenames goes as follows: CORES_PARAMEDIRCFG.pm
     pattern = "([0-9]+)_([a-zA-Z]+).pm"
-    filename = basename(filename)
-    m = re.match(pattern, filename)
-    try:
-        cores = m.group(1)
-    except AttributeError:
-        raise AttributeError("Filename %s does not have the expected format", filename)
-
-    cores = int(cores)
-    information_type = m.group(2)
-    return cores, information_type
+    return parse_filename(filename, pattern)
 
 
 def parse_dimemas_filename(filename):
@@ -53,19 +55,9 @@ def parse_dimemas_filename(filename):
     :param filename:
     :return: number of cores, information type
     """
+    # The pattern of the dimemas filenames goes as follows: CORES_DIMEMASCFG_PARAMEDIRCFG.dm
     pattern = "([0-9]+)_([a-zA-Z]+)_([a-zA-Z]+).dm"
-    filename = basename(filename)
-    m = re.match(pattern, filename)
-    try:
-        cores = m.group(1)
-    except AttributeError:
-        raise AttributeError("Filename %s does not have the expected format", filename)
-
-    cores = int(cores)
-    simulation_type = m.group(2)
-    information_type = m.group(3)
-
-    return cores, simulation_type, information_type
+    return parse_filename(filename, pattern)
 
 
 def merge_dictionaries(dict_one, dict_two):
