@@ -341,7 +341,7 @@ paraver_experiment: $(paraver_dependencies)
 
 # Collect information and produce a json file with it.
 .json.done: .scalability.done paramedir_experiment paradim_experiment
-	python cfg/parser/collector.py test_*/*.timing trace_*/*pm -n ${configuration_name}
+	python cfg/parser/collector.py test_*/*.timing trace_*/*pm dimemas_traces/*dm -n ${configuration_name}
 	touch $@
 json: .json.done
 

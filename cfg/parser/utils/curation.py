@@ -1,7 +1,6 @@
 # Imports
 import numpy as np
 
-
 class Log:
     """
     Object to store the Logs (info to be printed).
@@ -64,6 +63,46 @@ def function_curated_summary(experiment_data):
         log.add("%20s\tSpeed-up  : %s" % ("", speedup))
         log.add("%20s\tEfficiency: %s" % ("", efficiency))
         log.add("_" * 30)
+    return log
+
+
+def dimemas_curated_summary(experiment_data):
+    """
+    This is an example of a function to curate the results and return something understandable
+    :param experiment_data:
+    :return: text with a summary of functions scalability in the experiment.
+    """
+    from cfg.parser.utils.parsers import dictionary_pointer
+
+    log = Log()
+    cases = experiment_data.cases
+    base_case = experiment_data.base_case
+    dimemas_experiments = list(experiment_data[base_case]["Dimemas"])
+    information_types = list(experiment_data[base_case]["Dimemas"][dimemas_experiments[0]].keys())
+    information_types = ["Wallclock"]
+    log_text = "Cores"
+    for de in dimemas_experiments:
+        log_text += ",%s" % de
+    log_text += "\n"
+
+    for case in cases:
+        log_text += "%i" % case
+        for exp in dimemas_experiments:
+            for it in information_types:
+                address = (case,
+                            "Dimemas",
+                            exp,
+                            it,
+                           "data",
+                            "Maximum",
+                           )
+
+                section = dictionary_pointer(experiment_data.data, address)
+                wallclock_time = section[0]/10.**6
+                log_text += ", %.2f" % wallclock_time
+        log_text += "\n"
+    log.add(log_text)
+
     return log
 
 

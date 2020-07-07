@@ -54,6 +54,13 @@ def get_command_line_instructions():
         help="Produce functions report",
         default=None,
     )
+    parser.add_option(
+        "--dimemas",
+        dest="dimemas_file",
+        help="Produce dimemas report",
+        default=None,
+    )
+
 
     # OptParser will parse the text provided as command line arguments and will distringuish between the options
     # and other arguments
@@ -77,6 +84,7 @@ if __name__ == "__main__":
     sypd_file = options.sypd_file
     sypd_plot_file = options.sypd_plot_file
     functions_file = options.functions_file
+    dimemas_file = options.dimemas_file
 
     # Load the json file provided
     experiment_results = TimingInformation(
@@ -93,5 +101,7 @@ if __name__ == "__main__":
         experiment_results.simulated_years_per_day_plot(sypd_plot_file)
     if functions_file is not None:
         experiment_results.function_summary().save(functions_file)
+    if dimemas_file is not None:
+        experiment_results.dimemas_summary().save(dimemas_file)
 
     # To create a new diagnostic/plot you need to create the function in curation.py and add the call inside parsers.py

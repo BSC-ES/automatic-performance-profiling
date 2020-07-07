@@ -1,8 +1,11 @@
 # This script takes several timing.output logs and computes several stats
 import re
 import numpy as np
-from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary, \
-    save_function_summary_csv, simulated_years_per_day_plot
+from cfg.parser.utils.curation import function_curated_summary,\
+                                      dimemas_curated_summary, \
+                                      simulated_years_per_day_summary, \
+                                      save_function_summary_csv,\
+                                      simulated_years_per_day_plot
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
 
@@ -303,6 +306,7 @@ def parse_paramedir_files(files):
     for filename in files:
         # Get core count and information type from filename
         cores, information_type = parse_paramedir_filename(filename)
+        cores = int(cores)
         # Initialize dictionary in case it does not exists
         # Retrieve the section to store the data
         address = (cores,
@@ -330,6 +334,7 @@ def parse_dimemas_files(files):
     for filename in files:
         # Get core count and information type from filename
         cores, simulation_type, information_type = parse_dimemas_filename(filename)
+        cores = int(cores)
 
         # Retrieve the section to store the data
         address = (cores,
@@ -455,7 +460,8 @@ class TimingInformation:
     # Adding calls to different ways of processing the data
     def function_summary(self):
         return function_curated_summary(self)
-
+    def dimemas_summary(self):
+        return dimemas_curated_summary(self)
     # Saves functions' info to csv
     def function_info_csv(self, csv_folder):
         save_function_summary_csv(self, csv_folder)
