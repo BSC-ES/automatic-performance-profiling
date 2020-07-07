@@ -177,9 +177,9 @@ paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
 	done
 	touch $@
 
-%.dim: .Trace_%.done
-
-	${analysis_tools}/prv2dim $<.prv $@
+%.dim: .trace_cut_%.done
+	echo "${analysis_tools}/prv2dim trace_$*/trace_$*.prv $@"
+	${analysis_tools}/prv2dim trace_$*/trace_$*.prv $@
 
 
 dimemas_configurations=$(wildcard cfg/dimemas/cfgs/*)
@@ -189,9 +189,29 @@ dimemas_configurations=$(wildcard cfg/dimemas/cfgs/*)
 	        sufix=$$(basename $${cfg}) ; \
 	        sufix=$${sufix//dimemas./} ;\
 	        sufix=$${sufix//.cfg/} ;\
-		${analysis_tools}/Dimemas -S 32k --dim $< -p dimemas_traces/dimemas_$*_$${sufix}.prv --config-file $${cfg} ;\
+		${analysis_tools}/Dimemas -S 32k --dim $< -p dimemas_traces/$*_$${sufix}.prv --config-file $${cfg} ;\
+	done
+	
+# Using paramedir configurations with dimemas outputs
+paradim_configurations=$(wildcard cfg/trace_analysis/paradim_configurations/*)
+.paradim_%.done: .dimemas_experiment_%.done
+	# Run the paramedir configurations stored in paradim_configurations with all the dimemas traces
+	cd dimemas_traces; \
+	dimemas_traces=$$( ls $**.prv ) ;\
+	for trace in $${dimemas_traces}; do \
+	   for cfg in ${paradim_configurations} ; do \
+	           ../${analysis_tools}/paramedir $${trace} ../$${cfg} ;\
+	           output_name=$$(basename $${cfg/.cfg/} ) ;\
+	           new_name=$${trace/.prv/}_$${output_name} ;\
+	           mv $${output_name} $${new_name} ;\
+	   done ;\
 	done
 	touch $@
+
+paradim_dependencies=$(foreach var, $(number_of_processes), .paradim_$(var).done)
+.paradim_experiment.done: $(paradim_dependencies)
+	touch $@
+paradim_experiment: .paradim_experiment.done
 ####################################################
 # Recipes to prepare inidata
 inidata:
@@ -320,7 +340,7 @@ paraver_dependencies=$(foreach var, $(number_of_processes), .paraver_$(var).done
 paraver_experiment: $(paraver_dependencies)
 
 # Collect information and produce a json file with it.
-.json.done: .scalability.done paramedir_experiment
+.json.done: .scalability.done paramedir_experiment paradim_experiment
 	python cfg/parser/collector.py test_*/*.timing trace_*/*pm -n ${configuration_name}
 	touch $@
 json: .json.done
