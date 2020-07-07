@@ -36,6 +36,10 @@ def split_3d_histogram(text3d):
         name = case_lines[0].strip()
         histogram = "\n".join(case_lines[1:])
         histograms[name] = histogram
+    # In case of having a single histogram, fix it
+    if len(histograms) == 1:
+        for key in histograms.keys():
+            histograms = {"data": key + "\n" + histograms[key]}
     return histograms
 
 
