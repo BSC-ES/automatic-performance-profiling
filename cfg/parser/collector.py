@@ -53,12 +53,14 @@ if __name__ == "__main__":
 
     timing_files = [f for f in files if f.count(".timing")]
     paramedir_files = [f for f in files if f.count(".pm")]
+    dimemas_files = [f for f in files if f.count(".dm")]
 
     # Parse files and create a TimingInformation object
     experiment_results = TimingInformation(
         experiment_name=experiment_name,
         timing_files=timing_files,
         paramedir_files=paramedir_files,
+        dimemas_files=dimemas_files,
         param_file=param_file
     )
     # Save json file

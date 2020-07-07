@@ -1,10 +1,31 @@
 # This script takes several timing.output logs and computes several stats
 import re
 import numpy as np
-from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary,\
-                                      save_function_summary_csv, simulated_years_per_day_plot
+from cfg.parser.utils.curation import function_curated_summary, simulated_years_per_day_summary, \
+    save_function_summary_csv, simulated_years_per_day_plot
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
+
+
+def dictionary_pointer(dictionary, address):
+    """
+    It creates the proper dictionary structure according to an address provided.
+    In case the proper structure already exists it only retrieves it.
+    :param dictionary:
+    :param address:
+    :return: dictionary section
+    """
+
+    def initialize_dictionary_section(d, section):
+        try:
+            d[section]
+        except KeyError:
+            d[section] = {}
+        return d[section]
+
+    for step in address:
+        dictionary = initialize_dictionary_section(dictionary, step)
+    return dictionary
 
 
 def parse_paramedir_filename(filename):
@@ -24,6 +45,27 @@ def parse_paramedir_filename(filename):
     cores = int(cores)
     information_type = m.group(2)
     return cores, information_type
+
+
+def parse_dimemas_filename(filename):
+    """
+    It parses a filename and gives the core count and the information type that the corresponds to the file
+    :param filename:
+    :return: number of cores, information type
+    """
+    pattern = "([0-9]+)_([a-zA-Z]+)_([a-zA-Z]+).dm"
+    filename = basename(filename)
+    m = re.match(pattern, filename)
+    try:
+        cores = m.group(1)
+    except AttributeError:
+        raise AttributeError("Filename %s does not have the expected format", filename)
+
+    cores = int(cores)
+    simulation_type = m.group(2)
+    information_type = m.group(3)
+
+    return cores, simulation_type, information_type
 
 
 def merge_dictionaries(dict_one, dict_two):
@@ -145,6 +187,7 @@ def parse_timing_files(files):
         "Ratio CPU / Elapsed"
         Example: To access the elapsed time information from process 11 we could do it like:
             return_value[11][ "Elapsed Time(s)"]
+        :param filename:
         :param lines: Lines of a file
         :return: Nested dictionary with
         """
@@ -269,27 +312,48 @@ def parse_paramedir_files(files):
         # Get core count and information type from filename
         cores, information_type = parse_paramedir_filename(filename)
         # Initialize dictionary in case it does not exists
-        try:
-            results[cores]
-        except KeyError:
-            results[cores] = {}
-
-        try:
-            results[cores]["Counters"]
-        except KeyError:
-            results[cores]["Counters"] = {}
-
-        try:
-            results[cores]["Counters"][information_type]
-        except KeyError:
-            results[cores]["Counters"][information_type] = {}
+        # Retrieve the section to store the data
+        address = (cores,
+                   "Counters",
+                   information_type,
+                   )
+        dictionary_section = dictionary_pointer(results, address)
         # Open the file and process the contents
         with open(filename) as f:
             text = f.read()
             histograms = split_3d_histogram(text)
             for function_name, histogram in histograms.items():
-                results[cores]["Counters"][information_type][function_name] = process_category_histogram(histogram)
+                dictionary_section[function_name] = process_category_histogram(histogram)
     return results
+
+
+def parse_dimemas_files(files):
+    """
+    Takes a list of filenames corresponding to outputs of paramedir runs applied to dimemas simulations
+     and process it returning a dictionary with the data
+    :param files:
+    :return: dictionary
+    """
+    results = {}
+    for filename in files:
+        # Get core count and information type from filename
+        cores, simulation_type, information_type = parse_dimemas_filename(filename)
+
+        # Retrieve the section to store the data
+        address = (cores,
+                   "Dimemas",
+                   simulation_type,
+                   information_type,
+                   )
+        dictionary_section = dictionary_pointer(results, address)
+
+        # Open the file and process the contents
+        with open(filename) as f:
+            text = f.read()
+            histograms = split_3d_histogram(text)
+            for function_name, histogram in histograms.items():
+                dictionary_section[function_name] = process_category_histogram(histogram)
+    return
 
 
 class TimingInformation:
@@ -328,7 +392,7 @@ class TimingInformation:
     """
 
     def __init__(self, experiment_name=None, timing_files=None,
-                 paramedir_files=None, cores_per_node=48, json_file=None, param_file=None):
+                 paramedir_files=None, dimemas_files=None, cores_per_node=48, json_file=None, param_file=None):
         # Init class variables
         self.experiment_name = experiment_name
         self.data = None
@@ -338,18 +402,19 @@ class TimingInformation:
         self.functions = None
         self.param_file = self.get_param_info(param_file)
 
-        if not timing_files and not paramedir_files and not json_file:
+        if not timing_files and not paramedir_files and not json_file and not dimemas_files:
             raise AssertionError("No files provided")
 
         # Update values with the provided files
-        if json_file is not None:
+        if json_file:
             import json
             self.load_json(json_file)
-        if timing_files is not None:
+        if timing_files:
             self.load_timings(timing_files)
-        if paramedir_files is not None:
+        if paramedir_files:
             self.load_paramedir(paramedir_files)
-
+        if dimemas_files:
+            self.load_dimemas(dimemas_files)
         # If the property processes_per_node hasn't been set, we set it here. (It won't overwrite the value from a json)
         if self.processes_per_node is None:
             self.processes_per_node = cores_per_node
@@ -376,7 +441,8 @@ class TimingInformation:
             except KeyError:
                 pass
 
-    def get_param_info(self, param_file):
+    @staticmethod
+    def get_param_info(param_file):
         from os.path import isfile
         if param_file is None:
             return None
@@ -387,13 +453,12 @@ class TimingInformation:
             raise AssertionError("parameter file %s not found", param_file)
 
         f = open(param_file, "r")
-        param = [l.replace("\n","") for l in f if l.count("#") == 0 and l != "\n"]
+        param = [l.replace("\n", "") for l in f if l.count("#") == 0 and l != "\n"]
         param_dictionary = {}
         for line in param:
             key, val = line.split("=")
             param_dictionary[key.strip()] = val.strip().split(" ")
         return param_dictionary
-
 
     # Adding calls to different ways of processing the data
     def function_summary(self):
@@ -412,17 +477,17 @@ class TimingInformation:
     def save_json(self, filename=None):
         import json
         if filename is None:
-            filename = self.experiment_name+".json"
+            filename = self.experiment_name + ".json"
 
-        dictionary_to_save = {}
-        dictionary_to_save["experiment_name"] = self.experiment_name
-        dictionary_to_save["data"] = self.data
-        dictionary_to_save["cases"] = self.cases
-        dictionary_to_save["base_case"] = self.base_case
-        dictionary_to_save["processes_per_node"] = self.processes_per_node
-        dictionary_to_save["functions"] = self.functions
-        dictionary_to_save["param_file"] = self.param_file
-
+        dictionary_to_save = {
+            "experiment_name": self.experiment_name,
+            "data": self.data,
+            "cases": self.cases,
+            "base_case": self.base_case,
+            "processes_per_node": self.processes_per_node,
+            "functions": self.functions,
+            "param_file": self.param_file
+        }
 
         with open(filename, "w") as f:
             json.dump(dictionary_to_save, f)
@@ -437,6 +502,7 @@ class TimingInformation:
                 except ValueError:
                     return {k: v for k, v in x.items()}
             return x
+
         with open(filename, "r") as f:
             json_data = json.load(f, object_hook=json_keys2int)
             self.experiment_name = json_data["experiment_name"]
@@ -470,6 +536,17 @@ class TimingInformation:
             self.data = parse_paramedir_files(files)
         else:
             paramedir_info = parse_paramedir_files(files)
+            self.data = merge_dictionaries(self.data, paramedir_info)
+
+        pass
+
+    def load_dimemas(self, files):
+        if not files:
+            raise AssertionError("Empty list of files")
+        if self.data is None:
+            self.data = parse_dimemas_files(files)
+        else:
+            paramedir_info = parse_dimemas_files(files)
             self.data = merge_dictionaries(self.data, paramedir_info)
 
         pass
