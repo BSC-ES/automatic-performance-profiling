@@ -353,7 +353,7 @@ def parse_dimemas_files(files):
             histograms = split_3d_histogram(text)
             for function_name, histogram in histograms.items():
                 dictionary_section[function_name] = process_category_histogram(histogram)
-    return
+    return results
 
 
 class TimingInformation:
@@ -546,7 +546,7 @@ class TimingInformation:
         if self.data is None:
             self.data = parse_dimemas_files(files)
         else:
-            paramedir_info = parse_dimemas_files(files)
-            self.data = merge_dictionaries(self.data, paramedir_info)
+            dimemas_info = parse_dimemas_files(files)
+            self.data = merge_dictionaries(self.data, dimemas_info)
 
         pass
