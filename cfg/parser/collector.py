@@ -1,5 +1,5 @@
 from cfg.parser.utils.parsers import TimingInformation
-from os.path import isfile
+from os.path import isfile, abspath
 
 
 def expand_arguments(arguments):
@@ -23,8 +23,8 @@ def get_file_list_from_command_line_arguments():
     from optparse import OptionParser
     # Parse and assert command line options
     parser = OptionParser()
-    parser.add_option("-n", "--name", dest="experiment_name",
-                      help="Experiment name", default="Experiment")
+    parser.add_option("-n", "--name", dest="output_file",
+                      help="name of the output .json file", default=None)
     parser.add_option("-p", "--param-file", dest="param_file",
                       help="Parameter file to supply some infos", default=None)
     (options, args) = parser.parse_args()
@@ -41,7 +41,7 @@ def get_file_list_from_command_line_arguments():
 if __name__ == "__main__":
     # Get files from command line
     files, options = get_file_list_from_command_line_arguments()
-    experiment_name = options.experiment_name
+    output_file = options.output_file
     param_file = options.param_file
     if param_file is not None:
         try:
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     # Parse files and create a TimingInformation object
     experiment_results = TimingInformation(
-        experiment_name=experiment_name,
+        output_file=output_file,
         timing_files=timing_files,
         paramedir_files=paramedir_files,
         dimemas_files=dimemas_files,
@@ -65,3 +65,4 @@ if __name__ == "__main__":
     )
     # Save json file
     experiment_results.save_json()
+    print("jsone file saved in ", abspath(output_file+".json"))

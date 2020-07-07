@@ -335,7 +335,6 @@ def parse_dimemas_files(files):
         # Get core count and information type from filename
         cores, simulation_type, information_type = parse_dimemas_filename(filename)
         cores = int(cores)
-
         # Retrieve the section to store the data
         address = (cores,
                    "Dimemas",
@@ -388,16 +387,17 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, experiment_name=None, timing_files=None,
-                 paramedir_files=None, dimemas_files=None, cores_per_node=48, json_file=None, param_file=None):
+    def __init__(self, output_file=None, timing_files=None,
+                 paramedir_files=None, dimemas_files=None, processes_per_node=48, json_file=None, param_file=None):
         # Init class variables
-        self.experiment_name = experiment_name
+        self.output_file = output_file
+        self.experiment_name = None
         self.data = None
         self.cases = None
         self.base_case = None
-        self.processes_per_node = None
+        self.processes_per_node = processes_per_node
         self.functions = None
-        self.param_file = self.get_param_info(param_file)
+        self.param_file = self.load_param(param_file)
 
         if not timing_files and not paramedir_files and not json_file and not dimemas_files:
             raise AssertionError("No files provided")
@@ -412,9 +412,6 @@ class TimingInformation:
             self.load_paramedir(paramedir_files)
         if dimemas_files:
             self.load_dimemas(dimemas_files)
-        # If the property processes_per_node hasn't been set, we set it here. (It won't overwrite the value from a json)
-        if self.processes_per_node is None:
-            self.processes_per_node = cores_per_node
 
     def __getitem__(self, item):
         return self.data[item]
@@ -438,8 +435,7 @@ class TimingInformation:
             except KeyError:
                 pass
 
-    @staticmethod
-    def get_param_info(param_file):
+    def load_param(self, param_file):
         from os.path import isfile
         if param_file is None:
             return None
@@ -455,13 +451,31 @@ class TimingInformation:
         for line in param:
             key, val = line.split("=")
             param_dictionary[key.strip()] = val.strip().split(" ")
+
+        # Set the real number of processes used
+        try:
+            ppn = param_dictionary['processes_per_node'][0]
+            self.processes_per_node = ppn
+        except KeyError:
+            pass
+
+        # If name for the experiment was not passed load it from param file
+        if self.experiment_name is None:
+            try:
+                self.experiment_name = param_dictionary['configuration_name'][0]
+                if self.output_file is None:
+                    self.output_file = self.experiment_name + ".json"
+            except KeyError:
+                pass
         return param_dictionary
 
     # Adding calls to different ways of processing the data
     def function_summary(self):
         return function_curated_summary(self)
+
     def dimemas_summary(self):
         return dimemas_curated_summary(self)
+
     # Saves functions' info to csv
     def function_info_csv(self, csv_folder):
         save_function_summary_csv(self, csv_folder)
@@ -475,7 +489,7 @@ class TimingInformation:
     def save_json(self, filename=None):
         import json
         if filename is None:
-            filename = self.experiment_name + ".json"
+            filename = self.output_file + ".json"
 
         dictionary_to_save = {
             "experiment_name": self.experiment_name,

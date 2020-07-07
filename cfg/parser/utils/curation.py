@@ -1,6 +1,7 @@
 # Imports
 import numpy as np
 
+
 class Log:
     """
     Object to store the Logs (info to be printed).
@@ -104,7 +105,6 @@ def dimemas_curated_summary(experiment_data):
     log.add(log_text)
 
     return log
-
 
 def save_function_summary_csv(experiment_data, csv_folder):
     """
@@ -272,30 +272,50 @@ def experiment_comparison(experiment1, experiment2):
     return log
 
 
+
 def multiexperiment_comparison(experiments, field1="Communication", field2="sypd", field3="average"):
-    # Find cases that are common in all the experiments
-    common_cases = set(experiments[0].cases)
-    for experiment in experiments[1:]:
-        common_cases.intersection_update(experiment.cases)
+    # List of process per node used in experiments
+    processes_per_node = [int(exp.processes_per_node) for exp in experiments]
+
+    # Find cases with common number of node among the experiments
+    common_cases = set([ex / processes_per_node[0] for ex in experiments[0].cases])
+    for index, exp in enumerate(experiments[1:]):
+        n_node = [case / processes_per_node[index+1] for case in exp.cases]
+        common_cases.intersection_update(n_node)
+
     cases_to_compare = list(common_cases)
-    log = Log()
     base_case = min(cases_to_compare)
 
+    #Initialize results printout
+    log = Log()
+
     # Simulated Years per Day
-    base_case_speed = [experiment[base_case][field1][field2][field3] for experiment in experiments]
-    # Find index of slower experiment
+    base_case_speed = [experiment[base_case*ppn][field1][field2][field3]
+                       for experiment, ppn in zip(experiments, processes_per_node)]
+
+    # Find index of slowest experiment
     slowest_index = np.argmin(base_case_speed)
 
     ratios = [bcs / base_case_speed[slowest_index] for bcs in base_case_speed]
 
-    log_text = "%s %s %s" % (field1, field2, field3)
-    log.add(log_text)
+    # Print header
+    log_text = "%s, %s, %s" % (field1, field2, field3)
+    log.add(log_text)    
     log_text = "Experiment names:"
     for index, experiment in enumerate(experiments):
-        log_text += ", %s " % experiment.experiment_name
+        # add info on layout of proc on nodes
+        if int(experiment.processes_per_node) != 48:
+            node_filling = "[" + experiment.processes_per_node + " cores per node]"
+            log_text += ", %s %s" % (experiment.experiment_name, node_filling)
+        else:
+            log_text += ", %s" % (experiment.experiment_name)
+
+
+
     log.add(log_text)
 
-    log_text = "%4i processes" % base_case
+    # Add data
+    log_text = "%4i nodes" % base_case
     for index, experiment in enumerate(experiments):
         log_text += ",%5.2f " % base_case_speed[index]
 
@@ -305,13 +325,13 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp_speeds = [experiment[case][field1][field2][field3] for experiment in experiments]
+        exp_speeds = [experiment[case * ppn][field1][field2][field3] for experiment, ppn in zip(experiments, processes_per_node)]
         exp_speedups = [exp_speeds[i] / base_case_speed[i] for i in range(len(experiments))]
         exp_efficiency = [es / resource_increase for es in exp_speedups]
 
         ratios = [es / exp_speeds[slowest_index] for es in exp_speeds]
 
-        log_text = "%4i processes" % case
+        log_text = "%4i nodes" % case
         for index, experiment in enumerate(experiments):
             log_text += ", %5.2f " % exp_speeds[index]
         log.add(log_text)

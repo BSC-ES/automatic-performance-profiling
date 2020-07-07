@@ -340,10 +340,21 @@ paraver_dependencies=$(foreach var, $(number_of_processes), .paraver_$(var).done
 paraver_experiment: $(paraver_dependencies)
 
 # Collect information and produce a json file with it.
+
+# Collect information and produce a json file with it.
 .json.done: .scalability.done paramedir_experiment paradim_experiment
-	python cfg/parser/collector.py test_*/*.timing trace_*/*pm dimemas_traces/*dm -n ${configuration_name}
+	$(MAKE) process_json
 	touch $@
 json: .json.done
+
+process_json: ${configuration_name}.json
+${configuration_name}.json:
+	python cfg/parser/collector.py test_*/*.timing trace_*/*pm dimemas_traces/*dm -n ${configuration_name} -p param.cfg
+
+#.json.done: .scalability.done paramedir_experiment paradim_experiment
+#	python cfg/parser/collector.py test_*/*.timing trace_*/*pm dimemas_traces/*dm -n ${configuration_name}
+#	touch $@
+#json: .json.done
 
 # Make reports
 .info_report.done: .json.done 
