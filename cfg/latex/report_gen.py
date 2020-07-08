@@ -500,6 +500,11 @@ if __name__ == "__main__":
     text_file = options.text_file
     inspect_pkl_obj = options.inspect_pkl_obj
 
+    # Convert (sub)section title before using it
+    if section_title.count("_"):
+        section_title = " ".join([w.capitalize() for w in section_title.split("_")])
+    if subsection_title.count("_"):
+        subsection_title = " ".join([w.capitalize() for w in subsection_title.split("_")])
     # Load a report if exist, create a new one in case it doesn't
     report = report_load(report_obj)
 
