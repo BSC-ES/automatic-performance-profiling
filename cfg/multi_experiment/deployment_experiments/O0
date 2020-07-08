@@ -21,4 +21,4 @@ number_of_processes=48 96
 processes_per_node=48
 
 # Which parts of the recipe will be executed when we run make experiment
-experiment_recipes = json
+experiment_recipes = scalability process_json 
