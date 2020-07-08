@@ -23,5 +23,5 @@ do
 done
 
 python ../cfg/parser/comparator.py ${multi_exp_folder}/*/*.json -s > ${csv_file}
-python ../cfg/latex/report_gen.py -O ${report_obj} -S "Multi Experiment" -s ${multi_exp_folder} --add-csv ${csv_file}
+python ../cfg/latex/ReportGenerator.py -O ${report_obj} -S "Multi Experiment" -s ${multi_exp_folder} --add-csv ${csv_file}
 

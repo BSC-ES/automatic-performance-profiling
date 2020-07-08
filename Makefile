@@ -156,7 +156,7 @@ paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*
 	cd $($@_trace_folder); for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
-	python ${latex_folder}/report_gen.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPIcallprofile.pm --c
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPIcallprofile.pm --c
 	touch $@
 
 paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
@@ -173,7 +173,7 @@ paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
 		rm -f *nn_gradient.png ;\
 		rm -f *w_legend* ;\
 		mv $${picture_name}* $${picture_name}_trace_$*.png ;\
-                python ${latex_folder}/report_gen.py -O report.pkl -S "Paraver" --add-image  $${picture_name}_trace_$*.png ;\
+                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" --add-image  $${picture_name}_trace_$*.png ;\
 	done
 	touch $@
 
@@ -312,7 +312,7 @@ modelfactors: .modelfactors.done
 	cd modelfactors  ;\
 	../${analysis_tools}/modelfactors $(modelfactors_traces) 
 	# Add produced pictures to latex report
-	python ${latex_folder}/report_gen.py -O report.pkl -S "Model Factors" --add-img  modelfactors;\
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Model Factors" --add-img  modelfactors;\
 	touch $@
 
 # Function histograms
@@ -364,8 +364,8 @@ ${configuration_name}.json:
                                     --sypd sypd.txt \
                                     --sypd-plot ${configuration_name}.png \
                                     --functions functions_summary.txt
-	python ${latex_folder}/report_gen.py -O report.pkl -S "Functions detailed report" --add-csv function_csv
-	python ${latex_folder}/report_gen.py -O report.pkl -S "Scalability" --add-img ${configuration_name}.png
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" --add-csv function_csv
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Scalability" --add-img ${configuration_name}.png
 	touch $@
 
 ############
@@ -377,10 +377,10 @@ report: .latex_report.done
 	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | grep 'git-svn-id:'| head -1 | awk '{print $$2}'| awk -F / '{print $$NF}' ))
 	# Copy latex template to a new one which will be modified
 	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION)))
-	#python ${latex_folder}/report_gen.py -O report.pkl --section-title "Introduction" --section-number 1 -T Introduction.txt
-	python ${latex_folder}/report_gen.py report_gen.py -O report.pkl --report-title "Report Nemo version "$($@_NEMO_VERSION)
-	python ${latex_folder}/report_gen.py report_gen.py -O report.pkl --report-authors "O. Tinto Primis"
-	python ${latex_folder}/report_gen.py report_gen.py -O report.pkl --report-authors "Stella V. Paronuzzi Ticco"
+	#python ${latex_folder}/ReportGenerator.py -O report.pkl --section-title "Introduction" --section-number 1 -T Introduction.txt
+	python ${latex_folder}/ReportGenerator.py ReportGenerator.py -O report.pkl --report-title "Report Nemo version "$($@_NEMO_VERSION)
+	python ${latex_folder}/ReportGenerator.py ReportGenerator.py -O report.pkl --report-authors "O. Tinto Primis"
+	python ${latex_folder}/ReportGenerator.py ReportGenerator.py -O report.pkl --report-authors "Stella V. Paronuzzi Ticco"
 	# Remove old report folders
 	rm -rf $($@_LATEX_REPORT)
 	# Create a new one
@@ -388,7 +388,7 @@ report: .latex_report.done
 	# Copy the report in the appropriate folder
 	cp report.pkl $($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl
 	# Create the tex file
-	python ${latex_folder}/report_gen.py -O ./$($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl --dump-to-file
+	python ${latex_folder}/ReportGenerator.py -O ./$($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl --dump-to-file
 	# Compile the report
 	cd $($@_LATEX_REPORT); module load LATEX/20150523; pdflatex $($@_LATEX_REPORT).tex && evince $($@_LATEX_REPORT).pdf
 
@@ -422,7 +422,7 @@ n_cores=$(foreach var, $(number_of_processes), $(var))
 		file_in=STREAM_RUN/DATA/stream_$${core}.txt ;\
 		file_out=$${file_in%.txt}.csv ;\
 		python cfg/benchmarks/STREAM/STREAM_data_parser.py -i $${file_in} -o $${file_out} ;\
-		python ${latex_folder}/report_gen.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-csv $${file_out};\
+		python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-csv $${file_out};\
 	done
 	touch $@
 
@@ -465,7 +465,7 @@ osu_harvest_dep=$(foreach var, $(number_of_processes), .osu_run_$(var).done)
 		test_name=$${test##bin/osu_bench/} ;\
 		python cfg/benchmarks/OSU/OSU_test_plots.py -i OSU_RUN/DATA/$${test_name}* -o OSU_RUN/IMAGE;\
 	done
-	python ${latex_folder}/report_gen.py -O report.pkl -S "Hardware Benchmarks" -s "OSU Benchmark" --add-img  OSU_RUN/IMAGE
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "OSU Benchmark" --add-img  OSU_RUN/IMAGE
 	touch $@
 
 
