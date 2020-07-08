@@ -485,9 +485,12 @@ class TimingInformation:
 
     def save_json(self, filename=None):
         import json
+        # Check if file name has been passed, if not use experiment name
         if filename is None:
             filename = self.experiment_name + ".json"
-
+        # add extension if not there
+        if not filename.count(".json"):
+            filename = filename + ".json"
         dictionary_to_save = {
             "experiment_name": self.experiment_name,
             "data": self.data,
