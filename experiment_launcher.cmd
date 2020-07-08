@@ -5,9 +5,15 @@ experiment_configurations_folder=$1
 if [[ $# -eq 2 ]]
 then
   experiments_folder=$2
-else
 # Default name is set
-  experiments_folder=experiments
+else
+  # remove the last char if is a slash
+  if [[ `echo ${experiment_configurations_folder:-1}`=="/" ]]
+  then
+    experiment_configurations_folder=${experiment_configurations_folder%?}
+  fi
+  # Gets the config folder name
+  experiments_folder=${experiment_configurations_folder##*/}
 fi
 
 # Some sanity checks
