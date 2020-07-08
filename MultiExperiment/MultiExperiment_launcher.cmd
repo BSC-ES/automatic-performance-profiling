@@ -8,7 +8,7 @@ then
 # Default name is set
 else
   # remove the last char if is a slash
-  if [[ `echo ${experiment_configurations_folder:-1}`=="/" ]]
+  if [[ `echo ${experiment_configurations_folder: -1}` == "/" ]]
   then
     experiment_configurations_folder=${experiment_configurations_folder%?}
   fi
@@ -28,7 +28,7 @@ if [ ! -d "$1" ] ; then
 fi
 
 # Create experiments folder if it does not exist
-mkdir -p ${experiments_folder}
+mkdir -p ${experiments_folder} || exit 1
 
 # Look at the experiments that need to be launched
 experiment_configurations=$( ls ${experiment_configurations_folder} )
@@ -39,7 +39,7 @@ for experiment in ${experiment_configurations} ; do
       continue
    fi
    # Clone repository to the new experiment folder
-   git clone . ${experiments_folder}/${experiment}
+   git clone ../ ${experiments_folder}/${experiment}
 
    # Copy the configuration file into the new folder
    cp ${experiment_configurations_folder}/${experiment} ${experiments_folder}/${experiment}/param.cfg
@@ -50,10 +50,10 @@ for experiment in ${experiment_configurations} ; do
 done
 ## BEGIN -- NOT TO PUSH TO MASTER 
 #cd  ${experiments_folder}/${experiment}/cfg/parser/
-#for file in ./*.py
+#for file in ./*.py ./utils/*.py
 #do
 #  sed -i s/cfg.parser.//g $file
 #done
 #cd -
 ##  END -- NOT TO PUSH TO MASTER
-
+#

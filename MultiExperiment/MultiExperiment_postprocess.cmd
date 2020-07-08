@@ -12,6 +12,8 @@ then
   echo -e "folder:" ${multi_exp_folder}" not found\nAbort ..."
   exit 1
 fi
+csv_file=${multi_exp_folder}.csv
+cat /dev/null > ${csv_file}
 for folder in ${multi_exp_folder}/*
 do
   if [[ -d ${folder} ]]
@@ -20,7 +22,6 @@ do
   fi
 done
 
-python cfg/parser/comparator.py ${multi_exp_folder}/*.json -s > affinity.csv
-#python /gpfs/scratch/bsc32/bsc32402/Issue23/nemo_performance_profile/affinity_BENCH/BENCH_O1_46/cfg/parser/comparator.py ${multi_exp_folder}/*.json -s > affinity.csv
-python cfg/latex/report_gen.py -O report.pkl -S "Multi Experiment" -s "Affinity" --add-csv affinity.csv 
+python ../cfg/parser/comparator.py ${multi_exp_folder}/*/*.json -s > ${csv_file}
+python ../cfg/latex/report_gen.py -O ${report_obj} -S "Multi Experiment" -s ${multi_exp_folder} --add-csv ${csv_file}
 
