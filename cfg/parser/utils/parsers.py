@@ -387,10 +387,9 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, output_file=None, timing_files=None,
-                 paramedir_files=None, dimemas_files=None, processes_per_node=48, json_file=None, param_file=None):
+    def __init__(self, timing_files=None, paramedir_files=None, dimemas_files=None,
+                 processes_per_node=48, json_file=None, param_file=None):
         # Init class variables
-        self.output_file = output_file
         self.experiment_name = None
         self.data = None
         self.cases = None
@@ -463,8 +462,6 @@ class TimingInformation:
         if self.experiment_name is None:
             try:
                 self.experiment_name = param_dictionary['configuration_name'][0]
-                if self.output_file is None:
-                    self.output_file = self.experiment_name + ".json"
             except KeyError:
                 pass
         return param_dictionary
@@ -489,7 +486,7 @@ class TimingInformation:
     def save_json(self, filename=None):
         import json
         if filename is None:
-            filename = self.output_file + ".json"
+            filename = self.experiment_name + ".json"
 
         dictionary_to_save = {
             "experiment_name": self.experiment_name,

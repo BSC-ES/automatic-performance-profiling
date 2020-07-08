@@ -57,12 +57,11 @@ if __name__ == "__main__":
 
     # Parse files and create a TimingInformation object
     experiment_results = TimingInformation(
-        output_file=output_file,
         timing_files=timing_files,
         paramedir_files=paramedir_files,
         dimemas_files=dimemas_files,
         param_file=param_file
     )
     # Save json file
-    experiment_results.save_json()
+    experiment_results.save_json(output_file)
     print("jsone file saved in ", abspath(output_file+".json"))
