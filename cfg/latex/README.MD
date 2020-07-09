@@ -21,7 +21,7 @@ Short guide on how to use the class:
    ```
  - When you're done adding sections and data you can specify title and authors
    ```bash
-   python ReportGenerator.py -O ../report.pkl --report-title "Report Nemo version Piriri"
+   python ReportGenerator.py -O ../report.pkl --report-title "Report Nemo version 666"
    python ReportGenerator.py -O ../report.pkl --report-authors "O. Tinto Primis"
    python ReportGenerator.py -O ../report.pkl --report-authors "Stella V. Paronuzzi Ticco"
    ```
@@ -34,9 +34,9 @@ Short guide on how to use the class:
  - Now if you whant to generate the .tex file just dump the object to file with -d option:
    ```bash
    python ReportGenerator.py -O  ./report.pkl -d
-  ```
+   ```
 If everything went fine, which I seriously doubt you should now have a .tex file, and 
 ```bash
-pdflatex file.tex && evince file.pdf
+ pdflatex file.tex && evince file.pdf
 ```
 should open your report.
