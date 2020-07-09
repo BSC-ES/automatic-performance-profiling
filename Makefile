@@ -226,7 +226,7 @@ else
 	tar -xf ORCA2_ICE_v4.0.tar -C inidata
 	gunzip inidata/*
 	# Remove write permissions to avoid unwilingly manipulate the input files
-	chmod -w inidata 
+	chmod -w inidata
 	# Remove compressed file
 	rm ORCA2_ICE_v4.0.tar
 endif
@@ -340,8 +340,6 @@ paraver_dependencies=$(foreach var, $(number_of_processes), .paraver_$(var).done
 paraver_experiment: $(paraver_dependencies)
 
 # Collect information and produce a json file with it.
-
-# Collect information and produce a json file with it.
 .json.done: .scalability.done paramedir_experiment paradim_experiment
 	$(MAKE) process_json
 	touch $@
@@ -394,7 +392,22 @@ report: .latex_report.done
 
 	# Generate the target
 	touch $@
+##########################
+#Run multi exp
+.MultiExperiment_%.done:
+	# The script contains a wait statement, so the target won't complete until the script finishes
+	./MultiExperiment/MultiExperiment_launcher.cmd MultiExperiment/configurations/$*
+	touch $@
 
+MultiExperiment_%: .MultiExperiment_%.done
+	@echo $@ "done"
+
+.%_postproc.done: .MultiExperiment_%.done
+	python cfg/parser/comparator.py $*/*/*.json -s -O report.pkl -subsection-title $*
+	touch $@
+
+%_postproc: .%_postproc.done
+	@echo $@ "done"
 ##########################
 #Run some standard benchmark
 .stream_ready: | bin
@@ -473,4 +486,4 @@ hardware_benchmarks: .stream_harvest.done .osu_harvest.done
 ############
 # Intermediate files #that won't be removed automatically
 binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
-.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim .Trace_%.done
+.PRECIOUS: $(binaries) $(dimemas_dependencies) %.dim .Trace_%.done .multiexperiment_%.done
