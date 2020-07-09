@@ -503,7 +503,7 @@ if __name__ == "__main__":
     # Convert (sub)section title before using it
     if section_title.count("_"):
         section_title = " ".join([w.capitalize() for w in section_title.split("_")])
-    if subsection_title.count("_"):
+    if subsection_title is not None and subsection_title.count("_"):
         subsection_title = " ".join([w.capitalize() for w in subsection_title.split("_")])
     # Load a report if exist, create a new one in case it doesn't
     report = report_load(report_obj)
