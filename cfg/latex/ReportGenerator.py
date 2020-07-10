@@ -298,6 +298,37 @@ class CsvFile:
         else:
             self.csv_data = text
 
+    def purge_csv_data(self):
+        n_col = len(self.csv_data[0])
+        n_row = len(self.csv_data[1:])
+
+        # Reverse otherwise removing data will end in an out of range error
+        for col in reversed(range(n_col)):
+            try:
+                col_val = [int(data[col]) for data in self.csv_data[1:]]
+                check_list = [0] * n_row
+            except ValueError:
+                try:
+                    col_val = [float(data[col]) for data in self.csv_data[1:]]
+                    check_list = [0.0] * n_row
+                except ValueError:
+                    continue
+            if col_val == check_list:
+                # Now we want to remove entries also from the header
+                for row in range(n_row + 1):
+                    self.csv_data[row].remove(self.csv_data[row][col])
+
+    def store(self, csv_convert =False, csv_purge=False):
+
+        if csv_convert:
+            self.csv_data = converter(self.path, summary=True)
+        else:
+            with open(self.path, newline='') as csv_file:
+                self.csv_data = list(csv.reader(csv_file))
+        # If specified, remove empty columns from csv file
+        if csv_purge:
+            self.purge_csv_data()
+
         # Path where the file data will be dumped
         self.store_path = "csv/" + self.section
         if self.subsection is not None:

@@ -1,0 +1,10 @@
+#!/bin/bash
+source cfg/target/param_bash.cfg
+# if the mirror has not ben cloned yet
+if [[ ! -d nemo_mirror ]]
+then
+  ./cfg/clone_nemo.sh nemo_mirror ${model_branch}
+fi
+# Download NEMO sources from svn repository
+ln -sf nemo_mirror ${model}_source
+

@@ -335,8 +335,13 @@ def tracking_mpi_profile_per_function(experiment_data, function):
     cases = experiment_data.cases
 
     log = Log()
+<<<<<<< HEAD
     #log_txt = "\n%s\n" % function
     log_txt = "Cores"
+=======
+    log_txt = "\n%s\n" % function
+    log_txt += "Cores"
+>>>>>>> 6f362bc... New functions to deal with tracking and produce suitable csv outputs.
     for index, field in enumerate(mpi_fields):
         if index not in mpi_indices_to_keep:
             continue

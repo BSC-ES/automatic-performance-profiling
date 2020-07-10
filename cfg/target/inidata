@@ -1,0 +1,18 @@
+#!/bin/bash
+source cfg/target/param_bash.cfg
+
+if [[ ! -z ${configuration_resolution+x} ]]
+then
+  # It is BENCH, copy the namelist into the configuration namelist_cfg
+  cp cfg/utils/iodef.xml  inidata
+  cp cfg/utils/context_nemo.xml  inidata
+else
+  wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar
+  tar -xf ORCA2_ICE_v4.0.tar -C inidata
+  gunzip inidata/*
+  # Remove write permissions to avoid unwilingly manipulate the input files
+  chmod -w inidata
+  # Remove compressed file
+  rm ORCA2_ICE_v4.0.tar
+fi
+ 
