@@ -60,7 +60,12 @@ def get_command_line_instructions():
         help="Produce dimemas report",
         default=None,
     )
-
+    parser.add_option(
+        "--tracking",
+        dest="tracking_file",
+        help="Produce tracking report",
+        default=None,
+    )
 
     # OptParser will parse the text provided as command line arguments and will distringuish between the options
     # and other arguments
@@ -85,6 +90,7 @@ if __name__ == "__main__":
     sypd_plot_file = options.sypd_plot_file
     functions_file = options.functions_file
     dimemas_file = options.dimemas_file
+    tracking_file = options.tracking_file
 
     # Load the json file provided
     experiment_results = TimingInformation(
@@ -97,11 +103,15 @@ if __name__ == "__main__":
 
     if sypd_file is not None:
         experiment_results.simulated_years_per_day_summary().save(sypd_file)
-    if sypd_plot_file:
+    if sypd_plot_file is not None:
         experiment_results.simulated_years_per_day_plot(sypd_plot_file)
     if functions_file is not None:
         experiment_results.function_summary().save(functions_file)
     if dimemas_file is not None:
         experiment_results.dimemas_summary().save(dimemas_file)
+    if tracking_file is not None:
+        experiment_results.tracking(tracking_file)
+
+
 
     # To create a new diagnostic/plot you need to create the function in curation.py and add the call inside parsers.py

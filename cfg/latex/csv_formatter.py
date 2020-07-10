@@ -84,27 +84,29 @@ class ParaverFile:
         return summary
 
     def print_csv(self, summary=False):
-        output_file = "new_file"
-        with open(output_file, 'wt') as f_output:
-            csv_output = csv.writer(f_output)
+        # output_file = "new_file"
+        # with open(output_file, 'wt') as f_output:
+        #     csv_output = csv.writer(f_output)
+        data_rows = []
+        if summary:
+            header = ['-'] + [field for field in self.header]
+            # data_rows.append(header)
+            for key, val in self.summary.items():
+                data_rows.append([key] + val)
+        else:
 
-            if summary:
-                new_header = ['-'] + [field for field in self.header]
-                csv_output.writerow(new_header)
-                for key, val in self.summary.items():
-                    csv_output.writerow([key] + val)
-            else:
-                csv_output.writerow(self.header)
-                for data in self.data_lines:
-                    csv_output.writerow(data)
+            heder = self.header
+            # data_rows.append(self.header)
+            for data in self.data_lines:
+                data_rows.append(data[0])
 
-        return output_file
+        return [header] + data_rows
 
 
 def converter(input_file, summary=False):
     file = ParaverFile(input_file)
-    fmt_file = file.print_csv(summary)
-    return fmt_file
+    fmt_data = file.print_csv(summary)
+    return fmt_data
 
 
 def formatter(input_file, output_file):

@@ -1,6 +1,6 @@
 # Imports
 import numpy as np
-from ReportGenerator import Section
+from cfg.latex.ReportGenerator import Section
 
 class Log:
     """
@@ -12,7 +12,10 @@ class Log:
         self.text = ""
 
     def __add__(self, other):
+        if isinstance(other, Log):
+            other = other.text
         self.text += other + "\n"
+        return self
 
     def add(self, text):
         self.__add__(text)
@@ -34,6 +37,26 @@ class Log:
         else:
             with open(filename, "w") as f:
                 f.write(self.text)
+
+
+def go_to_dictionary_address(dictionary, address):
+    """
+    It creates the proper dictionary structure according to an address provided.
+    In case the proper structure already exists it only retrieves it.
+    :param dictionary:
+    :param address:
+    :return: dictionary section
+    """
+
+    def go_to_section(d, section):
+        try:
+            return d[section]
+        except KeyError:
+            raise AssertionError("Provided address does not exists in this dictionary:\n%s" % str(address))
+
+    for step in address:
+        dictionary = go_to_section(dictionary, step)
+    return dictionary
 
 
 def function_curated_summary(experiment_data):
@@ -81,7 +104,6 @@ def dimemas_curated_summary(experiment_data):
     :param experiment_data:
     :return: text with a summary of functions scalability in the experiment.
     """
-    from cfg.parser.utils.parsers import dictionary_pointer
 
     log = Log()
     cases = experiment_data.cases
@@ -99,20 +121,21 @@ def dimemas_curated_summary(experiment_data):
         for exp in dimemas_experiments:
             for it in information_types:
                 address = (case,
-                            "Dimemas",
-                            exp,
-                            it,
+                           "Dimemas",
+                           exp,
+                           it,
                            "data",
-                            "Maximum",
+                           "Maximum",
                            )
 
-                section = dictionary_pointer(experiment_data.data, address)
-                wallclock_time = section[0]/10.**6
+                section = go_to_dictionary_address(experiment_data.data, address)
+                wallclock_time = section[0] / 10. ** 6
                 log_text += ", %.2f" % wallclock_time
         log_text += "\n"
     log.add(log_text)
 
     return log
+
 
 def save_function_summary_csv(experiment_data, csv_folder):
     """
@@ -138,6 +161,8 @@ def save_function_summary_csv(experiment_data, csv_folder):
         for c, r in experiment_data.get_function_info(function):
             fun_results[function][c] = r
 
+    # Remove empty entries
+    fun_results = {k: v for k, v in fun_results.items() if v != {}}
     key = 'Elap. Time(s)'
 
     fun_results = {k: v for k, v in
@@ -172,6 +197,202 @@ def save_function_summary_csv(experiment_data, csv_folder):
 
         final_table = np.column_stack((header, data))
         np.savetxt(csv_folder + '/' + k + '.csv', final_table, delimiter=',', fmt="%s")
+    return log
+
+
+def tracking_function_info(experiment_data):
+    log = Log()
+
+    cases = experiment_data.cases
+    functions = experiment_data.functions
+
+    info_types = ['Elap. Time(s)']
+
+    for info_type in info_types:
+        log_text = "%s" % info_type
+        log_text += "," * len(cases) + "\n"
+        log_text += "%s" % "Functions"
+        for case in cases:
+            log_text += ",%i" % case
+        log_text += "\n"
+
+        for function in functions:
+            log_text += "%s" % function
+            for case in cases:
+                address = (case,
+                           "FunctionInfo",
+                           function,
+                           info_type,
+                           )
+                section = go_to_dictionary_address(experiment_data, address)
+                log_text += ",%.2f" % section
+            log_text += "\n"
+
+        log.add(log_text)
+    return log
+
+
+def function_information_from_paramedir_outputs(experiment_data):
+    """
+    This funciton only returns the functions that are defined in the base case counters part with the elapsed time on
+    each one of them and the total execution time.
+    :param experiment_data:
+    :return: total_time, sorted dictionary with the time for each function
+    """
+    base_case = experiment_data.base_case
+    address = (base_case, "Counters")
+    counters_dictionary = go_to_dictionary_address(experiment_data, address)
+    counter = "Time"
+    functions = list(counters_dictionary["Time"].keys())
+
+    def get_address(function):
+        return (base_case,
+                "Counters",
+                counter,
+                function,
+                "Average"
+                )
+
+    times = [go_to_dictionary_address(experiment_data, get_address(function))[0] for function in functions]
+    total_time = sum(times)
+
+    functions_time = {}
+    for index, function in enumerate(functions):
+        functions_time[function] = times[index]
+    functions_time = {k: v for k, v in sorted(functions_time.items(), key=lambda item: - item[1])}
+    return total_time, functions_time
+
+
+def tracking(experiment_data, folder, threshold=0.01):
+    from os import makedirs
+    from os.path import abspath
+    total_time, functions_time = function_information_from_paramedir_outputs(experiment_data)
+
+    # Keep only the functions that represent more time than the defined threshold
+    functions = [function for function, time in functions_time.items() if time/total_time >= threshold]
+    MPI_folder = folder + "/MPI"
+    counters_folder = folder + "/counters"
+    makedirs(MPI_folder, exist_ok=True)
+    makedirs(counters_folder, exist_ok=True)
+    # Joint log
+    full_log = Log()
+    for function in functions:
+        MPI_log = Log()
+        counters_log = Log()
+        mpi_profile = tracking_mpi_profile_per_function(experiment_data, function)
+        counters = tracking_counters_per_function(experiment_data, function)
+        if not mpi_profile or not counters:
+            continue
+
+        MPI_log += mpi_profile
+        counters_log += counters
+
+        MPI_log.save("%s/%s.csv" % (MPI_folder, function))
+        counters_log.save("%s/%s.csv" % (counters_folder, function))
+        full_log += mpi_profile + counters
+
+    full_log.print()
+
+
+def tracking_mpi_profile_per_function(experiment_data, function):
+    base_case = experiment_data.base_case
+    address = (
+        base_case,
+        "Counters",
+        "MPIcallprofile",
+    )
+    mpi_dictionary = go_to_dictionary_address(experiment_data, address)
+    mpi_fields = list(mpi_dictionary[function]["names"])
+    # All MPI fields that can be found in a NEMO trace (Probably should find a more generic way
+    """
+                    0 Outside_MPI
+                    1 MPI_Recv
+                    2 MPI_Isend
+                    3 MPI_Wait
+                    4 MPI_Bcast
+                    5 MPI_Barrier
+                    6 MPI_Allreduce
+                    7 MPI_Comm_rank
+                    8 MPI_Comm_size
+                    9 MPI_Comm_dup
+                    10 MPI_Init
+                    11 MPI_Finalize
+                    12 MPI_Iallreduce
+    """
+    mpi_fields_to_keep = (
+        "Outside_MPI",
+        "MPI_Recv",
+        "MPI_Isend",
+        "MPI_Wait",
+        "MPI_Bcast",
+        "MPI_Barrier",
+        "MPI_Allreduce",
+        "MPI_Iallreduce",
+    )
+
+    mpi_indices_to_keep = [index for index, value in enumerate(mpi_fields) if value in mpi_fields_to_keep]
+    cases = experiment_data.cases
+
+    log = Log()
+    #log_txt = "\n%s\n" % function
+    log_txt = "Cores"
+    for index, field in enumerate(mpi_fields):
+        if index not in mpi_indices_to_keep:
+            continue
+        log_txt += ",%s" % field
+    log.add(log_txt)
+    for case in cases:
+        log_txt = "%i" % case
+        address = (
+            case,
+            "Counters",
+            "MPIcallprofile",
+            function,
+            "Average",
+        )
+        data = go_to_dictionary_address(experiment_data, address)
+        for index, field in enumerate(mpi_fields):
+            if index not in mpi_indices_to_keep:
+                continue
+            log_txt += ",%.1f" % data[index]
+        log.add(log_txt)
+    return log
+
+
+def tracking_counters_per_function(experiment_data, function):
+    log = Log()
+    base_case = experiment_data.base_case
+    cases = experiment_data.cases
+    address = (base_case, "Counters")
+    counters_dictionary = go_to_dictionary_address(experiment_data, address)
+    available_counters = list(counters_dictionary.keys())
+    available_counters = ["Instructions", "Cycles", "IPC", "Time"]
+    labels = ["Instructions", "Cycles", "IPC", "Time(ms)"]
+
+    # Header
+    log_text = "Processes"
+    for index, counter in enumerate(available_counters):
+        log_text += ",%s" % labels[index]
+    log.add(log_text)
+
+    for case in cases:
+        log_text = "%i" % case
+        for counter in available_counters:
+            address = (case,
+                       "Counters",
+                       counter,
+                       function,
+                       "Average"
+                       )
+            try:
+                section = go_to_dictionary_address(experiment_data, address)
+            except AssertionError as err:
+                return None
+            data = section[0]
+            log_text += ", %.1f" % data
+
+        log.add(log_text)
+
     return log
 
 
@@ -280,7 +501,6 @@ def experiment_comparison(experiment1, experiment2):
     return log
 
 
-
 def multiexperiment_comparison(experiments, field1="Communication", field2="sypd", field3="average"):
     # List of process per node used in experiments
     processes_per_node = [int(exp.processes_per_node) for exp in experiments]
@@ -288,17 +508,17 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
     # Find cases with common number of node among the experiments
     common_cases = set([ex / processes_per_node[0] for ex in experiments[0].cases])
     for index, exp in enumerate(experiments[1:]):
-        n_node = [case / processes_per_node[index+1] for case in exp.cases]
+        n_node = [case / processes_per_node[index + 1] for case in exp.cases]
         common_cases.intersection_update(n_node)
 
     cases_to_compare = list(common_cases)
     base_case = min(cases_to_compare)
 
-    #Initialize results printout
+    # Initialize results printout
     log = Log()
 
     # Simulated Years per Day
-    base_case_speed = [experiment[base_case*ppn][field1][field2][field3]
+    base_case_speed = [experiment[base_case * ppn][field1][field2][field3]
                        for experiment, ppn in zip(experiments, processes_per_node)]
 
     # Find index of slowest experiment
@@ -308,7 +528,7 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
 
     # Print header
     log_text = "%s, %s, %s" % (field1, field2, field3)
-    log.add(log_text)    
+    log.add(log_text)
     log_text = "Experiment names:"
     for index, experiment in enumerate(experiments):
         # add info on layout of proc on nodes
@@ -317,8 +537,6 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
             log_text += ", %s %s" % (experiment.experiment_name, node_filling)
         else:
             log_text += ", %s" % (experiment.experiment_name)
-
-
 
     log.add(log_text)
 
@@ -333,7 +551,8 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp_speeds = [experiment[case * ppn][field1][field2][field3] for experiment, ppn in zip(experiments, processes_per_node)]
+        exp_speeds = [experiment[case * ppn][field1][field2][field3] for experiment, ppn in
+                      zip(experiments, processes_per_node)]
         exp_speedups = [exp_speeds[i] / base_case_speed[i] for i in range(len(experiments))]
         exp_efficiency = [es / resource_increase for es in exp_speedups]
 

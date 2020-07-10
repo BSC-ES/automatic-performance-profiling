@@ -5,7 +5,12 @@ from cfg.parser.utils.curation import function_curated_summary,\
                                       dimemas_curated_summary, \
                                       simulated_years_per_day_summary, \
                                       save_function_summary_csv,\
-                                      simulated_years_per_day_plot
+                                      simulated_years_per_day_plot, \
+                                      tracking, \
+                                      tracking_mpi_profile_per_function,\
+                                      tracking
+
+
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
 
@@ -86,7 +91,7 @@ def distributed_variable(values):
     return {"values": values, "average": np.average(values), "std": np.std(values)}
 
 
-def parse_timing_files(files):
+def parse_timing_files(files, functions=None):
     """
     Function that reads a list of files and returns different data of interest
     :param files: List of files to process
@@ -218,7 +223,7 @@ def parse_timing_files(files):
 
         return cores, process_data
 
-    def parse_function_info(lines):
+    def parse_function_info(lines, functions=None):
         """
         Parses function info.
         For each function found the information stored is the following:
@@ -252,6 +257,12 @@ def parse_timing_files(files):
             m = re.search(functions_pattern, l)
             if m:
                 section, values = parse_function_line(m.groups())
+                if functions is not None:
+                    real_name = [f for f in functions if f.replace("_", "").count(section.replace("_", ""))]
+                    if len(real_name) == 1:
+                        section = real_name[0]
+                    else:
+                        functions.append(section)
                 function_data[section] = {}
                 for label, value in zip(labels, values):
                     function_data[section][label] = value
@@ -285,7 +296,7 @@ def parse_timing_files(files):
             # Save case results
             results[number_of_processes] = {"ProcessInfo": process_data}
             # Get function info
-            function_info = parse_function_info(lines)
+            function_info = parse_function_info(lines, functions)
             results[number_of_processes]["FunctionInfo"] = function_info
             # Get step duration at process 0
             step_av, step_std = steps_info(lines)
@@ -405,12 +416,12 @@ class TimingInformation:
         if json_file:
             import json
             self.load_json(json_file)
-        if timing_files:
-            self.load_timings(timing_files)
         if paramedir_files:
             self.load_paramedir(paramedir_files)
         if dimemas_files:
             self.load_dimemas(dimemas_files)
+        if timing_files:
+            self.load_timings(timing_files)
 
     def __getitem__(self, item):
         return self.data[item]
@@ -418,7 +429,7 @@ class TimingInformation:
     def find_functions(self):
         functions = []
         for case in self.cases:
-            functions.append(list(self.data[case]["FunctionInfo"].keys()))
+            functions.append(list(self.data[case]["Counters"]["Cycles"].keys()))
         functions = sum(functions, [])
         return list(set(functions))
 
@@ -432,7 +443,7 @@ class TimingInformation:
             try:
                 yield case, self[case]["FunctionInfo"][function]
             except KeyError:
-                pass
+                return []
 
     def load_param(self, param_file):
         from os.path import isfile
@@ -483,11 +494,17 @@ class TimingInformation:
     def simulated_years_per_day_plot(self, filename=None):
         return simulated_years_per_day_plot(self, filename)
 
+    def tracking(self, folder):
+        return tracking(self, folder)
+
     def save_json(self, filename=None):
         import json
         # Check if file name has been passed, if not use experiment name
         if filename is None:
-            filename = self.experiment_name + ".json"
+            if self.experiment_name is not None:
+                filename = self.experiment_name + ".json"
+            else:
+                filename = "experiment.json"
         # add extension if not there
         if not filename.count(".json"):
             filename = filename + ".json"
@@ -532,14 +549,10 @@ class TimingInformation:
         if not files:
             raise AssertionError("Empty list of files")
         if self.data is None:
-            self.data = parse_timing_files(files)
+            self.data = parse_timing_files(files, self.functions)
         else:
-            timing_info = parse_timing_files(files)
+            timing_info = parse_timing_files(files, self.functions)
             self.data = merge_dictionaries(self.data, timing_info)
-        self.cases = list(sorted(self.data.keys()))
-        self.base_case = min(self.cases)
-
-        self.functions = self.find_functions()
 
     def load_paramedir(self, files):
         if not files:
@@ -549,6 +562,10 @@ class TimingInformation:
         else:
             paramedir_info = parse_paramedir_files(files)
             self.data = merge_dictionaries(self.data, paramedir_info)
+        if self.cases is None:
+            self.cases = list(sorted(self.data.keys()))
+            self.base_case = min(self.cases)
+        self.functions = self.find_functions()
 
         pass
 
@@ -562,3 +579,4 @@ class TimingInformation:
             self.data = merge_dictionaries(self.data, dimemas_info)
 
         pass
+

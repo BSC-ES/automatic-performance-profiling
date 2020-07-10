@@ -16,6 +16,11 @@ processes_per_node?=48
 analysis_tools=cfg/trace_analysis/
 latex_folder=cfg/latex
 trace_folder_prefix=trace
+# Check environment is loaded
+####################################################
+ifeq ("$(wildcard .env_loaded )","")
+  $(error Please load the environment sourcing load_env.sh file)
+endif
 # Help
 ####################################################
 help:
@@ -25,8 +30,6 @@ help:
 	@echo "Modify the file param.cfg to select the branch inside the nemo mirror that you would like to profile."
 	@echo ""
 	@echo 
-	
-
 ###################################################
 # Experiment recipes specified in param.cfg file
 experiment:
@@ -156,7 +159,7 @@ paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*
 	cd $($@_trace_folder); for file in *pm ; do \
 	   mv $${file} $*_$${file} ;\
 	done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPIcallprofile.pm --c
+#	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPIcallprofile.pm -c
 	touch $@
 
 paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
@@ -284,7 +287,7 @@ bin:
 # Clean recipes
 # Delete (almost)-everything
 clean:
-	rm -rf reference_workdir nemo_source *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
+	rm -rf reference_workdir nemo_source nemo_mirror *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
 	rm -rf function_csv/
 	rm -rf OSU* osu* bin/osu_bench .osu*
 	rm -rf STREAM* stream* bin/stream_bench .stream*
@@ -354,16 +357,27 @@ ${configuration_name}.json:
 #	touch $@
 #json: .json.done
 
-# Make reports
+# Make report
+functions=$(wildcard function_csv/* tracking/MPI/*)
 .info_report.done: .json.done 
 	python cfg/parser/reporter.py \
                                     ${configuration_name}.json \
                                     -f function_csv \
                                     --sypd sypd.txt \
                                     --sypd-plot ${configuration_name}.png \
-                                    --functions functions_summary.txt
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" --add-csv function_csv
+                                    --functions functions_summary.txt \
+	                            --tracking tracking
 	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Scalability" --add-img ${configuration_name}.png
+	for func in ${functions} ; do \
+                file_name=$${func##function_csv/} ;\
+                file_name=$${file_name##tracking/MPI/} ;\
+                func_name=$${file_name%.csv} ;\
+                echo $${func_name} ;\
+                echo $${file_name} ;\
+                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -s  $${func_name} --add-csv  function_csv/$${file_name}  --silent;\
+                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -s  $${func_name} --add-csv  tracking/MPI/$${file_name} -p  --silent ;\
+                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -s  $${func_name} --add-csv  tracking/counters/$${file_name} -p --silent ;\
+        done
 	touch $@
 
 ############

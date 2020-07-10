@@ -9,7 +9,7 @@ import csv
 import warnings
 from glob import glob
 
-from csv_formatter import converter
+from cfg.latex.csv_formatter import converter
 
 
 def report_load(report_name):
@@ -77,14 +77,14 @@ class LatexText:
     def add_section2tex(self, section):
         self.clearpage()
         self.add_text("\section{" + section.section_title + "}")
-        self.clearpage()
+        # self.clearpage()
         if section.text is not None:
             self.add_text(section.text)
 
     def add_subsection2tex(self, subsection):
-        self.clearpage()
+        # self.clearpage()
         self.add_text("\subsection{" + subsection.subsection_title + "}")
-        self.clearpage()
+        # self.clearpage()
         if subsection.text is not None:
             self.add_text(subsection.text)
 
@@ -99,7 +99,7 @@ class LatexText:
         makedirs(absolute_path + image.store_path, exist_ok=True)
         image.dump2disk(absolute_path)
         self.new_line()
-        self.add_text("\\begin{figure}")
+        self.add_text("\\begin{figure}[H]")
         self.add_text("\includegraphics[width=\linewidth]{" + image.store_path + "/" + image.name + "}")
         self.add_text("\caption{" + image.caption + ".}")
         self.add_text("\label{" + image.label + "}")
@@ -112,12 +112,12 @@ class LatexText:
         except AssertionError:
             raise AssertionError("Error with %s: is this an csv?", csv_file)
         # Update path
-        csv_file.store_path =  csv_file.store_path
+        csv_file.store_path = csv_file.store_path
         # Create img dir if it doesn't exist
         makedirs(absolute_path + csv_file.store_path, exist_ok=True)
         csv_file.dump2disk(absolute_path)
         self.new_line()
-        self.add_text("\\begin{table}")
+        self.add_text("\\begin{table}[H]")
         self.add_text("\centering")
         self.add_text("\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}")
         self.add_text("\caption{" + csv_file.caption + "}")
@@ -150,21 +150,25 @@ class Section:
             img_obj.store()
             self.images.append(img_obj)
 
-    def add_csv(self, file_path, subsection_name=None, csv_convert=False):
-        csv_files = get_files_from_path(file_path, ".csv")
+    def add_csv(self, file_path, subsection_name=None, csv_convert=False, csv_purge=False, silent_mode=False):
+        try:
+            csv_files = get_files_from_path(file_path, ".csv")
+        except AssertionError:
+            if silent_mode:
+                return
+            else:
+                raise AssertionError()
         for csv_file in csv_files:
-            if csv_convert:
-                # converted_file = converter(csv_file)
-                converted_file = converter(csv_file, summary=True)
-                csv_file = converted_file
-            csv_obj = CsvFile(csv_file, _section=self.section_name, _subsection=subsection_name)
+            csv_obj = CsvFile(csv_file,
+                              self.section_name,
+                              subsection_name,
+                              csv_purge,
+                              csv_convert)
             # Avoid adding item more than once ... useful in case of make target's failure
             for s_csv in self.csv_files:
                 if csv_obj.path == s_csv.path:
                     warnings.warn("File " + csv_obj.path + " already present", stacklevel=4)
                     return
-            # Save the data in the csv_obj
-            csv_obj.store()
             self.csv_files.append(csv_obj)
 
     # Some text, produced by some python script in csv format will be added to the report
@@ -175,7 +179,6 @@ class Section:
         csv_obj.store(csv_format_text)
         # Add to report obj
         self.csv_files.append(csv_obj)
-
 
     def get_subsection(self, subsection_title):
         for subsection in self.subsections:
@@ -209,8 +212,8 @@ class Subsection(Section):
         super(Subsection, self).add_image(file_path, self.subsection_name)
 
     # Overwrites method adding csv subsection info
-    def add_csv(self, file_path, csv_convert):
-        super(Subsection, self).add_csv(file_path, self.subsection_name, csv_convert)
+    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode):
+        super(Subsection, self).add_csv(file_path, self.subsection_name, csv_convert, csv_purge, silent_mode)
 
     # Overwrites method adding csv subsection info
     def add_text_as_csv(self, csv_format_text, computed_quantity):
@@ -246,25 +249,55 @@ class ImgFile:
 
 
 class CsvFile:
-    def __init__(self, _path, _section, _subsection=None, _caption=None):
+    def __init__(self, _path, _section_name, _subsection_name, _purge=False, _convert=False, _caption=None):
         self.path = _path
         self.store_path = None
         self.name = self.path.split("/")[-1]
         self.label = "tab:" + self.name.replace(".csv", "")
         self.caption = _caption
         self.csv_data = None
-        self.section = _section
-        self.subsection = _subsection
+        self.section = _section_name
+        self.subsection = _subsection_name
+        self.store(csv_convert=_convert, csv_purge=_purge)
 
         if self.caption is None:
-            self.label.replace("_", "\\_").replace("tab:", "")
+            self.caption = self.label.replace("_", "\\_").replace("tab:", "")
 
-    def store(self, text=None):
+    def purge_csv_data(self):
+        n_col = len(self.csv_data[0])
+        n_row = len(self.csv_data[1:])
+
+        # Reverse otherwise removing data will end in an out of range error
+        for col in reversed(range(n_col)):
+            try:
+                col_val = [int(data[col]) for data in self.csv_data[1:]]
+                check_list = [0] * n_row
+            except ValueError:
+                try:
+                    col_val = [float(data[col]) for data in self.csv_data[1:]]
+                    check_list = [0.0] * n_row
+                except ValueError:
+                    continue
+            if col_val == check_list:
+                # Now we want to remove entries also from the header
+                for row in range(n_row + 1):
+                    self.csv_data[row].remove(self.csv_data[row][col])
+
+    def store(self, text=None, csv_convert=False, csv_purge=False):
         if text is None:
-            with open(self.path, newline='') as csv_file:
-                self.csv_data = list(csv.reader(csv_file))
+            if csv_convert:
+                self.csv_data = converter(self.path, summary=True)
+            else:
+                with open(self.path, newline='') as csv_file:
+                    self.csv_data = list(csv.reader(csv_file))
+                    # Remove rows if they're empty
+                    self.csv_data = [d for d in self.csv_data if d != []]
+            # If specified, remove empty columns from csv file
+            if csv_purge:
+                self.purge_csv_data()
         else:
             self.csv_data = text
+
         # Path where the file data will be dumped
         self.store_path = "csv/" + self.section
         if self.subsection is not None:
@@ -272,6 +305,10 @@ class CsvFile:
 
     # Writes csv data to file
     def dump2disk(self, absolute_path):
+        if exists(absolute_path + self.store_path + "/" + self.name):
+            import hashlib
+            hash_name = hashlib.sha256(self.path.encode("utf8")).hexdigest()
+            self.name = hash_name + "_" + self.name
         with open(absolute_path + self.store_path + "/" + self.name, 'wt') as f_output:
             csv_output = csv.writer(f_output)
             for data_row in self.csv_data:
@@ -282,7 +319,7 @@ class CsvFile:
 class Report:
     def __init__(self, _name):
         # Name that will be used for the latex doc, without path
-        self.name = _name.replace(".pkl","").split("/")[-1]
+        self.name = _name.replace(".pkl", "").split("/")[-1]
         self.obj_name = _name
         self.sections = []
         self.total_section_number = 0
@@ -294,6 +331,7 @@ class Report:
                         "\\usepackage{graphicx} \n" \
                         "\\usepackage{csvsimple} \n" \
                         "\\usepackage{booktabs}\n" \
+                        "\\usepackage{float}\n" \
                         "\\title{TITLE} \n " \
                         "\\author{AUTHORS} \n  \date{\\today} \n" \
                         "\makeatletter \n" \
@@ -389,7 +427,7 @@ class Report:
                 for csv_file in subsection.csv_files:
                     self.text.add_csv2tex(csv_file, self.absolute_path)
 
-        self.__end_doc()    
+        self.__end_doc()
 
         file_name = self.name + ".tex"
         report_file = open(file_name, "w")
@@ -468,37 +506,62 @@ def get_command_line_arguments():
     Returns a list of files that have been provided as a command line argument
     :return: list of files
     """
-    from optparse import OptionParser
+
     # Parse and assert command line options
-    parser = OptionParser()
-    parser.add_option("-O", "--report-obj", dest="report_obj", default=None,
-                      help="Name of the object that will progressively store report information")
-    parser.add_option("-t", "--report-title ", dest="report_title", default=None,
-                      help="Title that will appear in the Report")
-    parser.add_option("-A", "--report-authors ", dest="report_authors", default=None,
-                      help="These will appear as report authors")
-    parser.add_option("-n", "--section-number", dest="section_number", default=None,
-                      help="name of the section that will be added if doesn't exist")
-    parser.add_option("-S", "--section-title", dest="section_title", default=None,
-                      help="title of the section that will be added if doesn't exist")
-    parser.add_option("-s", "--subsection-title", dest="subsection_title", default=None,
-                      help="title of the subsection that will be added if doesn't exist")
-    parser.add_option("-i", "--add-img", dest="image", default=None,
-                      help="path to an image or to an image folder which will be added to the section")
-    parser.add_option("-C", "--add-csv", dest="csv_file", default=None,
-                      help="path to a csv or a folder of csv that will be added to the section")
-    parser.add_option("-c", "--convert-csv", dest="csv_convert", default=False, action="store_true",
-                      help="If the file is a paraver file and need conversion to csv")
-    parser.add_option("-T", "--text-file", dest="text_file", default=None,
-                      help="path to a latex text file which will be used as section or subsection text")
-    parser.add_option("-d", "--dump-to-file", dest="dump_to_file", default=False, action="store_true",
-                      help="Triggers the generation of a tex file to be compiled with all the data stored so far")
-    parser.add_option("-I", "--inspect", dest="inspect_pkl_obj", default=False, action="store_true",
-                      help="Print to screen content of pkl obj")
-    (options, args) = parser.parse_args()
-    if not options.report_obj:
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-O", "--report-obj", default=None,
+                        help="Name of the object that will progressively store report information")
+    parser.add_argument("-t", "--report-title",
+                        type=str, default=None,
+                        help="Title that will appear in the Report")
+    parser.add_argument("-A", "--report-authors",
+                        type=str, default=None,
+                        help="These will appear as report authors")
+    parser.add_argument("-n", "--section-number",
+                        type=int, default=None,
+                        help="name of the section that will be added if doesn't exist")
+    parser.add_argument("-S", "--section-title",
+                        type=str, default=None,
+                        help="title of the section that will be added if doesn't exist")
+    parser.add_argument("-s", "--subsection-title",
+                        type=str, default=None,
+                        help="title of the subsection that will be added if doesn't exist")
+    parser.add_argument("-i", "--add-img", default=None,
+                        help="path to an image or to an image folder which will be added to the section")
+    parser.add_argument("-C", "--add-csv", default=None,
+                        help="path to a csv or a folder of csv that will be added to the section")
+    parser.add_argument("-c", "--csv-convert",
+                        default=False, action="store_true",
+                        help="If the file is a paraver file and need conversion to csv")
+    parser.add_argument("-p", "--csv-purge",
+                        default=False, action="store_true",
+                        help="Eliminates empty columns")
+    parser.add_argument("-T", "--text-file", default=None,
+                        help="path to a latex text file which will be used as section or subsection text")
+    parser.add_argument("-d", "--dump-to-file",
+                        default=False, action="store_true",
+                        help="Triggers the generation of a tex file to be compiled with all the data stored so far")
+    parser.add_argument("-I", "--inspect",
+                        default=False, action="store_true",
+                        help="Print to screen content of pkl obj")
+    parser.add_argument("--silent", action="store_true",
+                        help="Ignore if added file doesn't exist")
+    args = parser.parse_args()
+    if not args.report_obj:
         parser.error("A name for the object must be given")
-    return options
+    if args.add_csv is not None and args.section_title is None:
+        parser.error("A name for the section must be given")
+    if args.add_img is not None and args.section_title is None:
+        parser.error("A name for the section must be given")
+    if args.csv_convert or args.csv_purge:
+        if not args.add_csv:
+            parser.error("Purge and convert flags must be used with csv files")
+    if args.silent:
+        if not args.add_csv and not args.add_img:
+            parser.error("Silent mode can be run just when adding items to pkl object")
+    return args
 
 
 if __name__ == "__main__":
@@ -511,18 +574,15 @@ if __name__ == "__main__":
     section_title = options.section_title
     section_number = options.section_number
     subsection_title = options.subsection_title
-    image = options.image
-    csv_file = options.csv_file
+    image = options.add_img
+    csv_file = options.add_csv
     csv_convert = options.csv_convert
+    csv_purge = options.csv_purge
     dump_to_file = options.dump_to_file
     text_file = options.text_file
-    inspect_pkl_obj = options.inspect_pkl_obj
+    inspect_pkl_obj = options.inspect
+    silent_mode = options.silent
 
-    # Convert (sub)section title before using it
-    if section_title.count("_"):
-        section_title = " ".join([w.capitalize() for w in section_title.split("_")])
-    if subsection_title is not None and subsection_title.count("_"):
-        subsection_title = " ".join([w.capitalize() for w in subsection_title.split("_")])
     # Load a report if exist, create a new one in case it doesn't
     report = report_load(report_obj)
 
@@ -530,6 +590,11 @@ if __name__ == "__main__":
     if inspect_pkl_obj:
         report.inspect()
     else:
+        # Convert (sub)section title before using it
+        if section_title is not None and section_title.count("_"):
+            section_title = " ".join([w.capitalize() for w in section_title.split("_")])
+        if subsection_title is not None and subsection_title.count("_"):
+            subsection_title = " ".join([w.capitalize() for w in subsection_title.split("_")])
         if report_title is not None:
             report.add_title(report_title)
         if report_author is not None:
@@ -544,7 +609,7 @@ if __name__ == "__main__":
                 context.add_image(image)
             # Append csv table
             if csv_file is not None:
-                context.add_csv(csv_file, csv_convert=csv_convert)
+                context.add_csv(csv_file, csv_convert=csv_convert, csv_purge=csv_purge, silent_mode=silent_mode)
             # Add text to section
             if text_file is not None:
                 context.add_text(text_file)

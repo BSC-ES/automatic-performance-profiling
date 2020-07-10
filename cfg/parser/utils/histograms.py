@@ -33,7 +33,14 @@ def split_3d_histogram(text3d):
     # For each histogram
     for s, e in zip(starts, ends):
         case_lines = [l for l in lines[s:e + 1] if l.strip()]
-        name = case_lines[0].strip()
+        # with extended flags long names are stored btw square brackets
+        name = case_lines[0].split("[")[-1]
+        # Replace closing bracket if present
+        name = name.replace("]", "")
+        name = name.lower().split("_mp_")[-1]
+        if name[-1] == "_":
+            name = name[:-1]
+        # name = case_lines[0].strip()
         histogram = "\n".join(case_lines[1:])
         histograms[name] = histogram
     # In case of having a single histogram, fix it
@@ -72,6 +79,8 @@ def process_category_histogram(histogram):
     for match in m:
         replacement = match.replace(" ", "_")
         category_labels = category_labels.replace(match, replacement)
+    # TODO: Solve this hardcoded fix with a more general solution to deal with (non-)csv paramedir outputs.
+    category_labels = category_labels.replace("Outside MPI", "Outside_MPI")
     # Get list of funciont names
     categories = category_labels.split()
 
@@ -84,6 +93,11 @@ def process_category_histogram(histogram):
         label = split_line[0]
         if label in paramedir_labels:
             to_return[label] = [float(_x) for _x in split_line[1:]]
+
+    # We'll filter out all the unnamed values
+    indices_to_keep = [index for index, value in enumerate(categories) if value.count("value_") == 0]
+    for key in to_return.keys():
+        to_return[key] = [ v for index, v in enumerate(to_return[key]) if index in indices_to_keep]
     return to_return
 
 
