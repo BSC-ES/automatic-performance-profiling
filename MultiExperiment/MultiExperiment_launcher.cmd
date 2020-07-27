@@ -32,22 +32,23 @@ mkdir -p ${experiments_folder} || exit 1
 
 # Look at the experiments that need to be launched
 experiment_configurations=$( ls ${experiment_configurations_folder} )
-
 # For each experiment clone the repo there
 for experiment in ${experiment_configurations} ; do
    if [ -d ${experiments_folder}/${experiment} ] ; then
       continue
    fi
+   mkdir ${experiments_folder}/${experiment}
    # Clone repository to the new experiment folder
-   git clone ../ ${experiments_folder}/${experiment}
+   git clone . ${experiments_folder}/${experiment}
 
    # Copy the configuration file into the new folder
    cp ${experiment_configurations_folder}/${experiment} ${experiments_folder}/${experiment}/param.cfg
    # Launch the experiment in background and save the log
    cd ${experiments_folder}/${experiment}
-   nohup make experiment &> log &
+   make experiment &> log &
    cd -
-done
+done  ;\
+wait
 ## BEGIN -- NOT TO PUSH TO MASTER 
 #cd  ${experiments_folder}/${experiment}/cfg/parser/
 #for file in ./*.py ./utils/*.py

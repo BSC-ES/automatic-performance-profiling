@@ -1,6 +1,6 @@
 # Imports
 import numpy as np
-
+from ReportGenerator import Section
 
 class Log:
     """
@@ -17,8 +17,16 @@ class Log:
     def add(self, text):
         self.__add__(text)
 
-    def print(self):
-        print(self.text)
+    def print(self, context=None, computed_quantity=None):
+        if context is None:
+            print(self.text)
+        else:
+            try:
+                isinstance(context, Section)
+            except AssertionError:
+                raise AssertionError("An error occurred during loading of report")
+            context.add_text_as_csv(self.text, computed_quantity=computed_quantity)
+
 
     def save(self, filename=None):
         if filename is None:

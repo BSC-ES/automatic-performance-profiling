@@ -157,17 +157,25 @@ class Section:
                 # converted_file = converter(csv_file)
                 converted_file = converter(csv_file, summary=True)
                 csv_file = converted_file
-            csv_obj = CsvFile(csv_file)
+            csv_obj = CsvFile(csv_file, _section=self.section_name, _subsection=subsection_name)
             # Avoid adding item more than once ... useful in case of make target's failure
             for s_csv in self.csv_files:
                 if csv_obj.path == s_csv.path:
                     warnings.warn("File " + csv_obj.path + " already present", stacklevel=4)
                     return
-            csv_obj.section = self.section_name
-            csv_obj.subsection = subsection_name
             # Save the data in the csv_obj
             csv_obj.store()
             self.csv_files.append(csv_obj)
+
+    # Some text, produced by some python script in csv format will be added to the report
+    def add_text_as_csv(self, csv_format_text, subsection_name=None, computed_quantity=None):
+        csv_obj = CsvFile(self.subsection_title, _section=self.section_name, _subsection=subsection_name,
+                          _caption=computed_quantity)
+        # Save the data in the csv_obj
+        csv_obj.store(csv_format_text)
+        # Add to report obj
+        self.csv_files.append(csv_obj)
+
 
     def get_subsection(self, subsection_title):
         for subsection in self.subsections:
@@ -204,6 +212,10 @@ class Subsection(Section):
     def add_csv(self, file_path, csv_convert):
         super(Subsection, self).add_csv(file_path, self.subsection_name, csv_convert)
 
+    # Overwrites method adding csv subsection info
+    def add_text_as_csv(self, csv_format_text, computed_quantity):
+        super(Subsection, self).add_text_as_csv(csv_format_text, self.subsection_name, computed_quantity)
+
 
 class ImgFile:
     def __init__(self, _path):
@@ -234,19 +246,25 @@ class ImgFile:
 
 
 class CsvFile:
-    def __init__(self, _path):
+    def __init__(self, _path, _section, _subsection=None, _caption=None):
         self.path = _path
         self.store_path = None
         self.name = self.path.split("/")[-1]
-        self.label = "fig:" + self.path.split("/")[-1].replace(".csv", "")
-        self.caption = self.label.replace("_", "\\_").replace("fig:", "")
+        self.label = "tab:" + self.name.replace(".csv", "")
+        self.caption = _caption
         self.csv_data = None
-        self.section = None
-        self.subsection = None
+        self.section = _section
+        self.subsection = _subsection
 
-    def store(self):
-        with open(self.path, newline='') as csv_file:
-            self.csv_data = list(csv.reader(csv_file))
+        if self.caption is None:
+            self.label.replace("_", "\\_").replace("tab:", "")
+
+    def store(self, text=None):
+        if text is None:
+            with open(self.path, newline='') as csv_file:
+                self.csv_data = list(csv.reader(csv_file))
+        else:
+            self.csv_data = text
         # Path where the file data will be dumped
         self.store_path = "csv/" + self.section
         if self.subsection is not None:
@@ -503,7 +521,7 @@ if __name__ == "__main__":
     # Convert (sub)section title before using it
     if section_title.count("_"):
         section_title = " ".join([w.capitalize() for w in section_title.split("_")])
-    if subsection_title.count("_"):
+    if subsection_title is not None and subsection_title.count("_"):
         subsection_title = " ".join([w.capitalize() for w in subsection_title.split("_")])
     # Load a report if exist, create a new one in case it doesn't
     report = report_load(report_obj)
