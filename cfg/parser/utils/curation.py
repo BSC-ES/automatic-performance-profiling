@@ -71,7 +71,8 @@ def function_curated_summary(experiment_data):
         fun_results[function] = {}
         for c, r in experiment_data.get_function_info(function):
             fun_results[function][c] = r
-
+    # Remove empty entries
+    fun_results = {k: v for k, v in fun_results.items() if len(v) != 0}
     key = 'Elap. Time(s)'
 
     fun_results = {k: v for k, v in
