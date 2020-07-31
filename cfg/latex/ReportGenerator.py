@@ -298,6 +298,10 @@ class CsvFile:
         else:
             self.csv_data = text
 
+        # Path where the file data will be dumped
+        self.store_path = "csv/" + self.section
+        if self.subsection is not None:
+            self.store_path = self.store_path + "/" + self.subsection
     def purge_csv_data(self):
         n_col = len(self.csv_data[0])
         n_row = len(self.csv_data[1:])
@@ -317,22 +321,6 @@ class CsvFile:
                 # Now we want to remove entries also from the header
                 for row in range(n_row + 1):
                     self.csv_data[row].remove(self.csv_data[row][col])
-
-    def store(self, csv_convert =False, csv_purge=False):
-
-        if csv_convert:
-            self.csv_data = converter(self.path, summary=True)
-        else:
-            with open(self.path, newline='') as csv_file:
-                self.csv_data = list(csv.reader(csv_file))
-        # If specified, remove empty columns from csv file
-        if csv_purge:
-            self.purge_csv_data()
-
-        # Path where the file data will be dumped
-        self.store_path = "csv/" + self.section
-        if self.subsection is not None:
-            self.store_path = self.store_path + "/" + self.subsection
 
     # Writes csv data to file
     def dump2disk(self, absolute_path):
