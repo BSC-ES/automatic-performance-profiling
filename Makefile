@@ -175,9 +175,8 @@ paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
 		rm -f *.code.png ;\
 		rm -f *nn_gradient.png ;\
 		rm -f *w_legend* ;\
-		mv $${picture_name}* $${picture_name}_trace_$*.png ;\
-                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" --add-image  $${picture_name}_trace_$*.png ;\
 	done
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" -s $*" Cores" --add-img  $($@_trace_folder)
 	touch $@
 
 %.dim: .trace_cut_%.done
@@ -359,7 +358,7 @@ ${configuration_name}.json:
 
 # Make report
 functions=$(wildcard function_csv/* tracking/MPI/*)
-.info_report.done: .json.done 
+.info_report.done: .json.done
 	python cfg/parser/reporter.py \
                                     ${configuration_name}.json \
                                     -f function_csv \
@@ -390,9 +389,9 @@ report: .latex_report.done
 	# Copy latex template to a new one which will be modified
 	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION)))
 	#python ${latex_folder}/ReportGenerator.py -O report.pkl --section-title "Introduction" --section-number 1 -T Introduction.txt
-	python ${latex_folder}/ReportGenerator.py ReportGenerator.py -O report.pkl --report-title "Report Nemo version "$($@_NEMO_VERSION)
-	python ${latex_folder}/ReportGenerator.py ReportGenerator.py -O report.pkl --report-authors "O. Tinto Primis"
-	python ${latex_folder}/ReportGenerator.py ReportGenerator.py -O report.pkl --report-authors "Stella V. Paronuzzi Ticco"
+	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-title "Report Nemo version "$($@_NEMO_VERSION)
+	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-authors "O. Tinto Primis"
+	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-authors "Stella V. Paronuzzi Ticco"
 	# Remove old report folders
 	rm -rf $($@_LATEX_REPORT)
 	# Create a new one
