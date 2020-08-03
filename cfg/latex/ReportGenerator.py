@@ -101,7 +101,7 @@ class LatexText:
         self.new_line()
         self.add_text("\\begin{figure}[H]")
         self.add_text("\includegraphics[width=\linewidth]{" + image.store_path + "/" + image.name + "}")
-        self.add_text("\caption{" + image.caption + ".}")
+        self.add_text("\caption{" + image.caption + "}")
         self.add_text("\label{" + image.label + "}")
         self.add_text("\end{figure}")
         self.new_line()
