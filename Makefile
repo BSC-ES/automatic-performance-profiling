@@ -375,26 +375,22 @@ MultiExperiment_%: .MultiExperiment_%.done
 	mkdir bin/STREAM
 	cp STREAM/stream bin/STREAM/
 	touch $@
-.stream_run_%.done: .stream_ready
-	mkdir -p STREAM_RUN/$*
+.stream_run.done: .stream_ready
+	mkdir -p STREAM_RUN/
 	mkdir -p STREAM_RUN/DATA
-	cp bin/STREAM/* STREAM_RUN/$*
-	cp cfg/benchmarks/STREAM/jobscript.cmd STREAM_RUN/$*
-	sed -i "s/%CORES%/$*/g" STREAM_RUN/$*/jobscript.cmd ;\
-	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" STREAM_RUN/$*/jobscript.cmd ;\
-	sbatch --wait --chdir STREAM_RUN/$* STREAM_RUN/$*/jobscript.cmd ;\
-	cp STREAM_RUN/$*/*txt STREAM_RUN/DATA ;\
+	cp bin/STREAM/* STREAM_RUN/
+	cp cfg/benchmarks/STREAM/jobscript.cmd STREAM_RUN/
+	sed -i "s/%CORES%/1/g" STREAM_RUN/jobscript.cmd ;\
+	sed -i "s/%PROCESSES_PER_NODE%/${processes_per_node}/g" STREAM_RUN/jobscript.cmd ;\
+	sbatch  --wait --chdir STREAM_RUN STREAM_RUN/jobscript.cmd ;\
+	cp STREAM_RUN/*.txt STREAM_RUN/DATA ;\
 
 	touch $@
 
-stream_harvest_dep=$(foreach var, $(number_of_processes), .stream_run_$(var).done) 
-n_cores=$(foreach var, $(number_of_processes), $(var))
-.stream_harvest.done: $(stream_harvest_dep)
-	for core in ${n_cores} ; do \
-		file_in=STREAM_RUN/DATA/stream_$${core}.txt ;\
+.stream_harvest.done: .stream_run.done
+	for file_in in STREAM_RUN/DATA/*.txt ; do \
 		file_out=$${file_in%.txt}.csv ;\
 		python cfg/benchmarks/STREAM/STREAM_data_parser.py -i $${file_in} -o $${file_out} ;\
-		python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-csv $${file_out};\
 	done
 	touch $@
 
