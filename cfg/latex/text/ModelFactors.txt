@@ -1,0 +1,1 @@
+This section contains performance metrics generated from a set of Paraver traces using the modelfactors tool. Comparing traces produced with a different number of resources it analyzes the evolution of communication and computation aspects of the code. 

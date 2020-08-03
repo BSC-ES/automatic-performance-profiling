@@ -1,0 +1,1 @@
+This section contains, for each function of the code, a series of tables that include few key metrics that can help us to see whether the different functions scale well or not and which could be the most important factor, communication or computation.

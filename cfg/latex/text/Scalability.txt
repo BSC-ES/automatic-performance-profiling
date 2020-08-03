@@ -1,0 +1,1 @@
+This section contains an overview of the model behaviour in a strong scaling experiment, showing the amount of simulation years that can be produced in a day given a certain amount of resources, having a fixed configuration.

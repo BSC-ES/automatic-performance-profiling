@@ -177,7 +177,7 @@ report_add_%_paraver: $(paraver_dependencies)
 	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" -s $*' Core' --add-img $($@_trace_folder)
 report_add_paraver_dep=$(foreach var, $(number_of_processes), report_add_$(var)_paraver)
 report_add_paraver: $(report_add_paraver_dep)
-
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" -T cfg/latex/text/ParaverViews.txt
 ####################### DIMEMAS
 dimemas_dependencies=$(foreach var, $(number_of_processes), .dimemas_experiment_$(var).done)
 dimemas_experiments: $(dimemas_dependencies)
@@ -293,7 +293,7 @@ modelfactors: .modelfactors.done
 
 report_add_modelfactors: .modelfactors.done
 	# Add produced pictures to latex report
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Model Factors" --add-img  modelfactors 
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Model Factors" --add-img  modelfactors -T cfg/latex/text/ModelFactors.txt
 
 # Function histograms
 histogram_%.txt: .Trace_%.done
@@ -320,6 +320,8 @@ scalability_dependencies=$(foreach var, $(number_of_processes), test_$(var))
 scalability: .scalability.done
 .scalability.done: $(scalability_dependencies)
 	touch $@
+report_add_scalability: .info_report.done
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Scalability" --add-img ${configuration_name}.png -T cfg/latex/text/Scalability.txt
 
 ############### INFO
 .info_report.done: .json.done
@@ -335,6 +337,7 @@ scalability: .scalability.done
 
 functions=$(wildcard function_csv/* tracking/MPI/*)
 report_add_function_detail: .info_report.done
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -T cfg/latex/text/Function.txt
 	for func in ${functions} ; do \
                 file_name=$${func##function_csv/} ;\
                 file_name=$${file_name##tracking/MPI/} ;\
@@ -346,11 +349,9 @@ report_add_function_detail: .info_report.done
                 python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -s  $${func_name} --add-csv  tracking/counters/$${file_name} -p --silent ;\
         done
 
-report_add_scalability: .info_report.done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Scalability" --add-img ${configuration_name}.png
 
 report_add_dimemas: .info_report.done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Dimemas" --add-csv dimemas.csv
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Dimemas" --add-csv dimemas.csv -T cfg/latex/text/Dimemas.txt
 ##########################
 #Run multi exp
 .MultiExperiment_%.done:
@@ -453,7 +454,7 @@ hardware_benchmarks: .stream_harvest.done .osu_harvest.done
 
 # Add benchmarks to report
 report_add_benchmarks: report_add_osu report_add_stream
-
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -T cfg/latex/text/HardwareBenchmarks.txt
 ################## REPORT
 report: .latex_report.done
 .latex_report.done: report_add_scalability report_add_modelfactors report_add_paraver report_add_dimemas report_add_function_detail report_add_benchmarks report_add_paramedir
