@@ -76,14 +76,14 @@ class LatexText:
 
     def add_section2tex(self, section):
         self.clearpage()
-        self.add_text("\section{" + section.section_title + "}")
+        self.add_text("\section{" + section.section_title.replace("_","\_") + "}")
         # self.clearpage()
         if section.text is not None:
             self.add_text(section.text)
 
     def add_subsection2tex(self, subsection):
         # self.clearpage()
-        self.add_text("\subsection{" + subsection.subsection_title + "}")
+        self.add_text("\subsection{" + subsection.subsection_title.replace("_","\_") + "}")
         # self.clearpage()
         if subsection.text is not None:
             self.add_text(subsection.text)
@@ -609,11 +609,6 @@ if __name__ == "__main__":
     if inspect_pkl_obj:
         report.inspect()
     else:
-        # Convert (sub)section title before using it
-        if section_title is not None and section_title.count("_"):
-            section_title = " ".join([w.capitalize() for w in section_title.split("_")])
-        if subsection_title is not None and subsection_title.count("_"):
-            subsection_title = " ".join([w.capitalize() for w in subsection_title.split("_")])
         if report_title is not None:
             report.add_title(report_title)
         if report_author is not None:
