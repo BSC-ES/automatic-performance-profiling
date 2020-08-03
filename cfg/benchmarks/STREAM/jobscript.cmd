@@ -11,7 +11,7 @@
 #SBATCH --qos=debug
 
 
-for number_of_cores in  1 2 4 8 16 32 48
+for number_of_cores in  01 02 04 08 16 32 48
 do
   export OMP_NUM_THREADS=${number_of_cores}
   ./stream > stream_${number_of_cores}.txt

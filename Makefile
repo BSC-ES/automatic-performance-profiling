@@ -396,8 +396,12 @@ MultiExperiment_%: .MultiExperiment_%.done
 
 # Add stream data to the report
 report_add_stream: .stream_harvest.done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-csv STREAM_RUN/DATA -T cfg/latex/text/STREAM.txt
-	
+	$(eval $@_STRAM_DATA := $(shell ls STREAM_RUN/DATA/*.csv | sort -n ))
+	for data in  $($@_STRAM_DATA) ; do \
+	  python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-csv $${data};\
+	done
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" -T cfg/latex/text/STREAM.txt
+
 .osu_ready: | bin
 	wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
 
