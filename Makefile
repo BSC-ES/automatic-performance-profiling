@@ -170,7 +170,6 @@ paraver_configurations=$(wildcard cfg/trace_analysis/paraver_configurations/*)
 		rm -f *w_legend* ;\
 		mv $${picture_name}* $${picture_name}_trace_$*.png ;\
 	done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" -s $*" Cores" --add-img  $($@_trace_folder)
 	touch $@
 
 report_add_%_paraver: $(paraver_dependencies)
