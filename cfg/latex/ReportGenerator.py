@@ -135,17 +135,26 @@ class Section:
         self.csv_files = []
         self.text = None
 
-    def add_image(self, file_path, subsection_name=None):
+    def add_image(self, file_path, subsection_name=None, caption=None):
         images = get_files_from_path(file_path, ".png")
         for img in images:
-            img_obj = ImgFile(img)
+            if caption is not None:
+                try:
+                    assert(isfile(caption))
+                    with open(caption, 'r') as img_caption:
+                        actual_caption = img_caption.readlines()
+                    caption = actual_caption[0].replace("\n", "")
+                except AssertionError:
+                    if caption.count(".txt"):
+                        AssertionError("File %s not found", caption)
+                    else:
+                        pass
+            img_obj = ImgFile(img, self.section_name, subsection_name, caption)
             # Avoid adding item more than once ... useful in case of make target's failure
             for s_img in self.images:
                 if img_obj.path == s_img.path:
                     warnings.warn("Image " + img_obj.path + " already present", stacklevel=4)
                     return
-            img_obj.section = self.section_name
-            img_obj.subsection = subsection_name
             # Save the actual picture in the img_obj
             img_obj.store()
             self.images.append(img_obj)
@@ -208,8 +217,8 @@ class Subsection(Section):
         self.subsection_number = 0
 
     # Overwrites method adding images subsection info
-    def add_image(self, file_path):
-        super(Subsection, self).add_image(file_path, self.subsection_name)
+    def add_image(self, file_path, caption=None):
+        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=None,)
 
     # Overwrites method adding csv subsection info
     def add_csv(self, file_path, csv_convert, csv_purge, silent_mode):
@@ -221,16 +230,16 @@ class Subsection(Section):
 
 
 class ImgFile:
-    def __init__(self, _path):
+    def __init__(self, _path, _section, _subsection=None, _caption=None):
         self.path = _path
         self.store_path = None
         self.name = self.path.split("/")[-1]
         self.extension = self.name.split(".")[-1]
         self.label = "fig:" + self.name.replace(self.extension, "")
-        self.caption = self.label.replace("_", " ").replace("fig:", "")
+        self.caption = self.label.replace("_", " ").replace("fig:", "") if _caption is None else _caption
         self.pic = None
-        self.section = None
-        self.subsection = None
+        self.section = _section
+        self.subsection = _subsection
 
     # Stores the image in an obj
     def store(self):
@@ -254,14 +263,12 @@ class CsvFile:
         self.store_path = None
         self.name = self.path.split("/")[-1]
         self.label = "tab:" + self.name.replace(".csv", "")
-        self.caption = _caption
+        self.caption = self.label.replace("_", "\\_").replace("tab:", "") if _caption is None else _caption
         self.csv_data = None
         self.section = _section_name
         self.subsection = _subsection_name
         self.store(csv_convert=_convert, csv_purge=_purge)
 
-        if self.caption is None:
-            self.caption = self.label.replace("_", "\\_").replace("tab:", "")
 
     def purge_csv_data(self):
         n_col = len(self.csv_data[0])
@@ -350,6 +357,7 @@ class Report:
                         "\\usepackage{graphicx} \n" \
                         "\\usepackage{csvsimple} \n" \
                         "\\usepackage{booktabs}\n" \
+                        "\\usepackage{hyperref}\n"\
                         "\\usepackage{float}\n" \
                         "\\title{TITLE} \n " \
                         "\\author{AUTHORS} \n  \date{\\today} \n" \
@@ -362,6 +370,7 @@ class Report:
                         "\includegraphics[width = 40mm]{LOGO} \n" \
                         "\end{center}} \n" \
                         "\makeatother \n"
+
         self.text = None
 
     def add_title(self, title):
@@ -414,6 +423,8 @@ class Report:
         report_text.add_text(self.preamble)
         report_text.add_text("\\begin {document}")
         report_text.add_text("\maketitle")
+        report_text.clearpage()
+        report_text.add_text("\\tableofcontents")
         report_text.clearpage()
         self.text = report_text
 
@@ -549,9 +560,12 @@ def get_command_line_arguments():
                         help="title of the subsection that will be added if doesn't exist")
     parser.add_argument("-i", "--add-img", default=None,
                         help="path to an image or to an image folder which will be added to the section")
-    parser.add_argument("-C", "--add-csv", default=None,
+    parser.add_argument("--add-img-caption",
+                        type=str, default=None,
+                        help="If and image has been added, the caption can be specified either a string or a file")
+    parser.add_argument("-c", "--add-csv", default=None,
                         help="path to a csv or a folder of csv that will be added to the section")
-    parser.add_argument("-c", "--csv-convert",
+    parser.add_argument("--csv-convert",
                         default=False, action="store_true",
                         help="If the file is a paraver file and need conversion to csv")
     parser.add_argument("-p", "--csv-purge",
@@ -580,6 +594,8 @@ def get_command_line_arguments():
     if args.silent:
         if not args.add_csv and not args.add_img:
             parser.error("Silent mode can be run just when adding items to pkl object")
+    if args.add_img_caption and not args.add_img:
+            parser.error("A caption cannot be added if an image has not been specified")
     return args
 
 
@@ -594,6 +610,7 @@ if __name__ == "__main__":
     section_number = options.section_number
     subsection_title = options.subsection_title
     image = options.add_img
+    img_caption = options.add_img_caption
     csv_file = options.add_csv
     csv_convert = options.csv_convert
     csv_purge = options.csv_purge
@@ -620,7 +637,7 @@ if __name__ == "__main__":
             context = report.get_context(section_title, section_number, subsection_title)
             # Append images
             if image is not None:
-                context.add_image(image)
+                context.add_image(image, caption=img_caption)
             # Append csv table
             if csv_file is not None:
                 context.add_csv(csv_file, csv_convert=csv_convert, csv_purge=csv_purge, silent_mode=silent_mode)

@@ -145,7 +145,7 @@ paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*
 
 report_add_%_paramedir: .paramedir_%.done
 	$(eval $@_trace_folder := $(shell echo ${trace_folder_prefix}_$*))
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPIcallprofile.pm -c
+	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "MPI Call Profile" --add-csv $($@_trace_folder)/$*_MPIcallprofile.pm --csv-convert
 
 report_add_paramedir_dep=$(foreach var, $(number_of_processes), report_add_$(var)_paramedir)
 report_add_paramedir: $(report_add_paramedir_dep)
@@ -321,7 +321,11 @@ scalability: .scalability.done
 .scalability.done: $(scalability_dependencies)
 	touch $@
 report_add_scalability: .info_report.done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Scalability" --add-img ${configuration_name}.png -T cfg/latex/text/Scalability.txt
+	python ${latex_folder}/ReportGenerator.py -O report.pkl \
+                                                  -S "Scalability" \
+					          --add-img ${configuration_name}.png \
+						  --add-img-caption cfg/latex/caption/Scalability.txt\
+                                                  -T cfg/latex/text/Scalability.txt
 
 ############### INFO
 .info_report.done: .json.done
@@ -475,7 +479,7 @@ report: .latex_report.done
 	# Create the tex file
 	python ${latex_folder}/ReportGenerator.py -O ./$($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl --dump-to-file
 	# Compile the report
-	cd $($@_LATEX_REPORT); module load LATEX/20150523; pdflatex $($@_LATEX_REPORT).tex && evince $($@_LATEX_REPORT).pdf
+	cd $($@_LATEX_REPORT); module load LATEX/20150523; pdflatex $($@_LATEX_REPORT).tex && pdflatex $($@_LATEX_REPORT).tex && evince $($@_LATEX_REPORT).pdf
 
 	# Generate the target
 	touch $@
