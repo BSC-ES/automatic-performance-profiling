@@ -1,0 +1,71 @@
+#!/bin/bash
+source cfg/target/param_bash.cfg
+
+function_summary=$1
+trace=$2
+number_of_cores=$3
+
+legend_4UserFunctions=cfg/trace_analysis/paraver_configurations/legend_4UserFunctions.cfg
+
+# Checks the arguments
+if [[ ! $# -eq 3 ]]
+then
+  echo $0" : wrong number of input arguments"
+  exit 1
+fi
+# Check if files exist
+for arg in $1 $4
+do
+  if [[ ! -f ${arg} ]]
+  then
+    echo $0": File "${arg} " does not exist"
+    exit 1
+  fi
+done
+
+# Get core index so to retrieve the right column from function summary file
+core_index=0
+for core_n in ${number_of_processes}
+do
+  if [[ ${core_n} -eq ${number_of_cores}  ]]
+  then
+    break
+  fi
+  core_index=$((core_index+1))
+done
+
+# Remove possibles extention
+trace_folder=${trace%/*}
+trace=${trace//.pcf}
+trace=${trace//.prv}
+
+# In the summary file function names are alternated with time data for the function
+# So the column corresponding the the correct function names is (the n_th core experiment+1) * 2
+function_names=$(tail -n +2 ${function_summary}  | awk -F"," '{print $'$((1+(${core_index}*2)))'}')
+
+# Stores the functions ids
+for function in ${function_names}
+do
+  ids+=(`grep  ${function}_\] ${trace}.pcf | awk '{print $1}'`)
+done
+
+# The length of the array has to be added to function ids
+ids_for_cfg=${#ids[@]}" "  
+for id in ${ids[@]}
+do
+  ids_for_cfg+=${id}
+  ids_for_cfg+=" "
+done
+
+# Create the proper cfg for paraver
+paraver_cfg=paraver_tmp.cfg
+sed  s/LIST_OF_FUNCTIONS_IDS/"${ids_for_cfg}"/g ${legend_4UserFunctions} > ${trace_folder}/${paraver_cfg}
+
+# Use  the cfg on the trace to get the img
+cfg/trace_analysis/paraver -i ${trace}.prv ${trace_folder}/${paraver_cfg}
+
+# Overwrites the automatic legend created by paraver in the trace folder
+mv *.code* paraver_images/${number_of_cores}
+
+# Remove trash produced
+rm UserFunctions*

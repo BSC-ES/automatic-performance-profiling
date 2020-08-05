@@ -1,0 +1,30 @@
+#!/bin/bash
+
+source cfg/target/param_bash.cfg
+args=("$@")
+
+if [[ $# -lt 3 ]]
+then
+  echo $0": expects 3 args, "$#" given"
+  echo "abort"
+  exit 1
+fi
+
+analysis_tools=${args[0]}
+n_cores=${args[1]}
+dimemas_configurations=("${args[@]:2}")
+
+# Check how the function view changes with the different dimemas traces
+paraver_cfg=` readlink -f cfg/trace_analysis/cfgs/UserFunctions.cfg`
+cd dimemas_images
+
+for cfg in ${dimemas_configurations[@]}
+do
+  trace_name=${cfg##*/}
+  trace_name=${n_cores}_${trace_name%.*}.prv
+  image_name=${trace_name%.*}.png
+  echo  ${analysis_tools}/paraver -i ../dimemeas_traces/${trace_name} ${paraver_cfg}
+  ${analysis_tools}/paraver -i ../dimemas_traces/${trace_name} ${paraver_cfg} && rm -f *.code.png &&  mv *${image_name} ${image_name} &
+done
+cd -
+wait 

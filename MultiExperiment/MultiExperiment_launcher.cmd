@@ -21,7 +21,7 @@ if [ $# -eq 0  ] ; then
    echo "Argument required"
    exit 1
 fi
-# check folder exists
+# check folder with configuration exists
 if [ ! -d "$1" ] ; then 
    echo "Not a folder" 
    exit 1
@@ -34,27 +34,18 @@ mkdir -p ${experiments_folder} || exit 1
 experiment_configurations=$( ls ${experiment_configurations_folder} )
 # For each experiment clone the repo there
 for experiment in ${experiment_configurations} ; do
-   if [ -d ${experiments_folder}/${experiment} ] ; then
-      continue
+   if [ ! -d ${experiments_folder}/${experiment} ] ; then
+     mkdir ${experiments_folder}/${experiment}
+     # Clone repository to the new experiment folder
+     git clone . ${experiments_folder}/${experiment}
+     # Copy the configuration file into the new folder
+     cp ${experiment_configurations_folder}/${experiment} ${experiments_folder}/${experiment}/param.cfg
    fi
-   mkdir ${experiments_folder}/${experiment}
-   # Clone repository to the new experiment folder
-   git clone . ${experiments_folder}/${experiment}
 
-   # Copy the configuration file into the new folder
-   cp ${experiment_configurations_folder}/${experiment} ${experiments_folder}/${experiment}/param.cfg
    # Launch the experiment in background and save the log
    cd ${experiments_folder}/${experiment}
+   source ./load_env.sh
    make experiment &> log &
    cd -
 done  ;\
 wait
-## BEGIN -- NOT TO PUSH TO MASTER 
-#cd  ${experiments_folder}/${experiment}/cfg/parser/
-#for file in ./*.py ./utils/*.py
-#do
-#  sed -i s/cfg.parser.//g $file
-#done
-#cd -
-##  END -- NOT TO PUSH TO MASTER
-#

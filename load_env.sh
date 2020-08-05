@@ -1,8 +1,5 @@
 source cfg/environment.env
 export PYTHONPATH=$PYTHONPATH:$(pwd)
-cd ${PATH_TO_MAGICCUT}
-source add_to_path
-cd - > /dev/null
 ssh_id=`echo ${SSH_CONNECTION} | awk '{print $2}'`
 touch .${ssh_id}.env_loaded
 trap 'rm .'${ssh_id}'.env_loaded' EXIT

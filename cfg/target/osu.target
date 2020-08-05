@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [[ $# -lt 1 ]]
+then
+  echo $0": expects 1 args, "$#" given"
+  echo "abort"
+  exit 1
+fi
+
+osu_test=("$@")
+
+for test in ${osu_test[@]}
+do
+  test_name=${test##*/}
+  cp ${test} .
+  mpirun -np ${SLURM_NPROCS} ./${test_name} > ${test_name}_${SLURM_NPROCS}.txt
+done
+mkdir -p ../DATA
+cp *txt ../DATA

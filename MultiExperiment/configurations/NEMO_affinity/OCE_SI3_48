@@ -1,10 +1,10 @@
 # Branch to profile
-nemo_branch=avoid_error_partition
+model_branch=avoid_error_partition
 # Configuration name
 configuration_name=OCE_SI3
 # the following parameter should be cfgs in case the configuration is based on ORCA or tests if it is based n the bench
 configuration_folder=cfgs
-# Details of the configuration which you would put after makenemo, excluding the arch file
+# Details of the configuration which you would put after makemodel, excluding the arch file
 configuration_details=-r ORCA2_ICE_PISCES -d "OCE ICE" del_key "key_top"
 # Suffix of the arch file used
 arch_file_prefix=prod

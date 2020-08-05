@@ -1,37 +1,18 @@
 import csv
 
 # List of different accumulated results given by paraver
-paraver_labels = ("Total",
-                  "Average",
+#paraver_labels = ("Total",
+#                  "Average",
+#                  "Maximum",
+#                  "Minimum",
+#                  "StDev",
+#                  "Avg/Max",
+#                  )
+paraver_labels = ("Average",
                   "Maximum",
                   "Minimum",
-                  "StDev",
-                  "Avg/Max",
+                  "StDev"
                   )
-
-
-def get_command_line_arguments():
-    """
-    Returns a list of files that have been provided as a command line argument
-    :return: list of files
-    """
-    from optparse import OptionParser
-    # Parse and assert command line options
-    parser = OptionParser()
-    parser.add_option("-i", "--input_file", dest="input_file",
-                      help="File to be formatted", default=None)
-    parser.add_option("-o", "--output_file", dest="output_file",
-                      help="File which will retain output", default=None)
-    parser.add_option("-c", "--convert", dest="convert_file", default=False, action="store_true",
-                      help="to use input file is not already in csv format"
-                      )
-    parser.add_option("-s", "--summary", dest="print_summary", default=False, action="store_true",
-                      help="parse the file and print just the summary"
-                      )
-
-    (options, args) = parser.parse_args()
-    return options
-
 
 class ParaverFile:
     def __init__(self, _name):

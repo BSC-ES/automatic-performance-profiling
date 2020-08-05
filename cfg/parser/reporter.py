@@ -6,91 +6,67 @@ def get_command_line_instructions():
     Returns a list of files that have been provided as a command line argument
     :return: list of files
     """
-    # Using optparse to enable command line selection of different runtime options
-    from optparse import OptionParser
+    # Using Argparse to enable command line selection of different runtime options
+    from argparse import ArgumentParser
 
     # Initializing parser
-    parser = OptionParser()
+    parser = ArgumentParser()
 
-    # Adding options
+    # Read command line options
+    parser.add_argument("-j", "--json-file",
+                        default=None,
+                        help="Mandatory: the json file to be parsed")
+    parser.add_argument("-s", "--sypd-file",
+                        default=None,
+                        help="Produce a Simulation Years per Day csv file with the specified name")
 
-    # Expanded description to make it easier for someone to add a new option
-    parser.add_option(
-        # Short cml option
-        "-s",
-        # Long cml option
-        "--sypd",
-        # Name of the property in which the value will be stored. i.e. options.sypd
-        dest="sypd_file",
-        # Help message for this specific option
-        help="Produce a Simulation Years per Day report and save to the specified file ",
-        # Default value
-        default=None,
-    )
-    parser.add_option(
-        # Short cml option
-        "-p",
-        # Long cml option
-        "--sypd-plot",
-        # Name of the property in which the value will be stored. i.e. options.sypd
-        dest="sypd_plot_file",
-        # Help message for this specific option
-        help="Produce a Simulation Years per Day plot and save to the specified file ",
-        # Default value
-        default=None,
-    )
+    parser.add_argument("-p", "--sypd-plot",
+                        default=None,
+                        help="Produce a Simulation Years per Day plot and save to the specified png file")
 
-    parser.add_option(
-        "-f",
-        "--csv_folder",
-        dest="csv_function_folder",
-        help="folder to save csv files with functions' info ",
-        default=None,
-    )
+    parser.add_argument("-f", "--csv-folder",
+                        default=None,
+                        help="folder to save csv files with functions' info ")
 
-    parser.add_option(
-        "--functions",
-        dest="functions_file",
-        help="Produce functions report",
-        default=None,
-    )
-    parser.add_option(
-        "--dimemas",
-        dest="dimemas_file",
-        help="Produce dimemas report",
-        default=None,
-    )
-    parser.add_option(
-        "--tracking",
-        dest="tracking_file",
-        help="Produce tracking report",
-        default=None,
-    )
+    parser.add_argument("--functions-file",
+                        default=None,
+                        help="Produce functions report")
+    parser.add_argument("-m", "--most_expensive_function_summary",
+                        default=None,
+                        help="Print a summary of the most expensive functions per core")
+    parser.add_argument("--L3_IPC_scatterplot",
+                        default=None,
+                        help="Produce a png with L3 cache misses vs IPC in it")
+    parser.add_argument("--dimemas-file",
+                        default=None,
+                        help="Produce dimemas report")
+    parser.add_argument("--tracking-folder",
+                        default=None,
+                        help="Produce tracking report")
 
     # OptParser will parse the text provided as command line arguments and will distringuish between the options
     # and other arguments
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
     # Check that one argument is provided.
-    if len(args) != 1:
-        print(args)
-        parser.print_help()
-        print("A single json file is required as an argument.")
-        exit(1)
-    json_file = args[0]
-    return json_file, options
+    if args.json_file is None:
+        parser.error("Json file needed")
+    return args
 
 
 if __name__ == "__main__":
     # Get files from command line
-    json_file, options = get_command_line_instructions()
-    # Deal with the options provided
-    csv_function_folder = options.csv_function_folder
-    sypd_file = options.sypd_file
-    sypd_plot_file = options.sypd_plot_file
-    functions_file = options.functions_file
-    dimemas_file = options.dimemas_file
-    tracking_file = options.tracking_file
+    arguments = get_command_line_instructions()
+    # Deal with the arguments provided
+    json_file = arguments.json_file
+    sypd_file = arguments.sypd_file
+    sypd_plot_file = arguments.sypd_plot
+    csv_function_folder = arguments.csv_folder
+    functions_file = arguments.functions_file
+    most_expensive_function_summary = arguments.most_expensive_function_summary
+    L3_IPC_scatterplot = arguments.L3_IPC_scatterplot
+    dimemas_file = arguments.dimemas_file
+    tracking_folder = arguments.tracking_folder
 
     # Load the json file provided
     experiment_results = TimingInformation(
@@ -107,10 +83,16 @@ if __name__ == "__main__":
         experiment_results.simulated_years_per_day_plot(sypd_plot_file)
     if functions_file is not None:
         experiment_results.function_summary().save(functions_file)
+    if most_expensive_function_summary is not None:
+        experiment_results.most_expensive_function_summary(out_file_name=most_expensive_function_summary)
+
+    if L3_IPC_scatterplot is not None:
+        experiment_results.L3_IPC_scatterplot(out_file_name=L3_IPC_scatterplot)
+
     if dimemas_file is not None:
         experiment_results.dimemas_summary().save(dimemas_file)
-    if tracking_file is not None:
-        experiment_results.tracking(tracking_file)
+    if tracking_folder is not None:
+        experiment_results.tracking(tracking_folder)
 
 
 

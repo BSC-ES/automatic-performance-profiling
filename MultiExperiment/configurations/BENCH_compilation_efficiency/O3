@@ -1,15 +1,17 @@
+#Model name
+model=nemo
 # Branch to profile
-nemo_branch=avoid_error_partition
+model_branch=avoid_error_partition
 # Configuration name
-configuration_name=Deployment-O1
+configuration_name=O3
 # the following parameter should be cfgs in case the configuration is based on ORCA or tests if it is based n the bench
 configuration_folder=tests
-# Details of the configuration which you would put after makenemo, excluding the arch file
+# Details of the configuration which you would put after makemodel, excluding the arch file
 configuration_details=-a BENCH
 # For BENCH specifies the resolution at which it will run
 configuration_resolution=orca1
 # Suffix of the arch file used
-arch_file_prefix=O1
+arch_file_prefix=prod
 # Enable or disable output (TRUE or FALSE)
 output=FALSE
 # Number of steps used in test (Adjust acording to cost)
@@ -21,4 +23,4 @@ number_of_processes=48 96
 processes_per_node=48
 
 # Which parts of the recipe will be executed when we run make experiment
-experiment_recipes = scalability process_json 
+experiment_recipes = scalability ${configuration_name}.json

@@ -4,10 +4,10 @@ import numpy as np
 from cfg.parser.utils.curation import function_curated_summary,\
                                       dimemas_curated_summary, \
                                       simulated_years_per_day_summary, \
-                                      save_function_summary_csv,\
+                                      function_info_csv,\
+                                      most_expensive_function_summary,\
+                                      L3_IPC_scatterplot,\
                                       simulated_years_per_day_plot, \
-                                      tracking, \
-                                      tracking_mpi_profile_per_function,\
                                       tracking
 
 
@@ -53,7 +53,7 @@ def parse_paramedir_filename(filename):
     :return: number of cores, information type
     """
     # The pattern of the paramedir filenames goes as follows: CORES_PARAMEDIRCFG.pm
-    pattern = "([0-9]+)_([a-zA-Z]+).pm"
+    pattern = "([0-9]+)_([0-9a-zA-Z]+).pm"
     return parse_filename(filename, pattern)
 
 
@@ -481,12 +481,18 @@ class TimingInformation:
     def function_summary(self):
         return function_curated_summary(self)
 
+    def most_expensive_function_summary(self, out_file_name):
+        return most_expensive_function_summary(self, out_file_name)
+
+    def L3_IPC_scatterplot(self, out_file_name):
+        return L3_IPC_scatterplot(self, out_file_name)
+
     def dimemas_summary(self):
         return dimemas_curated_summary(self)
 
     # Saves functions' info to csv
     def function_info_csv(self, csv_folder):
-        save_function_summary_csv(self, csv_folder)
+        function_info_csv(self, csv_folder)
 
     def simulated_years_per_day_summary(self):
         return simulated_years_per_day_summary(self)
@@ -553,7 +559,9 @@ class TimingInformation:
         else:
             timing_info = parse_timing_files(files, self.functions)
             self.data = merge_dictionaries(self.data, timing_info)
-
+        if self.cases is None:
+            self.cases = list(sorted(self.data.keys()))
+            self.base_case = min(self.cases)
     def load_paramedir(self, files):
         if not files:
             raise AssertionError("Empty list of files")
@@ -577,6 +585,9 @@ class TimingInformation:
         else:
             dimemas_info = parse_dimemas_files(files)
             self.data = merge_dictionaries(self.data, dimemas_info)
+        if self.cases is None:
+            self.cases = list(sorted(self.data.keys()))
+            self.base_case = min(self.cases)
 
         pass
 

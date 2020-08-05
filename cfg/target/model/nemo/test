@@ -1,0 +1,41 @@
+#!/bin/bash
+# The job is submitted from the run folder
+run_folder=`pwd`
+cd ..
+source cfg/target/param_bash.cfg
+
+# Checks the arguments
+if [[ ! $# -eq 1 ]]
+then
+  echo $0" : wrong number of input arguments"
+  exit 1
+fi
+
+number_of_cores=$1
+
+# Copy everything from reference run_folder
+cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_vanilla/EXP00/* ${run_folder}
+
+# Copy xios server
+cp --remove-destination bin/xios_server.exe ${run_folder}
+
+# Change namelist parameters
+cfg/replace_namelist_parameter ${run_folder}/namelist_cfg nn_itend ${test_steps}
+cfg/replace_namelist_parameter ${run_folder}/namelist_cfg ln_icebergs .false.
+cfg/replace_namelist_parameter ${run_folder}/namelist_ref ln_meshmask .false.
+cfg/replace_namelist_parameter ${run_folder}/namelist_ref ln_timing   .true.
+cfg/replace_namelist_parameter ${run_folder}/namelist_cfg ln_timing   .true.
+# Disable output
+if [ ${output} == FALSE ] ; then \
+   sed -i "s/^.*file_definition.*$$//g" ${run_folder}/context_nemo.xml ; \
+fi
+
+# Enter the run folder and run the spinup
+cd ${run_folder}
+set -xuve
+time mpirun -genv I_MPI_DEBUG=4 -n ${number_of_cores} ./nemo
+set +xuve
+
+# Rename timing output
+mv timing.output ${number_of_cores}_test.timing
+

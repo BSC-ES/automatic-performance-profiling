@@ -1,0 +1,21 @@
+#!/bin/bash
+args=("$@")
+
+if [[ $# -lt 4 ]]
+then
+  echo $0 "expects N of Cores  and paradim configurations as input"
+  echo "abort"
+  exit 1
+fi
+
+analysis_tools=${args[0]}
+trace=${args[1]}
+image_folder=${args[2]}
+paraver_configurations=("${args[@]:3}")
+
+cd ${image_folder}
+# Make paraver images
+for cfg in ${paraver_configurations[@]} 
+do 
+  ${analysis_tools}/paraver -i ${trace} ${cfg} 
+done

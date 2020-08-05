@@ -51,35 +51,31 @@ def parse_args():
                         help="Whether you want to compare SYPD ")
     parser.add_argument("-f", "--function-info", default=False, action="store_true",
                         help="Whether you want to compare elapsed time by function ")
-    parser.add_argument("-O", "--report-obj", default=None,
-                        help="pkl object to which results will be added")
-    parser.add_argument("--subsection-title", default=None,
-                        help="If a report has been passed, the subsection title which will be created")
+    parser.add_argument("--file-out", default=None,
+                        help="File where results will be saved as csv. To the name it will be added the computed quantity")
     args = parser.parse_args()
 
     if not args.json_files:
         parser.error("List of json file expected")
 
+
     return args
 
 
 if __name__ == "__main__":
+
     # Get files from command line
-    options = parse_args()
-    json_file_list = get_files_from_path(options.json_files, "json")
-    weak_scaling = options.weak_scaling
-    SYPD = options.sypd
-    function_info = options.function_info
-    report_obj = options.report_obj
-    subsection_title = options.subsection_title
-    if report_obj is not None:
-        from ReportGenerator import report_load
-        # Load a report if exist, create a new one in case it doesn't
-        report = report_load(report_obj)
-        # Get the context
-        context = report.get_context("Multi Experiment", section_number=None, subsection_title=subsection_title)
-    else:
-        context = None
+    args = parse_args()
+    json_file_list = get_files_from_path(args.json_files, "json")
+
+    # Check json files are there
+    if not json_file_list:
+        raise ValueError("Folder %s does not contain json files", args.json_files)
+
+    weak_scaling = args.weak_scaling
+    SYPD = args.sypd
+    function_info = args.function_info
+    file_out = args.file_out
 
     # Load the two experiments provided.
     experiment_data = [TimingInformation(json_file=f) for f in json_file_list]
@@ -90,18 +86,18 @@ if __name__ == "__main__":
         var_type = "sypd"
         field3 = "average"
         multiexperiment_comparison(experiment_data, field1=info_type, field2=var_type, field3=field3).\
-            print(context, computed_quantity=var_type)
+            print(file_out)
 
-    if function_info:
-        # Example on how to compare elapsed time by function
-        common_cases, common_functions = find_common_cases_and_functions(experiment_data)
-        #
-        info_type = "FunctionInfo"
-        field = 'Elap. Time(s)'
-        for function in common_functions:
-            multiexperiment_comparison(experiment_data, field1=info_type, field2=function, field3=field).\
-                print(context, computed_quantity=field)
-
+    # if function_info:
+    #     # Example on how to compare elapsed time by function
+    #     common_cases, common_functions = find_common_cases_and_functions(experiment_data)
+    #     #
+    #     info_type = "FunctionInfo"
+    #     field = 'Elap. Time(s)'
+    #     for function in common_functions:
+    #         multiexperiment_comparison(experiment_data, field1=info_type, field2=function, field3=field).\
+    #             print(computed_quantity=field)
+    #
     # Prints weak scaling info
     if weak_scaling:
-        weakscaling_compute(experiment_data).print(context, computed_quantity="weak_scaling")
+        weakscaling_compute(experiment_data).print(file_out)

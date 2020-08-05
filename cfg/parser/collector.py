@@ -1,59 +1,60 @@
 from cfg.parser.utils.parsers import TimingInformation
+from cfg.latex.ReportGenerator import get_files_from_path
 from os.path import isfile, abspath
 
 
-def expand_arguments(arguments):
-    import glob
-    # Using the glob library to make it possible to use wildcards
-    expanded_arguments = []
-    for arg in arguments:
-        if arg.count("*"):
-            for new_argument in glob.glob(arg):
-                expanded_arguments.append(new_argument)
-        else:
-            expanded_arguments.append(arg)
-    return expanded_arguments
 
-
-def get_file_list_from_command_line_arguments():
+def get_command_line_arguments():
     """
     Returns a list of files that have been provided as a command line argument
     :return: list of files
     """
-    from optparse import OptionParser
+    import argparse
     # Parse and assert command line options
-    parser = OptionParser()
-    parser.add_option("-n", "--name", dest="output_file",
-                      help="name of the output .json file", default=None)
-    parser.add_option("-p", "--param-file", dest="param_file",
-                      help="Parameter file to supply some infos", default=None)
-    (options, args) = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input-files",
+                        default=None, nargs='+',
+                        help="list of files to parse")
+    parser.add_argument("-o", "--output-file", default=None,
+                        help="name of the output .json file")
+    parser.add_argument("-p", "--param-file", default=None,
+                        help="Parameter file to supply some infos")
+    args = parser.parse_args()
 
-    files = expand_arguments(args)
-
-    # In case of not having any argument print help and exit
-    if not files:
-        parser.print_help()
-        exit(0)
-    return files, options
+    # In case no input file has been passed
+    if args.input_files is None or not len(args.input_files):
+        parser.error("No input file specified")
+    return args
 
 
 if __name__ == "__main__":
-    # Get files from command line
-    files, options = get_file_list_from_command_line_arguments()
-    output_file = options.output_file
-    param_file = options.param_file
+
+    timing_files = []
+    paramedir_files = []
+    dimemas_files = []
+
+    # Get arguments from command line
+    args = get_command_line_arguments()
+
+    for folder in args.input_files:
+        files = get_files_from_path(folder)
+        for f in files:
+            if f.count(".timing"):
+                timing_files.append(f)
+            elif f.count(".pm"):
+                paramedir_files.append(f)
+            elif f.count(".dm"):
+                dimemas_files.append(f)
+            else:
+                continue
+
+    output_file = args.output_file
+    param_file = args.param_file
     if param_file is not None:
         try:
             assert isfile(param_file)
         except AssertionError:
             raise AssertionError("parameter file %s not found", param_file)
-
-    # Split the files between timing and paramedir  outputs.
-
-    timing_files = [f for f in files if f.count(".timing")]
-    paramedir_files = [f for f in files if f.count(".pm")]
-    dimemas_files = [f for f in files if f.count(".dm")]
 
     # Parse files and create a TimingInformation object
     experiment_results = TimingInformation(
@@ -64,4 +65,4 @@ if __name__ == "__main__":
     )
     # Save json file
     experiment_results.save_json(output_file)
-    print("jsone file saved in ", abspath(output_file+".json"))
+    print("jsone file saved in ", abspath(output_file + ".json"))

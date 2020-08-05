@@ -3,8 +3,10 @@ source cfg/target/param_bash.cfg
 exe_flavor=$1
 target_exe=$2
 # Compile NEMO
-compilation_workdir/makenemo -m ${arch_file_prefix}_${exe_flavor} -n ${configuration_name}_${exe_flavor} ${configuration_details} -j 16
-# Copy binary into bin folder
+compilation_command=` echo compilation_workdir/makenemo -m ${arch_file_prefix}_${exe_flavor} -n ${configuration_name}_${exe_flavor} ${configuration_details} -j 16`
+eval ${compilation_command}
+
+ # Copy binary into bin folder
 cp compilation_workdir/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/nemo ${target_exe}
 if [[ ! -z ${configuration_resolution+x} ]]
 then

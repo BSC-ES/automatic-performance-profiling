@@ -1,38 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from os.path import isfile, isdir, abspath, exists
-from os import listdir, mkdir
+from os.path import abspath
+from os import mkdir
 import errno
-from glob import glob
-
-def get_files_from_path(file_path, extension=None):
-    # If a wildcard has been passed as input
-    if file_path.count("*"):
-        return glob(file_path)
-
-    try:
-        # Single image
-        assert isfile(file_path)
-        return [file_path]
-        # A folder have been passed
-    except AssertionError:
-        try:
-            assert isdir(file_path)
-            # This way order of the files will be the same on every platform
-            files = [file_path + "/" + f for f in sorted(listdir(file_path))]
-            # Stores the absolute path
-            files = [abspath(f) for f in files]
-            # Filters out other file's type
-            if extension is not None:
-                files = [f for f in files if f.count(extension)]
-            return files
-        except AssertionError:
-
-            if exists(file_path):
-                raise AssertionError("Could not determine nature of parameter %s", file_path)
-            else:
-                raise AssertionError("File %s does not exist", file_path)
-
+from cfg.latex.ReportGenerator import get_files_from_path
 
 
 def get_command_line_arguments():
@@ -49,10 +20,9 @@ def get_command_line_arguments():
                       help="Name of the folder which will contains outputs")
     (options, args) = parser.parse_args()
 
-
     # In case of not having any argument print help and exit
     if not options.input_files:
-         parser.error("An input file must be given")
+        parser.error("An input file must be given")
     return options
 
 
@@ -83,7 +53,7 @@ def plot_collective(files, output_folder):
     plt.grid(True)
     plot_title = plot_title.replace(" / ", "_")
     fig_name = ("_").join(plot_title.split()[2:-2])
-    plt.savefig(output_folder +"/"+fig_name + '.png')
+    plt.savefig(output_folder + "/" + fig_name + '.png')
     print("Output saved in ", abspath(output_folder))
 
 

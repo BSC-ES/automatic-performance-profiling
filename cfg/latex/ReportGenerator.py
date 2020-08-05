@@ -34,6 +34,17 @@ def report_load(report_name):
 
 
 def get_files_from_path(file_path, extension=None):
+    # Manage input parameter passed with the nargs='+' option set
+    if isinstance(file_path,list):
+        # A folder or a file has been passed
+        if len(file_path):
+            file_path = file_path[0]
+        elif len(file_path) == 0:
+            raise AttributeError("The path %s is empty", file_path)
+        # A list of files have been passed
+        else:
+            return file_path
+
     # If a wildcard has been passed as input
     if file_path.count("*"):
         return glob(file_path)
@@ -76,14 +87,14 @@ class LatexText:
 
     def add_section2tex(self, section):
         self.clearpage()
-        self.add_text("\section{" + section.section_title.replace("_","\_") + "}")
+        self.add_text("\section{" + section.section_title.replace("_", "\_") + "}")
         # self.clearpage()
         if section.text is not None:
             self.add_text(section.text)
 
     def add_subsection2tex(self, subsection):
         # self.clearpage()
-        self.add_text("\subsection{" + subsection.subsection_title.replace("_","\_") + "}")
+        self.add_text("\subsection{" + subsection.subsection_title.replace("_", "\_") + "}")
         # self.clearpage()
         if subsection.text is not None:
             self.add_text(subsection.text)
@@ -140,7 +151,7 @@ class Section:
         for img in images:
             if caption is not None:
                 try:
-                    assert(isfile(caption))
+                    assert (isfile(caption))
                     with open(caption, 'r') as img_caption:
                         actual_caption = img_caption.readlines()
                     caption = actual_caption[0].replace("\n", "")
@@ -218,7 +229,7 @@ class Subsection(Section):
 
     # Overwrites method adding images subsection info
     def add_image(self, file_path, caption=None):
-        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=None,)
+        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=None, )
 
     # Overwrites method adding csv subsection info
     def add_csv(self, file_path, csv_convert, csv_purge, silent_mode):
@@ -236,10 +247,19 @@ class ImgFile:
         self.name = self.path.split("/")[-1]
         self.extension = self.name.split(".")[-1]
         self.label = "fig:" + self.name.replace(self.extension, "")
-        self.caption = self.label.replace("_", " ").replace("fig:", "") if _caption is None else _caption
+        self.caption = _caption
         self.pic = None
         self.section = _section
         self.subsection = _subsection
+
+        if self.caption is not None:
+            # Check if newcommands has been used, and convert to camelcase
+            if self.caption.count("_"):
+                for word in self.caption.split():
+                    if word.strip()[0] == "\\" and word.count("_"):
+                        self.caption.replace(word, "".join([w.capitalize() for w in word.split("_")]))
+        else:
+            self.caption = self.label.replace("_", " ").replace("fig:", "")
 
     # Stores the image in an obj
     def store(self):
@@ -268,7 +288,6 @@ class CsvFile:
         self.section = _section_name
         self.subsection = _subsection_name
         self.store(csv_convert=_convert, csv_purge=_purge)
-
 
     def purge_csv_data(self):
         n_col = len(self.csv_data[0])
@@ -309,6 +328,7 @@ class CsvFile:
         self.store_path = "csv/" + self.section
         if self.subsection is not None:
             self.store_path = self.store_path + "/" + self.subsection
+
     def purge_csv_data(self):
         n_col = len(self.csv_data[0])
         n_row = len(self.csv_data[1:])
@@ -346,30 +366,34 @@ class Report:
     def __init__(self, _name):
         # Name that will be used for the latex doc, without path
         self.name = _name.replace(".pkl", "").split("/")[-1]
+        self.absolute_path = None
         self.obj_name = _name
         self.sections = []
         self.total_section_number = 0
         self.title = ""
         self.authors = []
+        self.newcommand = {}
+        self.newcommand_file = "newcommand_file.tex"
         self.bsc_logo_url = 'https://pbs.twimg.com/profile_images/378800000692705583/015be2057821ebe8382c21804a8504fc_400x400.png'
         self.preamble = "\documentclass[11pt,a4paper,oldfontcommands]{article} \n" \
                         "\maxdeadcycles=2000 \n" \
                         "\\usepackage{graphicx} \n" \
                         "\\usepackage{csvsimple} \n" \
                         "\\usepackage{booktabs}\n" \
-                        "\\usepackage{hyperref}\n"\
+                        "\\usepackage{hyperref}\n" \
                         "\\usepackage{float}\n" \
-                        "\\title{TITLE} \n " \
-                        "\\author{AUTHORS} \n  \date{\\today} \n" \
-                        "\makeatletter \n" \
-                        "\def\@maketitle{ \n" \
-                        "\\begin{center} \n" \
-                        "{\Huge \\bfseries \sffamily \@title }\\\\[4ex] \n" \
-                        "{\Large  \@author}\\\\[4ex] \n" \
-                        "\@date\\\\[8ex] \n" \
-                        "\includegraphics[width = 40mm]{LOGO} \n" \
-                        "\end{center}} \n" \
-                        "\makeatother \n"
+                        "\input{" + self.newcommand_file + "}\n" \
+                                                           "\\title{TITLE} \n " \
+                                                           "\\author{AUTHORS} \n  \date{\\today} \n" \
+                                                           "\makeatletter \n" \
+                                                           "\def\@maketitle{ \n" \
+                                                           "\\begin{center} \n" \
+                                                           "{\Huge \\bfseries \sffamily \@title }\\\\[4ex] \n" \
+                                                           "{\Large  \@author}\\\\[4ex] \n" \
+                                                           "\@date\\\\[8ex] \n" \
+                                                           "\includegraphics[width = 40mm]{LOGO} \n" \
+                                                           "\end{center}} \n" \
+                                                           "\makeatother \n"
 
         self.text = None
 
@@ -378,6 +402,11 @@ class Report:
 
     def add_authors(self, authors):
         self.authors.append(authors)
+
+    def __set_absolute_path(self):
+        # Update patterns
+        absolute_path = abspath(self.obj_name).rsplit("/", 1)[0] + "/"
+        self.absolute_path = absolute_path
 
     def __set_title(self):
         if not len(self.title):
@@ -401,12 +430,9 @@ class Report:
             im.save(abs_logo_path)
 
     def __begin_doc(self):
-        # Update patterns
-        absolute_path = abspath(self.obj_name).rsplit("/", 1)[0] + "/"
-        self.absolute_path = absolute_path
         self.image_folder = self.absolute_path + "/image"
         self.csf_folder = self.absolute_path + "/csv"
-        self.name = absolute_path + self.name
+        self.name = self.absolute_path + self.name
         # Create root folder for images and csv
         try:
             mkdir(self.absolute_path + "/image")
@@ -435,12 +461,27 @@ class Report:
             raise AssertionError("something went wrong trying to close the report")
         self.text.add_text("\end{document}")
 
+    def __create_newcommand_file(self):
+        f_ncf = open(self.absolute_path + "/" + self.newcommand_file, "w")
+        for key, value in self.newcommand.items():
+            clean_key = "".join([k.capitalize() for k in key.split("_")])
+            f_ncf.write("\\newcommand\\" + clean_key + "{" + value + "}\n")
+        f_ncf.close()
+
     def write_to_txt(self):
+        # Set first page
         self.__set_authors()
         self.__set_title()
 
+        # Define where to create report
+        self.__set_absolute_path()
+
+        # Now that absolute path has been set we can start dumping to disk
+        self.__create_newcommand_file()
+
         # Initialize text member of the class and add preamble
         self.__begin_doc()
+
         for section in self.sections:
             self.text.add_section2tex(section)
             for image in section.images:
@@ -481,6 +522,14 @@ class Report:
         self.sections.append(new_section)
         # Increment the number of total sections
         self.total_section_number = self.total_section_number + 1
+
+    def add_newcommand(self, newcommand_file):
+        f = open(newcommand_file, "r")
+        params = [l.replace("\n", "") for l in f if l.count("#") == 0 and l != "\n"]
+
+        for p in params:
+            key, val = p.split("=")
+            self.newcommand[key.strip()] = val.strip()
 
     def get_context(self, section_title, section_number=0, subsection_title=None):
         section = self.get_section(section_title)
@@ -558,7 +607,8 @@ def get_command_line_arguments():
     parser.add_argument("-s", "--subsection-title",
                         type=str, default=None,
                         help="title of the subsection that will be added if doesn't exist")
-    parser.add_argument("-i", "--add-img", default=None,
+    parser.add_argument("-i", "--add-img",
+                        default=None, nargs='+',
                         help="path to an image or to an image folder which will be added to the section")
     parser.add_argument("--add-img-caption",
                         type=str, default=None,
@@ -581,6 +631,9 @@ def get_command_line_arguments():
                         help="Print to screen content of pkl obj")
     parser.add_argument("--silent", action="store_true",
                         help="Ignore if added file doesn't exist")
+    parser.add_argument("--add-newcommand",
+                        default=None,
+                        help="File which contains variable definitions that can be used in Fig. or Tab captions")
     args = parser.parse_args()
     if not args.report_obj:
         parser.error("A name for the object must be given")
@@ -595,29 +648,35 @@ def get_command_line_arguments():
         if not args.add_csv and not args.add_img:
             parser.error("Silent mode can be run just when adding items to pkl object")
     if args.add_img_caption and not args.add_img:
-            parser.error("A caption cannot be added if an image has not been specified")
+        parser.error("A caption cannot be added if an image has not been specified")
+    if args.add_newcommand is not None:
+        try:
+            assert (isfile(args.add_newcommand))
+        except AssertionError:
+            parser.error("The parameter file specified for newcommands does not exist.")
     return args
 
 
 if __name__ == "__main__":
     # Get files from command line
-    options = get_command_line_arguments()
+    args = get_command_line_arguments()
 
-    report_obj = options.report_obj
-    report_title = options.report_title
-    report_author = options.report_authors
-    section_title = options.section_title
-    section_number = options.section_number
-    subsection_title = options.subsection_title
-    image = options.add_img
-    img_caption = options.add_img_caption
-    csv_file = options.add_csv
-    csv_convert = options.csv_convert
-    csv_purge = options.csv_purge
-    dump_to_file = options.dump_to_file
-    text_file = options.text_file
-    inspect_pkl_obj = options.inspect
-    silent_mode = options.silent
+    report_obj = args.report_obj
+    report_title = args.report_title
+    report_author = args.report_authors
+    section_title = args.section_title
+    section_number = args.section_number
+    subsection_title = args.subsection_title
+    image = args.add_img
+    img_caption = args.add_img_caption
+    csv_file = args.add_csv
+    csv_convert = args.csv_convert
+    csv_purge = args.csv_purge
+    dump_to_file = args.dump_to_file
+    text_file = args.text_file
+    inspect_pkl_obj = args.inspect
+    silent_mode = args.silent
+    newcommand_file = args.add_newcommand
 
     # Load a report if exist, create a new one in case it doesn't
     report = report_load(report_obj)
@@ -630,6 +689,9 @@ if __name__ == "__main__":
             report.add_title(report_title)
         if report_author is not None:
             report.add_authors(report_author)
+
+        if newcommand_file is not None:
+            report.add_newcommand(newcommand_file)
 
         # Some content has to be added to pkl object
         if section_title is not None:
@@ -646,6 +708,7 @@ if __name__ == "__main__":
                 context.add_text(text_file)
 
             # Save the report obj
+
         report.save()
         # Writes to  file the loaded obj
         if dump_to_file:

@@ -1,0 +1,23 @@
+model=nemo
+# Branch to profile
+model_branch=origin/develop-mixed-precision
+# Configuration name
+configuration_name=O0
+# the following parameter should be cfgs in case the configuration is based on ORCA or tests if it is based n the bench
+configuration_folder=cfgs
+# Details of the configuration which you would put after makenemo, excluding the arch file
+configuration_details=-r ORCA2_ICE_PISCES -d "OCE ICE" del_key "key_top"
+# Suffix of the arch file used
+arch_file_prefix=O0
+# Enable or disable output (TRUE or FALSE)
+output=FALSE
+# Number of steps used in test (Adjust acording to cost)
+test_steps=200
+trace_steps=20
+# Processes used for the modelfactor
+number_of_processes=46 92 
+# This value will be passed to the slurm parameter --ntasks-per-node (default in mn4 is 48)
+processes_per_node=46
+
+# Which parts of the recipe will be executed when we run make experiment
+experiment_recipes = scalability ${configuration_name}.json 

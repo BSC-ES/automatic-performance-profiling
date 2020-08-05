@@ -1,0 +1,25 @@
+#!/bin/bash
+args=("$@")
+
+if [[ $# -lt 3 ]]
+then
+  echo $0 "expects analysis_tools path, dimemas trace, and paradim configurations as input"
+  echo "abort"
+  exit 1
+fi
+
+analysis_tools=${args[0]}
+trace=${args[1]}
+dimemas_configurations=("${args[@]:2}")
+
+# Remove path and extension
+trace_name=${trace##*/}
+trace_name=${trace_name%.*}
+for cfg in ${dimemas_configurations[@]} 
+do
+  # Remove the path and extension
+  cfg_name=${cfg##*/}
+  cfg_name=${cfg_name%.*}
+
+  ${analysis_tools}/Dimemas -S 32k --dim ${trace} -p ${trace_name}_${cfg_name}.prv --config-file ${cfg}
+done
