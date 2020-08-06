@@ -40,3 +40,9 @@ If everything went fine, which I seriously doubt you should now have a .tex file
  pdflatex file.tex && evince file.pdf
 ```
 should open your report.
+
+P.S.: In case you are using the script on MN4 facility, you have to 
+```bash
+module load LATEX/20150523
+```
+in order to compile.
