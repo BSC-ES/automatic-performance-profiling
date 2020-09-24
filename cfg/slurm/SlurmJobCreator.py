@@ -70,9 +70,9 @@ def get_command_line_arguments():
     parser.add_argument("--set-time-seconds", default=None, type=int,
                         help="Set slurm time, in minutes")
     parser.add_argument("--set-core", default=1, type=int,
-                        help="Set number of cores to be used for the jon")
+                        help="Set number of cores to be used for the job")
     parser.add_argument("--set-core-per-node", default=48, type=int,
-                        help="Set number of cores to be used for the jon")
+                        help="Set number of cores to be used for the job")
     parser.add_argument("-j", "--job-name", default=None,
                         help="Name of the job you want to create or modify")
     parser.add_argument("--set-queue", default="debug",

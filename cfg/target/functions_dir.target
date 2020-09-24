@@ -1,24 +1,38 @@
 #!/bin/bash
+
 run_folder=`pwd`
 cd ..
 source cfg/target/param_bash.cfg
-# Copy everything from reference folder
-cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* ${run_folder} 
-# Copy xios server
-cp --remove-destination bin/xios_server.exe ${run_folder}
-# Copy function and extrae configuration
-cp cfg/generate_func_list/* ${run_folder}
-# Fix namelist parameters
-cfg/replace_namelist_parameter ${run_folder}/namelist_cfg nn_itend 400
-cfg/replace_namelist_parameter ${run_folder}/namelist_cfg ln_icebergs .false.
-cfg/replace_namelist_parameter ${run_folder}/namelist_ref ln_meshmask .false.
 
-# Disable output
-if [ ${output} == FALSE ] ; then \
-   sed -i "s/^.*file_definition.*$$//g" ${run_folder}/context_nemo.xml ; \
+args=("$@")
+
+# Checks the arguments
+if [[ ! $# -eq 1 ]]
+then
+  echo $0" : wrong number of input arguments"
+  exit 1
 fi
+# Check if files exist
+for arg in ${args[@]}
+do
+  if [[ ! -e ${arg} ]]
+  then
+    echo $0": File "${arg} " does not exist"
+    exit 1
+  fi
+done
+
+model_exec=${args[0]}
+
+
+# Copy function and extrae configuration
+cp -r cfg/generate_func_list/* ${run_folder}
+
+# Copy everything from reference folder
+cp --remove-destination ${model_exec} ${run_folder}
 
 cd ${run_folder}
+
 n_functions=80
 
 # Load EXTRAE module and create wrapper
@@ -40,11 +54,9 @@ EOF
 
 chmod +x ${trace}
 
-set -xuve
-nemo_bin=nemo
 
 # List of function not to trace
-function_to_avoid=list_of_func_notto_trace.txt
+function_to_avoid=model/${model}/list_of_func_notto_trace.txt
 
 # Generate function list for xml
 function_file=extrae_functions.txt
@@ -52,15 +64,15 @@ function_avg_dur_file=function_avg_dur.txt
 cat /dev/null > ${function_file}
 cat /dev/null > ${function_avg_dur_file}
 
-
+executable=${model_exec##*/}
 # Spinup run
-time mpirun -genv I_MPI_DEBUG=4 -n ${SLURM_NPROCS} ${trace} ./${nemo_bin}
+time mpirun -genv I_MPI_DEBUG=4 -n ${SLURM_NPROCS} ${trace} ./${executable}
 
 # Create list extrae_functions.txt
 set +xuve
 
 # Produce istogram of function time duration
-../cfg/trace_analysis/paramedir nemo.prv sampling_user_function.cfg
+../cfg/trace_analysis/paramedir ${executable}.prv sampling_user_function.cfg
 
 histo_file=sampling_user_function
 

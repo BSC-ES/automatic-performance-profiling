@@ -1,4 +1,4 @@
-source cfg/environment.env
+source cfg/env/MN4/environment.env
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 ssh_id=`echo ${SSH_CONNECTION} | awk '{print $2}'`
 touch .${ssh_id}.env_loaded

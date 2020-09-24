@@ -23,4 +23,4 @@ tile_size=47x57 21x35
 # This value will be passed to the slurm parameter --ntasks-per-node (default in mn4 is 48)
 processes_per_node=48
 # Which parts of the recipe will be executed when we run make experiment
-experiment_recipes = process_json
+experiment_recipes = process_json.slurm

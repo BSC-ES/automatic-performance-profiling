@@ -43,7 +43,7 @@ experiment:
 inidata:
 	# Download data, put it in inidata and remove write permissions to avoid undesired modifications
 	mkdir inidata
-	./cfg/target/model/${model}/inidata
+	${cfg}/target/model/${model}/inidata.target
 %/.inidata.done: inidata
 	mkdir -p $(@D)
 	# Link inidata
@@ -51,31 +51,26 @@ inidata:
 	rsync -rv --exclude=.nc inidata/ $(@D)
 	touch $@
 
+
 ####################################################
-# Model Sources
-# The sources are prepared downloading the corresponding branch from the BSC Earth Sciences gitlab mirror
+# The sources are prepared
 %_source:
-	./cfg/target/model/${model}/$*_source
+	${cfg}/target/model/${model}/$*_source.target ${cfg}
+
 ####################################################
 # Recipe to compile different model versions
-# The subscript indicates the version that we are compiling (vanilla, trace or gprof)
-
-bin/${model}_%.exe: compilation_workdir 
+# The subscript indicates the version that we are compiling (vanilla, trace)
+bin/${model}_%.exe: ${model}_source
 	mkdir -p $(@D)
-	./cfg/target/model/${model}/${model}_exec $* $@
+	${cfg}/target/model/${model}/${model}_exec.target $* $@ $<
 
-%_workdir: ${model}_source
-	mkdir -p $@
-	rsync -av --exclude='doc*' --exclude='*.svn*' nemo_source/* $@
-	# This sould also be astracted from the model
-	cp cfg/arch/arch-* $@/arch/
 
 ####################################################
 # Recipes to prepare functions file for tracing
 # TODO: find a better way of prepare these rundirs without repeating code
 functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
 	${MAKE} $(@D)/.inidata.done
-
+	${cfg}/target/model/${model}/functions_dir.target $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/function.slurm \
                                      --set-time  120 \
                                      --set-core $(word 1, ${number_of_processes}) \
@@ -83,7 +78,7 @@ functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
                                      --job-name $(@D) \
 				     --set-queue $(slurm_queue)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/function.slurm \
-                                            --set-workload ${cfg}/target/model/${model}/functions_dir
+                                            --set-workload ${cfg}/target/functions_dir.target bin/${model}_trace.exe
 
 	sbatch --wait --chdir $(@D) $(@D)/function.slurm
 
@@ -104,10 +99,10 @@ ${trace_folder_prefix}_%/trace.slurm: functions_dir/extrae_functions.txt bin/${m
                                      --set-time  120 \
                                      --set-core $* \
                                      --set-core-per-node ${processes_per_node} \
-                                     --job-name $(@D) \
+                                     --job-name $(@F) \
                                      --set-queue $(slurm_queue)
 	python cfg/slurm/SlurmJobCreator.py --file-name  $@ \
-                                            --set-workload cfg/target/model/${model}/Trace $*
+                                            --set-workload ${cfg}/target/model/${model}/trace.target $*
 	# Launch jobscript
 	sbatch --wait --chdir $(@D) $@
 
@@ -170,15 +165,13 @@ report_add_paraver: $(REPORT_ADD_PARAVER)
 	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" -T cfg/latex/text/ParaverViews.txt
 
 ####################### DIMEMAS
-dimemas_traces:
-	mkdir $@
-
 dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/*)
 
 DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
 dimemas_trc: $(DIMEMAS_TRC) $(TRACE_CUT)
-dimemas_traces/%.dim: ${trace_folder_prefix}_%/${model}.best_cut.prv | dimemas_traces
-	 python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm \
+dimemas_traces/%.dim: ${trace_folder_prefix}_%/${model}.best_cut.prv
+	mkdir -p $(@D)
+	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm \
                                      --set-time-seconds $$(( $* )) \
                                      --job-name $(@F) \
                                      --set-queue $(slurm_queue)
@@ -246,7 +239,7 @@ test_%/test.slurm: bin/${model}_vanilla.exe bin/xios_server.exe
                                      --job-name $(@D) \
                                      --set-queue $(slurm_queue)
 	# Moldel specific instruction
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload ${cfg}/target/model/${model}/test $*
+	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload ${cfg}/target/model/${model}/test.target $*
 	# Launch job
 	sbatch --wait --chdir $(@D)  $@
 ####################################################
@@ -258,18 +251,12 @@ bin/xios_server.exe:
 	mkdir -p $(@D)
 	# TODO: HARDCODED dependency that at some point should be replaced with xios compilation
 	cp /gpfs/projects/bsc32/bsc32870/xios/2.5/mn4-r1650-prod/bin/xios_server.exe bin/xios_server.exe
-# REBUILD NEMO tool
-bin/rebuild_nemo.exe: compilation_workdir
-	mkdir -p $(@D)
-	cd reference_workdir/tools; ./maketools -n REBUILD_NEMO -m ${arch_file_prefix}
-	cp reference_workdir/tools/REBUILD_NEMO/rebuild_nemo* bin/
-
 
 ####################################################
 # Clean recipes
 # Delete (almost)-everything
 clean:
-	rm -rf reference_workdir nemo_source nemo_mirror *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
+	rm -rf  nemo_source nemo_mirror *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
 	rm -rf function_csv/
 	rm -rf OSU* osu* bin/osu_bench .osu*
 	rm -rf STREAM* stream* bin/stream_bench .stream*
@@ -322,7 +309,9 @@ process_json.slurm: $(JSON)
 	sbatch --wait --chdir . $@
 
 ${configuration_name}.json: $(JSON)
-	python cfg/parser/collector.py test_*/*.timing trace_*/*pm dimemas_traces/*dm -n ${configuration_name} -p param.cfg
+	python cfg/parser/collector.py --input-files test_*/*.timing trace_*/*pm dimemas_traces/*dm \
+                                       --output-file ${configuration_name} \
+                                       --param-file param.cfg
 
 
 ################ INFO
@@ -504,12 +493,12 @@ dimemas_experiments: trace_experiments
 paradim_experiments: dimemas_experiments
 
 
-REPORT_PREPROC = .info_report.done modelfactors paraver_images dimemas_images OSU_RUN/IMAGE STREAM_RUN/STREAM_${model}.png multiexp_csv
+REPORT_PREPROC = .info_report.done modelfactors dimemas_images OSU_RUN/IMAGE STREAM_RUN/STREAM_${model}.png multiexp_csv
 report_preproc: $(REPORT_PREPROC)
 
 clean_report_preproc: clean_info_report clean_modelfactors clean_paraver_images clean_dimemas_images clean_OSU_RUN_IMAGE clean_STREAM_${model}.png clean_multiexp_csv
 # Intermediate files that won't be removed automatically
 binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
-.PRECIOUS: $(binaries)  %.dim nemo_source *.env_loaded
+.PRECIOUS: ${nemo}_source $(binaries)  %.dim *.env_loaded
 
 .DELETE_ON_ERROR: $(PARAMEDIR_EXPERIMENTS) $(DIMEMAS_EXPERIMENTS) $(PARADIM_EXPERIMENTS)
