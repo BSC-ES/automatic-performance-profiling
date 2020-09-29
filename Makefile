@@ -360,15 +360,15 @@ multiexperiments_run: $(MULTIEXPERIMENT_RUN)
 #Run multi exp
 MultiExperimentRuns/%:
 	# The script contains a wait statement, so the target won't complete until the script finishes
-	./MultiExperiment/MultiExperiment_launcher.cmd MultiExperiment/configurations/$* $@
+	./MultiExperiment/MultiExperiment_launcher.cmd MultiExperiment/configurations/model/${model}/$* $@
 
 
 MULTIEXP_CSV=$(foreach exp, $(multiexperiment), $(exp).csv)
 multiexp_csv: $(MULTIEXP_CSV)
-weakscaling.csv: MultiExperimentRuns/weakscaling
+${configuration_name}_weakscaling.csv: MultiExperimentRuns/${configuration_name}_weakscaling
 	python cfg/parser/comparator.py --json-files $</*/*.json -w --file-out $@
 
-${model}_compilation_efficiency.csv: MultiExperimentRuns/${model}_compilation_efficiency
+${configuration_name}_compilation_efficiency.csv: MultiExperimentRuns/${configuration_name}_compilation_efficiency
 	python cfg/parser/comparator.py --json-files $</*/*.json -s --file-out $@
 	touch $@
 
@@ -450,14 +450,14 @@ report_add_benchmarks: report_add_osu report_add_stream
 	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -T cfg/latex/text/HardwareBenchmarks.txt
 ################## REPORT
 report: .latex_report.done
-.latex_report.done: report_add_scalability report_add_modelfactors report_add_paraver report_add_dimemas report_add_function_detail report_add_benchmarks  report_add_Multi_${model}_compilation_efficiency
+.latex_report.done: report_add_scalability report_add_modelfactors report_add_paraver report_add_dimemas report_add_function_detail report_add_benchmarks  report_add_Multi_${configuration_name}_compilation_efficiency report_add_Multi_${configuration_name}_weakscaling
 	# Stores the nemo commit tag to a variable
 	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | grep 'git-svn-id:'| head -1 | awk '{print $$2}'| awk -F / '{print $$NF}' ))
 	# Copy latex template to a new one which will be modified
 	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION)))
 	#python ${latex_folder}/ReportGenerator.py -O report.pkl --section-title "Introduction" --section-number 1 -T Introduction.txt
 	python ${latex_folder}/ReportGenerator.py -O report.pkl --add-newcommand ${config_file}
-	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-title "Report Nemo version "${model}
+	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-title "Report Nemo version "$($@_NEMO_VERSION)
 	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-authors "O. Tinto Primis"
 	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-authors "Stella V. Paronuzzi Ticco"
 	# Remove old report folders
