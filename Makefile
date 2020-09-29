@@ -21,15 +21,6 @@ $(eval ssh_id := $(shell echo ${SSH_CONNECTION} | awk '{print $$2}'))
 ifeq ("$(wildcard .$(ssh_id).env_loaded )","")
   $(error Please load the environment sourcing load_env.sh file)
 endif
-# Help
-####################################################
-help:
-	@echo ""
-	@echo "Recipes to prepare all the necessary elements to launch a performance analysis on NEMO (4.0, 4.0.1)"
-	@echo ""
-	@echo "Modify the file param.cfg to select the branch inside the nemo mirror that you would like to profile."
-	@echo ""
-	@echo 
 ###################################################
 # Experiment recipes specified in param.cfg file
 experiment:
