@@ -59,10 +59,10 @@ def stream_output_2png(input_files_path, output_picture_name):
             while not line.count("Function "):
                 line = f.readline().strip()
             # Read data
-            function_copy.append(f.readline().split()[1].strip())
-            function_scale.append(f.readline().split()[1].strip())
-            function_add.append(f.readline().split()[1].strip())
-            function_triad.append(f.readline().split()[1].strip())
+            function_copy.append(float(f.readline().split()[1].strip()))
+            function_scale.append(float(f.readline().split()[1].strip()))
+            function_add.append(float(f.readline().split()[1].strip()))
+            function_triad.append(float(f.readline().split()[1].strip()))
     plt.title("STREAM Benchmark")
     plt.ylabel('Bandwidth [MB/s]')
     plt.xlabel('# Threads')
