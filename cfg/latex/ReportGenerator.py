@@ -8,6 +8,7 @@ import io
 import csv
 import warnings
 from glob import glob
+import re
 
 from cfg.latex.csv_formatter import converter
 
@@ -254,10 +255,14 @@ class ImgFile:
 
         if self.caption is not None:
             # Check if newcommands has been used, and convert to camelcase
-            if self.caption.count("_"):
+            if self.caption.count("${"):
+                pattern="\${[A-zA-z_]+}"
                 for word in self.caption.split():
-                    if word.strip()[0] == "\\" and word.count("_"):
-                        self.caption.replace(word, "".join([w.capitalize() for w in word.split("_")]))
+                    if re.search(pattern, word):
+                        newcommand = word.replace("${", "\\")
+                        newcommand = newcommand.replace("}", "")
+                        newcommand = "".join([nc.capitalize() for nc in newcommand.split("_")])
+                        self.caption = self.caption.replace(word, newcommand)
         else:
             self.caption = self.label.replace("_", " ").replace("fig:", "")
 
