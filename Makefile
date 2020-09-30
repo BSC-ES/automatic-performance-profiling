@@ -333,7 +333,7 @@ report_add_scalability: .info_report.done
 	python ${latex_folder}/ReportGenerator.py -O report.pkl \
                                           -S "Scalability" \
                                           --add-img ${configuration_name}_scaling.png \
-                                          --add-img-caption cfg/latex/captions/Scalability.txt\
+                                          --add-img-caption cfg/latex/text/captions/Scalability.txt\
                                           --add-csv ${configuration_name}_scaling.csv \
                                           -T cfg/latex/text/Scalability.txt
 
@@ -473,7 +473,8 @@ report: .latex_report.done
 
 	# Generate the target
 	touch $@
-
+clean_report:
+	rm -rf report.pkl report_*
 ############### TARGET FOR PARALLEL MAKE
 REPORT_DEPENDENCIES = scalability trace_experiments paraver_images dimemas_experiments paramedir_experiments paradim_experiments hardware_benchmarks multiexperiments_run
 
