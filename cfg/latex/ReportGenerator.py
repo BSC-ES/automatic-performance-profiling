@@ -256,13 +256,16 @@ class ImgFile:
         if self.caption is not None:
             # Check if newcommands has been used, and convert to camelcase
             if self.caption.count("${"):
-                pattern="\${[A-zA-z_]+}"
+                pattern="\${([A-zA-z_]+)}"
                 for word in self.caption.split():
-                    if re.search(pattern, word):
-                        newcommand = word.replace("${", "\\")
-                        newcommand = newcommand.replace("}", "")
+                    try:
+                        newcommand = re.search(pattern, word).group(1)
                         newcommand = "".join([nc.capitalize() for nc in newcommand.split("_")])
+                        newcommand = "\\" + newcommand
                         self.caption = self.caption.replace(word, newcommand)
+                    except AttributeError:
+                        continue
+
         else:
             self.caption = self.label.replace("_", " ").replace("fig:", "")
 
