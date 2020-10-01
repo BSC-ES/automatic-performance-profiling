@@ -195,9 +195,9 @@ def L3_IPC_scatterplot(experiment_data, output_picture_name, length_summary=10):
                 break
     # Create the plot
     fig, ax = plt.subplots()
-    ax.set_title("L3 per Instruction vs IPC")
+    ax.set_title("IPC vs L3 per Instruction")
     ax.set_ylabel('IPC')
-    ax.set_xlabel('Useful L3 Total cache misses  per Instruction')
+    ax.set_xlabel('Useful L3 Total cache misses per Instruction (%)')
     for function_index, function_name in enumerate(legend_names):
         ax.plot([val[0] for val in function_info[function_index]],
                  [val[1] for val in function_info[function_index]], '-o', label=function_name)
@@ -207,7 +207,6 @@ def L3_IPC_scatterplot(experiment_data, output_picture_name, length_summary=10):
     fig.tight_layout()
 
     # This way labels for the x axis are not just one long number
-    ax.ticklabel_format(axis='x', style='sci', scilimits=(0, 0))
     # ax = plt.axes()
     # ax.arrow(0, 0, 0.5, 0.5, head_width=0.05, head_length=0.1, fc='k', ec='k')
     # ax.annotate('local max', xy=(100, 500), xytext=(3, 1.5), xycoords='figure points',
