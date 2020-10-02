@@ -13,8 +13,8 @@ slurm_queue?=debug
 cfg=$(CURDIR)/cfg
 analysis_tools=${cfg}/trace_analysis/
 latex_folder=${cfg}/latex
-trace_folder_prefix=$(CURDIR)/trace
 
+export analysis_tools
 # Check environment is loaded
 ####################################################
 $(eval ssh_id := $(shell echo ${SSH_CONNECTION} | awk '{print $$2}'))
@@ -75,11 +75,11 @@ functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
 
 
 #################### TRACE
-TRACE_EXPERIMENTS=$(foreach var, $(number_of_processes), ${trace_folder_prefix}_$(var)/trace.slurm)
+TRACE_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/trace.slurm)
 trace_experiments: $(TRACE_EXPERIMENTS)
 
 # Recipe to make traces
-${trace_folder_prefix}_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe
+trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe
 	mkdir -p $(@D)
 	cp $< $(@D)
 	${MAKE} $(@D)/.inidata.done
@@ -107,17 +107,17 @@ magiccut:
 	cd $@; ./setup_tool.cmd
 
 ### Cut the trace
-TRACE_CUT=$(foreach var, $(number_of_processes), ${trace_folder_prefix}_$(var)/${model}.best_cut.prv)
-${trace_folder_prefix}_%/${model}.best_cut.prv: ${trace_folder_prefix}_%/trace.slurm | magiccut
+TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${model}.best_cut.prv)
+trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut
 	# Magic Cut
 	cd $(@D); magicCut ${model}.prv
 
 #################### PARAMEDIR
-PARAMEDIR_EXPERIMENTS=$(foreach var, $(number_of_processes), ${trace_folder_prefix}_$(var)/paramedir.slurm)
+PARAMEDIR_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/paramedir.slurm)
 paramedir_experiments: $(PARAMEDIR_EXPERIMENTS) $(TRACE_CUT)
 
 paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
-${trace_folder_prefix}_%/paramedir.slurm: ${trace_folder_prefix}_%/${model}.best_cut.prv
+trace_%/paramedir.slurm: trace_%/${model}.best_cut.prv
 	 python cfg/slurm/SlurmJobCreator.py --file-name $@ \
                                      --set-time-second  $$((10 * $*)) \
                                      --set-core 48 \
@@ -125,14 +125,14 @@ ${trace_folder_prefix}_%/paramedir.slurm: ${trace_folder_prefix}_%/${model}.best
                                      --job-name paramedir_$* \
                                      --set-queue $(slurm_queue)
 	python cfg/slurm/SlurmJobCreator.py --file-name  $@ \
-                                            --set-workload ${cfg}/target/paramedir.target  ${analysis_tools} $(<F) $* ${paramedir_configurations}
-        # Launch jobscript
+                                            --set-workload ${cfg}/target/paramedir.target $(<F) $* ${paramedir_configurations}
+	# Launch jobscript
 	sbatch --wait --chdir $(@D) $@
 
-${trace_folder_prefix}_%/report_add_paramedir: ${trace_folder_prefix}_%/paramedir.slurm
+trace_%/report_add_paramedir: trace_%/paramedir.slurm
 	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "MPI Call Profile" --add-csv $(@D)/$*_MPIcallprofile.csv --csv-convert -p
 
-REPORT_ADD_PARAMEDIR=$(foreach var, $(number_of_processes), ${trace_folder_prefix}_$(var)/report_add_paramedir)
+REPORT_ADD_PARAMEDIR=$(foreach var, $(number_of_processes), trace_$(var)/report_add_paramedir)
 report_add_paramedir: $(REPORT_ADD_PARAMEDIR)
 
 ####################### PARAVER
@@ -140,10 +140,10 @@ PARAVER_IMAGES=$(foreach var, $(number_of_processes), paraver_images/$(var))
 paraver_images: $(PARAVER_IMAGES)
 
 paraver_configurations=$(wildcard ${analysis_tools}/paraver_configurations/*)
-paraver_images/%: ${trace_folder_prefix}_%/${model}.best_cut.prv .info_report.done
+paraver_images/%: trace_%/${model}.best_cut.prv .info_report.done
 	# Make paraver images
 	mkdir -p  $@
-	${cfg}/target/paraver.target ${analysis_tools} $< $@ ${paraver_configurations}
+	${cfg}/target/paraver.target $< $@ ${paraver_configurations}
 	${cfg}/target/create_paraver_function_legend.target most_expensive_function_summary.csv $< $*
 	${cfg}/target/create_paraver_legend.target $< $* ${paraver_configurations}
 
@@ -160,7 +160,7 @@ dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/*)
 
 DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
 dimemas_trc: $(DIMEMAS_TRC) $(TRACE_CUT)
-dimemas_traces/%.dim: ${trace_folder_prefix}_%/${model}.best_cut.prv
+dimemas_traces/%.dim: trace_%/${model}.best_cut.prv
 	mkdir -p $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm \
                                      --set-time-seconds $$(( $* )) \
@@ -176,7 +176,7 @@ dimemas_traces/dimemas_%.slurm: dimemas_traces/%.dim
                                      --set-time-seconds $$(( $* * 7 )) \
                                      --job-name dimemas_$* \
                                      --set-queue $(slurm_queue)
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload cfg/target/dimemas.target ${analysis_tools} $< ${dimemas_configurations}
+	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload cfg/target/dimemas.target $< ${dimemas_configurations}
 	sbatch --wait --chdir dimemas_traces $@
 
 ### Process images
@@ -184,7 +184,7 @@ DIMEMAS_IMAGES=$(foreach var, $(number_of_processes), dimemas_images/.dimemas_im
 dimemas_images: $(DIMEMAS_IMAGES) $(DIMEMAS_EXPERIMENTS)
 dimemas_images/.dimemas_images_%.done: dimemas_traces/dimemas_%.slurm
 	mkdir -p $(@D)
-	@${cfg}/target/dimemas_images.target ${analysis_tools} $* ${dimemas_configurations}
+	@${cfg}/target/dimemas_images.target $* ${dimemas_configurations}
 	touch $@
 
 report_add_dimemas_images: $(DIMEMAS_IMAGES)
@@ -213,7 +213,7 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
                                      --set-time-seconds $$(( $* * 8 )) \
                                      --job-name paradim_$* \
                                      --set-queue $(slurm_queue)
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload cfg/target/paradim.target ${analysis_tools} $* ${paradim_configurations}
+	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload cfg/target/paradim.target $* ${paradim_configurations}
 	sbatch --wait --chdir dimemas_traces dimemas_traces/paradim_$*.slurm
 
 ###################### TEST
@@ -276,7 +276,7 @@ report_add_modelfactors: modelfactors
 	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Model Factors" --add-img $^ -T cfg/latex/text/ModelFactors.txt
 
 # Function histograms
-histogram_%.txt: ${trace_folder_prefix}_%/${model}.best_cut.prv
+histogram_%.txt: trace_%/${model}.best_cut.prv
 	${analysis_tools}/paramedir $< ${analysis_tools}/cfgs/FunctionTimeHistogram.cfg
 	mv FunctionTimeHistogram histogram_$*.txt
 
@@ -476,7 +476,7 @@ report: .latex_report.done
 clean_report:
 	rm -rf report.pkl report_*
 ############### TARGET FOR PARALLEL MAKE
-REPORT_DEPENDENCIES = scalability trace_experiments paraver_images dimemas_experiments paramedir_experiments paradim_experiments hardware_benchmarks multiexperiments_run
+REPORT_DEPENDENCIES = scalability trace_experiments paraver_images dimemas_experiments paramedir_experiments paradim_experiments hardware_benchmarks 
 
 report_dependencies: $(REPORT_DEPENDENCIES)
 

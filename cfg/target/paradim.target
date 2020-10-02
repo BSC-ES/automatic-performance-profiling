@@ -10,9 +10,10 @@ then
   exit 1
 fi
 
-analysis_tools=${args[0]}
-cores=${args[1]}
-paradim_configurations=("${args[@]:2}")
+[ -z ${analysis_tools+x} ] && echo "Variable analysis_tools must be defined" && exit 1
+
+cores=${args[0]}
+paradim_configurations=("${args[@]:1}")
 
 dimemas_traces=( ${cores}*.prv )
 for trace in ${dimemas_traces[@]}

@@ -8,10 +8,11 @@ then
   exit 1
 fi
 
-analysis_tools=${args[0]}
-trace=${args[1]}
-n_cores=${args[2]}
-paramedir_configurations=("${args[@]:3}")
+[ -z ${analysis_tools+x} ] && echo "Variable analysis_tools must be defined" && exit 1
+
+trace=${args[0]}
+n_cores=${args[1]}
+paramedir_configurations=("${args[@]:2}")
 
 # remove  leftovers, because they can mess with the eventual renaming of files
 rm -f *.pm

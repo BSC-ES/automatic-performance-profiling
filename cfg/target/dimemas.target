@@ -1,16 +1,17 @@
 #!/bin/bash
 args=("$@")
 
-if [[ $# -lt 3 ]]
+if [[ $# -lt 2 ]]
 then
   echo $0 "expects analysis_tools path, dimemas trace, and paradim configurations as input"
   echo "abort"
   exit 1
 fi
 
-analysis_tools=${args[0]}
-trace=${args[1]}
-dimemas_configurations=("${args[@]:2}")
+[ -z ${analysis_tools+x} ] && echo "Variable analysis_tools must be defined" && exit 1
+
+trace=${args[0]}
+dimemas_configurations=("${args[@]:1}")
 
 # Remove path and extension
 trace_name=${trace##*/}

@@ -1,17 +1,18 @@
 #!/bin/bash
 args=("$@")
 
-if [[ $# -lt 4 ]]
+if [[ $# -lt 3 ]]
 then
   echo $0 "expects N of Cores  and paradim configurations as input"
   echo "abort"
   exit 1
 fi
 
-analysis_tools=${args[0]}
-trace=${args[1]}
-image_folder=${args[2]}
-paraver_configurations=("${args[@]:3}")
+[ -z ${analysis_tools+x} ] && echo "Variable analysis_tools must be defined" && exit 1
+
+trace=${args[0]}
+image_folder=${args[1]}
+paraver_configurations=("${args[@]:2}")
 
 cd ${image_folder}
 # Make paraver images
