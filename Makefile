@@ -1,20 +1,29 @@
-# Makefile to prepare all the necessary elements to launch a performance analysis on NEMO
-
-# Reading some parameters from the config file
-config_file=param.cfg
-include ${config_file}
-
-# Variables that can be overwritten in param.cfg
-# and will be taking this value only if are not defined
-processes_per_node?=48
+# Reading Input parameters
+parameters_file?=configurations/model/nemo/strongscaling/BENCH
 # If no queue has been specified it will use debug where possible
 slurm_queue?=debug
+# File to save all the data to produce the report
+report_file?=report.pkl
+# Reading some parameters from the config file
+include ${parameters_file}
+# Check that the io server has been specified
+ifndef  main_folder
+$(error main_folder must be defined in configuration file )
+endif
+main_folder_fullpath=run_dir/${main_folder}
+
 # Tools folder
 cfg=$(CURDIR)/cfg
 analysis_tools=${cfg}/trace_analysis/
-latex_folder=${cfg}/latex
-
 export analysis_tools
+
+latex_folder=${cfg}/latex
+# Reading the report settings
+report_file_full_path=$(CURDIR)/${report_file}
+report_cfg=${cfg}/latex/report.cfg
+include ${report_cfg}
+
+cores?=8
 # Check environment is loaded
 ####################################################
 $(eval ssh_id := $(shell echo ${SSH_CONNECTION} | awk '{print $$2}'))
@@ -26,14 +35,20 @@ endif
 experiment:
 	for recipe in ${experiment_recipes} ; do \
                 echo $${recipe} ; \
-                $(MAKE) $${recipe} slurm_queue=${slurm_queue}; \
+				[ ! -d ${main_folder_fullpath} ] && git clone . ${main_folder_fullpath} ;\
+				cp ${parameters_file} ${main_folder_fullpath}/param.cfg ;\
+				cd  ${main_folder_fullpath} ;\
+				source ./load_env.sh ;\
+				cd - ;\
+				$(MAKE) -C ./${main_folder_fullpath} parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
         done
+
 
 ####################################################
 # Recipes to prepare inidata
 inidata:
 	# Download data, put it in inidata and remove write permissions to avoid undesired modifications
-	mkdir inidata
+	mkdir -p inidata
 	${cfg}/target/model/${model}/inidata.target
 %/.inidata.done: inidata
 	mkdir -p $(@D)
@@ -76,10 +91,11 @@ functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
 
 #################### TRACE
 TRACE_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/trace.slurm)
-trace_experiments: $(TRACE_EXPERIMENTS)
+trace_experiments: functions_dir/extrae_functions.txt bin/${model}_trace.exe inidata
+	make -j${cores} $(TRACE_EXPERIMENTS)
 
 # Recipe to make traces
-trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe
+trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe inidata
 	mkdir -p $(@D)
 	cp $< $(@D)
 	${MAKE} $(@D)/.inidata.done
@@ -108,13 +124,17 @@ magiccut:
 
 ### Cut the trace
 TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${model}.best_cut.prv)
+trace_cut:
+	make -j${cores} $(TRACE_CUT)
+
 trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut
 	# Magic Cut
 	cd $(@D); magicCut ${model}.prv
 
 #################### PARAMEDIR
 PARAMEDIR_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/paramedir.slurm)
-paramedir_experiments: $(PARAMEDIR_EXPERIMENTS) $(TRACE_CUT)
+paramedir_experiments: trace_cut
+	 make -j${cores} $(PARAMEDIR_EXPERIMENTS)
 
 paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
 trace_%/paramedir.slurm: trace_%/${model}.best_cut.prv
@@ -130,14 +150,15 @@ trace_%/paramedir.slurm: trace_%/${model}.best_cut.prv
 	sbatch --wait --chdir $(@D) $@
 
 trace_%/report_add_paramedir: trace_%/paramedir.slurm
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "MPI Call Profile" --add-csv $(@D)/$*_MPIcallprofile.csv --csv-convert -p
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "MPI Call Profile" --add-csv $(@D)/$*_MPIcallprofile.csv --csv-convert -p
 
 REPORT_ADD_PARAMEDIR=$(foreach var, $(number_of_processes), trace_$(var)/report_add_paramedir)
 report_add_paramedir: $(REPORT_ADD_PARAMEDIR)
 
 ####################### PARAVER
 PARAVER_IMAGES=$(foreach var, $(number_of_processes), paraver_images/$(var))
-paraver_images: $(PARAVER_IMAGES)
+paraver_images: trace_cut .info_report.done
+	make -j${cores} $(PARAVER_IMAGES)
 
 paraver_configurations=$(wildcard ${analysis_tools}/paraver_configurations/*)
 paraver_images/%: trace_%/${model}.best_cut.prv .info_report.done
@@ -149,17 +170,19 @@ paraver_images/%: trace_%/${model}.best_cut.prv .info_report.done
 
 ### Add paraver to the report
 report_add_%_paraver: paraver_images/%
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" -s $*' Core' --add-img $<
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Paraver" -s $*' Core' --add-img $<
 
 REPORT_ADD_PARAVER=$(foreach var, $(number_of_processes), report_add_$(var)_paraver)
 report_add_paraver: $(REPORT_ADD_PARAVER) 
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Paraver" -T cfg/latex/text/ParaverViews.txt
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Paraver" -T cfg/latex/text/ParaverViews.txt
 
 ####################### DIMEMAS
 dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/*)
 
 DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
-dimemas_trc: $(DIMEMAS_TRC) $(TRACE_CUT)
+dimemas_trc: trace_cut
+	make -j${cores} $(DIMEMAS_TRC)
+
 dimemas_traces/%.dim: trace_%/${model}.best_cut.prv
 	mkdir -p $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm \
@@ -170,7 +193,9 @@ dimemas_traces/%.dim: trace_%/${model}.best_cut.prv
 	sbatch --wait --chdir dimemas_traces $(@D)/prv2dim.slurm
 
 DIMEMAS_EXPERIMENTS=$(foreach var, $(number_of_processes), dimemas_traces/dimemas_$(var).slurm)
-dimemas_experiments: $(DIMEMAS_EXPERIMENTS) dimemas_trc
+dimemas_experiments: dimemas_trc
+	make -j${cores} $(DIMEMAS_EXPERIMENTS)
+
 dimemas_traces/dimemas_%.slurm: dimemas_traces/%.dim
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
                                      --set-time-seconds $$(( $* * 7 )) \
@@ -181,7 +206,9 @@ dimemas_traces/dimemas_%.slurm: dimemas_traces/%.dim
 
 ### Process images
 DIMEMAS_IMAGES=$(foreach var, $(number_of_processes), dimemas_images/.dimemas_images_$(var).done)
-dimemas_images: $(DIMEMAS_IMAGES) $(DIMEMAS_EXPERIMENTS)
+dimemas_images: dimemas_experiments
+	make -j${cores} $(DIMEMAS_IMAGES)
+
 dimemas_images/.dimemas_images_%.done: dimemas_traces/dimemas_%.slurm
 	mkdir -p $(@D)
 	@${cfg}/target/dimemas_images.target $* ${dimemas_configurations}
@@ -193,21 +220,21 @@ report_add_dimemas_images: $(DIMEMAS_IMAGES)
 		config_type=$${config_type%.*} ;\
 		for cores in ${number_of_processes}; do \
 			image_name=$${cores}_$${config_type}.png ;\
-			python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Dimemas" -s $${config_type} --add-img dimemas_images/$${image_name} ;\
+			python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Dimemas" -s $${config_type} --add-img dimemas_images/$${image_name} ;\
 		done ;\
 	done
 
 report_add_dimemas: .info_report.done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Dimemas" --add-csv dimemas.csv -T cfg/latex/text/Dimemas.txt
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Dimemas" --add-csv dimemas.csv -T cfg/latex/text/Dimemas.txt
 	$(MAKE) report_add_dimemas_images
 
 ####################### PARADIM
 # Run the paramedir configurations with all the dimemas traces
 PARADIM_EXPERIMENTS=$(foreach var, $(number_of_processes), dimemas_traces/paradim_$(var).slurm)
-paradim_experiments: $(PARADIM_EXPERIMENTS) 
+paradim_experiments: dimemas_experiments
+	make -j${cores} $(PARADIM_EXPERIMENTS)
 
 paradim_configurations=$(wildcard cfg/trace_analysis/paradim_configurations/*)
-
 dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
                                      --set-time-seconds $$(( $* * 8 )) \
@@ -218,7 +245,8 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 
 ###################### TEST
 SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/test.slurm)
-scalability: $(SCALABILITY)
+scalability:  bin/${model}_vanilla.exe bin/xios_server.exe inidata
+	make -j${cores} $(SCALABILITY)
 
 # Recipes to launch some basic tests
 test_%/test.slurm: bin/${model}_vanilla.exe bin/xios_server.exe
@@ -266,14 +294,15 @@ clean_%:
 	rm -rf $*
 
 ################ MODELFACTORS
+TRACE_CUT_FULL_PATH=$(foreach var, $(number_of_processes), $(CURDIR)/trace_$(var)/${model}.best_cut.prv)
 modelfactors: $(TRACE_CUT)
-	mkdir $@
+	mkdir -p $@
 	cd $@  ;\
-	${analysis_tools}/modelfactors $^ ;\
+	${analysis_tools}/modelfactors $(TRACE_CUT_FULL_PATH) ;\
 	rm -rf *hybrid*
 report_add_modelfactors: modelfactors
 	# Add produced pictures to latex report
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Model Factors" --add-img $^ -T cfg/latex/text/ModelFactors.txt
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Model Factors" --add-img $^ -T cfg/latex/text/ModelFactors.txt
 
 # Function histograms
 histogram_%.txt: trace_%/${model}.best_cut.prv
@@ -330,7 +359,7 @@ clean_info_report:
 	rm -rf tracking
 ################ REPORT ADD SCALALBILITY
 report_add_scalability: .info_report.done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl \
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} \
                                           -S "Scalability" \
                                           --add-img ${configuration_name}_scaling.png \
                                           --add-img-caption cfg/latex/text/captions/Scalability.txt\
@@ -340,42 +369,35 @@ report_add_scalability: .info_report.done
 ################ REPORT ADD FUNCTION INFO
 functions=$(wildcard function_csv/* tracking/MPI/*)
 report_add_function_detail: .info_report.done
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -T cfg/latex/text/Function.txt
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" --add-csv most_expensive_function_summary.csv
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" --add-img L3_vs_IPC.png
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Functions detailed report" -T cfg/latex/text/Function.txt
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Functions detailed report" --add-csv most_expensive_function_summary.csv
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Functions detailed report" --add-img L3_vs_IPC.png
 	for func in ${functions} ; do \
                 file_name=$${func##function_csv/} ;\
                 file_name=$${file_name##tracking/MPI/} ;\
                 func_name=$${file_name%.csv} ;\
                 echo $${func_name} ;\
                 echo $${file_name} ;\
-                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -s  $${func_name} --add-csv  function_csv/$${file_name}  --silent;\
-                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -s  $${func_name} --add-csv  tracking/MPI/$${file_name} -p  --silent ;\
-                python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Functions detailed report" -s  $${func_name} --add-csv  tracking/counters/$${file_name} -p --silent ;\
+                python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Functions detailed report" -s  $${func_name} --add-csv  function_csv/$${file_name}  --silent;\
+                python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Functions detailed report" -s  $${func_name} --add-csv  tracking/MPI/$${file_name} -p  --silent ;\
+                python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Functions detailed report" -s  $${func_name} --add-csv  tracking/counters/$${file_name} -p --silent ;\
         done
 
 ##########################
-MULTIEXPERIMENT_RUN=$(foreach experiment, $(multiexperiment),MultiExperimentRuns/$(experiment))
-multiexperiments_run: $(MULTIEXPERIMENT_RUN)
-#Run multi exp
-MultiExperimentRuns/%:
-	# The script contains a wait statement, so the target won't complete until the script finishes
-	./MultiExperiment/MultiExperiment_launcher.cmd MultiExperiment/configurations/model/${model}/$* $@
-
 
 MULTIEXP_CSV=$(foreach exp, $(multiexperiment), $(exp).csv)
 multiexp_csv: $(MULTIEXP_CSV)
-${configuration_name}_weakscaling.csv: MultiExperimentRuns/${configuration_name}_weakscaling
+${configuration_name}_weakscaling.csv: run_dir/MultiExperimentRuns/weakscaling/${configuration_name}
 	python cfg/parser/comparator.py --json-files $</*/*.json -w --file-out $@
 
-${configuration_name}_compilation_efficiency.csv: MultiExperimentRuns/${configuration_name}_compilation_efficiency
+${configuration_name}_compilation_efficiency.csv: run_dir/MultiExperimentRuns/compilation_efficiency/${configuration_name}
 	python cfg/parser/comparator.py --json-files $</*/*.json -s --file-out $@
 	touch $@
 
 clean_multiexp_csv:
 	for experiment in ${exp}; do rm -rf ${experiment}.csv; done
 report_add_Multi_%: %.csv
-	python cfg/latex/ReportGenerator.py -O report.pkl -S "Multi Experiment" -s $* --add-csv $*.csv
+	python cfg/latex/ReportGenerator.py -O ${report_file} -S "Multi Experiment" -s $* --add-csv $*.csv
 
 %_postproc: .%_postproc.done
 	@echo $@ "done"
@@ -404,21 +426,14 @@ clean_STREAM_${model}.png:
 	rm -rf STREAM_RUN/STREAM_${model}.png
 # Add stream data to the report
 report_add_stream: STREAM_RUN/STREAM_${model}.png
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-img  $< -T cfg/latex/text/STREAM.txt
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-img  $< -T cfg/latex/text/STREAM.txt
 ### OSU
 osu-micro-benchmarks-%:
-	wget http://mvapich.cse.ohio-state.edu/download/mvapich/$@.tar.gz
-
-	tar -xvf $@.tar.gz
-	rm $@.tar.gz
-	cd $@ ;\
-	./configure CC=`which mpicxx` CXX=`which mpicc` --prefix=`pwd`;\
-	make install;\
-	make
+	${cfg}/target/osu_install.target $@
 
 OSU_RUN=$(foreach var, $(number_of_processes), OSU_RUN/$(var)/osu.slurm)
-osu_run: $(OSU_RUN)
-
+osu_run: osu-micro-benchmarks-5.6.3
+	 $(MAKE) -j${cores} $(OSU_RUN)
 osu_binaries=$(foreach test, $(osu_tests), osu-micro-benchmarks-5.6.3/mpi/$(test))
 OSU_RUN/%/osu.slurm: osu-micro-benchmarks-5.6.3
 	mkdir -p $(@D)
@@ -440,45 +455,30 @@ clean_OSU_RUN_IMAGE:
 	rm -rf OSU_RUN/IMAGE
 # Add results to report
 report_add_osu: OSU_RUN/IMAGE
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -s "OSU Benchmark" --add-img  $< -T cfg/latex/text/OSU.txt
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Hardware Benchmarks" -s "OSU Benchmark" --add-img  $< -T cfg/latex/text/OSU.txt
 
-HARDWARE_BENCHMARKS= STREAM_RUN/stream.slurm osu_run
-hardware_benchmarks: $(HARDWARE_BENCHMARKS)
+hardware_benchmarks:  STREAM_RUN/stream.slurm osu_run
 
 # Add benchmarks to report
 report_add_benchmarks: report_add_osu report_add_stream
-	python ${latex_folder}/ReportGenerator.py -O report.pkl -S "Hardware Benchmarks" -T cfg/latex/text/HardwareBenchmarks.txt
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Hardware Benchmarks" -T cfg/latex/text/HardwareBenchmarks.txt
 ################## REPORT
-report: .latex_report.done
-.latex_report.done: report_add_scalability report_add_modelfactors report_add_paraver report_add_dimemas report_add_function_detail report_add_benchmarks  report_add_Multi_${configuration_name}_compilation_efficiency report_add_Multi_${configuration_name}_weakscaling
-	# Stores the nemo commit tag to a variable
-	$(eval $@_NEMO_VERSION := $(shell cd nemo_mirror; git log | grep 'git-svn-id:'| head -1 | awk '{print $$2}'| awk -F / '{print $$NF}' ))
-	# Copy latex template to a new one which will be modified
-	$(eval $@_LATEX_REPORT := $(shell echo report_$($@_NEMO_VERSION)))
-	#python ${latex_folder}/ReportGenerator.py -O report.pkl --section-title "Introduction" --section-number 1 -T Introduction.txt
-	python ${latex_folder}/ReportGenerator.py -O report.pkl --add-newcommand ${config_file}
-	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-title "Report Nemo version "$($@_NEMO_VERSION)
-	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-authors "O. Tinto Primis"
-	python ${latex_folder}/ReportGenerator.py -O report.pkl --report-authors "Stella V. Paronuzzi Ticco"
-	# Remove old report folders
-	rm -rf $($@_LATEX_REPORT)
-	# Create a new one
-	mkdir $($@_LATEX_REPORT)
-	# Copy the report in the appropriate folder
-	cp report.pkl $($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl
-	# Create the tex file
-	python ${latex_folder}/ReportGenerator.py -O ./$($@_LATEX_REPORT)/$($@_LATEX_REPORT).pkl --dump-to-file
-	# Compile the report
-	cd $($@_LATEX_REPORT); module load LATEX/20150523; pdflatex $($@_LATEX_REPORT).tex && pdflatex $($@_LATEX_REPORT).tex && evince $($@_LATEX_REPORT).pdf
+report_add_strong_scaling: report_add_scalability report_add_modelfactors report_add_paraver report_add_dimemas report_add_function_detail
+#report_add_multi: report_add_Multi_${configuration_name}_compilation_efficiency report_add_Multi_${configuration_name}_weakscaling
+report_add_multi: report_add_Multi_${configuration_name}_compilation_efficiency
 
-	# Generate the target
-	touch $@
+report:
+	# Creates the report, dumping all the info to a tex file, and adding authors and title
+	mkdir $@
+	cfg/target/$@.target ${report_file} ${parameters_file} ${report_cfg}
 clean_report:
-	rm -rf report.pkl report_*
+	rm -rf ${report_file} report
 ############### TARGET FOR PARALLEL MAKE
-REPORT_DEPENDENCIES = scalability trace_experiments paraver_images dimemas_experiments paramedir_experiments paradim_experiments hardware_benchmarks 
-
-report_dependencies: $(REPORT_DEPENDENCIES)
+strong_scaling:
+	${MAKE} scalability
+	${MAKE} trace_cut
+	${MAKE} modelfactors paraver_images dimemas_experiments
+	${MAKE} paradim_experiments
 
 paraver_images: trace_experiments
 dimemas_experiments: trace_experiments

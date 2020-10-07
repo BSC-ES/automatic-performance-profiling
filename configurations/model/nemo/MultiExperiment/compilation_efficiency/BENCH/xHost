@@ -3,7 +3,7 @@ model=nemo
 # Branch to profile
 model_branch=avoid_error_partition
 # Configuration name
-configuration_name=O1
+configuration_name=xHost
 # the following parameter should be cfgs in case the configuration is based on ORCA or tests if it is based n the bench
 configuration_folder=tests
 # Details of the configuration which you would put after makemodel, excluding the arch file
@@ -11,7 +11,7 @@ configuration_details=-a BENCH
 # For BENCH specifies the resolution at which it will run
 configuration_resolution=orca1
 # Suffix of the arch file used
-arch_file_prefix=O1
+arch_file_prefix=xHost
 # Enable or disable output (TRUE or FALSE)
 output=FALSE
 # Number of steps used in test (Adjust acording to cost)
@@ -21,6 +21,7 @@ trace_steps=20
 number_of_processes=48 96
 # This value will be passed to the slurm parameter --ntasks-per-node (default in mn4 is 48)
 processes_per_node=48
-
 # Which parts of the recipe will be executed when we run make experiment
-experiment_recipes = scalability ${configuration_name}.json
+experiment_recipes = scalability process_json.slurm
+# Folder in which all the results will be stored
+main_folder = MultiExperimentRuns/compilation_efficiency/BENCH/${configuration_name}

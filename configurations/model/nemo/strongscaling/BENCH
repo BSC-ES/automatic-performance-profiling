@@ -1,12 +1,14 @@
 model=nemo
 # Branch to profile
-model_branch=svn/NEMO/trunk
+model_branch=avoid_error_partition
 # Configuration name
-configuration_name=OCE_SI3
+configuration_name=BENCH
 # the following parameter should be cfgs in case the configuration is based on ORCA or tests if it is based n the bench
-configuration_folder=cfgs
+configuration_folder=tests
 # Details of the configuration which you would put after makenemo, excluding the arch file
-configuration_details=-r ORCA2_ICE_PISCES -d "OCE ICE" del_key "key_top"
+configuration_details=-a BENCH
+# For BENCH specifies the resolution at which it will run
+configuration_resolution=orca1
 # Suffix of the arch file used
 arch_file_prefix=prod
 # Enable or disable output (TRUE or FALSE)
@@ -15,12 +17,12 @@ output=FALSE
 test_steps=200
 trace_steps=20
 # Processes used for the modelfactor
-number_of_processes=46 92 138
+number_of_processes=48 96 190
 # This value will be passed to the slurm parameter --ntasks-per-node (default in mn4 is 48)
-processes_per_node=46
-
-# Which parts of the recipe will be executed when we run make experiment
-experiment_recipes = json
-multiexperiment = ${configuration_name}_compilation_efficiency 
+processes_per_node=48
 # Osu test
 osu_tests = pt2pt/osu_multi_lat pt2pt/osu_mbw_mr collective/osu_allgather
+# Which parts of the recipe will be executed when we run make experiment
+experiment_recipes = strong_scaling
+# Folder in which all the results will be stored
+main_folder = strong_scaling/BENCH

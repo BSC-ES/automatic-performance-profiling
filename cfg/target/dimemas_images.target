@@ -3,16 +3,17 @@
 source cfg/target/param_bash.cfg
 args=("$@")
 
-if [[ $# -lt 3 ]]
+if [[ $# -lt 2 ]]
 then
   echo $0": expects 3 args, "$#" given"
   echo "abort"
   exit 1
 fi
 
-analysis_tools=${args[0]}
-n_cores=${args[1]}
-dimemas_configurations=("${args[@]:2}")
+[ -z ${analysis_tools+x} ] && echo "Variable analysis_tools must be defined" && exit 1
+
+n_cores=${args[0]}
+dimemas_configurations=("${args[@]:1}")
 
 # Check how the function view changes with the different dimemas traces
 paraver_cfg=` readlink -f cfg/trace_analysis/cfgs/UserFunctions.cfg`

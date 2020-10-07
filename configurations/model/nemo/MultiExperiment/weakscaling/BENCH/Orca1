@@ -2,7 +2,7 @@ model=nemo
 # Branch to profile
 model_branch=avoid_error_partition
 # Configuration name
-configuration_name=BENCH1
+configuration_name=orca1
 # the following parameter should be cfgs in case the configuration is based on ORCA or tests if it is based n the bench
 configuration_folder=tests
 # Details of the configuration which you would put after makemodel, excluding the arch file
@@ -24,3 +24,5 @@ tile_size=47x57 21x35
 processes_per_node=48
 # Which parts of the recipe will be executed when we run make experiment
 experiment_recipes = process_json.slurm
+# Folder in which all the results will be stored
+main_folder = MultiExperimentRuns/weakscaling/BENCH/${configuration_name}

@@ -1,0 +1,7 @@
+number_of_processes = 48 96 190
+# Osu test
+osu_tests = pt2pt/osu_multi_lat pt2pt/osu_mbw_mr collective/osu_allgather
+# Which parts of the recipe will be executed when we run make experiment
+experiment_recipes = hardware_benchmarks
+# Folder in which all the results will be stored
+main_folder = hardware_benchmarks

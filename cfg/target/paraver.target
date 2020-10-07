@@ -7,16 +7,24 @@ then
   echo "abort"
   exit 1
 fi
-
+for arg in ${args[@]}
+do
+	if [[ ! -e ${arg} ]]
+	then
+          echo $0": file or folder "${arg}" not found"
+          echo "Abort"
+          exit 1
+	fi
+done
 [ -z ${analysis_tools+x} ] && echo "Variable analysis_tools must be defined" && exit 1
 
 trace=${args[0]}
 image_folder=${args[1]}
 paraver_configurations=("${args[@]:2}")
-
+absolute_path=`pwd`
 cd ${image_folder}
 # Make paraver images
 for cfg in ${paraver_configurations[@]} 
 do 
-  ${analysis_tools}/paraver -i ${trace} ${cfg} 
+  ${analysis_tools}/paraver -i ${absolute_path}/${trace} ${cfg}
 done
