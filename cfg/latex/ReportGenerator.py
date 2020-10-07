@@ -379,7 +379,7 @@ class Report:
         self.sections = []
         self.total_section_number = 0
         self.title = ""
-        self.authors = []
+        self.authors = ""
         self.newcommand = {}
         self.newcommand_file = "newcommand_file.tex"
         self.bsc_logo_url = 'https://pbs.twimg.com/profile_images/378800000692705583/015be2057821ebe8382c21804a8504fc_400x400.png'
@@ -409,7 +409,7 @@ class Report:
         self.title = title
 
     def add_authors(self, authors):
-        self.authors.append(authors)
+        self.authors = authors
 
     def __set_absolute_path(self):
         # Update patterns
@@ -426,7 +426,7 @@ class Report:
         if not len(self.authors):
             print("Report's authors have not been specified")
         else:
-            self.preamble = self.preamble.replace("AUTHORS", ", ".join(self.authors))
+            self.preamble = self.preamble.replace("AUTHORS", self.authors)
 
     def __set_logo(self):
         abs_logo_path = self.image_folder + "/BSC_Logo.png"
