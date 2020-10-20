@@ -129,7 +129,7 @@ trace_cut:
 
 trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut
 	# Magic Cut
-	cd $(@D); magicCut ${model}.prv
+	cd $(@D); magicCut ${model}.prv ${trace_steps}
 
 #################### PARAMEDIR
 PARAMEDIR_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/paramedir.slurm)
