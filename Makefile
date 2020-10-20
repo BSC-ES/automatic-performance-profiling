@@ -1,5 +1,5 @@
 # Reading Input parameters
-parameters_file?=configurations/model/nemo/strongscaling/BENCH
+parameters_file?=configurations/model/example/BENCH
 # If no queue has been specified it will use debug where possible
 slurm_queue?=debug
 # File to save all the data to produce the report
@@ -115,21 +115,26 @@ trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe i
 
 
 # prepare env for cutting the trace
-export PATH := $(CURDIR)/magiccut/bin:$(PATH)
-magiccut:
+magiccut/magicCut:
 	# Download sources
 	git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch numpy_version
-	# Setup tool
-	cd $@; ./setup_tool.cmd
 
 ### Cut the trace
 TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${model}.best_cut.prv)
 trace_cut:
 	make -j${cores} $(TRACE_CUT)
 
-trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut
-	# Magic Cut
-	cd $(@D); magicCut ${model}.prv ${trace_steps}
+trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut/magicCut
+        # Magic Cut
+	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/magicCut_$*.slurm \
+                                     --set-time-second  $$((10 * $*)) \
+                                     --set-core 48 \
+                                     --job-name magicCut_$* \
+                                     --set-queue $(slurm_queue)
+	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/magicCut_$*.slurm \
+                                            --set-workload $|  ${model}.prv ${trace_steps}
+	# Launch jobscript	
+	sbatch --wait --chdir $(@D) $(@D)/magicCut_$*.slurm
 
 #################### PARAMEDIR
 PARAMEDIR_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/paramedir.slurm)

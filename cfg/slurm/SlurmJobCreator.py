@@ -1,11 +1,13 @@
 from os.path import abspath, exists
 
 
-def check_workload(workload):
+def check_workload(workload, add_interpreter=False):
     if exists(workload):
-        return abspath(workload)
-    else:
-        return workload
+        workload =  abspath(workload)
+    if add_interpreter:
+        if (workload.count(".py")):
+            workload = "python " + workload
+    return workload
 
 
 class SlurmJob:
@@ -47,9 +49,12 @@ class SlurmJob:
 
         with open(self.file_name, "a") as slurm_job:
             slurm_job.write("\n")
+            add_interpreter=False
+            if ("python" not in workload):
+                add_interpreter = True
             for work in workload:
                 # If command is a script, gives back the abs path
-                work = check_workload(work)
+                work = check_workload(work, add_interpreter)
                 slurm_job.write(work + " ")
 
 
