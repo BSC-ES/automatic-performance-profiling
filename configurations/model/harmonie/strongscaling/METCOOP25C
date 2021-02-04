@@ -26,7 +26,7 @@ processes_per_node=48
 experiment_recipes = strong_scaling
 # Folder in which all the results will be stored
 main_folder = strong_scaling/METCOOP25C
-# If part 1 of the workflow is executed in an external cluter and traces and timing files are provided, only part 2 of the workflow will be executed
-provided_traces=true
+# If part 1 of the workflow is executed in an external cluter and traces and timing files are provided, only part 2 of the workflow will be executed (TRUE or FALSE)
+provided_traces=TRUE
 # Path to the traces and timing files in case they are generated in an external cluster
 provided_traces_path=/gpfs/scratch/bsc32/bsc32544/harmonie_traces
