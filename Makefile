@@ -48,33 +48,42 @@ experiment:
 # Recipes to prepare inidata
 inidata:
 	# Download data, put it in inidata and remove write permissions to avoid undesired modifications
+ifeq ($(provided_traces), FALSE)
 	mkdir -p inidata
 	${cfg}/target/model/${model}/inidata.target
+endif
 %/.inidata.done: inidata
+ifeq ($(provided_traces), FALSE)
 	mkdir -p $(@D)
 	# Link inidata
 	ln -rsf inidata/* $(@D)
 	rsync -rv --exclude=.nc inidata/ $(@D)
 	touch $@
+endif
 
 
 ####################################################
 # The sources are prepared
 %_source:
+ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/$*_source.target ${cfg}
+endif
 
 ####################################################
 # Recipe to compile different model versions
 # The subscript indicates the version that we are compiling (vanilla, trace)
 bin/${model}_%.exe: ${model}_source
+ifeq ($(provided_traces), FALSE)
 	mkdir -p $(@D)
 	${cfg}/target/model/${model}/${model}_exec.target $* $@ $<
+endif
 
 
 ####################################################
 # Recipes to prepare functions file for tracing
 # TODO: find a better way of prepare these rundirs without repeating code
 functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
+ifeq ($(provided_traces), FALSE)
 	${MAKE} $(@D)/.inidata.done
 	${cfg}/target/model/${model}/functions_dir.target $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/function.slurm \
@@ -87,15 +96,19 @@ functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
                                             --set-workload ${cfg}/target/functions_dir.target bin/${model}_trace.exe
 
 	sbatch --wait --chdir $(@D) $(@D)/function.slurm
+endif
 
 
 #################### TRACE
 TRACE_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/trace.slurm)
 trace_experiments: functions_dir/extrae_functions.txt bin/${model}_trace.exe inidata
+ifeq ($(provided_traces), FALSE)
 	make -j${cores} $(TRACE_EXPERIMENTS)
+endif
 
 # Recipe to make traces
 trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe inidata
+ifeq ($(provided_traces), FALSE)
 	mkdir -p $(@D)
 	cp $< $(@D)
 	${MAKE} $(@D)/.inidata.done
@@ -112,6 +125,9 @@ trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe i
                                             --set-workload ${cfg}/target/model/${model}/trace.target $*
 	# Launch jobscript
 	sbatch --wait --chdir $(@D) $@
+else
+	#TODO: copy traces from provided_traces_path
+endif
 
 
 # prepare env for cutting the trace
@@ -246,10 +262,13 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 ###################### TEST
 SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/test.slurm)
 scalability:  bin/${model}_vanilla.exe bin/xios_server.exe inidata
+ifeq ($(provided_traces), FALSE)
 	make -j${cores} $(SCALABILITY)
+endif
 
 # Recipes to launch some basic tests
 test_%/test.slurm: bin/${model}_vanilla.exe bin/xios_server.exe
+ifeq ($(provided_traces), FALSE)
 	${MAKE} $(@D)/.inidata.done
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
                                      --set-time 120 \
@@ -261,15 +280,18 @@ test_%/test.slurm: bin/${model}_vanilla.exe bin/xios_server.exe
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload ${cfg}/target/model/${model}/test.target $*
 	# Launch job
 	sbatch --wait --chdir $(@D)  $@
+endif
 ####################################################
 
 # Some other recipes
 
 # Xios server
 bin/xios_server.exe:
+ifeq ($(provided_traces), FALSE)
 	mkdir -p $(@D)
 	# TODO: HARDCODED dependency that at some point should be replaced with xios compilation
 	cp /gpfs/projects/bsc32/bsc32870/xios/2.5/mn4-r1650-prod/bin/xios_server.exe bin/xios_server.exe
+endif
 
 ####################################################
 # Clean recipes
