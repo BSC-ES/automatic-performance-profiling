@@ -1,3 +1,6 @@
 inidata
 nemo_mirror
 nemo_source
+param.cfg
+run_dir
+cfg/target/param_bash.cfg

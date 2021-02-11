@@ -3,8 +3,9 @@ model=harmonie
 configuration=METCOOP25C
 
 config_folder=configurations
-model_config_folder=${config_folder}/model/${model}/
+model_config_folder=${config_folder}/model/${model}
 
+cp ${model_config_folder}/strongscaling/${configuration} ./param.cfg
 source load_env.sh
 
 if [[ $@ -gt 0 ]]
