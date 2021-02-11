@@ -48,8 +48,8 @@ experiment:
 # Recipes to prepare inidata
 inidata:
 	# Download data, put it in inidata and remove write permissions to avoid undesired modifications
-ifeq ($(provided_traces), FALSE)
 	mkdir -p inidata
+ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/inidata.target
 endif
 %/.inidata.done: inidata
@@ -135,12 +135,10 @@ endif
 
 
 # prepare env for cutting the trace
-export PATH := $(CURDIR)/magiccut/bin:$(PATH)
+export PATH := $(CURDIR)/magiccut:$(PATH)
 magiccut:
 	# Download sources
 	git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch numpy_version
-	# Setup tool
-	cd $@; ./setup_tool.cmd
 
 ### Cut the trace
 TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${model}.best_cut.prv)
