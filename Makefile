@@ -53,13 +53,13 @@ ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/inidata.target
 endif
 %/.inidata.done: inidata
-ifeq ($(provided_traces), FALSE)
 	mkdir -p $(@D)
+ifeq ($(provided_traces), FALSE)
 	# Link inidata
 	ln -rsf inidata/* $(@D)
 	rsync -rv --exclude=.nc inidata/ $(@D)
-	touch $@
 endif
+	touch $@
 
 
 ####################################################
@@ -87,8 +87,8 @@ endif
 # Recipes to prepare functions file for tracing
 # TODO: find a better way of prepare these rundirs without repeating code
 functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
-ifeq ($(provided_traces), FALSE)
 	${MAKE} $(@D)/.inidata.done
+ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/functions_dir.target $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/function.slurm \
                                      --set-time  120 \
@@ -100,6 +100,9 @@ ifeq ($(provided_traces), FALSE)
                                             --set-workload ${cfg}/target/functions_dir.target bin/${model}_trace.exe
 
 	sbatch --wait --chdir $(@D) $(@D)/function.slurm
+else
+	# TODO: Fix this
+	touch ./$@
 endif
 
 
@@ -112,11 +115,11 @@ endif
 
 # Recipe to make traces
 trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe inidata
-ifeq ($(provided_traces), FALSE)
 	mkdir -p $(@D)
 	cp $< $(@D)
 	${MAKE} $(@D)/.inidata.done
 
+ifeq ($(provided_traces), FALSE)
 	# Copy jobscript and trace utils
 	cp cfg/trace/* $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
@@ -131,6 +134,9 @@ ifeq ($(provided_traces), FALSE)
 	sbatch --wait --chdir $(@D) $@
 else
 	#TODO: copy traces from provided_traces_path
+	ln -sf ${provided_traces_path}/$(@D)/MASTERODB.prv $(@D)
+	ln -sf ${provided_traces_path}/$(@D)/MASTERODB.pcf $(@D)
+	ln -sf ${provided_traces_path}/$(@D)/MASTERODB.row $(@D)
 endif
 
 
