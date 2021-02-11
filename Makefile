@@ -67,15 +67,19 @@ endif
 %_source:
 ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/$*_source.target ${cfg}
+else
+	@:
 endif
 
 ####################################################
 # Recipe to compile different model versions
 # The subscript indicates the version that we are compiling (vanilla, trace)
 bin/${model}_%.exe: ${model}_source
-ifeq ($(provided_traces), FALSE)
 	mkdir -p $(@D)
+ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/${model}_exec.target $* $@ $<
+else
+	touch ./$@
 endif
 
 
