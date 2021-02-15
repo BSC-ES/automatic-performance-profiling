@@ -134,9 +134,9 @@ ifeq ($(provided_traces), FALSE)
 	sbatch --wait --chdir $(@D) $@
 else
 	#TODO: copy traces from provided_traces_path
-	tar zxfv ${provided_traces_path}/$(@D)/MASTERODB.prv.tar.gz -C $(@D)
-	cp ${provided_traces_path}/$(@D)/MASTERODB.pcf $(@D)
-	cp ${provided_traces_path}/$(@D)/MASTERODB.row $(@D)
+	tar zxfv ${provided_traces_path}/$(@D)/${bin_name}.prv.tar.gz -C $(@D)
+	cp ${provided_traces_path}/$(@D)/${bin_name}.pcf $(@D)
+	cp ${provided_traces_path}/$(@D)/${bin_name}.row $(@D)
 endif
 
 
