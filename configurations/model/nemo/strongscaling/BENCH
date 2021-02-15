@@ -1,7 +1,7 @@
 # Model name
 model=nemo
 # Binary name of the model
-bin_name=MASTERODB
+bin_name=nemo
 # Branch to profile
 model_branch=avoid_error_partition
 # Configuration name
