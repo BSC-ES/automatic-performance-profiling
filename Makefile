@@ -74,7 +74,7 @@ endif
 ####################################################
 # Recipe to compile different model versions
 # The subscript indicates the version that we are compiling (vanilla, trace)
-bin/${model}_%.exe: ${model}_source
+bin/${bin_name}_%.exe: ${model}_source
 	mkdir -p $(@D)
 ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/${model}_exec.target $* $@ $<
@@ -86,7 +86,7 @@ endif
 ####################################################
 # Recipes to prepare functions file for tracing
 # TODO: find a better way of prepare these rundirs without repeating code
-functions_dir/extrae_functions.txt: bin/${model}_trace.exe bin/xios_server.exe
+functions_dir/extrae_functions.txt: bin/${bin_name}_trace.exe bin/xios_server.exe
 	${MAKE} $(@D)/.inidata.done
 ifeq ($(provided_traces), FALSE)
 	${cfg}/target/model/${model}/functions_dir.target $(@D)
@@ -97,7 +97,7 @@ ifeq ($(provided_traces), FALSE)
                                      --job-name $(@D) \
 				     --set-queue $(slurm_queue)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/function.slurm \
-                                            --set-workload ${cfg}/target/functions_dir.target bin/${model}_trace.exe
+                                            --set-workload ${cfg}/target/functions_dir.target bin/${bin_name}_trace.exe
 
 	sbatch --wait --chdir $(@D) $(@D)/function.slurm
 else
@@ -108,13 +108,13 @@ endif
 
 #################### TRACE
 TRACE_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/trace.slurm)
-trace_experiments: functions_dir/extrae_functions.txt bin/${model}_trace.exe inidata
+trace_experiments: functions_dir/extrae_functions.txt bin/${bin_name}_trace.exe inidata
 ifeq ($(provided_traces), FALSE)
 	make -j${cores} $(TRACE_EXPERIMENTS)
 endif
 
 # Recipe to make traces
-trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${model}_trace.exe inidata
+trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${bin_name}_trace.exe inidata
 	mkdir -p $(@D)
 	cp $< $(@D)
 	${MAKE} $(@D)/.inidata.done
@@ -146,11 +146,11 @@ magiccut/magicCut:
 	git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch numpy_version
 
 ### Cut the trace
-TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${model}.best_cut.prv)
+TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${bin_name}.best_cut.prv)
 trace_cut:
 	make -j${cores} $(TRACE_CUT)
 
-trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut/magicCut
+trace_%/${bin_name}.best_cut.prv: trace_%/trace.slurm | magiccut/magicCut
         # Magic Cut
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/magicCut_$*.slurm \
                                      --set-time-second  $$((10 * $*)) \
@@ -158,7 +158,7 @@ trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut/magicCut
                                      --job-name magicCut_$* \
                                      --set-queue $(slurm_queue)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/magicCut_$*.slurm \
-                                            --set-workload $|  ${model}.prv ${trace_steps}
+                                            --set-workload $|  ${bin_name}.prv ${trace_steps}
 	# Launch jobscript	
 	sbatch --wait --chdir $(@D) $(@D)/magicCut_$*.slurm
 
@@ -168,7 +168,7 @@ paramedir_experiments: trace_cut
 	 make -j${cores} $(PARAMEDIR_EXPERIMENTS)
 
 paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
-trace_%/paramedir.slurm: trace_%/${model}.best_cut.prv
+trace_%/paramedir.slurm: trace_%/${bin_name}.best_cut.prv
 	 python cfg/slurm/SlurmJobCreator.py --file-name $@ \
                                      --set-time-second  $$((10 * $*)) \
                                      --set-core 48 \
@@ -192,7 +192,7 @@ paraver_images: trace_cut .info_report.done
 	make -j${cores} $(PARAVER_IMAGES)
 
 paraver_configurations=$(wildcard ${analysis_tools}/paraver_configurations/*)
-paraver_images/%: trace_%/${model}.best_cut.prv .info_report.done
+paraver_images/%: trace_%/${bin_name}.best_cut.prv .info_report.done
 	# Make paraver images
 	mkdir -p  $@
 	${cfg}/target/paraver.target $< $@ ${paraver_configurations}
@@ -214,7 +214,7 @@ DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
 dimemas_trc: trace_cut
 	make -j${cores} $(DIMEMAS_TRC)
 
-dimemas_traces/%.dim: trace_%/${model}.best_cut.prv
+dimemas_traces/%.dim: trace_%/${mbin_name}.best_cut.prv
 	mkdir -p $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm \
                                      --set-time-seconds $$(( $* )) \
@@ -276,13 +276,13 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 
 ###################### TEST
 SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/test.slurm)
-scalability:  bin/${model}_vanilla.exe bin/xios_server.exe inidata
+scalability:  bin/${bin_name}_vanilla.exe bin/xios_server.exe inidata
 ifeq ($(provided_traces), FALSE)
 	make -j${cores} $(SCALABILITY)
 endif
 
 # Recipes to launch some basic tests
-test_%/test.slurm: bin/${model}_vanilla.exe bin/xios_server.exe
+test_%/test.slurm: bin/${bin_name}_vanilla.exe bin/xios_server.exe
 ifeq ($(provided_traces), FALSE)
 	${MAKE} $(@D)/.inidata.done
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
@@ -331,7 +331,7 @@ clean_%:
 	rm -rf $*
 
 ################ MODELFACTORS
-TRACE_CUT_FULL_PATH=$(foreach var, $(number_of_processes), $(CURDIR)/trace_$(var)/${model}.best_cut.prv)
+TRACE_CUT_FULL_PATH=$(foreach var, $(number_of_processes), $(CURDIR)/trace_$(var)/${bin_name}.best_cut.prv)
 modelfactors: $(TRACE_CUT)
 	mkdir -p $@
 	cd $@  ;\
@@ -342,7 +342,7 @@ report_add_modelfactors: modelfactors
 	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Model Factors" --add-img $^ -T cfg/latex/text/ModelFactors.txt
 
 # Function histograms
-histogram_%.txt: trace_%/${model}.best_cut.prv
+histogram_%.txt: trace_%/${bin_name}.best_cut.prv
 	${analysis_tools}/paramedir $< ${analysis_tools}/cfgs/FunctionTimeHistogram.cfg
 	mv FunctionTimeHistogram histogram_$*.txt
 
