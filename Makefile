@@ -134,9 +134,9 @@ ifeq ($(provided_traces), FALSE)
 	sbatch --wait --chdir $(@D) $@
 else
 	#TODO: copy traces from provided_traces_path
-	ln -sf ${provided_traces_path}/$(@D)/MASTERODB.prv $(@D)
-	ln -sf ${provided_traces_path}/$(@D)/MASTERODB.pcf $(@D)
-	ln -sf ${provided_traces_path}/$(@D)/MASTERODB.row $(@D)
+	tar zxfv ${provided_traces_path}/$(@D)/MASTERODB.prv.tar.gz -C $(@D)
+	cp ${provided_traces_path}/$(@D)/MASTERODB.pcf $(@D)
+	cp ${provided_traces_path}/$(@D)/MASTERODB.row $(@D)
 endif
 
 
@@ -153,7 +153,8 @@ trace_cut:
 
 trace_%/${model}.best_cut.prv: trace_%/trace.slurm | magiccut
 	# Magic Cut
-	cd $(@D); magicCut MASTERODB.prv 25
+	cd $(@D)
+	#magicCut MASTERODB.prv 25
 
 #################### PARAMEDIR
 PARAMEDIR_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/paramedir.slurm)
