@@ -33,113 +33,40 @@ endif
 ###################################################
 # Experiment recipes specified in param.cfg file
 experiment:
+ifeq ($(provided_traces), TRUE)
 	for recipe in ${experiment_recipes} ; do \
                 echo $${recipe} ; \
 				[ ! -d ${main_folder_fullpath} ] && git clone . ${main_folder_fullpath} ;\
 				cp ${parameters_file} ${main_folder_fullpath}/param.cfg ;\
 				cd  ${main_folder_fullpath} ;\
 				source ./load_env.sh ;\
+				for var in ${number_of_processes} ; do \
+					mkdir -p ./test_$${var} ;\
+					cp ${provided_traces_path}/${main_folder}/test_$${var}/* ./test_$${var}/. ;\
+					mkdir -p ./trace_$${var} ;\
+					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.pcf ./trace_$${var}/. ;\
+					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.row ./trace_$${var}/. ;\
+					if [ -f ${provided_traces_path}/${main_folder}/${bin_name}.prv.tar.gz ]; then \
+						tar zxfv ${provided_traces_path}/${main_folder}/${bin_name}.prv.tar.gz -C ./trace_$${var}/. ;\
+					else \
+						cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.prv ./trace_$${var}/. ;\
+					fi ;\
+				done ;\
 				cd - ;\
-				$(MAKE) -C ./${main_folder_fullpath} parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
+				$(MAKE) -f ./${main_folder_fullpath}/Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
         done
-
-
-####################################################
-# Recipes to prepare inidata
-inidata:
-	# Download data, put it in inidata and remove write permissions to avoid undesired modifications
-	mkdir -p inidata
-ifeq ($(provided_traces), FALSE)
-	${cfg}/target/model/${model}/inidata.target
-endif
-%/.inidata.done: inidata
-	mkdir -p $(@D)
-ifeq ($(provided_traces), FALSE)
-	# Link inidata
-	ln -rsf inidata/* $(@D)
-	rsync -rv --exclude=.nc inidata/ $(@D)
-endif
-	touch $@
-
-
-####################################################
-# The sources are prepared
-%_source:
-ifeq ($(provided_traces), FALSE)
-	${cfg}/target/model/${model}/$*_source.target ${cfg}
 else
-	@:
+	for recipe in ${experiment_recipes} ; do \
+                echo $${recipe} ; \
+				cp ${parameters_file} ${main_folder_fullpath}/param.cfg ;\
+				cd  ${main_folder_fullpath} ;\
+				source ./load_env.sh ;\
+				cd - ;\
+				$(MAKE) -f ./${main_folder_fullpath}/Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
+        done
 endif
-
-####################################################
-# Recipe to compile different model versions
-# The subscript indicates the version that we are compiling (vanilla, trace)
-bin/${bin_name}_%.exe: ${model}_source
-	mkdir -p $(@D)
-ifeq ($(provided_traces), FALSE)
-	${cfg}/target/model/${model}/${model}_exec.target $* $@ $<
-else
-	touch ./$@
-endif
-
-
-####################################################
-# Recipes to prepare functions file for tracing
-# TODO: find a better way of prepare these rundirs without repeating code
-functions_dir/extrae_functions.txt: bin/${bin_name}_trace.exe bin/xios_server.exe
-	${MAKE} $(@D)/.inidata.done
-ifeq ($(provided_traces), FALSE)
-	${cfg}/target/model/${model}/functions_dir.target $(@D)
-	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/function.slurm \
-                                     --set-time  120 \
-                                     --set-core $(word 1, ${number_of_processes}) \
-                                     --set-core-per-node ${processes_per_node} \
-                                     --job-name $(@D) \
-				     --set-queue $(slurm_queue)
-	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/function.slurm \
-                                            --set-workload ${cfg}/target/functions_dir.target bin/${bin_name}_trace.exe
-
-	sbatch --wait --chdir $(@D) $(@D)/function.slurm
-else
-	# TODO: Fix this
-	touch ./$@
-endif
-
 
 #################### TRACE
-TRACE_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/trace.slurm)
-trace_experiments: functions_dir/extrae_functions.txt bin/${bin_name}_trace.exe inidata
-ifeq ($(provided_traces), FALSE)
-	make -j${cores} $(TRACE_EXPERIMENTS)
-endif
-
-# Recipe to make traces
-trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${bin_name}_trace.exe inidata
-	mkdir -p $(@D)
-	cp $< $(@D)
-	${MAKE} $(@D)/.inidata.done
-
-ifeq ($(provided_traces), FALSE)
-	# Copy jobscript and trace utils
-	cp cfg/trace/* $(@D)
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
-                                     --set-time  120 \
-                                     --set-core $* \
-                                     --set-core-per-node ${processes_per_node} \
-                                     --job-name $(@F) \
-                                     --set-queue $(slurm_queue)
-	python cfg/slurm/SlurmJobCreator.py --file-name  $@ \
-                                            --set-workload ${cfg}/target/model/${model}/trace.target $*
-	# Launch jobscript
-	sbatch --wait --chdir $(@D) $@
-else
-	#TODO: copy traces from provided_traces_path
-	tar zxfv ${provided_traces_path}/$(@D)/${bin_name}.prv.tar.gz -C $(@D)
-	cp ${provided_traces_path}/$(@D)/${bin_name}.pcf $(@D)
-	cp ${provided_traces_path}/$(@D)/${bin_name}.row $(@D)
-endif
-
-
 # prepare env for cutting the trace
 magiccut/magicCut:
 	# Download sources
@@ -150,7 +77,7 @@ TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${bin_name}.best_c
 trace_cut:
 	make -j${cores} $(TRACE_CUT)
 
-trace_%/${bin_name}.best_cut.prv: trace_%/trace.slurm | magiccut/magicCut
+trace_%/${bin_name}.best_cut.prv: trace_%/${bin_name}.prv | magiccut/magicCut
         # Magic Cut
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/magicCut_$*.slurm \
                                      --set-time-second  $$((10 * $*)) \
@@ -274,45 +201,11 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload cfg/target/paradim.target $* ${paradim_configurations}
 	sbatch --wait --chdir dimemas_traces dimemas_traces/paradim_$*.slurm
 
-###################### TEST
-SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/test.slurm)
-scalability:  bin/${bin_name}_vanilla.exe bin/xios_server.exe inidata
-ifeq ($(provided_traces), FALSE)
-	make -j${cores} $(SCALABILITY)
-endif
-
-# Recipes to launch some basic tests
-test_%/test.slurm: bin/${bin_name}_vanilla.exe bin/xios_server.exe
-ifeq ($(provided_traces), FALSE)
-	${MAKE} $(@D)/.inidata.done
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
-                                     --set-time 120 \
-                                     --set-core $* \
-                                     --set-core-per-node ${processes_per_node} \
-                                     --job-name $(@D) \
-                                     --set-queue $(slurm_queue)
-	# Moldel specific instruction
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload ${cfg}/target/model/${model}/test.target $*
-	# Launch job
-	sbatch --wait --chdir $(@D)  $@
-endif
-####################################################
-
-# Some other recipes
-
-# Xios server
-bin/xios_server.exe:
-ifeq ($(provided_traces), FALSE)
-	mkdir -p $(@D)
-	# TODO: HARDCODED dependency that at some point should be replaced with xios compilation
-	cp /gpfs/projects/bsc32/bsc32870/xios/2.5/mn4-r1650-prod/bin/xios_server.exe bin/xios_server.exe
-endif
-
 ####################################################
 # Clean recipes
 # Delete (almost)-everything
 clean:
-	rm -rf  nemo_source nemo_mirror *.prv *.row *.pcf modelfactors* histogram_* trace_* functions_dir extrae_functions.txt *_workdir bin test_*
+	rm -rf *.prv *.row *.pcf modelfactors* histogram_* trace_* test_*
 	rm -rf function_csv/
 	rm -rf OSU* osu* bin/osu_bench .osu*
 	rm -rf STREAM* stream* bin/stream_bench .stream*
@@ -349,12 +242,12 @@ histogram_%.txt: trace_%/${bin_name}.best_cut.prv
 histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).txt)
 histograms: $(histogram_dependencies)
 
-analysis: histograms modelfactors scalability	
+analysis: histograms modelfactors
 
 
 ################ JSON
 # Stores the info produces from all the experiments in a json file
-JSON= $(SCALABILITY) $(PARAMEDIR_EXPERIMENTS) $(PARADIM_EXPERIMENTS)
+JSON= $(PARAMEDIR_EXPERIMENTS) $(PARADIM_EXPERIMENTS)
 # Submits a job to creat json file: used when the traces have been taken on a big N of cores
 process_json.slurm: $(JSON)
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
@@ -512,13 +405,10 @@ clean_report:
 	rm -rf ${report_file} report
 ############### TARGET FOR PARALLEL MAKE
 strong_scaling:
-	${MAKE} scalability
 	${MAKE} trace_cut
 	${MAKE} modelfactors paraver_images dimemas_experiments
 	${MAKE} paradim_experiments
 
-paraver_images: trace_experiments
-dimemas_experiments: trace_experiments
 paradim_experiments: dimemas_experiments
 
 
@@ -527,7 +417,6 @@ report_preproc: $(REPORT_PREPROC)
 
 clean_report_preproc: clean_info_report clean_modelfactors clean_paraver_images clean_dimemas_images clean_OSU_RUN_IMAGE clean_STREAM_${model}.png clean_multiexp_csv
 # Intermediate files that won't be removed automatically
-binaries= bin/nemo_trace.exe bin/nemo_vanilla.exe
-.PRECIOUS: ${nemo}_source $(binaries)  %.dim *.env_loaded
+.PRECIOUS: %.dim *.env_loaded
 
 .DELETE_ON_ERROR: $(PARAMEDIR_EXPERIMENTS) $(DIMEMAS_EXPERIMENTS) $(PARADIM_EXPERIMENTS)
