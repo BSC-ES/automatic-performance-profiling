@@ -75,7 +75,7 @@ magiccut/magicCut:
 ### Cut the trace
 TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${bin_name}.best_cut.prv)
 trace_cut:
-	make -j${cores} $(TRACE_CUT)
+	make -f ./Makefile.part2 -j${cores} $(TRACE_CUT)
 
 trace_%/${bin_name}.best_cut.prv: trace_%/${bin_name}.prv | magiccut/magicCut
         # Magic Cut
@@ -92,7 +92,7 @@ trace_%/${bin_name}.best_cut.prv: trace_%/${bin_name}.prv | magiccut/magicCut
 #################### PARAMEDIR
 PARAMEDIR_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/paramedir.slurm)
 paramedir_experiments: trace_cut
-	 make -j${cores} $(PARAMEDIR_EXPERIMENTS)
+	 make -f ./Makefile.part2 -j${cores} $(PARAMEDIR_EXPERIMENTS)
 
 paramedir_configurations=$(wildcard ${analysis_tools}/paramedir_configurations/*)
 trace_%/paramedir.slurm: trace_%/${bin_name}.best_cut.prv
@@ -116,7 +116,7 @@ report_add_paramedir: $(REPORT_ADD_PARAMEDIR)
 ####################### PARAVER
 PARAVER_IMAGES=$(foreach var, $(number_of_processes), paraver_images/$(var))
 paraver_images: trace_cut .info_report.done
-	make -j${cores} $(PARAVER_IMAGES)
+	make -f ./Makefile.part2 -j${cores} $(PARAVER_IMAGES)
 
 paraver_configurations=$(wildcard ${analysis_tools}/paraver_configurations/*)
 paraver_images/%: trace_%/${bin_name}.best_cut.prv .info_report.done
@@ -139,7 +139,7 @@ dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/*)
 
 DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
 dimemas_trc: trace_cut
-	make -j${cores} $(DIMEMAS_TRC)
+	make -f ./Makefile.part2 -j${cores} $(DIMEMAS_TRC)
 
 dimemas_traces/%.dim: trace_%/${mbin_name}.best_cut.prv
 	mkdir -p $(@D)
@@ -152,7 +152,7 @@ dimemas_traces/%.dim: trace_%/${mbin_name}.best_cut.prv
 
 DIMEMAS_EXPERIMENTS=$(foreach var, $(number_of_processes), dimemas_traces/dimemas_$(var).slurm)
 dimemas_experiments: dimemas_trc
-	make -j${cores} $(DIMEMAS_EXPERIMENTS)
+	make -f ./Makefile.part2 -j${cores} $(DIMEMAS_EXPERIMENTS)
 
 dimemas_traces/dimemas_%.slurm: dimemas_traces/%.dim
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
@@ -165,7 +165,7 @@ dimemas_traces/dimemas_%.slurm: dimemas_traces/%.dim
 ### Process images
 DIMEMAS_IMAGES=$(foreach var, $(number_of_processes), dimemas_images/.dimemas_images_$(var).done)
 dimemas_images: dimemas_experiments
-	make -j${cores} $(DIMEMAS_IMAGES)
+	make  -f ./Makefile.part2 -j${cores} $(DIMEMAS_IMAGES)
 
 dimemas_images/.dimemas_images_%.done: dimemas_traces/dimemas_%.slurm
 	mkdir -p $(@D)
@@ -184,13 +184,13 @@ report_add_dimemas_images: $(DIMEMAS_IMAGES)
 
 report_add_dimemas: .info_report.done
 	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Dimemas" --add-csv dimemas.csv -T cfg/latex/text/Dimemas.txt
-	$(MAKE) report_add_dimemas_images
+	$(MAKE) -f ./Makefile.part2 report_add_dimemas_images
 
 ####################### PARADIM
 # Run the paramedir configurations with all the dimemas traces
 PARADIM_EXPERIMENTS=$(foreach var, $(number_of_processes), dimemas_traces/paradim_$(var).slurm)
 paradim_experiments: dimemas_experiments
-	make -j${cores} $(PARADIM_EXPERIMENTS)
+	make -f ./Makefile.part2 -j${cores} $(PARADIM_EXPERIMENTS)
 
 paradim_configurations=$(wildcard cfg/trace_analysis/paradim_configurations/*)
 dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
@@ -255,7 +255,7 @@ process_json.slurm: $(JSON)
                                      --set-time 120 \
                                      --job-name ${configuration_name}.json \
                                      --set-queue $(slurm_queue)
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload make ${configuration_name}.json
+	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload make -f ./Makefile.part2 ${configuration_name}.json
 	sbatch --wait --chdir . $@
 
 ${configuration_name}.json: $(JSON)
