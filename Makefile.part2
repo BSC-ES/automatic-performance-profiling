@@ -53,7 +53,7 @@ ifeq ($(provided_traces), TRUE)
 					fi ;\
 				done ;\
 				cd - ;\
-				$(MAKE) -f ./${main_folder_fullpath}/Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
+				$(MAKE) -C ./${main_folder_fullpath} -f ./${main_folder_fullpath}/Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
         done
 else
 	for recipe in ${experiment_recipes} ; do \
@@ -62,7 +62,7 @@ else
 				cd  ${main_folder_fullpath} ;\
 				source ./load_env.sh ;\
 				cd - ;\
-				$(MAKE) -f ./${main_folder_fullpath}/Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
+				$(MAKE) -C ./${main_folder_fullpath} -f ./${main_folder_fullpath}/Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
         done
 endif
 
