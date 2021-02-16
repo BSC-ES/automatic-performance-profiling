@@ -405,9 +405,9 @@ clean_report:
 	rm -rf ${report_file} report
 ############### TARGET FOR PARALLEL MAKE
 strong_scaling:
-	${MAKE} trace_cut
-	${MAKE} modelfactors paraver_images dimemas_experiments
-	${MAKE} paradim_experiments
+	$(MAKE) -f ./Makefile.part2 trace_cut
+	$(MAKE) -f ./Makefile.part2 modelfactors paraver_images dimemas_experiments
+	$(MAKE) -f ./Makefile.part2 paradim_experiments
 
 paradim_experiments: dimemas_experiments
 
