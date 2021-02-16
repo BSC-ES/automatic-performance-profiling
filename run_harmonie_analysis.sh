@@ -16,7 +16,7 @@ else
   queue=debug
 fi
 
-make experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}
+make -f Makefile.part2 experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}
 
 #make experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}  &
 #make experiment parameters_file=${config_folder}/hardware_benchmarks slurm_queue=${queue} &
