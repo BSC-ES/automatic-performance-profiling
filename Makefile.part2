@@ -79,13 +79,14 @@ trace_cut:
 
 trace_%/${bin_name}.best_cut.prv: trace_%/${bin_name}.prv | magiccut/magicCut
         # Magic Cut
+	magiccut_steps=$((trace_steps+timestep_0))
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/magicCut_$*.slurm \
                                      --set-time-second  $$((10 * $*)) \
                                      --set-core 48 \
                                      --job-name magicCut_$* \
                                      --set-queue $(slurm_queue)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/magicCut_$*.slurm \
-                                            --set-workload $|  ${bin_name}.prv ${trace_steps}
+                                            --set-workload $|  ${bin_name}.prv ${magiccut_steps}
 	# Launch jobscript	
 	sbatch --wait --chdir $(@D) $(@D)/magicCut_$*.slurm
 
