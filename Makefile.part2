@@ -104,7 +104,6 @@ trace_%/paramedir.slurm: trace_%/${bin_name}.best_cut.prv
 	 python cfg/slurm/SlurmJobCreator.py --file-name $@ \
                                      --set-time-second  $$((10 * $*)) \
                                      --set-core 48 \
-                                     --set-core-per-node ${processes_per_node} \
                                      --job-name paramedir_$* \
                                      --set-queue $(slurm_queue)
 	python cfg/slurm/SlurmJobCreator.py --file-name  $@ \
@@ -146,7 +145,7 @@ DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
 dimemas_trc: trace_cut
 	make -f ./Makefile.part2 -j${cores} $(DIMEMAS_TRC)
 
-dimemas_traces/%.dim: trace_%/${mbin_name}.best_cut.prv
+dimemas_traces/%.dim: trace_%/${bin_name}.best_cut.prv
 	mkdir -p $(@D)
 	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm \
                                      --set-time-seconds $$(( $* )) \
