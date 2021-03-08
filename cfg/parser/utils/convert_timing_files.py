@@ -167,6 +167,6 @@ if __name__ == "__main__":
             output_dict[number_of_processes]["TimeStepTime"] = get_step_avg_duration(lines)
             output_dict[number_of_processes]["Communication"] = get_avg_sypd(lines)
     # Save output
-    pickle.dump(output_dict, open(output_file+".pkl", "wb"))
+    pickle.dump(output_dict, open(output_file, "wb"))
     print("Converted timing file saved to " + abspath(output_file))
 
