@@ -142,6 +142,7 @@ def dimemas_curated_summary(experiment_data):
 
 def most_expensive_function_summary(experiment_data, out_file_name, length_summary=10):
     import csv
+    from os.path import abspath
     header = []
     TIME_data = [[] for x in range(length_summary + 1)]
     function_names = [[] for x in range(len(experiment_data.cases))]
@@ -151,11 +152,11 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
         header.append("function_name")
         header.append(core)
         n_function = 0
-        for function_name, function_info in experiment_data.data[core]["FunctionInfo"].items():
+        for function_name, elapsed_time in experiment_data.data[core]["FunctionInfo"].items():
             if n_function < length_summary + 1:
                 function_names[core_index].append(function_name)
                 TIME_data[n_function].append(function_name)
-                TIME_data[n_function].append(str(function_info["Elap. Time(%)"]))
+                TIME_data[n_function].append(str(elapsed_time))
                 n_function += 1
             else:
                 break
@@ -165,6 +166,7 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
         out_writer.writerow(header)
         for func in range(length_summary + 1):
             out_writer.writerow(TIME_data[func])
+        print("Written file in " + abspath(out_file_name))
 
 
 # Function plot L3 cache misses vs IPC
