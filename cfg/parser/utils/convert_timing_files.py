@@ -114,7 +114,7 @@ if __name__ == "__main__":
         # Get number of processes
         m = re.match("([0-9]+)_([a-zA-Z]+).timing", basename(timing_files))
         try:
-            number_of_processes = m.group(1)
+            number_of_processes = float(m.group(1))
         except AttributeError:
             raise AttributeError("Filename %s does not have the expected format", timing_files)
         output_dict[number_of_processes] = {}
