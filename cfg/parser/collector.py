@@ -3,7 +3,6 @@ from cfg.latex.ReportGenerator import get_files_from_path
 from os.path import isfile, abspath
 
 
-
 def get_command_line_arguments():
     """
     Returns a list of files that have been provided as a command line argument
@@ -12,19 +11,13 @@ def get_command_line_arguments():
     import argparse
     # Parse and assert command line options
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input-files",
-                        default=None, nargs='+',
+    parser.add_argument("-i", "--input-files", required=True, nargs='+',
                         help="list of files to parse")
     parser.add_argument("-o", "--output-file", default=None,
                         help="name of the output .json file")
     parser.add_argument("-p", "--param-file", default=None,
                         help="Parameter file to supply some infos")
-    args = parser.parse_args()
-
-    # In case no input file has been passed
-    if args.input_files is None or not len(args.input_files):
-        parser.error("No input file specified")
-    return args
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -39,7 +32,7 @@ if __name__ == "__main__":
     for folder in args.input_files:
         files = get_files_from_path(folder)
         for f in files:
-            if f.count(".timing"):
+            if f.count("timing.pkl"):
                 timing_files.append(f)
             elif f.count(".pm"):
                 paramedir_files.append(f)
