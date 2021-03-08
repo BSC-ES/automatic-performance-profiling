@@ -261,8 +261,8 @@ class TimingInformation:
                 pass
         return param_dictionary
 
-    # Adding calls to different ways of processing the data
     def function_summary(self):
+        # Adding calls to different ways of processing the data
         return function_curated_summary(self)
 
     def most_expensive_function_summary(self, out_file_name):
@@ -345,7 +345,7 @@ class TimingInformation:
 
         if self.functions:
             # Change function names to match the one in traces
-            self.fix_function(timing_info_dict)
+            self.fix_function_names(timing_info_dict)
 
         if self.data is None:
             self.data = timing_info_dict
@@ -384,3 +384,15 @@ class TimingInformation:
             self.base_case = min(self.cases)
 
         pass
+
+    def fix_function_names(self, function_dict):
+        for core in function_dict:
+            function_info = function_dict[core]['FunctionInfo']
+            # We can not cycle directly on key, because dictionary will change size, raising an exception
+            list_of_function_names = [*function_info]
+            for function_name in list_of_function_names:
+                real_name = [f for f in self.functions if f.replace("_", "").count(function_name.replace("_", ""))]
+                if real_name:
+                    # Updates the name of the function with the ones present in the trace
+                    function_info[real_name[0]] = function_info.pop(function_name)
+
