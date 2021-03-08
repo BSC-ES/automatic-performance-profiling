@@ -16,7 +16,7 @@ def get_command_line_arguments():
     parser.add_argument("-o", "--output-file", default=None,
                         help="name of the output .json file")
     parser.add_argument("-p", "--param-file", default=None,
-                        help="Parameter file to supply some infos")
+                        help="Parameter file to supply some info")
     return parser.parse_args()
 
 
@@ -58,4 +58,4 @@ if __name__ == "__main__":
     )
     # Save json file
     experiment_results.save_json(output_file)
-    print("jsone file saved in ", abspath(output_file + ".json"))
+    print("json file saved in ", abspath(output_file + ".json"))
