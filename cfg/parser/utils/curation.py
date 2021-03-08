@@ -564,8 +564,8 @@ def experiment_comparison(experiment1, experiment2):
             "                     %4i processes  speed :  %5.1f|%5.1f SYPD   SpeedUp:   %4.1fx |%4.1fx   Efficiency: %4.2f|%4.2f  -> %.2f ratio." %
             (case, exp1_speed, exp2_speed, exp1_speedup, exp2_speedup, exp1_efficiency, exp2_efficiency, ratio))
     # Time-step length
-    exp1_base_length = experiment1[base_case]["TimeStepTime"][0]
-    exp2_base_length = experiment2[base_case]["TimeStepTime"][0]
+    exp1_base_length = experiment1[base_case]["TimeStepTime"]
+    exp2_base_length = experiment2[base_case]["TimeStepTime"]
     log.add("_" * 30)
     log.add("Base time-step length(s) with %4i processes:    %4.2f | %4.2f" %
             (base_case, exp1_base_length, exp2_base_length))
@@ -573,8 +573,8 @@ def experiment_comparison(experiment1, experiment2):
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_length = experiment1[case]["TimeStepTime"][0]
-        exp2_length = experiment2[case]["TimeStepTime"][0]
+        exp1_length = experiment1[case]["TimeStepTime"]
+        exp2_length = experiment2[case]["TimeStepTime"]
         log.add("                              %4i processes:    %4.2f | %4.2f" % (case, exp1_length, exp2_length))
     return log
 
@@ -651,7 +651,7 @@ def weakscaling_compute(experiment):
     # Get number of cores
     number_of_processes = [exp.param_file["number_of_processes"] for exp in experiment]
     # Get average duration of the timesteps with this config
-    TimeStepTime = [[exp.data[core]["TimeStepTime"][0] for core in exp.data] for exp in experiment]
+    TimeStepTime = [[exp.data[core]["TimeStepTime"] for core in exp.data] for exp in experiment]
     log = Log()
     log.add("Config:, Tile Size, Ncores, Timestep per second ")
     for index_conf, conf in enumerate(configurations):
@@ -683,7 +683,7 @@ def extract_data_from_experiments(experiments):
     data = []
     for experiment in experiments:
         for case in experiment.cases:
-            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case]["TimeStepTime"][0])
+            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case]["TimeStepTime"])
             data.append(to_append)
     return data
 
