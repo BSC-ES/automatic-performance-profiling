@@ -488,11 +488,11 @@ def simulated_years_per_day_summary(experiment_data):
     log = Log()
 
     base_case = experiment_data.base_case
-    base_case_speed = experiment_data[base_case]["Communication"]["sypd"]["average"]
+    base_case_speed = experiment_data[base_case]["SYPD"]
 
     log.add("Processes, Comunication, SpeedUp, Efficiency")
     for case in experiment_data.cases:
-        speed = experiment_data[case]["Communication"]["sypd"]["average"]
+        speed = experiment_data[case]["SYPD"]
         speedup = speed / base_case_speed
         resource_increase = case / base_case
         efficiency = speedup / resource_increase
@@ -516,7 +516,7 @@ def simulated_years_per_day_plot(experiment_data, filename):
     plot_data = {x_label: [], y_label: []}
 
     base_case = experiment_data.base_case
-    base_case_speed = experiment_data[base_case]["Communication"]["sypd"]["average"]
+    base_case_speed = experiment_data[base_case]["SYPD"]
 
     plot_data[x_label].append(base_case)
     plot_data[y_label].append(base_case_speed)
@@ -524,7 +524,7 @@ def simulated_years_per_day_plot(experiment_data, filename):
     for case in experiment_data.cases:
         if case == experiment_data.base_case:
             continue
-        speed = experiment_data[case]["Communication"]["sypd"]["average"]
+        speed = experiment_data[case]["SYPD"]
         speedup = speed / base_case_speed
         resource_increase = case / base_case
         efficiency = speedup / resource_increase
@@ -540,8 +540,8 @@ def experiment_comparison(experiment1, experiment2):
     log = Log()
 
     # Simulated Years per Day
-    exp1_base_case_speed = experiment1[base_case]["Communication"]["sypd"]["average"]
-    exp2_base_case_speed = experiment2[base_case]["Communication"]["sypd"]["average"]
+    exp1_base_case_speed = experiment1[base_case]["SYPD"]
+    exp2_base_case_speed = experiment2[base_case]["SYPD"]
     ratio = exp2_base_case_speed / exp1_base_case_speed
     log.add(
         "Base case experiment %4i processes  speed :  %5.1f|%5.1f SYPD                                                    -> %.2f ratio.  " %
@@ -550,10 +550,10 @@ def experiment_comparison(experiment1, experiment2):
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_speed = experiment1[case]["Communication"]["sypd"]["average"]
+        exp1_speed = experiment1[case]["SYPD"]
         exp1_speedup = exp1_speed / exp1_base_case_speed
         exp1_efficiency = exp1_speedup / resource_increase
-        exp2_speed = experiment2[case]["Communication"]["sypd"]["average"]
+        exp2_speed = experiment2[case]["SYPD"]
         exp2_speedup = exp2_speed / exp2_base_case_speed
         exp2_efficiency = exp2_speedup / resource_increase
         ratio = exp2_speed / exp1_speed
