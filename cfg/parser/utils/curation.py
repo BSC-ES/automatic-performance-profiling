@@ -142,6 +142,7 @@ def dimemas_curated_summary(experiment_data):
 
 def most_expensive_function_summary(experiment_data, out_file_name, length_summary=10):
     import csv
+    from os.path import abspath
     header = []
     TIME_data = [[] for x in range(length_summary + 1)]
     function_names = [[] for x in range(len(experiment_data.cases))]
@@ -151,11 +152,11 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
         header.append("function_name")
         header.append(core)
         n_function = 0
-        for function_name, function_info in experiment_data.data[core]["FunctionInfo"].items():
+        for function_name, elapsed_time in experiment_data.data[core]["FunctionInfo"].items():
             if n_function < length_summary + 1:
                 function_names[core_index].append(function_name)
                 TIME_data[n_function].append(function_name)
-                TIME_data[n_function].append(str(function_info["Elap. Time(%)"]))
+                TIME_data[n_function].append(str(elapsed_time))
                 n_function += 1
             else:
                 break
@@ -165,6 +166,7 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
         out_writer.writerow(header)
         for func in range(length_summary + 1):
             out_writer.writerow(TIME_data[func])
+        print("Written file in " + abspath(out_file_name))
 
 
 # Function plot L3 cache misses vs IPC
@@ -488,11 +490,11 @@ def simulated_years_per_day_summary(experiment_data):
     log = Log()
 
     base_case = experiment_data.base_case
-    base_case_speed = experiment_data[base_case]["Communication"]["sypd"]["average"]
+    base_case_speed = experiment_data[base_case]["SYPD"]
 
     log.add("Processes, Comunication, SpeedUp, Efficiency")
     for case in experiment_data.cases:
-        speed = experiment_data[case]["Communication"]["sypd"]["average"]
+        speed = experiment_data[case]["SYPD"]
         speedup = speed / base_case_speed
         resource_increase = case / base_case
         efficiency = speedup / resource_increase
@@ -516,7 +518,7 @@ def simulated_years_per_day_plot(experiment_data, filename):
     plot_data = {x_label: [], y_label: []}
 
     base_case = experiment_data.base_case
-    base_case_speed = experiment_data[base_case]["Communication"]["sypd"]["average"]
+    base_case_speed = experiment_data[base_case]["SYPD"]
 
     plot_data[x_label].append(base_case)
     plot_data[y_label].append(base_case_speed)
@@ -524,7 +526,7 @@ def simulated_years_per_day_plot(experiment_data, filename):
     for case in experiment_data.cases:
         if case == experiment_data.base_case:
             continue
-        speed = experiment_data[case]["Communication"]["sypd"]["average"]
+        speed = experiment_data[case]["SYPD"]
         speedup = speed / base_case_speed
         resource_increase = case / base_case
         efficiency = speedup / resource_increase
@@ -540,8 +542,8 @@ def experiment_comparison(experiment1, experiment2):
     log = Log()
 
     # Simulated Years per Day
-    exp1_base_case_speed = experiment1[base_case]["Communication"]["sypd"]["average"]
-    exp2_base_case_speed = experiment2[base_case]["Communication"]["sypd"]["average"]
+    exp1_base_case_speed = experiment1[base_case]["SYPD"]
+    exp2_base_case_speed = experiment2[base_case]["SYPD"]
     ratio = exp2_base_case_speed / exp1_base_case_speed
     log.add(
         "Base case experiment %4i processes  speed :  %5.1f|%5.1f SYPD                                                    -> %.2f ratio.  " %
@@ -550,10 +552,10 @@ def experiment_comparison(experiment1, experiment2):
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_speed = experiment1[case]["Communication"]["sypd"]["average"]
+        exp1_speed = experiment1[case]["SYPD"]
         exp1_speedup = exp1_speed / exp1_base_case_speed
         exp1_efficiency = exp1_speedup / resource_increase
-        exp2_speed = experiment2[case]["Communication"]["sypd"]["average"]
+        exp2_speed = experiment2[case]["SYPD"]
         exp2_speedup = exp2_speed / exp2_base_case_speed
         exp2_efficiency = exp2_speedup / resource_increase
         ratio = exp2_speed / exp1_speed
@@ -562,8 +564,8 @@ def experiment_comparison(experiment1, experiment2):
             "                     %4i processes  speed :  %5.1f|%5.1f SYPD   SpeedUp:   %4.1fx |%4.1fx   Efficiency: %4.2f|%4.2f  -> %.2f ratio." %
             (case, exp1_speed, exp2_speed, exp1_speedup, exp2_speedup, exp1_efficiency, exp2_efficiency, ratio))
     # Time-step length
-    exp1_base_length = experiment1[base_case]["TimeStepTime"][0]
-    exp2_base_length = experiment2[base_case]["TimeStepTime"][0]
+    exp1_base_length = experiment1[base_case]["TimeStepTime"]
+    exp2_base_length = experiment2[base_case]["TimeStepTime"]
     log.add("_" * 30)
     log.add("Base time-step length(s) with %4i processes:    %4.2f | %4.2f" %
             (base_case, exp1_base_length, exp2_base_length))
@@ -571,8 +573,8 @@ def experiment_comparison(experiment1, experiment2):
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_length = experiment1[case]["TimeStepTime"][0]
-        exp2_length = experiment2[case]["TimeStepTime"][0]
+        exp1_length = experiment1[case]["TimeStepTime"]
+        exp2_length = experiment2[case]["TimeStepTime"]
         log.add("                              %4i processes:    %4.2f | %4.2f" % (case, exp1_length, exp2_length))
     return log
 
@@ -649,7 +651,7 @@ def weakscaling_compute(experiment):
     # Get number of cores
     number_of_processes = [exp.param_file["number_of_processes"] for exp in experiment]
     # Get average duration of the timesteps with this config
-    TimeStepTime = [[exp.data[core]["TimeStepTime"][0] for core in exp.data] for exp in experiment]
+    TimeStepTime = [[exp.data[core]["TimeStepTime"] for core in exp.data] for exp in experiment]
     log = Log()
     log.add("Config:, Tile Size, Ncores, Timestep per second ")
     for index_conf, conf in enumerate(configurations):
@@ -681,7 +683,7 @@ def extract_data_from_experiments(experiments):
     data = []
     for experiment in experiments:
         for case in experiment.cases:
-            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case]["TimeStepTime"][0])
+            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case]["TimeStepTime"])
             data.append(to_append)
     return data
 

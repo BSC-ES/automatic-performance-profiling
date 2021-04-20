@@ -1,15 +1,14 @@
 # This script takes several timing.output logs and computes several stats
 import re
 import numpy as np
-from cfg.parser.utils.curation import function_curated_summary,\
-                                      dimemas_curated_summary, \
-                                      simulated_years_per_day_summary, \
-                                      function_info_csv,\
-                                      most_expensive_function_summary,\
-                                      L3_IPC_scatterplot,\
-                                      simulated_years_per_day_plot, \
-                                      tracking
-
+from cfg.parser.utils.curation import function_curated_summary, \
+    dimemas_curated_summary, \
+    simulated_years_per_day_summary, \
+    function_info_csv, \
+    most_expensive_function_summary, \
+    L3_IPC_scatterplot, \
+    simulated_years_per_day_plot, \
+    tracking
 
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
@@ -89,221 +88,6 @@ def merge_dictionaries(dict_one, dict_two):
 
 def distributed_variable(values):
     return {"values": values, "average": np.average(values), "std": np.std(values)}
-
-
-def parse_timing_files(files, functions=None):
-    """
-    Function that reads a list of files and returns different data of interest
-    :param files: List of files to process
-    :return: Results object with the info parsed.
-    """
-
-    def parse_communication_time(lines):
-        """
-        Parses the section containing computing and communication time, where also the SYPD is provided
-        :param lines:
-        :return: Dictionary with computing and communication info.
-        """
-        computing_time_pattern = "Computing +time : +([0-9\.E\+]+) +on MPI rank : +([0-9\.E\+]+)"
-        lbclnk_time_pattern = "Waiting +lbc_lnk +time +: +([0-9\.E\+]+) \( ([0-9\.E\+]+) +%\) +on MPI rank : +([0-9\.E\+]+)"
-        global_time_pattern = "Waiting  global time :    ([0-9\.E\+]+) \( ([0-9\.E\+]+) %\)           on MPI rank :      ([0-9\.E\+]+)"
-        total_time_pattern = "Total *time : +([0-9\.E\+]+) +\(SYPD: +([0-9\.E\+]+) +\) on +MPI +rank +: +([0-9\.E\+]+)"
-
-        computing_times = []
-        p2p_times = []
-        p2p_pcts = []
-        collective_times = []
-        collective_pcts = []
-        total_times = []
-        sypds = []
-
-        def num_groups(regex):
-            """
-            :param regex: A regex pattern
-            :return: Number of groups in a regex pattern
-            """
-            return re.compile(regex).groups
-
-        def get_from_pattern(pattern, line):
-            """
-            Given a pattern and a line returns the groups found
-            :param pattern:
-            :param line:
-            :return: Contents of the groups that made match.
-            """
-            m = re.search(pattern, line)
-            if m:
-                if len(m.groups()) == 2:
-                    v, rank = m.groups()
-                    return float(v), int(rank)
-                elif len(m.groups()) == 3:
-                    v1, v2, rank = m.groups()
-                    return float(v1), float(v2), int(rank)
-            ng = num_groups(pattern)
-            if ng == 2:
-                return None, None
-            elif ng == 3:
-                return None, None, None
-            else:
-                raise AssertionError
-
-        for l in lines:
-            # For each line in the file see if it matches any of the different kinds of patterns
-            computing_time, rank = get_from_pattern(computing_time_pattern, l)
-            p2p_time, p2p_pct, rank = get_from_pattern(lbclnk_time_pattern, l)
-            collective_time, collective_pct, rank = get_from_pattern(global_time_pattern, l)
-            total_time, sypd, rank = get_from_pattern(total_time_pattern, l)
-
-            # In case if finds something add to the corresponding list
-            if computing_time is not None:
-                computing_times.append(computing_time)
-            if p2p_time is not None:
-                p2p_times.append(p2p_time)
-                p2p_pcts.append(p2p_pct)
-            if collective_time is not None:
-                collective_times.append(collective_time)
-                collective_pcts.append(collective_pct)
-            if total_time is not None:
-                total_times.append(total_time)
-                sypds.append(sypd)
-
-        # Return a dictionary with the information
-        return {
-            "sypd": distributed_variable(sypds),
-            "total_time": distributed_variable(total_times),
-            "computing_time": distributed_variable(computing_times),
-            "p2p_time": distributed_variable(p2p_times),
-            "p2p_pct": distributed_variable(p2p_pcts),
-            "collective_time": distributed_variable(collective_times),
-            "collective_pct": distributed_variable(collective_pcts),
-        }
-
-    # Few functions used to parse a file
-    def parse_time_by_process_info(lines, filename):
-        """
-        Parses the info for each process and returns a dictionary with the following keys and data for each process:
-        "Elapsed Time(s)"
-        "CPU Time(s)"
-        "Ratio CPU / Elapsed"
-        Example: To access the elapsed time information from process 11 we could do it like:
-            return_value[11][ "Elapsed Time(s)"]
-        :param filename:
-        :param lines: Lines of a file
-        :return: Nested dictionary with
-        """
-
-        def parse_time_by_process_line(groups):
-            process = groups[0]
-            values = [float(v) for v in groups[1:]]
-            return process, values
-
-        # Regex patterns
-        process_time = " +([0-9]+) +\| +([0-9\.E\+]+) +\| +([0-9\.E\+]+) +\| +([0-9\.E\+]+)"
-        # Time by processor
-        process_data = {}
-        # Labels
-        labels = ["Elapsed Time(s)", "CPU Time(s)", "Ratio CPU / Elapsed"]
-        for l in lines:
-            m = re.search(process_time, l)
-            if m:
-                # Process Rank | Elapsed Time (s) | CPU Time (s) | Ratio CPU/Elapsed
-                process, values = parse_time_by_process_line(m.groups())
-                process_data[process] = {}
-                for label, value in zip(labels, values):
-                    process_data[process][label] = value
-
-        pattern = "([0-9]+)_([a-zA-Z]+).timing"
-        filename = basename(filename)
-        m = re.match(pattern, filename)
-        try:
-            cores = m.group(1)
-        except AttributeError:
-            raise AttributeError("Filename %s does not have the expected format", filename)
-        cores = int(cores)
-
-        return cores, process_data
-
-    def parse_function_info(lines, functions=None):
-        """
-        Parses function info.
-        For each function found the information stored is the following:
-            "Elap. Time(s)"
-            "Elap. Time(%)"
-            "CPU Time(s)"
-            "CPU Time(%)"
-            "CPU/Elap"
-            "Max elap(%)"
-            "Min elap(%)"
-            "Freq"
-        Example: To access the elapsed time information for "dyn_spg" routine we could do it like:
-            return_value["dyn_spg"]["Elap. Time(s)"]
-        :param lines:
-        :return: Dictionary with function information.
-        """
-
-        def parse_function_line(groups):
-            section = groups[0]
-            values = [float(v) for v in groups[1:]]
-            return section, values
-
-        # Regex pattern for function times
-        functions_pattern = "([0-9a-zA-Z_]+) +" + "([0-9\.E\+\-]+) +" * 7 + "([0-9\.E\+\-]+)"
-        # Labels
-        labels = ["Elap. Time(s)", "Elap. Time(%)", "CPU Time(s)", "CPU Time(%)", "CPU/Elap", "Max elap(%)",
-                  "Min elap(%)", "Freq"]
-        # Get function information
-        function_data = {}
-        for l in lines:
-            m = re.search(functions_pattern, l)
-            if m:
-                section, values = parse_function_line(m.groups())
-                if functions is not None:
-                    real_name = [f for f in functions if f.replace("_", "").count(section.replace("_", ""))]
-                    if len(real_name) == 1:
-                        section = real_name[0]
-                    else:
-                        functions.append(section)
-                function_data[section] = {}
-                for label, value in zip(labels, values):
-                    function_data[section][label] = value
-        return function_data
-
-    def steps_info(lines):
-        """
-        Processes the information of each step and returns the average and the standard deviation
-        :param lines:
-        :return: Time-step average and standard deviation
-        """
-        # Step length pattern
-        step_length_pattern = "timing step *[0-9]+ *: *(.*)"
-        # Get step duration
-        steps = []
-        for l in lines:
-            m = re.search(step_length_pattern, l)
-            if m:
-                steps.append(float(m.group(1)))
-        return np.average(steps), np.std(steps)
-
-    # Dictionary with results
-    results = {}
-    # Parse files
-    for filename in files:
-        with open(filename) as f:
-            lines = [l for l in f]
-
-            # Get number of processes and detailed process data
-            number_of_processes, process_data = parse_time_by_process_info(lines, filename)
-            # Save case results
-            results[number_of_processes] = {"ProcessInfo": process_data}
-            # Get function info
-            function_info = parse_function_info(lines, functions)
-            results[number_of_processes]["FunctionInfo"] = function_info
-            # Get step duration at process 0
-            step_av, step_std = steps_info(lines)
-            results[number_of_processes]["TimeStepTime"] = (step_av, step_std)
-            #
-            results[number_of_processes]["Communication"] = parse_communication_time(lines)
-    return results
 
 
 def parse_paramedir_files(files):
@@ -477,8 +261,8 @@ class TimingInformation:
                 pass
         return param_dictionary
 
-    # Adding calls to different ways of processing the data
     def function_summary(self):
+        # Adding calls to different ways of processing the data
         return function_curated_summary(self)
 
     def most_expensive_function_summary(self, out_file_name):
@@ -551,17 +335,27 @@ class TimingInformation:
             except KeyError:
                 pass
 
-    def load_timings(self, files):
-        if not files:
-            raise AssertionError("Empty list of files")
+    def load_timings(self, timing_files):
+        import pickle
+        timing_info_dict = {}
+        # Merge the dictionary into single one
+        for file in timing_files:
+            timing_info = pickle.load(open(file, "rb"))
+            timing_info_dict[[*timing_info][0]] = timing_info[[*timing_info][0]]
+
+        if self.functions:
+            # Change function names to match the one in traces
+            self.fix_function_names(timing_info_dict)
+
         if self.data is None:
-            self.data = parse_timing_files(files, self.functions)
+            self.data = timing_info_dict
         else:
-            timing_info = parse_timing_files(files, self.functions)
-            self.data = merge_dictionaries(self.data, timing_info)
+            self.data = merge_dictionaries(self.data, timing_info_dict)
+
         if self.cases is None:
             self.cases = list(sorted(self.data.keys()))
             self.base_case = min(self.cases)
+
     def load_paramedir(self, files):
         if not files:
             raise AssertionError("Empty list of files")
@@ -590,4 +384,15 @@ class TimingInformation:
             self.base_case = min(self.cases)
 
         pass
+
+    def fix_function_names(self, function_dict):
+        for core in function_dict:
+            function_info = function_dict[core]['FunctionInfo']
+            # We can not cycle directly on key, because dictionary will change size, raising an exception
+            list_of_function_names = [*function_info]
+            for function_name in list_of_function_names:
+                real_name = [f for f in self.functions if f.replace("_", "").count(function_name.replace("_", ""))]
+                if real_name:
+                    # Updates the name of the function with the ones present in the trace
+                    function_info[real_name[0]] = function_info.pop(function_name)
 
