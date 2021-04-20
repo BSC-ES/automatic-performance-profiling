@@ -16,7 +16,7 @@ def get_command_line_arguments():
     parser.add_argument("-i", "--timing-files", required=True,
                         help="list of files to parse")
     parser.add_argument("-o", "--output-file", required=True,
-                        help="name of the output .json file")
+                        help="name of the output .pkl file")
     return parser.parse_args()
 
 
