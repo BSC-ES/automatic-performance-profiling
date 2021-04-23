@@ -42,7 +42,9 @@ ifeq ($(provided_traces), TRUE)
 				source ./load_env.sh ;\
 				for var in ${number_of_processes} ; do \
 					mkdir -p ./test_$${var} ;\
-					cp ${provided_traces_path}/${main_folder}/test_$${var}/* ./test_$${var}/. ;\
+					cp ${provided_traces_path}/${main_folder}/test_$${var}/ifs.stat ./test_$${var}/$${var}_test.ifs.stat ;\
+					cp ${provided_traces_path}/${main_folder}/test_$${var}/Forecast.* ./test_$${var}/$${var}_test.Forecast ;\
+					python3 cfg/parser/utils/model/${model}/convert_timing_files.py -t ./test_$${var}/$${var}_test.ifs.stat -f ./test_$${var}/$${var}_test.Forecast -o ./test_$${var}/$${var}_test.timing
 					mkdir -p ./trace_$${var} ;\
 					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.pcf ./trace_$${var}/. ;\
 					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.row ./trace_$${var}/. ;\
@@ -263,7 +265,7 @@ process_json.slurm: $(JSON)
 	sbatch --wait --chdir . $@
 
 ${configuration_name}.json: $(JSON)
-	python cfg/parser/collector.py --input-files test_*/*.timing trace_*/*pm dimemas_traces/*dm \
+	python cfg/parser/collector.py --input-files test_*/*.timing.pkl trace_*/*pm dimemas_traces/*dm \
                                        --output-file ${configuration_name} \
                                        --param-file param.cfg
 
