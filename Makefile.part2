@@ -44,7 +44,7 @@ ifeq ($(provided_traces), TRUE)
 					mkdir -p ./test_$${var} ;\
 					cp ${provided_traces_path}/${main_folder}/test_$${var}/ifs.stat ./test_$${var}/$${var}_test.ifs.stat ;\
 					cp ${provided_traces_path}/${main_folder}/test_$${var}/Forecast.* ./test_$${var}/$${var}_test.Forecast ;\
-					python3 cfg/parser/utils/model/${model}/convert_timing_files.py -t ./test_$${var}/$${var}_test.ifs.stat -f ./test_$${var}/$${var}_test.Forecast -o ./test_$${var}/$${var}_test.timing
+					python3 cfg/parser/utils/model/${model}/convert_timing_files.py -t ./test_$${var}/$${var}_test.ifs.stat -f ./test_$${var}/$${var}_test.Forecast -o ./test_$${var}/$${var}_test.timing ;\
 					mkdir -p ./trace_$${var} ;\
 					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.pcf ./trace_$${var}/. ;\
 					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.row ./trace_$${var}/. ;\
