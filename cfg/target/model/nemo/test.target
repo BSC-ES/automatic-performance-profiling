@@ -37,7 +37,7 @@ time mpirun -genv I_MPI_DEBUG=4 -n ${number_of_cores} ./nemo
 set +xuve
 
 # Rename timing output
-mv timing.output ${number_of_cores}.timing
-python3 cfg/parser/utils/model/nemo/convert_timing_files.py -i ${number_of_cores}.timing -o ${number_of_cores}_test.timing
+mv timing.output ${number_of_cores}_test.timing
+python3 cfg/parser/utils/model/nemo/convert_timing_files.py -i ${number_of_cores}_test.timing -o ${number_of_cores}_test.timing
 
 

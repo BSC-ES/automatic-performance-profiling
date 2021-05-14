@@ -75,23 +75,23 @@ def function_curated_summary(experiment_data):
             fun_results[function][c] = r
     # Remove empty entries
     fun_results = {k: v for k, v in fun_results.items() if len(v) != 0}
-    key = 'Elap. Time(s)'
 
+    # Order function by 'Elap. Time(s)'
     fun_results = {k: v for k, v in
-                   sorted(fun_results.items(), key=lambda item: item[1][experiment_data.base_case][key])}
+                   sorted(fun_results.items(), key=lambda item: item[1][experiment_data.base_case])}
     for k, v in fun_results.items():
         resources = ""
         speedup = ""
         efficiency = ""
-        base_result = fun_results[k][experiment_data.base_case][key]
+        base_result = fun_results[k][experiment_data.base_case]
         for case in experiment_data.cases:
             if case == experiment_data.base_case:
                 continue
             resource_increase = case / experiment_data.base_case
             try:
                 resources += " %.2f" % resource_increase
-                speedup += " %.2f" % (base_result / fun_results[k][case][key])
-                efficiency += " %.2f" % ((base_result / fun_results[k][case][key]) / resource_increase)
+                speedup += " %.2f" % (base_result / fun_results[k][case])
+                efficiency += " %.2f" % ((base_result / fun_results[k][case]) / resource_increase)
             except KeyError:
                 pass
         log.add("%20s\tResources : %s" % (k, resources))
@@ -247,8 +247,9 @@ def function_info_csv(experiment_data, csv_folder):
     fun_results = {k: v for k, v in fun_results.items() if v != {}}
     key = 'Elap. Time(s)'
 
+    # Order the function results by 'Elap. Time(s)'
     fun_results = {k: v for k, v in
-                   sorted(fun_results.items(), key=lambda item: item[1][experiment_data.base_case][key])}
+                   sorted(fun_results.items(), key=lambda item: item[1][experiment_data.base_case])}
     for k, v in fun_results.items():
 
         # List to store data
@@ -256,7 +257,7 @@ def function_info_csv(experiment_data, csv_folder):
         speedup = []
         efficiency = []
 
-        base_result = fun_results[k][experiment_data.base_case][key]
+        base_result = fun_results[k][experiment_data.base_case]
 
         # Fill list with formatted data
         for case in experiment_data.cases:
@@ -265,8 +266,8 @@ def function_info_csv(experiment_data, csv_folder):
             resource_increase = case / experiment_data.base_case
             try:
                 resources.append("{:.0f}".format(resource_increase))
-                speedup.append("{:.2f}".format(base_result / fun_results[k][case][key]))
-                efficiency.append("{:.2f}".format((base_result / fun_results[k][case][key]) / resource_increase))
+                speedup.append("{:.2f}".format(base_result / fun_results[k][case]))
+                efficiency.append("{:.2f}".format((base_result / fun_results[k][case]) / resource_increase))
             except KeyError:
                 pass
         # Declare array to be saved in csv
