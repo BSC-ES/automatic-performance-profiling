@@ -83,13 +83,13 @@ def get_function_elapsed_time():
     :return: Dictionary with function information.
     """
     function_data = {}
-    function_data["cpg_drv"] = 0.0
-    function_data["call_sl"] = 0.0
-    function_data["espcm"] = 0.0
-    function_data["eltinv_ctl"] = 0.0
-    function_data["eftinv_ctl"] = 0.0
-    function_data["eftdir_ctl"] = 0.0
-    function_data["eltdir_ctl"] = 0.0
+    function_data["cpg_drv"] = float(1.0)
+    function_data["call_sl"] = float(1.0)
+    function_data["espcm"] = float(1.0)
+    function_data["eltinv_ctl"] = float(1.0)
+    function_data["eftinv_ctl"] = float(1.0)
+    function_data["eftdir_ctl"] = float(1.0)
+    function_data["eltdir_ctl"] = float(1.0)
     return function_data
 
 def get_step_avg_duration(lines):

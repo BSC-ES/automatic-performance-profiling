@@ -33,40 +33,36 @@ endif
 ###################################################
 # Experiment recipes specified in param.cfg file
 experiment:
-ifeq ($(provided_traces), TRUE)
 	for recipe in ${experiment_recipes} ; do \
                 echo $${recipe} ; \
 				[ ! -d ${main_folder_fullpath} ] && git clone . ${main_folder_fullpath} ;\
 				cp ${parameters_file} ${main_folder_fullpath}/param.cfg ;\
 				cd  ${main_folder_fullpath} ;\
 				source ./load_env.sh ;\
-				for var in ${number_of_processes} ; do \
-					mkdir -p ./test_$${var} ;\
-					cp ${provided_traces_path}/${main_folder}/test_$${var}/ifs.stat ./test_$${var}/$${var}_test.ifs.stat ;\
-					cp ${provided_traces_path}/${main_folder}/test_$${var}/Forecast.* ./test_$${var}/$${var}_test.Forecast ;\
-					python3 cfg/parser/utils/model/${model}/convert_timing_files.py -t ./test_$${var}/$${var}_test.ifs.stat -f ./test_$${var}/$${var}_test.Forecast -o ./test_$${var}/$${var}_test.timing ;\
-					mkdir -p ./trace_$${var} ;\
-					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.pcf ./trace_$${var}/. ;\
-					cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.row ./trace_$${var}/. ;\
-					if [ -f ${provided_traces_path}/${main_folder}/${bin_name}.prv.tar.gz ]; then \
-						tar zxfv ${provided_traces_path}/${main_folder}/${bin_name}.prv.tar.gz -C ./trace_$${var}/. ;\
-					else \
-						cp ${provided_traces_path}/${main_folder}/trace_$${var}/${bin_name}.prv ./trace_$${var}/. ;\
-					fi ;\
-				done ;\
 				cd - ;\
 				$(MAKE) -C ./${main_folder_fullpath} -f ./Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
         done
-else
-	for recipe in ${experiment_recipes} ; do \
-                echo $${recipe} ; \
-				cp ${parameters_file} ${main_folder_fullpath}/param.cfg ;\
-				cd  ${main_folder_fullpath} ;\
-				source ./load_env.sh ;\
-				cd - ;\
-				$(MAKE) -C ./${main_folder_fullpath} -f ./Makefile.part2 parameters_file=param.cfg slurm_queue=${slurm_queue} $${recipe} ; \
-        done
-endif
+
+####################################################
+# Recipes to copy provided traces and log files
+test_%/.test.done:
+	mkdir -p $(@D) ;\
+	cd $(@D) ;\
+	cp ${provided_traces_path}/${main_folder}/$(@D)/ifs.stat $*_test.ifs.stat ;\
+	cp ${provided_traces_path}/${main_folder}/$(@D)/Forecast.* $*_test.Forecast ;\
+	python3 ${cfg}/parser/utils/model/${model}/convert_timing_files.py -t $*_test.ifs.stat -f $*_test.Forecast -o $*_test.timing ;\
+	touch $(@F)
+trace_%/.trace.done:
+	mkdir -p $(@D) ;\
+	cd $(@D) ;\
+	cp ${provided_traces_path}/${main_folder}/$(@D)/${bin_name}.pcf . ;\
+	cp ${provided_traces_path}/${main_folder}/$(@D)/${bin_name}.row . ;\
+	if [ -f ${provided_traces_path}/${main_folder}/$(@D)/${bin_name}.prv.tar.gz ]; then \
+		tar zxfv ${provided_traces_path}/${main_folder}/$(@D)/${bin_name}.prv.tar.gz -C . ;\
+	else \
+		cp ${provided_traces_path}/${main_folder}/$(@D)/${bin_name}.prv . ;\
+	fi ;\
+	touch $(@F)
 
 #################### TRACE
 # prepare env for cutting the trace
@@ -79,7 +75,7 @@ TRACE_CUT=$(foreach var, $(number_of_processes), trace_$(var)/${bin_name}.best_c
 trace_cut:
 	make -f ./Makefile.part2 -j${cores} $(TRACE_CUT)
 
-trace_%/${bin_name}.best_cut.prv: trace_%/${bin_name}.prv | magiccut/magicCut
+trace_%/${bin_name}.best_cut.prv: trace_%/.trace.done | magiccut/magicCut
         # Magic Cut
 ifeq ($(timestep_0), TRUE)
 	$(eval magiccut_steps := $(shell echo $(trace_steps)+1 | bc))
@@ -207,6 +203,11 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload cfg/target/paradim.target $* ${paradim_configurations}
 	sbatch --wait --chdir dimemas_traces dimemas_traces/paradim_$*.slurm
 
+###################### TEST
+SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/.test.done)
+scalability:
+	make -f ./Makefile.part2 -j${cores} $(SCALABILITY)
+
 ####################################################
 # Clean recipes
 # Delete (almost)-everything
@@ -248,12 +249,12 @@ histogram_%.txt: trace_%/${bin_name}.best_cut.prv
 histograms_dependencies=$(foreach var, $(number_of_processes), histogram_$(var).txt)
 histograms: $(histogram_dependencies)
 
-analysis: histograms modelfactors
+analysis: histograms modelfactors scalability
 
 
 ################ JSON
 # Stores the info produces from all the experiments in a json file
-JSON= $(PARAMEDIR_EXPERIMENTS) $(PARADIM_EXPERIMENTS)
+JSON= $(SCALABILITY) $(PARAMEDIR_EXPERIMENTS) $(PARADIM_EXPERIMENTS)
 # Submits a job to creat json file: used when the traces have been taken on a big N of cores
 process_json.slurm: $(JSON)
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
@@ -411,6 +412,7 @@ clean_report:
 	rm -rf ${report_file} report
 ############### TARGET FOR PARALLEL MAKE
 strong_scaling:
+	$(MAKE) -f ./Makefile.part2 scalability
 	$(MAKE) -f ./Makefile.part2 trace_cut
 	$(MAKE) -f ./Makefile.part2 modelfactors paraver_images dimemas_experiments
 	$(MAKE) -f ./Makefile.part2 paradim_experiments
