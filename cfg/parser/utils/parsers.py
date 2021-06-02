@@ -268,6 +268,7 @@ class TimingInformation:
         return most_expensive_function_summary(self, out_file_name)
 
     def scatter_plots(self, x_axis="L3", y_axis="IPC", length_summary=10):
+        import warnings
         # Function plot L3 cache misses vs IPC
         import matplotlib.pyplot as plt
         output_name = x_axis + "_" + y_axis + ".png"
@@ -279,6 +280,13 @@ class TimingInformation:
         legend_names = []
         for core_index, core in enumerate(self.cases):
             n_function = 0
+            # Maybe not all the requested data have been created
+            try:
+                self.data[core]['Counters'][x_axis]
+                self.data[core]['Counters'][y_axis]
+            except KeyError:
+                warnings.warn("The scatter plot % vs %s could not be created: insufficient data" % (x_axis, y_axis))
+                return
             for name in function_name:
                 if n_function < length_summary + 1:
                     try:
