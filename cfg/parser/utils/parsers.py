@@ -6,7 +6,6 @@ from cfg.parser.utils.curation import function_curated_summary, \
     simulated_years_per_day_summary, \
     function_info_csv, \
     most_expensive_function_summary, \
-    L3_IPC_scatterplot, \
     simulated_years_per_day_plot, \
     tracking
 
@@ -268,8 +267,54 @@ class TimingInformation:
     def most_expensive_function_summary(self, out_file_name):
         return most_expensive_function_summary(self, out_file_name)
 
-    def L3_IPC_scatterplot(self, out_file_name):
-        return L3_IPC_scatterplot(self, out_file_name)
+    def scatter_plots(self, x_axis="L3", y_axis="IPC", length_summary=10):
+        # Function plot L3 cache misses vs IPC
+        import matplotlib.pyplot as plt
+        output_name = x_axis + "_" + y_axis + ".png"
+        function_info = [[] for x in range(length_summary + 1)]
+        # Use the most expensive function on the bigger N of cores used
+        max_core = self.cases[-1]
+        function_name = [name for name, info in self.data[max_core]["FunctionInfo"].items()]
+        # Array to store plotted function's names
+        legend_names = []
+        for core_index, core in enumerate(self.cases):
+            n_function = 0
+            for name in function_name:
+                if n_function < length_summary + 1:
+                    try:
+                        # Function name's are taken from timings, so it is possible they are not present in the trace
+                        L3 = self.data[core]['Counters'][x_axis][name]['Average']
+                        IPC = self.data[core]['Counters'][y_axis][name]['Average']
+                    except KeyError:
+                        # If the function was not tracked skip to next function
+                        continue
+                    if len(legend_names) < length_summary:
+                        legend_names.append(name)
+                    function_info[n_function].append([L3, IPC])
+                    n_function += 1
+                else:
+                    break
+        # Create the plot
+        fig, ax = plt.subplots()
+        ax.set_title("%s vs %s per 1000 instructions" % (x_axis, y_axis))
+        ax.set_xlabel(x_axis)
+        ax.set_ylabel(y_axis)
+        for function_index, function_name in enumerate(legend_names):
+            ax.plot([val[0] for val in function_info[function_index]],
+                    [val[1] for val in function_info[function_index]], '-o', label=function_name)
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+        fig.tight_layout()
+
+        # This way labels for the x axis are not just one long number
+        # ax = plt.axes()
+        # ax.arrow(0, 0, 0.5, 0.5, head_width=0.05, head_length=0.1, fc='k', ec='k')
+        # ax.annotate('local max', xy=(100, 500), xytext=(3, 1.5), xycoords='figure points',
+        #             horizontalalignment='right', verticalalignment='top',
+        #             arrowprops=dict(facecolor='black', shrink=0.05)
+        #             )
+        # ax.arrow(0.0, 1, 3, 0, head_width=0.05, head_length=0.1, fc='k', ec='k')
+        fig.savefig(output_name)
 
     def dimemas_summary(self):
         return dimemas_curated_summary(self)
@@ -395,4 +440,3 @@ class TimingInformation:
                 if real_name:
                     # Updates the name of the function with the ones present in the trace
                     function_info[real_name[0]] = function_info.pop(function_name)
-
