@@ -169,54 +169,7 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
         print("Written file in " + abspath(out_file_name))
 
 
-# Function plot L3 cache misses vs IPC
-def L3_IPC_scatterplot(experiment_data, output_picture_name, length_summary=10):
-    import matplotlib.pyplot as plt
-    function_info = [[] for x in range(length_summary + 1)]
-    # Use the most expensive function on the bigger N of cores used
-    max_core = experiment_data.cases[-1]
-    function_name = [name for name, info in experiment_data.data[max_core]["FunctionInfo"].items()]
-    # Array to store plotted function's names
-    legend_names = []
-    for core_index, core in enumerate(experiment_data.cases):
-        n_function = 0
-        for name in function_name:
-            if n_function < length_summary + 1:
-                try:
-                    # Function name's are taken from timings, so it is possible they are not present in the trace
-                    L3 = experiment_data[core]['Counters']['L3'][name]['Average']
-                    IPC = experiment_data[core]['Counters']['IPC'][name]['Average']
-                except KeyError:
-                    # If the function was not tracked skip to next function
-                    continue
-                if len(legend_names) < length_summary:
-                    legend_names.append(name)
-                function_info[n_function].append([L3, IPC])
-                n_function += 1
-            else:
-                break
-    # Create the plot
-    fig, ax = plt.subplots()
-    ax.set_title("IPC vs L3 per Instruction")
-    ax.set_ylabel('IPC')
-    ax.set_xlabel('Useful L3 Total cache misses per Instruction (%)')
-    for function_index, function_name in enumerate(legend_names):
-        ax.plot([val[0] for val in function_info[function_index]],
-                 [val[1] for val in function_info[function_index]], '-o', label=function_name)
-    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    if not output_picture_name.count(".png"):
-        output_picture_name = output_picture_name + ".png"
-    fig.tight_layout()
 
-    # This way labels for the x axis are not just one long number
-    # ax = plt.axes()
-    # ax.arrow(0, 0, 0.5, 0.5, head_width=0.05, head_length=0.1, fc='k', ec='k')
-    # ax.annotate('local max', xy=(100, 500), xytext=(3, 1.5), xycoords='figure points',
-    #             horizontalalignment='right', verticalalignment='top',
-    #             arrowprops=dict(facecolor='black', shrink=0.05)
-    #             )
-    # ax.arrow(0.0, 1, 3, 0, head_width=0.05, head_length=0.1, fc='k', ec='k')
-    fig.savefig(output_picture_name)
 
 
 def function_info_csv(experiment_data, csv_folder):

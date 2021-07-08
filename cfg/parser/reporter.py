@@ -13,45 +13,29 @@ def get_command_line_instructions():
     parser = ArgumentParser()
 
     # Read command line options
-    parser.add_argument("-j", "--json-file",
-                        default=None,
+    parser.add_argument("-j", "--json-file", required=True,
                         help="Mandatory: the json file to be parsed")
-    parser.add_argument("-s", "--sypd-file",
-                        default=None,
+    parser.add_argument("-s", "--sypd-file", default=None,
                         help="Produce a Simulation Years per Day csv file with the specified name")
 
-    parser.add_argument("-p", "--sypd-plot",
-                        default=None,
+    parser.add_argument("-p", "--sypd-plot",  default=None,
                         help="Produce a Simulation Years per Day plot and save to the specified png file")
 
-    parser.add_argument("-f", "--csv-folder",
-                        default=None,
+    parser.add_argument("-f", "--csv-folder", default=None,
                         help="folder to save csv files with functions' info ")
 
-    parser.add_argument("--functions-file",
-                        default=None,
+    parser.add_argument("--functions-file", default=None,
                         help="Produce functions report")
-    parser.add_argument("-m", "--most_expensive_function_summary",
-                        default=None,
+    parser.add_argument("-m", "--most_expensive_function_summary", default=None,
                         help="Print a summary of the most expensive functions per core")
-    parser.add_argument("--L3_IPC_scatterplot",
-                        default=None,
+    parser.add_argument("--scatter-plots", default=False, action="store_true",
                         help="Produce a png with L3 cache misses vs IPC in it")
-    parser.add_argument("--dimemas-file",
-                        default=None,
+    parser.add_argument("--dimemas-file", default=None,
                         help="Produce dimemas report")
-    parser.add_argument("--tracking-folder",
-                        default=None,
+    parser.add_argument("--tracking-folder", default=None,
                         help="Produce tracking report")
 
-    # OptParser will parse the text provided as command line arguments and will distringuish between the options
-    # and other arguments
-    args = parser.parse_args()
-
-    # Check that one argument is provided.
-    if args.json_file is None:
-        parser.error("Json file needed")
-    return args
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -64,14 +48,12 @@ if __name__ == "__main__":
     csv_function_folder = arguments.csv_folder
     functions_file = arguments.functions_file
     most_expensive_function_summary = arguments.most_expensive_function_summary
-    L3_IPC_scatterplot = arguments.L3_IPC_scatterplot
+    scatter_plots = arguments.scatter_plots
     dimemas_file = arguments.dimemas_file
     tracking_folder = arguments.tracking_folder
 
     # Load the json file provided
-    experiment_results = TimingInformation(
-                                           json_file=json_file,
-                                           )
+    experiment_results = TimingInformation(json_file=json_file)
 
     # Depending on the options selected, do different kinds of diagnostics.
     if csv_function_folder is not None:
@@ -86,14 +68,18 @@ if __name__ == "__main__":
     if most_expensive_function_summary is not None:
         experiment_results.most_expensive_function_summary(out_file_name=most_expensive_function_summary)
 
-    if L3_IPC_scatterplot is not None:
-        experiment_results.L3_IPC_scatterplot(out_file_name=L3_IPC_scatterplot)
+    if scatter_plots:
+        axes_dictionary = {"Instructions": "L1",
+                           "Instructions": "L2",
+                           "Instructions": "L3",
+                           "Instructions": "Time",
+                           "Instructions": "IPC",
+                           "L3": "IPC"
+                           }
+        for x_axis in axes_dictionary.keys():
+            experiment_results.scatter_plots(x_axis=x_axis, y_axis=axes_dictionary[x_axis])
 
     if dimemas_file is not None:
         experiment_results.dimemas_summary().save(dimemas_file)
     if tracking_folder is not None:
         experiment_results.tracking(tracking_folder)
-
-
-
-    # To create a new diagnostic/plot you need to create the function in curation.py and add the call inside parsers.py
