@@ -417,7 +417,7 @@ clean_report:
 strong_scaling:
 	$(MAKE) -f ./Makefile.part2 scalability trace
 	$(MAKE) -f ./Makefile.part2 trace_cut
-	$(MAKE) -f ./Makefile.part2 modelfactors paraver_images dimemas_experiments
+	$(MAKE) -f ./Makefile.part2 modelfactors paraver_images dimemas_images
 	$(MAKE) -f ./Makefile.part2 paradim_experiments
 
 paradim_experiments: dimemas_experiments
