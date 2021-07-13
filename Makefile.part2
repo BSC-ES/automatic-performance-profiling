@@ -48,9 +48,7 @@ experiment:
 test_%/.test.done:
 	mkdir -p $(@D) ;\
 	cd $(@D) ;\
-	cp ${provided_traces_path}/${main_folder}/$(@D)/ifs.stat $*_test.ifs.stat ;\
-	cp ${provided_traces_path}/${main_folder}/$(@D)/Forecast.* $*_test.Forecast ;\
-	python3 ${cfg}/parser/utils/model/${model}/convert_timing_files.py -t $*_test.ifs.stat -f $*_test.Forecast -o $*_test.timing ;\
+	${cfg}/target/model/${model}/test.target $* ;\
 	touch $(@F)
 trace_%/.trace.done:
 	mkdir -p $(@D) ;\
@@ -207,6 +205,11 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/.test.done)
 scalability:
 	make -f ./Makefile.part2 -j${cores} $(SCALABILITY)
+
+###################### TRACE
+TRACE=$(foreach var, $(number_of_processes), trace_$(var)/.trace.done)
+trace:
+	make -f ./Makefile.part2 -j${cores} $(TRACE)
 
 ####################################################
 # Clean recipes
@@ -412,7 +415,7 @@ clean_report:
 	rm -rf ${report_file} report
 ############### TARGET FOR PARALLEL MAKE
 strong_scaling:
-	$(MAKE) -f ./Makefile.part2 scalability
+	$(MAKE) -f ./Makefile.part2 scalability trace
 	$(MAKE) -f ./Makefile.part2 trace_cut
 	$(MAKE) -f ./Makefile.part2 modelfactors paraver_images dimemas_experiments
 	$(MAKE) -f ./Makefile.part2 paradim_experiments
