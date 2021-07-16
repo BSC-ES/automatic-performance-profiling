@@ -69,15 +69,12 @@ if __name__ == "__main__":
         experiment_results.most_expensive_function_summary(out_file_name=most_expensive_function_summary)
 
     if scatter_plots:
-        axes_dictionary = {"Instructions": "L1",
-                           "Instructions": "L2",
-                           "Instructions": "L3",
-                           "Instructions": "Time",
-                           "Instructions": "IPC",
-                           "L3": "IPC"
+        axes_dictionary = {"Instructions": ["L1", "L2", "L3", "Time", "IPC"],
+                           "L3": ["IPC"]
                            }
         for x_axis in axes_dictionary.keys():
-            experiment_results.scatter_plots(x_axis=x_axis, y_axis=axes_dictionary[x_axis])
+            for y_axis in axes_dictionary[x_axis]:
+                experiment_results.scatter_plots(x_axis=x_axis, y_axis=y_axis)
 
     if dimemas_file is not None:
         experiment_results.dimemas_summary().save(dimemas_file)
