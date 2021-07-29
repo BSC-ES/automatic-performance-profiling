@@ -63,6 +63,10 @@ trace_%/.trace.done:
 	touch $(@F)
 
 #################### TRACE
+TRACE=$(foreach var, $(number_of_processes), trace_$(var)/.trace.done)
+trace:
+	make -f ./Makefile.part2 -j${cores} $(TRACE)
+
 # prepare env for cutting the trace
 magiccut/magicCut:
 	# Download sources
@@ -205,11 +209,6 @@ dimemas_traces/paradim_%.slurm: dimemas_traces/dimemas_%.slurm
 SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/.test.done)
 scalability:
 	make -f ./Makefile.part2 -j${cores} $(SCALABILITY)
-
-###################### TRACE
-TRACE=$(foreach var, $(number_of_processes), trace_$(var)/.trace.done)
-trace:
-	make -f ./Makefile.part2 -j${cores} $(TRACE)
 
 ####################################################
 # Clean recipes
