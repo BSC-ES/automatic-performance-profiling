@@ -4,3 +4,5 @@ nemo_source
 param.cfg
 run_dir
 cfg/target/param_bash.cfg
+cfg/latex/__pycache__
+cfg/parser/utils/__pycache__
