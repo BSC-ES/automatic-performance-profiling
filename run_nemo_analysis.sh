@@ -5,6 +5,7 @@ configuration=BENCH
 config_folder=configurations
 model_config_folder=${config_folder}/model/${model}/
 
+cp ${model_config_folder}/strongscaling/${configuration} ./param.cfg
 source load_env.sh
 
 if [[ $@ -gt 0 ]]
@@ -14,6 +15,10 @@ then
 else
   queue=debug
 fi
+
+make -f Makefile.part1 experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}
+#make -f Makefile.part2 experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}
+exit
 
 make experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}  &
 make experiment parameters_file=${config_folder}/hardware_benchmarks slurm_queue=${queue} &
