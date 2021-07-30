@@ -12,17 +12,13 @@ platform=cca
 provided_traces=TRUE
 # Path to the traces and timing files in case they are generated on an external cluster
 provided_traces_path=/gpfs/scratch/bsc32/bsc32544/harmonie_traces
-# Suffix of the arch file used
-arch_file_prefix=prod
-# Enable or disable output (TRUE or FALSE)
-output=FALSE
 # Number of steps used in test (Adjust acording to cost)
 test_steps=576
 trace_steps=12
 # Model executes an initial setup timestep with value 0? (TRUE or FALSE)
 timestep_0=TRUE
 # Processes used for the modelfactor
-number_of_processes=288 576 1152
+number_of_processes=288 576
 # This value will be passed to the slurm parameter --ntasks-per-node (default on MN4 is 48) to run part 1 of the workflow (if provided_traces=FALSE). Note that this variable is NOT necessary if provided_traces=TRUE.
 #processes_per_node=48
 # Which parts of the recipe will be executed when we run make experiment
