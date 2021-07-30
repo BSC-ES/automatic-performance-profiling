@@ -139,7 +139,7 @@ report_add_paraver: $(REPORT_ADD_PARAVER)
 	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Paraver" -T cfg/latex/text/ParaverViews.txt
 
 ####################### DIMEMAS
-dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/*)
+dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 
 DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
 dimemas_trc: trace_cut
