@@ -2,8 +2,6 @@
 parameters_file?=configurations/model/example/BENCH
 # If no queue has been specified it will use debug where possible
 slurm_queue?=debug
-# File to save all the data to produce the report
-report_file?=report.pkl
 # Reading some parameters from the config file
 include ${parameters_file}
 # Check that the io server has been specified
@@ -14,14 +12,6 @@ main_folder_fullpath=run_dir/${main_folder}
 
 # Tools folder
 cfg=$(CURDIR)/cfg
-analysis_tools=${cfg}/trace_analysis/
-export analysis_tools
-
-latex_folder=${cfg}/latex
-# Reading the report settings
-report_file_full_path=$(CURDIR)/${report_file}
-report_cfg=${cfg}/latex/report.cfg
-include ${report_cfg}
 
 cores?=8
 # Check environment is loaded
