@@ -39,6 +39,10 @@ else
   git checkout svn/utils/build
   mv [a-zA-Z]* _build
 
+  mkdir -p _ext/PPR
+  git checkout svn/vendors/PPR
+  mv [a-zA-Z]* _ext/PPR/
+
   # Checkout NEMO revision
   git checkout $2
 

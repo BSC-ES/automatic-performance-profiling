@@ -112,7 +112,7 @@ trace_%/trace.slurm: functions_dir/extrae_functions.txt bin/${bin_name}_trace.ex
                                             --set-workload ${cfg}/target/model/${model}/trace.target $*
 	# Launch jobscript
 	sbatch --wait --chdir $(@D) $@
-	touch .trace.done
+	touch $(@D)/.trace.done
 
 ###################### TEST
 SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/test.slurm)
@@ -132,7 +132,7 @@ test_%/test.slurm: bin/${bin_name}_vanilla.exe bin/xios_server.exe
 	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload ${cfg}/target/model/${model}/test.target $*
 	# Launch job
 	sbatch --wait --chdir $(@D)  $@
-	touch .test.done
+	touch $(@D)/.test.done
 ####################################################
 
 # Some other recipes
