@@ -34,6 +34,6 @@ tile_size=62x40 47x40
 # This value will be passed to the slurm parameter --ntasks-per-node (default on MN4 is 48) to run part 1 of the workflow (if provided_traces=FALSE). Note that this variable is NOT necessary if provided_traces=TRUE.
 processes_per_node=48
 # Which parts of the recipe will be executed when we run make experiment
-experiment_recipes = process_json.slurm
+experiment_recipes = process_json
 # Folder in which all the results will be stored
 main_folder = MultiExperimentRuns/weakscaling/BENCH/${configuration_name}
