@@ -153,7 +153,7 @@ clean_%:
 ################ JSON
 # Runs the scalability tests and traces needed for the JSON file generated in Makefile.part2
 JSON= $(SCALABILITY) $(TRACE_EXPERIMENTS)
-process_json: $(JSON)
+process_json:
 	make -f ./Makefile.part1 -j${cores} $(JSON)
 
 ##########################
