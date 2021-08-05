@@ -8,12 +8,12 @@ def get_command_line_instructions():
     """
     # Using Argparse to enable command line selection of different runtime options
     from argparse import ArgumentParser
-
+    from cfg.Error import PathType
     # Initializing parser
     parser = ArgumentParser()
 
     # Read command line options
-    parser.add_argument("-j", "--json-file", required=True,
+    parser.add_argument("-j", "--json-file", required=True, type=PathType(exists=True, type="file"),
                         help="Mandatory: the json file to be parsed")
     parser.add_argument("-s", "--sypd-file", default=None,
                         help="Produce a Simulation Years per Day csv file with the specified name")

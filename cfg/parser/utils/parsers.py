@@ -216,17 +216,23 @@ class TimingInformation:
         functions = sum(functions, [])
         return list(set(functions))
 
-    def get_function_info(self, function, cases=None):
-        # Convert it to a list in case it is not
-        if cases is None:
-            cases = self.cases
-        if cases is not None and not isinstance(cases, list):
-            cases = list(cases)
-        for case in cases:
-            try:
-                yield case, self[case]["FunctionInfo"][function]
-            except KeyError:
-                return []
+    def get_function_info(self):
+        # Create a dictionary with function info for all cases available
+        ret_val = {}
+        for function in self.functions:
+            ret_val[function] = {}
+            for case in self.cases:
+                try:
+                    # Store results in dictionary if present
+                    ret_val[function][case] = self[case]["FunctionInfo"][function]
+                except KeyError:
+                    # Remove the entry and pass to the next function
+                    del ret_val[function]
+                    break
+        # Order the function results by 'Elap. Time(s)'
+        ret_val = {k: v for k, v in sorted(ret_val.items(), key=lambda item: item[1][self.base_case])}
+
+        return ret_val
 
     def load_param(self, param_file):
         from os.path import isfile
@@ -269,60 +275,63 @@ class TimingInformation:
 
     def scatter_plots(self, x_axis="L3", y_axis="IPC", length_summary=10):
         import warnings
+        import re
         # Function plot L3 cache misses vs IPC
         import matplotlib.pyplot as plt
-        output_name = x_axis + "_" + y_axis + ".png"
-        function_info = [[] for x in range(length_summary + 1)]
+
         # Use the most expensive function on the bigger N of cores used
         max_core = self.cases[-1]
+
+        # Check data are present
+        if not (x_axis in self.data[max_core]['Counters'] and y_axis in self.data[max_core]['Counters']):
+            warnings.warn("The scatter plot % vs %s could not be created: insufficient data" % (x_axis, y_axis))
+
+        # Create output name
+        output_name = x_axis + "_" + y_axis + ".png"
+
+        # Get all the function names
         function_name = [name for name, info in self.data[max_core]["FunctionInfo"].items()]
-        # Array to store plotted function's names
-        legend_names = []
-        for core_index, core in enumerate(self.cases):
-            n_function = 0
-            # Maybe not all the requested data have been created
-            try:
-                self.data[core]['Counters'][x_axis]
-                self.data[core]['Counters'][y_axis]
-            except KeyError:
-                warnings.warn("The scatter plot % vs %s could not be created: insufficient data" % (x_axis, y_axis))
-                return
-            for name in function_name:
-                if n_function < length_summary + 1:
-                    try:
-                        # Function name's are taken from timings, so it is possible they are not present in the trace
-                        L3 = self.data[core]['Counters'][x_axis][name]['Average']
-                        IPC = self.data[core]['Counters'][y_axis][name]['Average']
-                    except KeyError:
-                        # If the function was not tracked skip to next function
-                        continue
-                    if len(legend_names) < length_summary:
-                        legend_names.append(name)
-                    function_info[n_function].append([L3, IPC])
-                    n_function += 1
-                else:
+
+        # Dictionary with function info from counters
+        function_info = {}
+        n_function = 0
+        for f_name in function_name:
+            # Track just the first Nth function
+            if n_function > length_summary + 1:
+                break
+            function_info[f_name] = {'x': [], 'y': []}
+            n_function += 1
+            for core in self.cases:
+                try:
+                    # Function name's are taken from timings, so it is possible they are not present in the trace
+                    x_data = self.data[core]['Counters'][x_axis][f_name]['Average']
+                    y_data = self.data[core]['Counters'][y_axis][f_name]['Average']
+                except KeyError:
+                    # If the function was not tracked delete dictionary entry and skip to next function
+                    del function_info[f_name]
+                    n_function -= 1
                     break
+
+                # Add the data to the dictionary
+                function_info[f_name]['x'] += x_data
+                function_info[f_name]['y'] += y_data
+
         # Create the plot
         fig, ax = plt.subplots()
         ax.set_title("%s vs %s per 1000 instructions" % (x_axis, y_axis))
         ax.set_xlabel(x_axis)
         ax.set_ylabel(y_axis)
-        for function_index, function_name in enumerate(legend_names):
-            ax.plot([val[0] for val in function_info[function_index]],
-                    [val[1] for val in function_info[function_index]], '-o', label=function_name)
+        for f_name in function_info:
+            if f_name[0] == "_":
+                # Remove leading underscores that python does not know how to render
+                legend_name = re.sub('^_+', "", f_name)
+            else:
+                legend_name = f_name
+            ax.plot(function_info[f_name]['x'], function_info[f_name]['y'], '-o', label=legend_name)
+
         ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        fig.savefig(output_name,  bbox_inches='tight')
 
-        fig.tight_layout()
-
-        # This way labels for the x axis are not just one long number
-        # ax = plt.axes()
-        # ax.arrow(0, 0, 0.5, 0.5, head_width=0.05, head_length=0.1, fc='k', ec='k')
-        # ax.annotate('local max', xy=(100, 500), xytext=(3, 1.5), xycoords='figure points',
-        #             horizontalalignment='right', verticalalignment='top',
-        #             arrowprops=dict(facecolor='black', shrink=0.05)
-        #             )
-        # ax.arrow(0.0, 1, 3, 0, head_width=0.05, head_length=0.1, fc='k', ec='k')
-        fig.savefig(output_name)
 
     def dimemas_summary(self):
         return dimemas_curated_summary(self)

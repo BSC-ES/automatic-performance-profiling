@@ -67,18 +67,10 @@ def function_curated_summary(experiment_data):
     :param experiment_data:
     :return: text with a summary of functions scalability in the experiment.
     """
-    fun_results = {}
     log = Log()
-    for function in experiment_data.functions:
-        fun_results[function] = {}
-        for c, r in experiment_data.get_function_info(function):
-            fun_results[function][c] = r
-    # Remove empty entries
-    fun_results = {k: v for k, v in fun_results.items() if len(v) != 0}
+    # Get the dictionary of function
+    fun_results = experiment_data.get_function_info()
 
-    # Order function by 'Elap. Time(s)'
-    fun_results = {k: v for k, v in
-                   sorted(fun_results.items(), key=lambda item: item[1][experiment_data.base_case])}
     for k, v in fun_results.items():
         resources = ""
         speedup = ""
@@ -88,12 +80,10 @@ def function_curated_summary(experiment_data):
             if case == experiment_data.base_case:
                 continue
             resource_increase = case / experiment_data.base_case
-            try:
-                resources += " %.2f" % resource_increase
-                speedup += " %.2f" % (base_result / fun_results[k][case])
-                efficiency += " %.2f" % ((base_result / fun_results[k][case]) / resource_increase)
-            except KeyError:
-                pass
+            resources += " %.2f" % resource_increase
+            # Avoid dividing by zero
+            speedup += " %.2f" % (base_result / (fun_results[k][case] + 1e-10))
+            efficiency += " %.2f" % ((base_result / (fun_results[k][case] + 1e-10)) / resource_increase)
         log.add("%20s\tResources : %s" % (k, resources))
         log.add("%20s\tSpeed-up  : %s" % ("", speedup))
         log.add("%20s\tEfficiency: %s" % ("", efficiency))
@@ -169,9 +159,6 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
         print("Written file in " + abspath(out_file_name))
 
 
-
-
-
 def function_info_csv(experiment_data, csv_folder):
     """
     Function to save the results as a csv which will be used in the latex report
@@ -179,30 +166,17 @@ def function_info_csv(experiment_data, csv_folder):
     """
     import numpy as np
     from os import mkdir
-    import errno
+    from os.path import isdir
 
-    # Try and create output dir
-    try:
+    # Create results folder
+    if not isdir(csv_folder):
         mkdir(csv_folder)
-    except OSError as exc:
-        if exc.errno != errno.EEXIST:
-            raise
-        pass
 
-    fun_results = {}
     log = Log()
-    for function in experiment_data.functions:
-        fun_results[function] = {}
-        for c, r in experiment_data.get_function_info(function):
-            fun_results[function][c] = r
 
-    # Remove empty entries
-    fun_results = {k: v for k, v in fun_results.items() if v != {}}
-    key = 'Elap. Time(s)'
+    # Get a dictionary with function info ordered by elapsed Time
+    fun_results = experiment_data.get_function_info()
 
-    # Order the function results by 'Elap. Time(s)'
-    fun_results = {k: v for k, v in
-                   sorted(fun_results.items(), key=lambda item: item[1][experiment_data.base_case])}
     for k, v in fun_results.items():
 
         # List to store data
@@ -211,18 +185,17 @@ def function_info_csv(experiment_data, csv_folder):
         efficiency = []
 
         base_result = fun_results[k][experiment_data.base_case]
-
         # Fill list with formatted data
         for case in experiment_data.cases:
             if case == experiment_data.base_case:
                 continue
             resource_increase = case / experiment_data.base_case
-            try:
-                resources.append("{:.0f}".format(resource_increase))
-                speedup.append("{:.2f}".format(base_result / fun_results[k][case]))
-                efficiency.append("{:.2f}".format((base_result / fun_results[k][case]) / resource_increase))
-            except KeyError:
-                pass
+
+            resources.append("{:.0f}".format(resource_increase))
+            # Avoid division by zero
+            speedup.append("{:.2f}".format(base_result / (fun_results[k][case] + 1e-10)))
+            efficiency.append("{:.2f}".format((base_result / (fun_results[k][case] + 1e-10)) / resource_increase))
+
         # Declare array to be saved in csv
         header = np.array(['resources', 'speedup', 'efficiency'], dtype=str)
 
