@@ -63,6 +63,10 @@ trace_%/.trace.done:
 	touch $(@F)
 
 #################### TRACE
+TRACE=$(foreach var, $(number_of_processes), trace_$(var)/.trace.done)
+trace:
+	make -f ./Makefile.part2 -j${cores} $(TRACE)
+
 # prepare env for cutting the trace
 magiccut/magicCut:
 	# Download sources
@@ -135,7 +139,7 @@ report_add_paraver: $(REPORT_ADD_PARAVER)
 	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Paraver" -T cfg/latex/text/ParaverViews.txt
 
 ####################### DIMEMAS
-dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/*)
+dimemas_configurations=$(wildcard ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 
 DIMEMAS_TRC=$(foreach var, $(number_of_processes), dimemas_traces/$(var).dim)
 dimemas_trc: trace_cut
@@ -206,11 +210,6 @@ SCALABILITY=$(foreach var, $(number_of_processes), test_$(var)/.test.done)
 scalability:
 	make -f ./Makefile.part2 -j${cores} $(SCALABILITY)
 
-###################### TRACE
-TRACE=$(foreach var, $(number_of_processes), trace_$(var)/.trace.done)
-trace:
-	make -f ./Makefile.part2 -j${cores} $(TRACE)
-
 ####################################################
 # Clean recipes
 # Delete (almost)-everything
@@ -259,14 +258,8 @@ analysis: histograms modelfactors scalability
 # Stores the info produces from all the experiments in a json file
 JSON= $(SCALABILITY) $(PARAMEDIR_EXPERIMENTS) $(PARADIM_EXPERIMENTS)
 # Submits a job to creat json file: used when the traces have been taken on a big N of cores
-process_json.slurm: $(JSON)
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ \
-                                     --set-core 48 \
-                                     --set-time 120 \
-                                     --job-name ${configuration_name}.json \
-                                     --set-queue $(slurm_queue)
-	python cfg/slurm/SlurmJobCreator.py --file-name $@ --set-workload make -f ./Makefile.part2 ${configuration_name}.json
-	sbatch --wait --chdir . $@
+process_json: $(JSON)
+	make -f ./Makefile.part2 ${configuration_name}.json
 
 ${configuration_name}.json: $(JSON)
 	python cfg/parser/collector.py --input-files test_*/*.timing.pkl trace_*/*pm dimemas_traces/*dm \
@@ -284,7 +277,7 @@ ${configuration_name}.json: $(JSON)
                                     -f function_csv \
                                     --functions-file functions_summary.txt \
                                     --most_expensive_function_summary most_expensive_function_summary.csv \
-		          	    --L3_IPC_scatterplot L3_vs_IPC.png \
+		          	    --scatter-plots \
 				    --dimemas-file dimemas.csv \
     	                            --tracking-folder tracking
 	touch $@
