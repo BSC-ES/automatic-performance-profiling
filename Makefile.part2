@@ -118,20 +118,21 @@ REPORT_ADD_PARAMEDIR=$(foreach var, $(number_of_processes), trace_$(var)/report_
 report_add_paramedir: $(REPORT_ADD_PARAMEDIR)
 
 ####################### PARAVER
-PARAVER_IMAGES=$(foreach var, $(number_of_processes), paraver_images/$(var))
+PARAVER_IMAGES=$(foreach var, $(number_of_processes), paraver_images/$(var)/.paraver_images.done)
 paraver_images: trace_cut .info_report.done
 	make -f ./Makefile.part2 -j${cores} $(PARAVER_IMAGES)
 
 paraver_configurations=$(wildcard ${analysis_tools}/paraver_configurations/*)
-paraver_images/%: trace_%/${bin_name}.best_cut.prv .info_report.done
+paraver_images/%/.paraver_images.done: trace_%/${bin_name}.best_cut.prv .info_report.done
 	# Make paraver images
-	mkdir -p  $@
-	${cfg}/target/paraver.target $< $@ ${paraver_configurations}
+	mkdir -p $(@D)
+	${cfg}/target/paraver.target $< $(@D) ${paraver_configurations}
 	${cfg}/target/create_paraver_function_legend.target most_expensive_function_summary.csv $< $*
 	${cfg}/target/create_paraver_legend.target $< $* ${paraver_configurations}
+	touch $(@D)/.paraver_images.done
 
 ### Add paraver to the report
-report_add_%_paraver: paraver_images/%
+report_add_%_paraver: paraver_images/%/.paraver_images.done
 	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Paraver" -s $*' Core' --add-img $<
 
 REPORT_ADD_PARAVER=$(foreach var, $(number_of_processes), report_add_$(var)_paraver)
