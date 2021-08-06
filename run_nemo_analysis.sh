@@ -16,9 +16,35 @@ else
   queue=debug
 fi
 
-make -f Makefile.part1 experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}
-#make -f Makefile.part2 experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}
+make -f Makefile.part1 experiment parameters_file=${config_folder}/hardware_benchmarks slurm_queue=${queue} &
+make -f Makefile.part1 experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue} &
+for config in ${model_config_folder}/MultiExperiment/weakscaling/${configuration}/*
+do
+  make -f Makefile.part1 experiment parameters_file=${config} slurm_queue=${queue} &
+done
+for config in ${model_config_folder}/MultiExperiment/compilation_efficiency/${configuration}/*
+do
+  make -f Makefile.part1 experiment parameters_file=${config} slurm_queue=${queue} &
+done
+# Wait for all the runs of part 1 to be done and start running part 2
+wait
+
+source load_env.sh
+
+make -f Makefile.part2 experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue} &
+for config in ${model_config_folder}/MultiExperiment/weakscaling/${configuration}/*
+do
+  make -f Makefile.part2 experiment parameters_file=${config} slurm_queue=${queue} &
+done
+for config in ${model_config_folder}/MultiExperiment/compilation_efficiency/${configuration}/*
+do
+  make -f Makefile.part2 experiment parameters_file=${config} slurm_queue=${queue} &
+done
+# Wait for all the runs of part 2 to be done and start creating the report
+wait
+
 exit
+##############################
 
 make experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}  &
 make experiment parameters_file=${config_folder}/hardware_benchmarks slurm_queue=${queue} &

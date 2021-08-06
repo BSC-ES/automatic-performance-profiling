@@ -262,7 +262,7 @@ process_json: $(SCALABILITY) $(TRACE_EXPERIMENTS)
 	make -f ./Makefile.part2 -j${cores} $(JSON)
 	make -f ./Makefile.part2 ${configuration_name}.json
 
-${configuration_name}.json: $(JSON)
+${configuration_name}.json: $(SCALABILITY) $(TRACE_EXPERIMENTS) $(JSON)
 	python cfg/parser/collector.py --input-files test_*/*.timing.pkl trace_*/*pm dimemas_traces/*dm \
                                        --output-file ${configuration_name} \
                                        --param-file param.cfg
