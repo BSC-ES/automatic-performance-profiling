@@ -63,9 +63,9 @@ trace_%/.trace.done:
 	touch $(@F)
 
 #################### TRACE
-TRACE=$(foreach var, $(number_of_processes), trace_$(var)/.trace.done)
-trace:
-	make -f ./Makefile.part2 -j${cores} $(TRACE)
+TRACE_EXPERIMENTS=$(foreach var, $(number_of_processes), trace_$(var)/.trace.done)
+trace_experiments:
+	make -f ./Makefile.part2 -j${cores} $(TRACE_EXPERIMENTS)
 
 # prepare env for cutting the trace
 magiccut/magicCut:
@@ -410,7 +410,7 @@ clean_report:
 	rm -rf ${report_file} report
 ############### TARGET FOR PARALLEL MAKE
 strong_scaling:
-	$(MAKE) -f ./Makefile.part2 scalability trace
+	$(MAKE) -f ./Makefile.part2 scalability trace_experiments
 	$(MAKE) -f ./Makefile.part2 trace_cut
 	$(MAKE) -f ./Makefile.part2 modelfactors paraver_images dimemas_images
 	$(MAKE) -f ./Makefile.part2 paradim_experiments
