@@ -147,12 +147,12 @@ dimemas_trc: trace_cut
 
 dimemas_traces/%.dim: trace_%/${bin_name}.best_cut.prv
 	mkdir -p $(@D)
-	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm \
-                                     --set-time-seconds $$(( $* )) \
-                                     --job-name $(@F) \
+	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim_$*.slurm \
+                                     --set-time-seconds $$(( $* * 2 )) \
+                                     --job-name prv2dim_$* \
                                      --set-queue $(slurm_queue)
-	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim.slurm --set-workload ${analysis_tools}/prv2dim $< $(@F)
-	sbatch --wait --chdir dimemas_traces $(@D)/prv2dim.slurm
+	python cfg/slurm/SlurmJobCreator.py --file-name $(@D)/prv2dim_$*.slurm --set-workload ${analysis_tools}/prv2dim $< $(@F)
+	sbatch --wait --chdir dimemas_traces $(@D)/prv2dim_$*.slurm
 
 DIMEMAS_EXPERIMENTS=$(foreach var, $(number_of_processes), dimemas_traces/dimemas_$(var).slurm)
 dimemas_experiments: dimemas_trc
