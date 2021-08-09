@@ -43,33 +43,18 @@ done
 # Wait for all the runs of part 2 to be done and start creating the report
 wait
 
-exit
-##############################
-
-make experiment parameters_file=${model_config_folder}/strongscaling/${configuration} slurm_queue=${queue}  &
-make experiment parameters_file=${config_folder}/hardware_benchmarks slurm_queue=${queue} &
-for config in ${model_config_folder}/MultiExperiment/weakscaling/${configuration}/*
-do
-  make experiment parameters_file=${config} slurm_queue=${queue} &
-done
-for config in ${model_config_folder}/MultiExperiment/compilation_efficiency/${configuration}/*
-do
-  make experiment parameters_file=${config} slurm_queue=${queue} &
-done
-# Wait for all the runs to be done and start creating the report
-wait
-
 main_folder=`pwd`
 
-cd run_dir/strong_scaling/BENCH/
-  source load_env.sh
-  make report_add_strong_scaling report_file=${main_folder}/report.pkl
-cd - 
+cd run_dir/strong_scaling/${configuration}
+source load_env.sh
+make -f Makefile.part2 report_add_strong_scaling parameters_file=${model_config_folder}/strongscaling/${configuration} report_file=${main_folder}/report.pkl
+cd -
+
 cd run_dir/hardware_benchmarks
-  source load_env.sh
-  make report_add_benchmarks report_file=${main_folder}/report.pkl
+source load_env.sh
+make -f Makefile.part2 report_add_benchmarks parameters_file=${config_folder}/hardware_benchmarks report_file=${main_folder}/report.pkl
 cd -
 
 source load_env.sh
-make report_add_multi  report_file=${main_folder}/report.pkl
-make report parameters_file=${model_config_folder}/strongscaling/${configuration}
+make -f Makefile.part2 report_add_multi parameters_file=param.cfg report_file=${main_folder}/report.pkl
+make -f Makefile.part2 report parameters_file=param.cfg
