@@ -7,3 +7,5 @@ cfg/target/param_bash.cfg
 cfg/__pycache__
 cfg/latex/__pycache__
 cfg/parser/utils/__pycache__
+report.pkl
+report

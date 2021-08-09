@@ -129,7 +129,7 @@ paraver_images/%/.paraver_images.done: trace_%/${bin_name}.best_cut.prv .info_re
 	${cfg}/target/paraver.target $< $(@D) ${paraver_configurations}
 	${cfg}/target/create_paraver_function_legend.target most_expensive_function_summary.csv $< $*
 	${cfg}/target/create_paraver_legend.target $< $* ${paraver_configurations}
-	touch $(@D)/.paraver_images.done
+	touch $@
 
 ### Add paraver to the report
 report_add_%_paraver: paraver_images/%/.paraver_images.done
