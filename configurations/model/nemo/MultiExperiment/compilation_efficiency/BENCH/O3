@@ -34,4 +34,4 @@ processes_per_node=48
 # Which parts of the recipe will be executed when we run make experiment
 experiment_recipes = process_json
 # Folder in which all the results will be stored
-main_folder = MultiExperimentRuns/compilation_efficiency/BENCH/${configuration_name}
+main_folder = MultiExperimentRuns/compilation_efficiency/BENCH/O3
