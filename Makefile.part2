@@ -133,7 +133,7 @@ paraver_images/%/.paraver_images.done: trace_%/${bin_name}.best_cut.prv .info_re
 
 ### Add paraver to the report
 report_add_%_paraver: paraver_images/%/.paraver_images.done
-	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Paraver" -s $*' Core' --add-img $<
+	python ${latex_folder}/ReportGenerator.py -O ${report_file} -S "Paraver" -s $*' Core' --add-img $(<D)
 
 REPORT_ADD_PARAVER=$(foreach var, $(number_of_processes), report_add_$(var)_paraver)
 report_add_paraver: $(REPORT_ADD_PARAVER) 
