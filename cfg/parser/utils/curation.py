@@ -506,7 +506,7 @@ def experiment_comparison(experiment1, experiment2):
     return log
 
 
-def multiexperiment_comparison(experiments, field1="Communication", field2="sypd", field3="average"):
+def multiexperiment_comparison(experiments, field1):
     # List of process per node used in experiments
     processes_per_node = [int(exp.processes_per_node) for exp in experiments]
 
@@ -523,8 +523,7 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
     log = Log()
 
     # Simulated Years per Day
-    base_case_speed = [experiment[base_case * ppn][field1][field2][field3]
-                       for experiment, ppn in zip(experiments, processes_per_node)]
+    base_case_speed = [experiment[base_case * ppn][field1] for experiment, ppn in zip(experiments, processes_per_node)]
 
     # Find index of slowest experiment
     slowest_index = np.argmin(base_case_speed)
@@ -541,7 +540,7 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
             node_filling = "[" + experiment.processes_per_node + " cores per node]"
             log_text += ", %s %s" % (experiment.experiment_name, node_filling)
         else:
-            log_text += ", %s" % (experiment.experiment_name + " [SYPD]")
+            log_text += ", %s" % (experiment.experiment_name + " [" + field1 + "]")
 
     log.add(log_text)
 
@@ -556,7 +555,7 @@ def multiexperiment_comparison(experiments, field1="Communication", field2="sypd
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp_speeds = [experiment[case * ppn][field1][field2][field3] for experiment, ppn in
+        exp_speeds = [experiment[case * ppn][field1] for experiment, ppn in
                       zip(experiments, processes_per_node)]
         exp_speedups = [exp_speeds[i] / base_case_speed[i] for i in range(len(experiments))]
         exp_efficiency = [es / resource_increase for es in exp_speedups]

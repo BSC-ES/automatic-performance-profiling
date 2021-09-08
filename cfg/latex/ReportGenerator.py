@@ -36,7 +36,7 @@ def report_load(report_name):
 
 def get_files_from_path(file_path, extension=None):
     # Manage input parameter passed with the nargs='+' option set
-    if isinstance(file_path,list):
+    if isinstance(file_path, list):
         # A folder or a file has been passed
         if len(file_path):
             file_path = file_path[0]
@@ -594,11 +594,11 @@ def get_command_line_arguments():
     :return: list of files
     """
 
-    # Parse and assert command line options
     import argparse
+    from cfg.Error import PathType
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-O", "--report-obj", default=None,
+    parser.add_argument("-O", "--report-obj", required=True,
                         help="Name of the object that will progressively store report information")
     parser.add_argument("-t", "--report-title",
                         type=str, default=None,
@@ -640,11 +640,10 @@ def get_command_line_arguments():
     parser.add_argument("--silent", action="store_true",
                         help="Ignore if added file doesn't exist")
     parser.add_argument("--add-newcommand",
-                        default=None,
+                        type=PathType(exists=True, type="file"), default=None,
                         help="File which contains variable definitions that can be used in Fig. or Tab captions")
     args = parser.parse_args()
-    if not args.report_obj:
-        parser.error("A name for the object must be given")
+
     if args.add_csv is not None and args.section_title is None:
         parser.error("A name for the section must be given")
     if args.add_img is not None and args.section_title is None:
@@ -657,11 +656,7 @@ def get_command_line_arguments():
             parser.error("Silent mode can be run just when adding items to pkl object")
     if args.add_img_caption and not args.add_img:
         parser.error("A caption cannot be added if an image has not been specified")
-    if args.add_newcommand is not None:
-        try:
-            assert (isfile(args.add_newcommand))
-        except AssertionError:
-            parser.error("The parameter file specified for newcommands does not exist.")
+
     return args
 
 
