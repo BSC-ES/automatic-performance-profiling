@@ -79,7 +79,7 @@ trace_cut:
 
 trace_%/${bin_name}.best_cut.prv: trace_%/.trace.done | magiccut/magicCut
         # Magic Cut
-ifeq ($(timestep_0), TRUE)
+ifeq ($(timestep_zero), TRUE)
 	$(eval magiccut_steps := $(shell echo $(trace_steps)+1 | bc))
 else
 	$(eval magiccut_steps=${trace_steps})

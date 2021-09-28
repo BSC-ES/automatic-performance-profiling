@@ -26,7 +26,7 @@ output=FALSE
 test_steps=200
 trace_steps=20
 # Model executes an initial setup timestep with value 0? (TRUE or FALSE)
-timestep_0=FALSE
+timestep_zero=FALSE
 # Processes used for the modelfactor
 number_of_processes=768 1024
 # Tail size, needed for postproc
