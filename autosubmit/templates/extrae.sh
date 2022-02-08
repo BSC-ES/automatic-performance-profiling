@@ -1,30 +1,47 @@
 source %ENV_SOURCES%
+
+test_name=""
+if [ "%MEMBER%" = "compilation_efficiency" ];
+then
+  test_name="compilation_efficiency"
+  export test_name="compilation_efficiency"
+elif [ "%MEMBER%" = "StrongScaling" ];
+then
+  test_name="strong_scaling"
+  export test_name="strong_scaling"
+elif [ "%MEMBER%" = "weakscaling" ];
+then
+  test_name="weakscaling"
+  export test_name="weakscaling"
+fi
 source %INIDATA_ROOT%/strong_scaling/param_bash.cfg
-mkdir -p %RUN_ROOT%/strong_scaling/trace_%NUMPROC%
-cd %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
-#cp %RUN_ROOT%/strong_scaling/functions_dir/extrae_functions.txt %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
+mkdir -p %RUN_ROOT%/$test_name/trace_%NUMPROC%
+cp -r %PROJECT_ROOT%/cfg/generate_func_list/* %RUN_ROOT%/trace_%NUMPROC%/
+
+cd %RUN_ROOT%/$test_name/trace_%NUMPROC%/
 #Link inidata
-cp %INIDATA_ROOT%/strong_scaling/* %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
-ln -rsf %INIDATA_ROOT%/original %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
-rsync -rv --exclude=.nc %INIDATA_ROOT% %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
-cd %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
+cp %INIDATA_ROOT%/$test_name/* %RUN_ROOT%/$test_name/trace_%NUMPROC%/
+#Doble check this #TODO not sure if it should be original after the member changes
+ln -rsf %INIDATA_ROOT%/original %RUN_ROOT%/$test_name/trace_%NUMPROC%/
+rsync -rv --exclude=.nc %INIDATA_ROOT% %RUN_ROOT%/$test_name/trace_%NUMPROC%/
+cd %RUN_ROOT%/$test_name/trace_%NUMPROC%/
 if [ "%MODEL%" = "nemo" ] || [ "%MODEL%" = "NEMO" ];
 then
-    run_folder=%RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
+    run_folder=%RUN_ROOT%/$test_name/trace_%NUMPROC%/
     number_of_cores=%NUMPROC%
     # Copy everything from reference folder
-    cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_trace/EXP00/* %RUN_ROOT%/strong_scaling/trace_%NUMPROC%
+    cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_trace/EXP00/* %RUN_ROOT%/$test_name/trace_%NUMPROC%
     # Copy xios server
-    cp %BINARIES_ROOT%/xios_server.exe %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/
+    cp %BINARIES_ROOT%/xios_server.exe %RUN_ROOT%/$test_name/trace_%NUMPROC%/
     # Fix namelist parameters
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/namelist_cfg nn_itend ${trace_steps}
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/namelist_cfg ln_icebergs .false.
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/namelist_ref ln_meshmask .false.
+    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/trace_%NUMPROC%/namelist_cfg nn_itend ${trace_steps}
+    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/trace_%NUMPROC%/namelist_cfg ln_icebergs .false.
+    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/trace_%NUMPROC%/namelist_ref ln_meshmask .false.
     # Set ice frequency to 1
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/namelist_ref nn_fsbc 1
+    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/trace_%NUMPROC%/namelist_ref nn_fsbc 1
     # Disable output
     if [ ${output} = FALSE ] ; then \
-        sed -i "s/^.*file_definition.*$$//g" %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/context_nemo.xml ; \
+        sed -i "s/^.*file_definition.*$$//g" %RUN_ROOT%/$test_name/trace_%NUMPROC%/context_nemo.xml ; \
     fi
 fi
 ### trace.target
@@ -36,7 +53,7 @@ trace=trace.sh
 cat << EOF > $trace
   #!/bin/bash
 
-  export EXTRAE_CONFIG_FILE=./extrae.xml
+  export EXTRAE_CONFIG_FILE=%RUN_ROOT%/$test_name/trace_%NUMPROC%/extrae.xml
   source \$EXTRAE_HOME/etc/extrae.sh
 
   export LD_PRELOAD=\${EXTRAE_HOME}/lib/libmpitracecf.so
@@ -51,11 +68,11 @@ bin=nemo
 
 
 # Copy function.txt
-cp --remove-destination compilation_workdir/${configuration_folder}/${configuration_name}_trace/EXP00/* ${run_folder}
-cp %RUN_FOLDER%/strong_scaling/functions_dir/extrae_functions.txt %RUN_ROOT%/strong_scaling/trace_%NUMPROC%/extrae_functions.txt
+cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_trace/EXP00/* ${run_folder}
+cp %RUN_FOLDER%/$test_name/functions_dir/extrae_functions.txt %RUN_ROOT%/$test_name/trace_%NUMPROC%/extrae_functions.txt
 
 # Generate function list for xml
-%PROJECT_ROOT%/cfg/generate_func_list/generate_func_list.sh ${nemo_bin} extrae_functions.txt
+%PROJECT_ROOT%/cfg/generate_func_list/generate_func_list.sh ${bin} extrae_functions.txt
 #./generate_function_list.sh ${bin} extrae_functions.txt
 
 # Spinup run
