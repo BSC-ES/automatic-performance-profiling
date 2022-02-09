@@ -64,7 +64,7 @@ EOF
 chmod +x ${trace}
 set -xuve
 #Model specific
-bin=nemo
+bin=./nemo
 
 
 # Copy function.txt
