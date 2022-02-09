@@ -16,7 +16,7 @@ then
   folder="compilation_efficiency"
   mkdir -p compilation_efficiency
   for config in %COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%CONFIGURATION%/*; do
-    python %CONVERT_PARAM_FILE% -p $(config) -o %INIDATA_ROOT%/compilation_efficiency/$(config)/param_bash.cfg
+    python %CONVERT_PARAM_FILE% -p $config -o %INIDATA_ROOT%/compilation_efficiency/${config##*/}/param_bash.cfg
   done
 fi
 if [ "%MEMBER%" = "WeakScaling" ];
@@ -24,7 +24,7 @@ then
   folder="weakscaling"
   mkdir -p weakscaling
   for config in %WEAKSCALING_PARAMETERS_ROOT%/%CONFIGURATION%/*; do
-    python %CONVERT_PARAM_FILE% -p $(config) -o %INIDATA_ROOT%/weakscaling/$(config)/param_bash.cfg
+    python %CONVERT_PARAM_FILE% -p $config -o %INIDATA_ROOT%/weakscaling/${config##*/}/param_bash.cfg
   done
 fi
 if [ "%MEMBER%" = "StrongScaling" ];

@@ -14,9 +14,9 @@ then
   test_name="weakscaling"
   export test_name="weakscaling"
 fi
-source %INIDATA_ROOT%/strong_scaling/param_bash.cfg
+source %INIDATA_ROOT%/$test_name/param_bash.cfg
 mkdir -p %RUN_ROOT%/$test_name/trace_%NUMPROC%
-cp -r %PROJECT_ROOT%/cfg/generate_func_list/* %RUN_ROOT%/trace_%NUMPROC%/
+cp -r %PROJECT_ROOT%/cfg/generate_func_list/* %RUN_ROOT%/$test_name/trace_%NUMPROC%/
 
 cd %RUN_ROOT%/$test_name/trace_%NUMPROC%/
 #Link inidata
@@ -69,10 +69,10 @@ bin=nemo
 
 # Copy function.txt
 cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_trace/EXP00/* ${run_folder}
-cp %RUN_FOLDER%/$test_name/functions_dir/extrae_functions.txt %RUN_ROOT%/$test_name/trace_%NUMPROC%/extrae_functions.txt
+cp %RUN_ROOT%/$test_name/functions_dir/extrae_functions.txt %RUN_ROOT%/$test_name/trace_%NUMPROC%/extrae_functions.txt
 
 # Generate function list for xml
-%PROJECT_ROOT%/cfg/generate_func_list/generate_func_list.sh ${bin} extrae_functions.txt
+%PROJECT_ROOT%/cfg/generate_func_list/generate_function_list.sh ${bin} extrae_functions.txt
 #./generate_function_list.sh ${bin} extrae_functions.txt
 
 # Spinup run
