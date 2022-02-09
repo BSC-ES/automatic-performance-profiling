@@ -17,7 +17,7 @@ then
   mkdir -p compilation_efficiency
   multi_config=true
   for config in %COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%CONFIGURATION%/*; do
-    folders+="$folder/${config##*/}"
+    folders+=("$folder/${config##*/}")
     mkdir -p compilation_efficiency/${config##*/}
     python %CONVERT_PARAM_FILE% -p $config -o %INIDATA_ROOT%/compilation_efficiency/${config##*/}/param_bash.cfg
   done
@@ -28,7 +28,7 @@ then
   multi_config=true
   mkdir -p weakscaling
   for config in %WEAKSCALING_PARAMETERS_ROOT%/%CONFIGURATION%/*; do
-    folders+="$folder/${config##*/}"
+    folders+=("$folder/${config##*/}")
     mkdir -p weakscaling/${config##*/}
     python %CONVERT_PARAM_FILE% -p $config -o %INIDATA_ROOT%/weakscaling/${config##*/}/param_bash.cfg
   done
@@ -44,7 +44,7 @@ fi
 if [ "%MEMBER%" != "HardwareBenchmarks" ];
 then
   #Load parameter configuration depending on the test
-  for folder in $folders[@];
+  for folder in "${folders[@]}";
   do
     source %INIDATA_ROOT%/$folder/param_bash.cfg
     # Clone model

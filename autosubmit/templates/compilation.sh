@@ -10,7 +10,7 @@ run_folder=(%RUN_FOLDER%)
 source %ENV_SOURCES%
 if [ "%MEMBER%" = "HardwareBenchmarks" ];
 then
-    source %INIDATA_ROOT%/hardware_/param_bash.cfg
+    source %INIDATA_ROOT%/hardware_benchmarks/param_bash.cfg
     git clone https://github.com/jeffhammond/STREAM.git STREAM
     cd STREAM
     gcc -fopenmp -D_OPENMP stream.c -o stream
