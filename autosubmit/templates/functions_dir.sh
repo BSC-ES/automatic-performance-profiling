@@ -21,12 +21,12 @@ fi
 
 mkdir -p %RUN_ROOT%/$test_name/functions_dir
 cd %RUN_ROOT%/$test_name/functions_dir
-cp %BINARIES_ROOT%/%MODEL%*trace.exe %RUN_ROOT%/$test_name/functions_dir/%MODEL%
+cp %BINARIES_ROOT%/$test_name/%MODEL%*trace.exe %RUN_ROOT%/$test_name/functions_dir/%MODEL%
 model_exec=%RUN_ROOT%/$test_name/functions_dir/%MODEL% #?
 
 # Copy function and extrae configuration
 cp -r %PROJECT_ROOT%/cfg/generate_func_list/* %RUN_ROOT%/$test_name/functions_dir/
-cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_trace/EXP00/* %RUN_ROOT%/$test_name/functions_dir
+cp --remove-destination %COMPILATION_ROOT%/$test_name/${configuration_folder}/${configuration_name}_trace/EXP00/* %RUN_ROOT%/$test_name/functions_dir
 
 
 %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/functions_dir/namelist_cfg nn_itend 5

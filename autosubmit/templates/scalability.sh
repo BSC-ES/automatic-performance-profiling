@@ -29,10 +29,10 @@ then
     run_folder=%RUN_ROOT%
     number_of_cores=%NUMPROC%
     # Copy everything from reference run_folder
-    cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_vanilla/EXP00/* %RUN_ROOT%/$test_name/scalability_%NUMPROC%
+    cp --remove-destination %COMPILATION_ROOT%/$test_name/${configuration_folder}/${configuration_name}_vanilla/EXP00/* %RUN_ROOT%/$test_name/scalability_%NUMPROC%
     # cp --remove-destination /gpfs/scratch/bsc32/bsc32070/a036/compilation/tests/BENCH_vanilla/EXP00/* %RUN_ROOT%/strong_scaling/scalability_%NUMPROC%
     # Copy xios server
-    cp %BINARIES_ROOT%/xios_server.exe %RUN_ROOT%/$test_name/scalability_%NUMPROC%/
+    cp %BINARIES_ROOT%/$test_name/xios_server.exe %RUN_ROOT%/$test_name/scalability_%NUMPROC%/
 
     # Change namelist parameters
     %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/scalability_%NUMPROC%/namelist_cfg nn_itend ${test_steps}

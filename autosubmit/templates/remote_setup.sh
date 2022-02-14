@@ -1,6 +1,4 @@
 cd %EXP_ROOT%
-mkdir -p %COMPILATION_ROOT%
-
 
 
 # Clone repository to the remote for needed files
@@ -13,11 +11,30 @@ then
 fi
 source %ENV_SOURCES%
 export PYTHONPATH=$PYTHONPATH:$(pwd)
+mkdir -p %COMPILATION_ROOT%
+mkdir -p %INIDATA_ROOT%
+mkdir -p %BINARIES_ROOT%
+mkdir -p %RUN_ROOT%
+
 mkdir -p inidata
 cd inidata
 
 #Download common ini data
-
+# Clone model
+branchs_to_clone=(%BRANCH_LIST%)
+if [ "%MODEL%" = "nemo" ];
+then
+    #nemo_source.target
+    # if the mirror has not been cloned yet
+    for branch in "${branchs_to_clone[@]}";
+    do
+      if [[ ! -d nemo_mirror_$branch ]]
+      then
+          %PROJECT_ROOT%/cfg/clone_nemo.sh %COMPILATION_ROOT%/nemo_mirror_$branch $branch
+          ln -sf %COMPILATION_ROOT%/nemo_mirror_$branch %COMPILATION_ROOT%/%MODEL%_source_$branch
+      fi
+    done
+fi
 #This needs an if only HW is on members
 # This is common except for HW so it is valid as running once. This could be at INI.sh but it is running = member
 mkdir -p original

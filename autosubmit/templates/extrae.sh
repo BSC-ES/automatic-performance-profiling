@@ -30,9 +30,9 @@ then
     run_folder=%RUN_ROOT%/$test_name/trace_%NUMPROC%/
     number_of_cores=%NUMPROC%
     # Copy everything from reference folder
-    cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_trace/EXP00/* %RUN_ROOT%/$test_name/trace_%NUMPROC%
+    cp --remove-destination %COMPILATION_ROOT%/$test_name/${configuration_folder}/${configuration_name}_trace/EXP00/* %RUN_ROOT%/$test_name/trace_%NUMPROC%
     # Copy xios server
-    cp %BINARIES_ROOT%/xios_server.exe %RUN_ROOT%/$test_name/trace_%NUMPROC%/
+    cp %BINARIES_ROOT%/$test_name/xios_server.exe %RUN_ROOT%/$test_name/trace_%NUMPROC%/
     # Fix namelist parameters
     %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/trace_%NUMPROC%/namelist_cfg nn_itend ${trace_steps}
     %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/trace_%NUMPROC%/namelist_cfg ln_icebergs .false.
@@ -68,7 +68,7 @@ bin=./nemo
 
 
 # Copy function.txt
-cp --remove-destination %COMPILATION_ROOT%/${configuration_folder}/${configuration_name}_trace/EXP00/* ${run_folder}
+cp --remove-destination %COMPILATION_ROOT%/$test_name/${configuration_folder}/${configuration_name}_trace/EXP00/* ${run_folder}
 cp %RUN_ROOT%/$test_name/functions_dir/extrae_functions.txt %RUN_ROOT%/$test_name/trace_%NUMPROC%/extrae_functions.txt
 
 # Generate function list for xml

@@ -13,4 +13,4 @@ do
   mpirun -np 48 ./${test_name} > ${test_name}_48.txt
 done
 mkdir -p %RUN_ROOT%/hardware_benchmarks/DATA
-cp *txt %RUN_ROO%/hardware_benchmarks/DATA
+cp *txt %RUN_ROOT%/hardware_benchmarks/DATA

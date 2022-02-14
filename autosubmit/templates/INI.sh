@@ -48,16 +48,16 @@ then
   do
     source %INIDATA_ROOT%/$folder/param_bash.cfg
     # Clone model
-    if [ "%MODEL%" = "nemo" ];
-    then
+    #if [ "%MODEL%" = "nemo" ];
+    #then
         #nemo_source.target
         # if the mirror has not been cloned yet
-        if [[ ! -d nemo_mirror ]]
-        then
-          %PROJECT_ROOT%/cfg/clone_nemo.sh %COMPILATION_ROOT%/nemo_mirror ${model_branch}
-        fi
-        ln -sf %COMPILATION_ROOT%/nemo_mirror %COMPILATION_ROOT%/${model}_source
-    fi
+    #    if [[ ! -d nemo_mirror ]]
+    #    then
+    #      %PROJECT_ROOT%/cfg/clone_nemo.sh %COMPILATION_ROOT%/nemo_mirror ${model_branch}
+    #    fi
+    #    ln -sf %COMPILATION_ROOT%/nemo_mirror %COMPILATION_ROOT%/${model}_source
+    #fi
 
     if [[ ! -z ${configuration_resolution+x} ]]
     then
