@@ -45,13 +45,14 @@ then
        sed -i "s/^.*file_definition.*$$//g" %RUN_ROOT%/$test_name/scalability_%NUMPROC%/context_nemo.xml ; \
     fi
 fi
-#if %MODEL% -eq "NEMO"
-#then
-# Enter the run folder and run the spinup
-
 cd %RUN_ROOT%/$test_name/scalability_%NUMPROC%
 set -xuve
-time mpirun -genv I_MPI_DEBUG=4 -n %NUMPROC% ./nemo
+if [ "%MODEL%" = "nemo" ] || [ "%MODEL%" = "NEMO" ];
+then
+ time mpirun -genv I_MPI_DEBUG=4 -n %NUMPROC% ./nemo # to change bin name
+
+fi
+
 set +xuve
 # Rename timing output
 mv timing.output %NUMPROC%_test.timing
