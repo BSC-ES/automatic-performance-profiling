@@ -9,3 +9,4 @@ cfg/latex/__pycache__
 cfg/parser/utils/__pycache__
 report.pkl
 report
+templates/.idea
