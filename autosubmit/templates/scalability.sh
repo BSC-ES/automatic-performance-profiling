@@ -1,63 +1,119 @@
 #MEMBERS =  CompilationEfficiency HardwareBenchmarks WeakScaling StrongScaling
 #RUN_FOLDER =  hardware_benchmarks compilation_efficiency strong_scaling weakscaling
-
+compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
+binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
+env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
+mkdir -p $compilation
+current_member=%MEMBER%
+inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
+project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
+model=%COMMON.MODEL%
 test_name=""
-if [ "%MEMBER%" = "compilation_efficiency" ];
+if [ "$current_member" = "CompilationEfficiency" ];
 then
   test_name="compilation_efficiency"
   export test_name="compilation_efficiency"
-elif [ "%MEMBER%" = "StrongScaling" ];
+  folders=%COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
+elif [ "$current_member" = "StrongScaling" ];
 then
   test_name="strong_scaling"
   export test_name="strong_scaling"
-elif [ "%MEMBER%" = "weakscaling" ];
+  # should add folder to get rid of if with duplicate code
+elif [ "$current_member" = "WeakScaling" ];
 then
   test_name="weakscaling"
   export test_name="weakscaling"
+  folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 fi
-#MEMBERS=HardwareBenchmarks CompilationEfficiency WeakScaling StrongScaling
-source %ENV_SOURCES%
-source %INIDATA_ROOT%/$test_name/param_bash.cfg
-mkdir -p %RUN_ROOT%/$test_name/scalability_%NUMPROC%
-# Link inidata
-cp %INIDATA_ROOT%/$test_name/* %RUN_ROOT%/$test_name/scalability_%NUMPROC%/
-ln -rsf %INIDATA_ROOT%/original %RUN_ROOT%/$test_name/scalability_%NUMPROC%/
-rsync -rv --exclude=.nc %INIDATA_ROOT% %RUN_ROOT%/$test_name/scalability_%NUMPROC%/
-
-if [ "%MODEL%" = "nemo" ] || [ "%MODEL%" = "NEMO" ];
+if [ "$current_member" = "WeakScaling" ] || [ "$current_member" = "CompilationEfficiency" ];
 then
-    run_folder=%RUN_ROOT%
-    number_of_cores=%NUMPROC%
-    # Copy everything from reference run_folder
-    cp --remove-destination %COMPILATION_ROOT%/$test_name/${configuration_folder}/${configuration_name}_vanilla/EXP00/* %RUN_ROOT%/$test_name/scalability_%NUMPROC%
-    # cp --remove-destination /gpfs/scratch/bsc32/bsc32070/a036/compilation/tests/BENCH_vanilla/EXP00/* %RUN_ROOT%/strong_scaling/scalability_%NUMPROC%
-    # Copy xios server
-    cp %BINARIES_ROOT%/$test_name/xios_server.exe %RUN_ROOT%/$test_name/scalability_%NUMPROC%/
+   for test in $folders
+   do
+        test_name_=$test_name"/"$(basename $test)
+        source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+        source $inidata/$test_name_/param_bash.cfg
+        mkdir -p $run_folder/$test_name_/scalability_%NUMPROC%
+        # Link inidata
+        cp $inidata/$test_name_/* $run_folder/$test_name_/scalability_%NUMPROC%/
+        ln -rsf $inidata/original $run_folder/$test_name_/scalability_%NUMPROC%/
+        rsync -rv --exclude=.nc $inidata $run_folder/$test_name_/scalability_%NUMPROC%/
 
-    # Change namelist parameters
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/scalability_%NUMPROC%/namelist_cfg nn_itend ${test_steps}
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/scalability_%NUMPROC%/namelist_cfg ln_icebergs .false.
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/scalability_%NUMPROC%/namelist_ref ln_meshmask .false.
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/scalability_%NUMPROC%/namelist_ref ln_timing   .true.
-    %PROJECT_ROOT%/cfg/replace_namelist_parameter %RUN_ROOT%/$test_name/scalability_%NUMPROC%/namelist_cfg ln_timing   .true.
-    # Disable output
-    if [ ${output} = FALSE ] ; then \
-       sed -i "s/^.*file_definition.*$$//g" %RUN_ROOT%/$test_name/scalability_%NUMPROC%/context_nemo.xml ; \
+        if [ "%COMMON.MODEL%" = "nemo" ] || [ "%COMMON.MODEL%" = "NEMO" ];
+        then
+            number_of_cores=%NUMPROC%
+            # Copy everything from reference run_folder
+            cp --remove-destination $compilation/$test_name_/${configuration_folder}/${configuration_name}_vanilla/EXP00/* $run_folder/$test_name_/scalability_%NUMPROC%
+            # cp --remove-destination /gpfs/scratch/bsc32/bsc32070/a036/compilation/tests/BENCH_vanilla/EXP00/* $run_folder/strong_scaling/scalability_%NUMPROC%
+            # Copy xios server
+            cp $binaries/$test_name_/xios_server.exe $run_folder/$test_name_/scalability_%NUMPROC%/
+
+            # Change namelist parameters
+            $project/cfg/replace_namelist_parameter $run_folder/$test_name_/scalability_%NUMPROC%/namelist_cfg nn_itend ${test_steps}
+            $project/cfg/replace_namelist_parameter $run_folder/$test_name_/scalability_%NUMPROC%/namelist_cfg ln_icebergs .false.
+            $project/cfg/replace_namelist_parameter $run_folder/$test_name_/scalability_%NUMPROC%/namelist_ref ln_meshmask .false.
+            $project/cfg/replace_namelist_parameter $run_folder/$test_name_/scalability_%NUMPROC%/namelist_ref ln_timing   .true.
+            $project/cfg/replace_namelist_parameter $run_folder/$test_name_/scalability_%NUMPROC%/namelist_cfg ln_timing   .true.
+            # Disable output
+            if [ ${output} = FALSE ] ; then \
+               sed -i "s/^.*file_definition.*$$//g" $run_folder/$test_name_/scalability_%NUMPROC%/context_nemo.xml ; \
+            fi
+        fi
+        cd $run_folder/$test_name_/scalability_%NUMPROC%
+        set -xuve
+        if [ "%COMMON.MODEL%" = "nemo" ] || [ "%COMMON.MODEL%" = "NEMO" ];
+        then
+            time mpirun -genv I_MPI_DEBUG=4 -n %NUMPROC% ./nemo # to change bin name
+        fi
+
+        set +xuve
+        # Rename timing output
+        mv timing.output %NUMPROC%_test.timing
+        python3 $project/cfg/parser/utils/model/nemo/convert_timing_files.py -i %NUMPROC%_test.timing -o %NUMPROC%_test.timing
+   done
+elif [ $current_member = "StrongScaling" ];
+then
+    source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+    source $inidata/$test_name/param_bash.cfg
+    mkdir -p $run_folder/$test_name/scalability_%NUMPROC%
+    # Link inidata
+    cp $inidata/$test_name/* $run_folder/$test_name/scalability_%NUMPROC%/
+    ln -rsf $inidata/original $run_folder/$test_name/scalability_%NUMPROC%/
+    rsync -rv --exclude=.nc $inidata $run_folder/$test_name/scalability_%NUMPROC%/
+
+    if [ "%COMMON.MODEL%" = "nemo" ] || [ "%COMMON.MODEL%" = "NEMO" ];
+    then
+        number_of_cores=%NUMPROC%
+        # Copy everything from reference run_folder
+        cp --remove-destination $compilation/$test_name/${configuration_folder}/${configuration_name}_vanilla/EXP00/* $run_folder/$test_name/scalability_%NUMPROC%
+        # cp --remove-destination /gpfs/scratch/bsc32/bsc32070/a036/compilation/tests/BENCH_vanilla/EXP00/* $run_folder/strong_scaling/scalability_%NUMPROC%
+        # Copy xios server
+        cp $binaries/$test_name/xios_server.exe $run_folder/$test_name/scalability_%NUMPROC%/
+
+        # Change namelist parameters
+        $project/cfg/replace_namelist_parameter $run_folder/$test_name/scalability_%NUMPROC%/namelist_cfg nn_itend ${test_steps}
+        $project/cfg/replace_namelist_parameter $run_folder/$test_name/scalability_%NUMPROC%/namelist_cfg ln_icebergs .false.
+        $project/cfg/replace_namelist_parameter $run_folder/$test_name/scalability_%NUMPROC%/namelist_ref ln_meshmask .false.
+        $project/cfg/replace_namelist_parameter $run_folder/$test_name/scalability_%NUMPROC%/namelist_ref ln_timing   .true.
+        $project/cfg/replace_namelist_parameter $run_folder/$test_name/scalability_%NUMPROC%/namelist_cfg ln_timing   .true.
+        # Disable output
+        if [ ${output} = FALSE ] ; then \
+           sed -i "s/^.*file_definition.*$$//g" $run_folder/$test_name/scalability_%NUMPROC%/context_nemo.xml ; \
+        fi
     fi
+    cd $run_folder/$test_name/scalability_%NUMPROC%
+    set -xuve
+    if [ "%COMMON.MODEL%" = "nemo" ] || [ "%COMMON.MODEL%" = "NEMO" ];
+    then
+     time mpirun -genv I_MPI_DEBUG=4 -n %NUMPROC% ./nemo # to change bin name
+
+    fi
+
+    set +xuve
+    # Rename timing output
+    mv timing.output %NUMPROC%_test.timing
+    python3 $project/cfg/parser/utils/model/nemo/convert_timing_files.py -i %NUMPROC%_test.timing -o %NUMPROC%_test.timing
 fi
-cd %RUN_ROOT%/$test_name/scalability_%NUMPROC%
-set -xuve
-if [ "%MODEL%" = "nemo" ] || [ "%MODEL%" = "NEMO" ];
-then
- time mpirun -genv I_MPI_DEBUG=4 -n %NUMPROC% ./nemo # to change bin name
-
-fi
-
-set +xuve
-# Rename timing output
-mv timing.output %NUMPROC%_test.timing
-python3 %PROJECT_ROOT%/cfg/parser/utils/model/nemo/convert_timing_files.py -i %NUMPROC%_test.timing -o %NUMPROC%_test.timing
-
 
 
 
