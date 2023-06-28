@@ -1,0 +1,33 @@
+#DEFAULT:
+#  EXPID: a00m
+#  HPCARCH: marenostrum4
+#  CUSTOM_CONFIG:
+#    PRE: "autosubmit/configuration"
+#    POST: "~/platforms.yml"
+experiment:
+  DATELIST: '20210811'
+  MEMBERS: CompilationEfficiency HardwareBenchmarks WeakScaling StrongScaling
+  CHUNKSIZEUNIT: month
+  CHUNKSIZE: '1'
+  NUMCHUNKS: '2'
+  CALENDAR: standard
+project:
+  PROJECT_TYPE: git
+  PROJECT_DESTINATION: auto-performance-profiling
+git:
+  PROJECT_ORIGIN: https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git
+  PROJECT_BRANCH: autosubmit-makefile1
+  PROJECT_COMMIT: ''
+svn:
+  PROJECT_URL: ''
+  PROJECT_REVISION: ''
+local:
+  PROJECT_PATH: ''
+
+project_files:
+  FILE_PROJECT_CONF: ''
+  FILE_JOBS_CONF: ''
+  JOB_SCRIPTS_TYPE: ''
+rerun:
+  RERUN: 'FALSE'
+  CHUNKLIST: ''

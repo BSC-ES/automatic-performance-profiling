@@ -1,0 +1,17 @@
+config:
+  MAXWAITINGJOBS: '3'
+  TOTALJOBS: '6'
+  SAFETYSLEEPTIME: '10'
+  RETRIALS: '0'
+  OUTPUT: pdf
+  PRESUBMISSION: 'FALSE'
+mail:
+  NOTIFICATIONS: False
+  TO: ""
+communications:
+  API: paramiko
+storage:
+  TYPE: pkl
+  COPY_REMOTE_LOGS: 'True'
+migrate:
+  TO_USER: ''

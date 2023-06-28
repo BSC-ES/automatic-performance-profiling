@@ -1,0 +1,30 @@
+# User should have a platforms_credentials.yml in it's home directory with the following
+# structure:
+# PLATFORMS:
+#   marenostrum0:
+#     USER: "bsc32XXX"
+#   marenostrum4:
+#     USER: "bsc32XXX"
+PLATFORMS:
+  marenostrum0:
+    TYPE: ps
+    HOST: mn0.bsc.es
+    PROJECT: bsc32
+    USER: "TOFILL"
+    MAXWAITINGJOBS: '100'
+    ADD_PROJECT_TO_HOST: 'false'
+    SCRATCH_DIR: /gpfs/scratch
+  marenostrum4:
+    TYPE: slurm
+    HOST: mn1.bsc.es,mn2.bsc.es,mn3.bsc.es
+    PROJECT: bsc32
+    USER: "TOFILL"
+    SCRATCH_DIR: /gpfs/scratch
+    ADD_PROJECT_TO_HOST: 'False'
+    MAX_WALLCLOCK: 48:00
+    MAX_PROCESSORS: '2400'
+    MAXWAITINGJOBS: '100'
+    PROCESSORS_PER_NODE: '48'
+    SERIAL_QUEUE: debug
+    QUEUE: bsc_es
+

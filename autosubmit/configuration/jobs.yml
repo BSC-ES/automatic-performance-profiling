@@ -1,0 +1,140 @@
+JOBS:
+  CLEAN:
+    FILE: autosubmit/templates/clean.sh
+    RUNNING: once
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    PLATFORM: marenostrum0
+    CHECK: 'true'
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  REMOTE_SETUP:
+    FILE: autosubmit/templates/remote_setup.sh
+    DEPENDENCIES: CLEAN
+    RUNNING: once
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    PLATFORM: marenostrum0
+    CHECK: 'true'
+    #CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  REMOTE_INIDATA:
+    FILE: autosubmit/templates/INI.sh
+    DEPENDENCIES: REMOTE_SETUP CLEAN
+    RUNNING: member
+    WALLCLOCK: 00:30
+    CHECK: 'true'
+    NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+    PLATFORM: marenostrum0
+  REMOTE_COMPILATION:
+    FILE: autosubmit/templates/compilation.sh
+    DEPENDENCIES: REMOTE_INIDATA
+    RUNNING: member
+    PROCESSORS: '4'
+    WALLCLOCK: 00:50
+    NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+    PLATFORM: marenostrum0
+  PREPARE_TESTS:
+    FILE: autosubmit/templates/Tests.sh
+    DEPENDENCIES: REMOTE_COMPILATION
+    RUNNING: member
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    CHECK: 'true'
+    NOTIFY_ON: FAILED
+  Scalability:
+    FOR:
+     NAME: [ 48,96,192 ]
+     PROCESSORS: [ 48,96,192 ]
+    FILE: autosubmit/templates/scalability.sh
+    DEPENDENCIES: 
+      PREPARE_TESTS:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    CHECK: 'true'
+    NOTIFY_ON: FAILED
+  functions_dir:
+    FILE: autosubmit/templates/functions_dir.sh
+    DEPENDENCIES: 
+      Scalability_192:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+      Scalability_96: 
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+      Scalability_48:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    PROCESSORS: '192'
+    QUEUE: debug
+    CHECK: 'true'
+    NOTIFY_ON: FAILED
+  trace:
+    FOR:
+     NAME: [ 48,96,192 ]
+     PROCESSORS: [ 48,96,192 ]
+    FILE: autosubmit/templates/extrae.sh
+    DEPENDENCIES: 
+      functions_dir:
+        MEMBERS_FROM: 
+          HardwareBenchmarks:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
+
+    RUNNING: member
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    CHECK: 'true'
+    NOTIFY_ON: FAILED
+  OSU_RUN:
+    FOR:
+     NAME: [ 48,96,192 ]
+     PROCESSORS: [ 48,96,192 ]
+    FILE: autosubmit/templates/osu_run.sh
+    DEPENDENCIES: 
+      PREPARE_TESTS:
+        MEMBERS_FROM:
+          CompilationEfficiency, WeakScaling, StrongScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None 
+    RUNNING: member
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    CHECK: 'true'
+    NOTIFY_ON: FAILED
+  STREAM:
+    FOR: 
+      NAME: [ 1,2,4,8,16,32,48 ]
+      PROCESSORS: [ 1,2,4,8,16,32,48 ]
+    FILE: autosubmit/templates/stream.sh
+    DEPENDENCIES: 
+      PREPARE_TESTS:
+        MEMBERS_FROM:
+          CompilationEfficiency, WeakScaling, StrongScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    CHECK: 'true'
+    NOTIFY_ON: FAILED
