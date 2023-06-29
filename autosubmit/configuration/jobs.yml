@@ -1,4 +1,6 @@
+# This file defines the workflow
 JOBS:
+  # Cleans the previous run, WARNING this job deletes all data, is meant to use for development
   CLEAN:
     FILE: autosubmit/templates/clean.sh
     RUNNING: once
@@ -7,6 +9,7 @@ JOBS:
     PLATFORM: marenostrum0
     CHECK: 'true'
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  # Downloads the git in the remote and some other stuff required by HW test, it requires connection to the internet
   REMOTE_SETUP:
     FILE: autosubmit/templates/remote_setup.sh
     DEPENDENCIES: CLEAN
@@ -16,6 +19,7 @@ JOBS:
     PLATFORM: marenostrum0
     CHECK: 'true'
     #CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  # Creates the folder "inidata" with the param_bash.cfg specific to each test, it requires connection to the internet due HW tests
   REMOTE_INIDATA:
     FILE: autosubmit/templates/INI.sh
     DEPENDENCIES: REMOTE_SETUP CLEAN
@@ -25,6 +29,7 @@ JOBS:
     NOTIFY_ON: FAILED
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
     PLATFORM: marenostrum0
+  # Compiles all the tests, it requires connection to the internet due HW
   REMOTE_COMPILATION:
     FILE: autosubmit/templates/compilation.sh
     DEPENDENCIES: REMOTE_INIDATA
@@ -34,6 +39,7 @@ JOBS:
     NOTIFY_ON: FAILED
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
     PLATFORM: marenostrum0
+  # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
     FILE: autosubmit/templates/Tests.sh
     DEPENDENCIES: REMOTE_COMPILATION
@@ -42,11 +48,14 @@ JOBS:
     QUEUE: debug
     CHECK: 'true'
     NOTIFY_ON: FAILED
+  # Performs the scalability test for all the tests except HW as it uses different tests
   Scalability:
+    # This generates 3 differents jobs which only changes the number of processors
     FOR:
      NAME: [ 48,96,192 ]
      PROCESSORS: [ 48,96,192 ]
     FILE: autosubmit/templates/scalability.sh
+    # This disables the HW tests from being generated
     DEPENDENCIES: 
       PREPARE_TESTS:
         MEMBERS_FROM:
@@ -59,6 +68,7 @@ JOBS:
     QUEUE: debug
     CHECK: 'true'
     NOTIFY_ON: FAILED
+  # Selects the functions to be traced
   functions_dir:
     FILE: autosubmit/templates/functions_dir.sh
     DEPENDENCIES: 
@@ -86,6 +96,7 @@ JOBS:
     QUEUE: debug
     CHECK: 'true'
     NOTIFY_ON: FAILED
+  # Gets the traces
   trace:
     FOR:
      NAME: [ 48,96,192 ]
@@ -104,6 +115,7 @@ JOBS:
     QUEUE: debug
     CHECK: 'true'
     NOTIFY_ON: FAILED
+  # HW test
   OSU_RUN:
     FOR:
      NAME: [ 48,96,192 ]
@@ -121,6 +133,7 @@ JOBS:
     QUEUE: debug
     CHECK: 'true'
     NOTIFY_ON: FAILED
+  # HW TEST
   STREAM:
     FOR: 
       NAME: [ 1,2,4,8,16,32,48 ]

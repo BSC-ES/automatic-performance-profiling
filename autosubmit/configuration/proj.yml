@@ -5,6 +5,7 @@ COMMON:
   BRANCH_LIST: avoid_error_partition
   CONFIGURATION: BENCH
   EXP_ROOT: '%CURRENT_ROOTDIR%'
+  # I believe this is deprecated
   RUN_FOLDER: hardware_benchmarks compilation_efficiency strong_scaling weakscaling
   TRACE_N_FUNCTIONS: '80'
 COMMON_PATH_LOCATIONS:

@@ -1,3 +1,4 @@
+# This part should be in the minimal.yml file in your $experiment directory
 #DEFAULT:
 #  EXPID: a00m
 #  HPCARCH: marenostrum4
@@ -5,19 +6,30 @@
 #    PRE: "autosubmit/configuration"
 #    POST: "~/platforms.yml"
 experiment:
+  # Can be any date, it is not used by the experiment but Autosubmit needs it
   DATELIST: '20210811'
+  # You can disable some tests to be run by Autosubmit if you delete them from the list
+  # This can be done in your $expid/conf to don't change the proj configuration
   MEMBERS: CompilationEfficiency HardwareBenchmarks WeakScaling StrongScaling
+  # Irevelant
   CHUNKSIZEUNIT: month
+  # Irrelevant
   CHUNKSIZE: '1'
+  # Irrelevant because the lowest level of the workflow is member
   NUMCHUNKS: '2'
   CALENDAR: standard
 project:
+  # This is the project type, should be in the minimal.yml
   PROJECT_TYPE: git
+  # This is the destination, can be whatever as long as you use %PROJDIR% later on
   PROJECT_DESTINATION: auto-performance-profiling
 git:
+  # This is the gitlab url of the project, should be in the minimal.yml
   PROJECT_ORIGIN: https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git
+  # This is the branch of the project, should be in the minimal.yml
   PROJECT_BRANCH: autosubmit-makefile1
   PROJECT_COMMIT: ''
+# Rest is irrelevant
 svn:
   PROJECT_URL: ''
   PROJECT_REVISION: ''
