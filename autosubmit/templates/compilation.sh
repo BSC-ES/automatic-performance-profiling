@@ -1,16 +1,19 @@
-#!/usr/bin/env bash
+# This file clones and compiles the model, it requires connection to the outside ( login0 ) due the hardware benchmarks
 # Go to experiment folder
 set -xv
 # Set the experiment variables
+# At somepoint of AS 4, we will introduce the capability of extend the header provided by Autosubmit,
+# in which we could add these variables common for all the scripts, and then we could remove them from here. Not yet done
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 mkdir -p $compilation
+# MEMBER in this context, is a test type. It can be CompilationEfficiency, WeakScaling, StrongScaling or HardwareBenchmarks ( case-sensitive)
+# Autosubmit Automatically tells you in which member you are with this placeholder
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
-
 mkdir -p $binaries
 source $env_sources
 cd $compilation
@@ -19,13 +22,13 @@ source $env_sources
 # End of experiment variables
 if [ $current_member = "HardwareBenchmarks" ];
 then
+    #HardwareBenchmarks compilation extracted from the original makefile and modified to be compatible with the file structure
     source $inidata/hardware_benchmarks/param_bash.cfg
     git clone https://github.com/jeffhammond/STREAM.git STREAM
     cd STREAM
     gcc -fopenmp -D_OPENMP stream.c -o stream
     #STREAM_RUN/stream.slurm
     cd $compilation
-
     #stream.target (stream.sh)
     #osu_install
     wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
@@ -74,7 +77,7 @@ else
       #$* filename
       target_exe_trace=${bin_name}_trace.exe
       #$@ target_name
-      model_sources=%COMMON.MODEL%_source_${model_branch}
+      model_sources=$model_source_${model_branch}
       ##$<
       mkdir -p $compilation
       cd $compilation

@@ -18,9 +18,6 @@ source $env_sources
 # End of experiment variables
 
 source $inidata/strong_scaling/param_bash.cfg
-# only once
-
-#RUN_FOLDER =  hardware_benchmarks compilation_efficiency strong_scaling weakscaling
 
 test_name=""
 if [ "$current_member" = "CompilationEfficiency" ];
@@ -38,6 +35,8 @@ then
   export test_name="weakscaling"
   folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 fi
+# This shouldn't be an if, instead $folders in strong_scaling should point to one folder(run/strong_scaling) , the same goes in function_dirs,inidata,scalability files
+# This is a quick fix but it should be done similary to the compilation.sh #lines 43-65
 if [ "$current_member" = "WeakScaling" ] || [ "$current_member" = "CompilationEfficiency" ];
 then
    for test in $folders
@@ -45,8 +44,8 @@ then
         test_name_=$test_name"/"$(basename $test)
         mkdir -p $run_root/$test_name_/functions_dir
         cd $run_root/$test_name_/functions_dir
-        cp $binaries/$test_name_/%COMMON.MODEL%*trace.exe $run_root/$test_name_/functions_dir/%COMMON.MODEL%
-        model_exec=$run_root/$test_name_/functions_dir/%COMMON.MODEL% #?
+        cp $binaries/$test_name_/$model*trace.exe $run_root/$test_name_/functions_dir/$model
+        model_exec=$run_root/$test_name_/functions_dir/$model #?
 
         # Copy function and extrae configuration
         cp -r $project/cfg/generate_func_list/* $run_root/$test_name_/functions_dir/
@@ -79,7 +78,7 @@ EOF
         chmod +x ${trace}
 
         # List of function not to trace
-        function_to_avoid=$project/cfg/generate_func_list/model/%COMMON.MODEL%/list_of_func_notto_trace.txt
+        function_to_avoid=$project/cfg/generate_func_list/model/$model/list_of_func_notto_trace.txt
 
         # Generate function list for xml
         function_file=extrae_functions.txt
@@ -120,8 +119,8 @@ elif [ "$current_member" = "StrongScaling" ];
 then
     mkdir -p $run_root/$test_name/functions_dir
     cd $run_root/$test_name/functions_dir
-    cp $binaries/$test_name/%COMMON.MODEL%*trace.exe $run_root/$test_name/functions_dir/%COMMON.MODEL%
-    model_exec=$run_root/$test_name/functions_dir/%COMMON.MODEL% #?
+    cp $binaries/$test_name/$model*trace.exe $run_root/$test_name/functions_dir/$model
+    model_exec=$run_root/$test_name/functions_dir/$model #?
 
     # Copy function and extrae configuration
     cp -r $project/cfg/generate_func_list/* $run_root/$test_name/functions_dir/
@@ -154,7 +153,7 @@ EOF
     chmod +x ${trace}
 
     # List of function not to trace
-    function_to_avoid=$project/cfg/generate_func_list/model/%COMMON.MODEL%/list_of_func_notto_trace.txt
+    function_to_avoid=$project/cfg/generate_func_list/model/$model/list_of_func_notto_trace.txt
 
     # Generate function list for xml
     function_file=extrae_functions.txt

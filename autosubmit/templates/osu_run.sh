@@ -1,3 +1,4 @@
+# HW benchmark osu_run
 #MEMBERS=HardwareBenchmarks CompilationEfficiency WeakScaling StrongScaling
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%

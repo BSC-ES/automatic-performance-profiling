@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# HW benchmark STREAM
 # Go to experiment folder
 set -xv
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%

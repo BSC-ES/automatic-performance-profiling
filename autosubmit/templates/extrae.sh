@@ -1,3 +1,5 @@
+# This script is used to run the trace tests
+
 # Set the experiment variables
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
@@ -11,7 +13,6 @@ inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
 mkdir -p $binaries
-source $env_sources
 cd $compilation
 source $env_sources
 
@@ -32,6 +33,8 @@ then
   export test_name="weakscaling"
   folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 fi
+# This shouldn't be an if, instead $folders in strong_scaling should point to one folder(run/strong_scaling) , the same goes in function_dirs,inidata,scalability files
+# This is a quick fix but it should be done similary to the compilation.sh #lines 43-65
 if [ "$current_member" = "WeakScaling" ] || [ "$current_member" = "CompilationEfficiency" ];
 then
    for test in $folders

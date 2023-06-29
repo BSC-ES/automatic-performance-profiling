@@ -1,3 +1,6 @@
+# This script needs to be run in marenostrum0 (or any other machine with connection to outside)
+# It will download the needed files to run the experiment
+# TODO: change %_% placeholders in script for $var set at the beggining of the script like in the other files
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
@@ -45,7 +48,7 @@ then
       fi
     done
 fi
-#This needs an if only HW is on members
+#This needs an if only HW is set on members
 # This is common except for HW so it is valid as running once. This could be at INI.sh but it is running = member
 mkdir -p original
 wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar #Revise
@@ -56,6 +59,7 @@ chmod -w original
 # Remove compressed file
 rm ORCA2_ICE_v4.0.tar
 ####
+# I believe this was moved to compilation.sh
 #mkdir -p $compilation
 #cd $compilation
 #wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
