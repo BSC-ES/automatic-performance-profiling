@@ -45,18 +45,20 @@ else
     declare -a test_name
     if [ $current_member = "CompilationEfficiency" ];
     then
+        mkdir -p $compilation/compilation_efficiency
         for config in $inidata/compilation_efficiency/*
         do
             configuration_folders+=($config/param_bash.cfg)
-            mkdir -p $compilation/compilation_efficiency
+            mkdir -p $compilation/compilation_efficiency/${config##*/}
             test_name+=(compilation_efficiency/${config##*/})
         done
     elif [ $current_member = "WeakScaling" ];
     then
+        mkdir -p $compilation/weakscaling
         for config in $inidata/weakscaling/*
         do
             configuration_folders+=($config/param_bash.cfg)
-            mkdir -p $compilation/weakscaling
+            mkdir -p $compilation/weakscaling/${config##*/}
             test_name+=(weakscaling/${config##*/})
         done
     else
@@ -77,16 +79,16 @@ else
       #$* filename
       target_exe_trace=${bin_name}_trace.exe
       #$@ target_name
-      model_sources=$model_source_${model_branch}
+      model_sources=%COMMON.MODEL%_source_${model_branch}
       ##$<
       mkdir -p $compilation
       cd $compilation
-      mkdir -p $test_name
-      mkdir -p $binaries/$test_name
+      mkdir -p ${test_name[i]}
+      mkdir -p $binaries/${test_name[i]}
       rsync -av --exclude='doc*' --exclude='*.svn*' ${model_sources}/* $compilation/${test_name[i]}
       cd $compilation/${test_name[i]}
       # This should also be astracted from the model
-      cp $project/cfg/arch/arch-* $compilation/$test_name/arch/
+      cp $project/cfg/arch/arch-* $compilation/${test_name[i]}/arch/
       if [ "$model" = "nemo" ];
       then
           # Compile NEMO

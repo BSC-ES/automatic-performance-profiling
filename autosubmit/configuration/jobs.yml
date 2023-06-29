@@ -111,7 +111,7 @@ JOBS:
             DATES_TO: None
 
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
     CHECK: 'true'
     NOTIFY_ON: FAILED
