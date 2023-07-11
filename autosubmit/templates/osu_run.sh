@@ -12,8 +12,7 @@ model=%COMMON.MODEL%
 source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 source $inidata/hardware_benchmarks/param_bash.cfg
 mkdir -p $run_folder/hardware_benchmarks/OSU_RUN_%NUMPROC%
-mkdir -p /gpfs/scratch/bsc32/bsc32070/a036/run/hardware_benchmarks/OSU_RUN_%NUMPROC%
-cd /gpfs/scratch/bsc32/bsc32070/a036/run/hardware_benchmarks/OSU_RUN_%NUMPROC%
+cd $run_folder/hardware_benchmarks/OSU_RUN_%NUMPROC%
 
 
 for test in ${osu_tests[@]}
