@@ -42,6 +42,7 @@ then
    for test in $folders
    do
         test_name_=$test_name"/"$(basename $test)
+        source $inidata/$test_name_/param_bash.cfg
         mkdir -p $run_root/$test_name_/functions_dir
         cd $run_root/$test_name_/functions_dir
         cp $binaries/$test_name_/$model*trace.exe $run_root/$test_name_/functions_dir/$model

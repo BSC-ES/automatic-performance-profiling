@@ -65,12 +65,12 @@ then
         then
             time mpirun -genv I_MPI_DEBUG=4 -n $number_of_cores ./nemo # to change bin name
         fi
-
+        
         set +xuve
         # Rename timing output
-        mv timing.output $number_of_cores_test.timing
-        python3 $project/cfg/parser/utils/model/nemo/convert_timing_files.py -i $number_of_cores_test.timing -o $number_of_cores_test.timing
-   done
+        mv timing.output ${number_of_cores}_test.timing
+        python3 $project/cfg/parser/utils/model/nemo/convert_timing_files.py -i ${number_of_cores}_test.timing -o ${number_of_cores}_test.timing
+    done
 elif [ $current_member = "StrongScaling" ];
 then
     source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
@@ -83,7 +83,6 @@ then
 
     if [ "$model" = "nemo" ] || [ "$model" = "NEMO" ];
     then
-        number_of_cores=$number_of_cores
         # Copy everything from reference run_folder
         cp --remove-destination $compilation/$test_name/${configuration_folder}/${configuration_name}_vanilla/EXP00/* $run_folder/$test_name/scalability_$number_of_cores
         # cp --remove-destination /gpfs/scratch/bsc32/bsc32070/a036/compilation/tests/BENCH_vanilla/EXP00/* $run_folder/strong_scaling/scalability_$number_of_cores
@@ -111,8 +110,8 @@ then
 
     set +xuve
     # Rename timing output
-    mv timing.output $number_of_cores_test.timing
-    python3 $project/cfg/parser/utils/model/nemo/convert_timing_files.py -i $number_of_cores_test.timing -o $number_of_cores_test.timing
+    mv timing.output ${number_of_cores}_test.timing
+    python3 $project/cfg/parser/utils/model/nemo/convert_timing_files.py -i ${number_of_cores}_test.timing -o ${number_of_cores}_test.timing
 fi
 
 

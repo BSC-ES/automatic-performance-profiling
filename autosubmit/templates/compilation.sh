@@ -67,9 +67,9 @@ else
       mkdir -p $compilation/strong_scaling
       test_name+=(strong_scaling)
     fi
+    i=0
     for param_file in ${configuration_folders[@]};
     do
-      i=0
       source $param_file
       #exe_flavor=bin/${bin_name}_46
       exe_flavor=vanilla
@@ -118,6 +118,3 @@ else
     i=$((i+1))
     done
 fi
-
-
-
