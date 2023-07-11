@@ -7,7 +7,7 @@ JOBS:
     WALLCLOCK: 00:30
     QUEUE: debug
     PLATFORM: marenostrum0
-    CHECK: 'true'
+    CHECK: "true"
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
   # Downloads the git in the remote and some other stuff required by HW test, it requires connection to the internet
   REMOTE_SETUP:
@@ -17,7 +17,7 @@ JOBS:
     WALLCLOCK: 00:30
     QUEUE: debug
     PLATFORM: marenostrum0
-    CHECK: 'true'
+    CHECK: "true"
     #CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
   # Creates the folder "inidata" with the param_bash.cfg specific to each test, it requires connection to the internet due HW tests
   REMOTE_INIDATA:
@@ -25,7 +25,7 @@ JOBS:
     DEPENDENCIES: REMOTE_SETUP CLEAN
     RUNNING: member
     WALLCLOCK: 00:30
-    CHECK: 'true'
+    CHECK: "true"
     NOTIFY_ON: FAILED
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
     PLATFORM: marenostrum0
@@ -34,7 +34,7 @@ JOBS:
     FILE: autosubmit/templates/compilation.sh
     DEPENDENCIES: REMOTE_INIDATA
     RUNNING: member
-    PROCESSORS: '4'
+    PROCESSORS: "4"
     WALLCLOCK: 00:50
     NOTIFY_ON: FAILED
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
@@ -46,17 +46,17 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 00:30
     QUEUE: debug
-    CHECK: 'true'
+    CHECK: "true"
     NOTIFY_ON: FAILED
   # Performs the scalability test for all the tests except HW as it uses different tests
   Scalability:
     # This generates 3 differents jobs which only changes the number of processors
     FOR:
-     NAME: [ 48,96,192 ]
-     PROCESSORS: [ 48,96,192 ]
+      NAME: [48, 96, 192, 768, 384]
+      PROCESSORS: [48, 96, 192, 768, 384]
     FILE: autosubmit/templates/scalability.sh
     # This disables the HW tests from being generated
-    DEPENDENCIES: 
+    DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
           HardwareBenchmarks:
@@ -64,48 +64,60 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
-    CHECK: 'true'
+    CHECK: "true"
     NOTIFY_ON: FAILED
   # Selects the functions to be traced
   functions_dir:
     FILE: autosubmit/templates/functions_dir.sh
-    DEPENDENCIES: 
-      Scalability_192:
+    DEPENDENCIES:
+      Scalability_384:
         MEMBERS_FROM:
-          HardwareBenchmarks:
+          HardwareBenchmarks, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
-      Scalability_96: 
+      Scalability_768:
         MEMBERS_FROM:
-          HardwareBenchmarks:
+          HardwareBenchmarks, CompilationEfficiency, StrongScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+      Scalability_192:
+        MEMBERS_FROM:
+          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+      Scalability_96:
+        MEMBERS_FROM:
+          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
       Scalability_48:
         MEMBERS_FROM:
-          HardwareBenchmarks:
+          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    PROCESSORS: '192'
+    PROCESSORS: "192"
     QUEUE: debug
-    CHECK: 'true'
+    CHECK: "true"
     NOTIFY_ON: FAILED
   # Gets the traces
   trace:
-    FOR:
-     NAME: [ 48,96,192 ]
-     PROCESSORS: [ 48,96,192 ]
     FILE: autosubmit/templates/extrae.sh
-    DEPENDENCIES: 
+    FOR:
+      NAME: [48, 96, 192, 768, 384]
+      PROCESSORS: [48, 96, 192, 768, 384]
+    DEPENDENCIES:
       functions_dir:
-        MEMBERS_FROM: 
-          HardwareBenchmarks:
+        MEMBERS_FROM:
+          HardwareBenchmarks, CompilationEfficiency:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
@@ -113,33 +125,15 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 02:00
     QUEUE: debug
-    CHECK: 'true'
+    CHECK: "true"
     NOTIFY_ON: FAILED
   # HW test
   OSU_RUN:
     FOR:
-     NAME: [ 48,96,192 ]
-     PROCESSORS: [ 48,96,192 ]
+      NAME: [48, 96, 192]
+      PROCESSORS: [48, 96, 192]
     FILE: autosubmit/templates/osu_run.sh
-    DEPENDENCIES: 
-      PREPARE_TESTS:
-        MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, StrongScaling:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None 
-    RUNNING: member
-    WALLCLOCK: 00:30
-    QUEUE: debug
-    CHECK: 'true'
-    NOTIFY_ON: FAILED
-  # HW TEST
-  STREAM:
-    FOR: 
-      NAME: [ 1,2,4,8,16,32,48 ]
-      PROCESSORS: [ 1,2,4,8,16,32,48 ]
-    FILE: autosubmit/templates/stream.sh
-    DEPENDENCIES: 
+    DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
           CompilationEfficiency, WeakScaling, StrongScaling:
@@ -149,5 +143,23 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 00:30
     QUEUE: debug
-    CHECK: 'true'
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  # HW TEST
+  STREAM:
+    FOR:
+      NAME: [1, 2, 4, 8, 16, 32, 48]
+      PROCESSORS: [1, 2, 4, 8, 16, 32, 48]
+    FILE: autosubmit/templates/stream.sh
+    DEPENDENCIES:
+      PREPARE_TESTS:
+        MEMBERS_FROM:
+          CompilationEfficiency, WeakScaling, StrongScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 00:30
+    QUEUE: debug
+    CHECK: "true"
     NOTIFY_ON: FAILED

@@ -5,7 +5,9 @@ DEFAULT:
   EXPID: a00m
   HPCARCH: marenostrum4
   CUSTOM_CONFIG:
-    PRE: "%PROJDIR%/autosubmit/configuration"
+    PRE:
+      - "%PROJDIR%/autosubmit/configuration/common/"
+      - "%PROJDIR%/autosubmit/configuration/preset-1/"
     POST: "~/platforms_credentials.yml"
 project:
   PROJECT_TYPE: git

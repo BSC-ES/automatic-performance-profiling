@@ -1,0 +1,29 @@
+JOBS:
+  Scalability:
+    # This generates 3 differents jobs which only changes the number of processors
+    FOR:
+      # jobs to overload
+      NAME: [48, 96, 192]
+      PROCESSORS: [48, 96, 192]
+    DEPENDENCIES:
+      PREPARE_TESTS:
+        # This will be added in addition to the HW disabled in the common
+        MEMBERS_FROM:
+          WeakScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+  trace:
+    # This generates 3 differents jobs which only changes the number of processors
+    FOR:
+      # jobs to overload
+      NAME: [48, 96, 192]
+      PROCESSORS: [48, 96, 192]
+    DEPENDENCIES:
+      functions_dir:
+        # This will be added in addition to the HW disabled in the common
+        MEMBERS_FROM:
+          WeakScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
