@@ -20,7 +20,28 @@ JOBS:
     DEPENDENCIES:
       functions_dir:
         MEMBERS_FROM:
-          StrongScaling:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
+  report_setup:
+    FILE: autosubmit/templates/extrae.sh
+    DEPENDENCIES:
+      trace:
+        FOR:
+          NAME: [768, 384]
+          PROCESSORS: [768, 384]
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
+      Scalability:
+        FOR:
+          NAME: [768, 384]
+          PROCESSORS: [768, 384]
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None

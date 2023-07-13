@@ -27,3 +27,23 @@ JOBS:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
+  report_setup:
+    DEPENDENCIES:
+      trace:
+        FOR:
+          NAME: [48, 96, 192]
+          PROCESSORS: [48, 96, 192]
+        MEMBERS_FROM:
+          WeakScaling:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
+      Scalability:
+        FOR:
+          NAME: [48, 96, 192]
+          PROCESSORS: [48, 96, 192]
+        MEMBERS_FROM:
+          WeakScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None

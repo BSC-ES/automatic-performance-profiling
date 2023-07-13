@@ -9,17 +9,19 @@ current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
+n_cores=%NUMPROC%
+
 source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 source $inidata/hardware_benchmarks/param_bash.cfg
-mkdir -p $run_folder/hardware_benchmarks/OSU_RUN_%NUMPROC%
-cd $run_folder/hardware_benchmarks/OSU_RUN_%NUMPROC%
-
+mkdir -p $run_folder/hardware_benchmarks/OSU_RUN/%NUMPROC%
+cd $run_folder/hardware_benchmarks/OSU_RUN/%NUMPROC%
 
 for test in ${osu_tests[@]}
 do
   test_name=${test##*/}
   cp $compilation/osu-micro-benchmarks-5.6.3/mpi/${test} ${test_name}
-  mpirun -np 48 ./${test_name} > ${test_name}_48.txt
+  mpirun -np ${n_cores} ./${test_name} > ${test_name}_${n_cores}.txt
 done
-mkdir -p $run_folder/hardware_benchmarks/DATA
-cp *txt $run_folder/hardware_benchmarks/DATA
+
+mkdir -p $run_folder/hardware_benchmarks/OSU_RUN/DATA
+cp *txt $run_folder/hardware_benchmarks/OSU_RUN/DATA
