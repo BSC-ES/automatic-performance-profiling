@@ -9,6 +9,9 @@ magiccut=%CURRENT_ROOTDIR%/magiccut/magicCut
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
     folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
+elif [ "$current_member" = "CompilationEfficiency" ]; then
+    test_name="compilation_efficiency"
+    folders=%COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 else 
     test_name="weakscaling"
     folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
