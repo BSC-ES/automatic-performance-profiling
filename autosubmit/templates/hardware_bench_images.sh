@@ -1,13 +1,17 @@
 root_dir=%CURRENT_ROOTDIR%
 current_member=%MEMBER%
 model=%COMMON.MODEL%
+env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 
-run_root=%RUN_ROOT%
+run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
-cfg=%CFG%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
 analysis_tools=${cfg}/trace_analysis/
+project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
-source $inidata/hardare_benchmarks/param_bash.cfg
+source $env_sources
+source $inidata/hardware_benchmarks/param_bash.cfg
+export PYTHONPATH=$PYTHONPATH:${project}
 
 cd $run_root/hardware_benchmarks
 mkdir -p OSU_RUN/IMAGE
