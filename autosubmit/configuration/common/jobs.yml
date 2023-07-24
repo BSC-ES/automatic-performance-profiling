@@ -54,8 +54,8 @@ JOBS:
     FILE: autosubmit/templates/scalability.sh
     # This disables the HW tests from being generated
     FOR:
-      NAME: [48, 96, 192, 768, 384]
-      PROCESSORS: [48, 96, 192, 768, 384]
+      NAME: [48, 96, 190, 756, 384]
+      PROCESSORS: [48, 96, 190, 756, 384]
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
@@ -80,7 +80,7 @@ JOBS:
             DATES_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    PROCESSORS: "192"
+    PROCESSORS: "190"
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -88,8 +88,8 @@ JOBS:
   trace:
     FILE: autosubmit/templates/extrae.sh
     FOR:
-      NAME: [48, 96, 192, 768, 384]
-      PROCESSORS: [48, 96, 192, 768, 384]
+      NAME: [48, 96, 190, 756, 384]
+      PROCESSORS: [48, 96, 190, 756, 384]
     DEPENDENCIES:
       functions_dir:
         MEMBERS_FROM:
@@ -103,11 +103,12 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
   # HW test
   OSU_RUN:
     FOR:
-      NAME: [48, 96, 192]
-      PROCESSORS: [48, 96, 192]
+      NAME: [48, 96, 190]
+      PROCESSORS: [48, 96, 190]
     FILE: autosubmit/templates/osu_run.sh
     DEPENDENCIES:
       PREPARE_TESTS:
@@ -144,8 +145,8 @@ JOBS:
     DEPENDENCIES:
       trace:
         FOR:
-          NAME: [48, 96, 192, 768, 384]
-          PROCESSORS: [48, 96, 192, 768, 384]
+          NAME: [48, 96, 190, 756, 384]
+          PROCESSORS: [48, 96, 190, 756, 384]
         MEMBERS_FROM:
           HardwareBenchmarks:
             DATES_TO: None
@@ -153,8 +154,8 @@ JOBS:
             CHUNKS_TO: None
       Scalability:
         FOR:
-          NAME: [48, 96, 192, 768, 384]
-          PROCESSORS: [48, 96, 192, 768, 384]
+          NAME: [48, 96, 190, 756, 384]
+          PROCESSORS: [48, 96, 190, 756, 384]
         MEMBERS_FROM:
           HardwareBenchmarks:
             DATES_TO: None
@@ -171,8 +172,8 @@ JOBS:
             CHUNKS_TO: None
       OSU_RUN:
         FOR:
-          NAME: [48, 96, 192]
-          PROCESSORS: [48, 96, 192]
+          NAME: [48, 96, 190]
+          PROCESSORS: [48, 96, 190]
         MEMBERS_FROM:
           StrongScaling, CompilationEfficiency, WeakScaling:
             DATES_TO: None
@@ -183,6 +184,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: marenostrum0
   trace_cut:
     FILE: autosubmit/templates/trace_cut.sh
     DEPENDENCIES:
@@ -193,7 +195,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -207,7 +209,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -221,7 +223,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -235,7 +237,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -253,6 +255,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: marenostrum0
   modelfactors:
     FILE: autosubmit/templates/modelfactors.sh
     DEPENDENCIES:
@@ -263,7 +266,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -283,7 +286,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 02:00
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -319,6 +322,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: marenostrum0
   report:
     FILE: autosubmit/templates/report.sh
     DEPENDENCIES: add_section
@@ -326,3 +330,4 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: marenostrum0

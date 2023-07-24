@@ -3,8 +3,8 @@ JOBS:
     # This generates 3 differents jobs which only changes the number of processors
     FOR:
       # jobs to overload
-      NAME: [48, 96, 192]
-      PROCESSORS: [48, 96, 192]
+      NAME: [48, 96, 190]
+      PROCESSORS: [48, 96, 190]
     DEPENDENCIES:
       PREPARE_TESTS:
         # This will be added in addition to the HW disabled in the common
@@ -17,8 +17,8 @@ JOBS:
     # This generates 3 differents jobs which only changes the number of processors
     FOR:
       # jobs to overload
-      NAME: [48, 96, 192]
-      PROCESSORS: [48, 96, 192]
+      NAME: [48, 96, 190]
+      PROCESSORS: [48, 96, 190]
     DEPENDENCIES:
       functions_dir:
         # This will be added in addition to the HW disabled in the common
@@ -31,8 +31,8 @@ JOBS:
     DEPENDENCIES:
       trace:
         FOR:
-          NAME: [48, 96, 192]
-          PROCESSORS: [48, 96, 192]
+          NAME: [48, 96, 190]
+          PROCESSORS: [48, 96, 190]
         MEMBERS_FROM:
           WeakScaling:
             MEMBERS_TO: None
@@ -40,8 +40,8 @@ JOBS:
             DATES_TO: None
       Scalability:
         FOR:
-          NAME: [48, 96, 192]
-          PROCESSORS: [48, 96, 192]
+          NAME: [48, 96, 190]
+          PROCESSORS: [48, 96, 190]
         MEMBERS_FROM:
           WeakScaling:
             DATES_TO: None

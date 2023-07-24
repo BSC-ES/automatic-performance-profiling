@@ -2,8 +2,8 @@ JOBS:
   Scalability:
     # This generates 3 differents jobs which only changes the number of processors
     FOR:
-      NAME: [768, 384]
-      PROCESSORS: [768, 384]
+      NAME: [756, 384]
+      PROCESSORS: [756, 384]
     # This disables the HW tests from being generated
     DEPENDENCIES:
       PREPARE_TESTS:
@@ -14,9 +14,8 @@ JOBS:
             CHUNKS_TO: None
   trace:
     FOR:
-      NAME: [768, 384]
-      PROCESSORS: [768, 384]
-    FILE: autosubmit/templates/extrae.sh
+      NAME: [756, 384]
+      PROCESSORS: [756, 384]
     DEPENDENCIES:
       functions_dir:
         MEMBERS_FROM:
@@ -25,12 +24,11 @@ JOBS:
             CHUNKS_TO: None
             DATES_TO: None
   report_setup:
-    FILE: autosubmit/templates/extrae.sh
     DEPENDENCIES:
       trace:
         FOR:
-          NAME: [768, 384]
-          PROCESSORS: [768, 384]
+          NAME: [756, 384]
+          PROCESSORS: [756, 384]
         MEMBERS_FROM:
           StrongScaling, CompilationEfficiency:
             MEMBERS_TO: None
@@ -38,8 +36,8 @@ JOBS:
             DATES_TO: None
       Scalability:
         FOR:
-          NAME: [768, 384]
-          PROCESSORS: [768, 384]
+          NAME: [756, 384]
+          PROCESSORS: [756, 384]
         MEMBERS_FROM:
           StrongScaling, CompilationEfficiency:
             DATES_TO: None

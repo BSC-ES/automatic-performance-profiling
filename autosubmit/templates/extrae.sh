@@ -12,6 +12,8 @@ current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+
 mkdir -p $binaries
 cd $compilation
 source $env_sources
@@ -26,7 +28,7 @@ elif [ $current_member = "StrongScaling" ];
 then
     test_name="strong_scaling"
     export test_name="strong_scaling"
-    folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
+    folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
 elif [ $current_member = "WeakScaling" ];
 then
     test_name="weakscaling"
@@ -44,7 +46,7 @@ do
     
     source $inidata/$test_name_/param_bash.cfg
     mkdir -p $run_root/$test_name_/trace_$numproc
-    cp $project/cfg/trace/* $run_root/$test_name_/trace_$numproc/
+    cp ${cfg}/trace/* $run_root/$test_name_/trace_$numproc/
     
     cd $run_root/$test_name_/trace_$numproc/
     #Link inidata
@@ -62,11 +64,11 @@ do
         # Copy xios server
         cp $binaries/$test_name_/xios_server.exe $run_root/$test_name_/trace_$numproc/
         # Fix namelist parameters
-        $project/cfg/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_cfg nn_itend ${trace_steps}
-        $project/cfg/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_cfg ln_icebergs .false.
-        $project/cfg/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_ref ln_meshmask .false.
+        ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_cfg nn_itend ${trace_steps}
+        ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_cfg ln_icebergs .false.
+        ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_ref ln_meshmask .false.
         # Set ice frequency to 1
-        $project/cfg/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_ref nn_fsbc 1
+        ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_ref nn_fsbc 1
         # Disable output
         if [ "${output}" = FALSE ] ; then \
             sed -i "s/^.*file_definition.*$$//g" $run_root/$test_name_/trace_$numproc/context_nemo.xml ; \
@@ -90,10 +92,7 @@ export LD_LIBRARY_PATH=\${EXTRAE_HOME}/lib/:\$LD_LIBRARY_PATH
 \$*
 EOF
     chmod +x ${trace}
-    set -xuve
-    #Model specific
-    
-    
+
     # Copy function.txt
     cp $run_root/$test_name_/functions_dir/extrae_functions.txt $run_root/$test_name_/trace_$numproc/extrae_functions.txt
     
@@ -103,8 +102,6 @@ EOF
     # Spinup run
     time mpirun -genv I_MPI_DEBUG=4 -n $numproc ./${trace} ./${bin_name}
     
-    # Create list extrae_functions.txt
-    set +xuve
     # Clean a little bit
     rm -rf set-* *.nc
 done
