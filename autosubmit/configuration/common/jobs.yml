@@ -227,6 +227,20 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+  paradim:
+    FILE: autosubmit/templates/paradim.sh
+    DEPENDENCIES:
+      dimemas:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    QUEUE: debug
+    CHECK: "true"
+    NOTIFY_ON: FAILED
   paraver:
     FILE: autosubmit/templates/paraver.sh
     DEPENDENCIES:
@@ -261,7 +275,7 @@ JOBS:
     DEPENDENCIES:
       trace_cut:
         MEMBERS_FROM:
-          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
+          HardwareBenchmarks, CompilationEfficiency:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -279,7 +293,7 @@ JOBS:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
-      dimemas:
+      paradim:
         MEMBERS_FROM:
           HardwareBenchmarks:
             DATES_TO: None
