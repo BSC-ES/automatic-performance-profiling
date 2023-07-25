@@ -327,7 +327,7 @@ JOBS:
             CHUNKS_TO: None
       modelfactors:
         MEMBERS_FROM:
-          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
+          HardwareBenchmarks, CompilationEfficiency:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
