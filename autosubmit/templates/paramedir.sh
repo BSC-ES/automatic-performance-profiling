@@ -2,7 +2,7 @@ root_dir=%CURRENT_ROOTDIR%
 current_member=%MEMBER%
 model=%COMMON.MODEL%
 
-run_root=%RUN_ROOT%
+run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=${project}/cfg/trace_analysis/
@@ -22,20 +22,25 @@ paramedir_configurations=$(find ${analysis_tools}/paramedir_configurations/*)
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
+    if [ $current_member = "StrongScaling" ]; then
+        test_name_=${test_name}
+    fi
     source $inidata/$test_name_/param_bash.cfg
-    cd $run_root/$test_name
-    for trace_folder in trace_*
+    mkdir -p  ${run_root}/${test_name_}/paramedir
+
+    # WORKING DIRECTORY: paramedir folder in test's root folder
+    cd ${run_root}/${test_name_}/paramedir
+    rm -f *.pm
+
+    trace_folders=$(find ${run_root}/${test_name_} | grep trace_[0-9]*$)
+    for trace_folder in ${trace_folders}
     do
-        cd $trace_folder
         source $inidata/$test_name_/param_bash.cfg
-        trace=${folders}/${trace_folder}/${bin_name}.best_cut.prv
-        n_cores=$(echo $trace_folder | sed 's/test_//')
+        trace=${trace_folder}/${bin_name}.best_cut.prv
+        n_cores=$(echo $trace_folder | sed 's/.*trace_//')
 
         # paramedir.target
         ##################
-	    rm -f *.pm
-
-        # Enter directory and process all paramedir configurations
         for cfg in ${paramedir_configurations[@]} 
         do
             ${analysis_tools}/paramedir ${trace} ${cfg} 

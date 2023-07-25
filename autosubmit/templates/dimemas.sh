@@ -1,11 +1,12 @@
 root_dir=%CURRENT_ROOTDIR%
 current_member=%MEMBER%
 model=%COMMON.MODEL%
+env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 
-run_root=%RUN_ROOT%
+run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-analysis_tools=%CFG%/trace_analysis/
+analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
@@ -22,17 +23,20 @@ dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
+    if [ $current_member = "StrongScaling" ]; then
+        test_name_=${test_name}
+    fi
     source $inidata/$test_name_/param_bash.cfg
-    cd $run_root/$test_name
+    
+    # WORKING DIR: test's root folder
+    cd $run_root/$test_name_
     mkdir -p dimemas_traces
-
-    for trace_folder in trace_*
+    trace_folders=$(find | grep trace_[0-9]*$)
+    for trace_folder in ${trace_folders}
     do
-        source $inidata/$test_name_/param_bash.cfg
-        trace=${folders}/${trace_folder}/${bin_name}.best_cut.prv
-        n_cores=$(echo $trace_folder | sed 's/test_//')
+        trace=${trace_folder}/${bin_name}.best_cut.prv
+        n_cores=$(echo $trace_folder | sed 's/.*trace_//')
         dim_trace=dimemas_traces/${n_cores}.dim
-
     
         ${analysis_tools}/prv2dim ${trace} ${dim_trace}
         
@@ -47,7 +51,7 @@ do
             cfg_name=${cfg##*/}
             cfg_name=${cfg_name%.*}
 
-            ${analysis_tools}/Dimemas -S 32k --dim ${trace} -p ${dim_trace_name}_${cfg_name}.prv --config-file ${cfg}
+            ${analysis_tools}/Dimemas -S 32k --dim ${dim_trace} -p dimemas_traces/${dim_trace_name}_${cfg_name}.prv --config-file ${cfg}
         done
         ##################
     done
