@@ -199,10 +199,24 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
-  dimemas:
-    FILE: autosubmit/templates/dimemas.sh
+  dimemas_traces:
+    FILE: autosubmit/templates/dimemas_traces.sh
     DEPENDENCIES:
       trace_cut:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    QUEUE: debug
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  dimemas_images:
+    FILE: autosubmit/templates/dimemas_images.sh
+    DEPENDENCIES:
+      dimemas_traces:
         MEMBERS_FROM:
           HardwareBenchmarks:
             DATES_TO: None
@@ -230,7 +244,7 @@ JOBS:
   paradim:
     FILE: autosubmit/templates/paradim.sh
     DEPENDENCIES:
-      dimemas:
+      dimemas_traces:
         MEMBERS_FROM:
           HardwareBenchmarks:
             DATES_TO: None
@@ -314,6 +328,12 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
       paraver:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+      dimemas_images:
         MEMBERS_FROM:
           HardwareBenchmarks:
             DATES_TO: None
