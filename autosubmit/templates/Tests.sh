@@ -12,17 +12,17 @@ model=%COMMON.MODEL%
 source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 if [ "%MEMBER%" = "HardwareBenchmarks" ];
 then
-     source $inidata/hardware_benchmarks/param_bash.cfg
-     mkdir -p $run_root
-     mkdir -p $run_root/hardware_benchmarks
-     mkdir -p $run_root/hardware_benchmarks/STREAM_RUN
-     cp $compilation/STREAM/stream $run_folder/hardware_benchmarks/STREAM_RUN/stream
+    source $inidata/hardware_benchmarks/param_bash.cfg
+    mkdir -p $run_root
+    mkdir -p $run_root/hardware_benchmarks
+    mkdir -p $run_root/hardware_benchmarks/STREAM_RUN
+    cp $compilation/STREAM/stream $run_folder/hardware_benchmarks/STREAM_RUN/stream
 fi
 if [ "%MEMBER%" = "CompilationEfficiency" ];
 then
-     #source $inidata/compilation_efficiency/param_bash.cfg
-     mkdir -p $run_root
-     mkdir -p $run_root/compilation_efficiency
+    #source $inidata/compilation_efficiency/param_bash.cfg
+    mkdir -p $run_root
+    mkdir -p $run_root/compilation_efficiency
 fi
 if [ "%MEMBER%" = "WeakScaling" ];
 then

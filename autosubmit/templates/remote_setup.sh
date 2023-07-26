@@ -41,11 +41,11 @@ then
     # if the mirror has not been cloned yet
     for branch in "${branchs_to_clone[@]}";
     do
-      if [[ ! -d nemo_mirror_$branch ]]
-      then
-          $project/cfg/clone_nemo.sh $compilation/nemo_mirror_$branch $branch
-          ln -sf $compilation/nemo_mirror_$branch $compilation/%COMMON.MODEL%_source_$branch
-      fi
+        if [[ ! -d nemo_mirror_$branch ]]
+        then
+            $project/cfg/clone_nemo.sh $compilation/nemo_mirror_$branch $branch
+            ln -sf $compilation/nemo_mirror_$branch $compilation/%COMMON.MODEL%_source_$branch
+        fi
     done
 fi
 #This needs an if only HW is set on members
