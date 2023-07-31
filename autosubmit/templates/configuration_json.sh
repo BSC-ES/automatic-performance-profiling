@@ -1,10 +1,12 @@
 root_dir=%CURRENT_ROOTDIR%
 current_member=%MEMBER%
 model=%COMMON.MODEL%
+env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
-run_root=%RUN_ROOT%
+run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
-cfg=%CFG%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
 analysis_tools=${cfg}/trace_analysis/
 
 if [ "$current_member" = "StrongScaling" ]; then
@@ -18,15 +20,20 @@ else
     folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 fi
 
-paradim_configurations=$(find ${analysis_tools}/paramdim_configurations/*)
+source ${env_sources}
+export PYTHONPATH=$PYTHONPATH:${project}
+
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
+    if [ $current_member = "StrongScaling" ]; then
+        test_name_=${test_name}
+    fi
     source $inidata/$test_name_/param_bash.cfg
-    cd $run_root/$test_name
+    cd $run_root/$test_name_
         
     python ${cfg}/parser/collector.py \
-                                    --input-files scalability_*/*.timing.pkl trace_*/*pm dimemas_traces/*dm \
+                                    --input-files scalability_*/*.timing.pkl paramedir/*pm dimemas_traces/*dm \
                                     --output-file ${configuration_name} \
                                     --param-file $inidata/$test_name_/param_bash.cfg
 
