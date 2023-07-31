@@ -35,7 +35,6 @@ do
     trace_folders=$(find ${run_root}/${test_name_} | grep trace_[0-9]*$)
     for trace_folder in ${trace_folders}
     do
-        source $inidata/$test_name_/param_bash.cfg
         trace=${trace_folder}/${bin_name}.best_cut.prv
         n_cores=$(echo $trace_folder | sed 's/.*trace_//')
 
