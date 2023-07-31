@@ -241,6 +241,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
   paradim:
     FILE: autosubmit/templates/paradim.sh
     DEPENDENCIES:
@@ -255,6 +256,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
   paraver:
     FILE: autosubmit/templates/paraver.sh
     DEPENDENCIES:
@@ -289,7 +291,7 @@ JOBS:
     DEPENDENCIES:
       trace_cut:
         MEMBERS_FROM:
-          HardwareBenchmarks, CompilationEfficiency:
+          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -347,7 +349,7 @@ JOBS:
             CHUNKS_TO: None
       modelfactors:
         MEMBERS_FROM:
-          HardwareBenchmarks, CompilationEfficiency:
+          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
