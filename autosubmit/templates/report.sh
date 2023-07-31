@@ -17,7 +17,6 @@ export PYTHONPATH=$PYTHONPATH:${project}
 
 cd ${report_path}
 source ${report_conffile}
-python ${cfg}/latex/ReportGenerator.py -O ${report_name}.pkl --section-title "Introduction" --section-number 1 -T ${cfg}/latex/Introduction.txt
 python ${cfg}/latex/ReportGenerator.py -O ${report_name}.pkl --add-newcommand ${parameters_conffile}
 python ${cfg}/latex/ReportGenerator.py -O ${report_name}.pkl --report-title "${title}"
 python ${cfg}/latex/ReportGenerator.py -O ${report_name}.pkl --report-authors "${authors}"

@@ -15,7 +15,10 @@ analysis_tools=${cfg}/trace_analysis/
 source ${env_sources}
 export PYTHONPATH=$PYTHONPATH:${project}
 
-mkdir -p ${report_path}
+if [ ! -d ${report_path} ]; then
+    mkdir -p ${report_path}
+    python ${cfg}/latex/ReportGenerator.py -O ${report_full_path} --section-title "Introduction" --section-number 1 -T ${cfg}/latex/Introduction.txt
+fi
 
 # TODO Hardware works, other members not checked
 if [ "${current_member}" = "HardwareBenchmarks" ]; then
