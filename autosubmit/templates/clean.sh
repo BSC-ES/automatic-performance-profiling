@@ -5,7 +5,7 @@ inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 run=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
-report=%REPORT.PATH%
+report=%REPORT.FOLDER%
 chmod +w -R $inidata || :
 chmod +w -R $binaries || :
 chmod +w -R $compilation || :
