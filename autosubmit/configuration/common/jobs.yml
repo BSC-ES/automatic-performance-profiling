@@ -48,26 +48,6 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
-  # Performs the scalability test for all the tests except HW as it uses different tests
-  Scalability:
-    # This generates 3 differents jobs which only changes the number of processors
-    FILE: autosubmit/templates/scalability.sh
-    # This disables the HW tests from being generated
-    FOR:
-      NAME: [48, 96, 190, 756, 384]
-      PROCESSORS: [48, 96, 190, 756, 384]
-    DEPENDENCIES:
-      PREPARE_TESTS:
-        MEMBERS_FROM:
-          HardwareBenchmarks:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-    RUNNING: member
-    WALLCLOCK: 02:00
-    QUEUE: debug
-    CHECK: "true"
-    NOTIFY_ON: FAILED
   # Selects the functions to be traced
   functions_dir:
     FILE: autosubmit/templates/functions_dir.sh
@@ -84,107 +64,6 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
-  # Gets the traces
-  trace:
-    FILE: autosubmit/templates/extrae.sh
-    FOR:
-      NAME: [48, 96, 190, 756, 384]
-      PROCESSORS: [48, 96, 190, 756, 384]
-    DEPENDENCIES:
-      functions_dir:
-        MEMBERS_FROM:
-          HardwareBenchmarks:
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-            DATES_TO: None
-
-    RUNNING: member
-    WALLCLOCK: 02:00
-    QUEUE: debug
-    CHECK: "true"
-    NOTIFY_ON: FAILED
-    CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
-  # HW test
-  OSU_RUN:
-    FOR:
-      NAME: [48, 96, 190]
-      PROCESSORS: [48, 96, 190]
-    FILE: autosubmit/templates/osu_run.sh
-    DEPENDENCIES:
-      PREPARE_TESTS:
-        MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, StrongScaling:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-    RUNNING: member
-    WALLCLOCK: 00:30
-    QUEUE: debug
-    CHECK: "true"
-    NOTIFY_ON: FAILED
-  # HW TEST
-  STREAM:
-    FOR:
-      NAME: [1, 2, 4, 8, 16, 32, 48]
-      PROCESSORS: [1, 2, 4, 8, 16, 32, 48]
-    FILE: autosubmit/templates/stream.sh
-    DEPENDENCIES:
-      PREPARE_TESTS:
-        MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, StrongScaling:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-    RUNNING: member
-    WALLCLOCK: 00:30
-    QUEUE: debug
-    CHECK: "true"
-    NOTIFY_ON: FAILED
-  report_setup:
-    FILE: autosubmit/templates/report_setup.sh
-    DEPENDENCIES:
-      trace:
-        FOR:
-          NAME: [48, 96, 190, 756, 384]
-          PROCESSORS: [48, 96, 190, 756, 384]
-        MEMBERS_FROM:
-          HardwareBenchmarks:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-      Scalability:
-        FOR:
-          NAME: [48, 96, 190, 756, 384]
-          PROCESSORS: [48, 96, 190, 756, 384]
-        MEMBERS_FROM:
-          HardwareBenchmarks:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-      STREAM:
-        FOR:
-          NAME: [1, 2, 4, 8, 16, 32, 48]
-          PROCESSORS: [1, 2, 4, 8, 16, 32, 48]
-        MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, WeakScaling:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-      OSU_RUN:
-        FOR:
-          NAME: [48, 96, 190]
-          PROCESSORS: [48, 96, 190]
-        MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, WeakScaling:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-    RUNNING: member
-    WALLCLOCK: 00:30
-    QUEUE: debug
-    CHECK: "true"
-    NOTIFY_ON: FAILED
-    PLATFORM: marenostrum0
   trace_cut:
     FILE: autosubmit/templates/trace_cut.sh
     DEPENDENCIES:
@@ -271,6 +150,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: marenostrum0
   hardware_bench_images:
     FILE: autosubmit/templates/hardware_bench_images.sh
     DEPENDENCIES:
@@ -324,9 +204,9 @@ JOBS:
     FILE: autosubmit/templates/add_section.sh
     DEPENDENCIES:
       paraver:
-        MEMBERS_TO: StrongScaling, WeakScaling, CompilationEfficiency
+        MEMBERS_TO: StrongScaling,WeakScaling,CompilationEfficiency
       dimemas_images:
-        MEMBERS_TO: StrongScaling, WeakScaling, CompilationEfficiency
+        MEMBERS_TO: StrongScaling,WeakScaling,CompilationEfficiency
       hardware_bench_images:
         MEMBERS_TO: HardwareBenchmarks
       modelfactors:

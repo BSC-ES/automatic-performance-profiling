@@ -41,9 +41,9 @@ do
         # dimemas.target
         ##################
         # Remove path and extension
-        for cfg in ${dimemas_configurations[@]}
+        for config in ${dimemas_configurations[@]}
         do
-            trace_name=${cfg##*/}
+            trace_name=${config##*/}
             trace_name=${n_cores}_${trace_name%.*}.prv
             image_name=${trace_name%.*}.png
             echo  ${analysis_tools}/paraver -i ../dimemeas_traces/${trace_name} ${paraver_cfg}
