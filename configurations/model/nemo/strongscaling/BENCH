@@ -35,3 +35,5 @@ processes_per_node=48
 experiment_recipes = strong_scaling
 # Folder in which all the results will be stored
 main_folder = strong_scaling/BENCH
+# Plots that will be generated in the report, format x_axis-y_axis
+scatter_plots=Instructions-L1 Instructions-L2 Instructions-L3 Instructions-Time L3-IPC

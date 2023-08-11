@@ -37,3 +37,5 @@ processes_per_node=48
 experiment_recipes = process_json
 # Folder in which all the results will be stored
 main_folder = MultiExperimentRuns/weakscaling/BENCH/orca1
+# Plots that will be generated in the report, format x_axis-y_axis
+scatter_plots=Instructions-L1 Instructions-L2 Instructions-L3 Instructions-Time L3-IPC
