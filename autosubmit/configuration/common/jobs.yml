@@ -106,6 +106,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: marenostrum0
   paramedir:
     FILE: autosubmit/templates/paramedir.sh
     DEPENDENCIES:
@@ -200,6 +201,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: marenostrum0
   add_section:
     FILE: autosubmit/templates/add_section.sh
     DEPENDENCIES:
