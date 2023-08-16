@@ -36,4 +36,4 @@ experiment_recipes = process_json
 # Folder in which all the results will be stored
 main_folder = MultiExperimentRuns/compilation_efficiency/BENCH/O3
 # Plots that will be generated in the report, format x_axis-y_axis
-scatter_plots=Instructions-L1 Instructions-L2 Instructions-L3 Instructions-Time L3-IPC
+scatter_plots=Instructions_L1 Instructions_L2 Instructions_L3 Instructions_Time L3-IPC

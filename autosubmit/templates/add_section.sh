@@ -89,12 +89,10 @@ for current_member in ${members}; do
             functions=$(find function_csv/* tracking/MPI/*)
             python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" -T ${cfg}/latex/text/Function.txt
             python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-csv most_expensive_function_summary.csv
-            python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img Instructions_L1.png
-            python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img Instructions_L2.png
-            python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img Instructions_L3.png
-            python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img Instructions_Time.png
-            python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img Instructions_IPC.png
-            python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img L3_IPC.png
+            for scatter_plot in ${scatter_plots}; do
+                python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img ${scatter_plot}.png
+            done 
+
             for func in ${functions} ; do \
                 file_name=${func##function_csv/} ;\
                 file_name=${file_name##tracking/MPI/} ;\
