@@ -51,7 +51,7 @@ def parse_paramedir_filename(filename):
     :return: number of cores, information type
     """
     # The pattern of the paramedir filenames goes as follows: CORES_PARAMEDIRCFG.pm
-    pattern = "([0-9]+)_([0-9a-zA-Z]+).pm"
+    pattern = "([0-9]+)_([0-9a-zA-Z_]+).pm"
     return parse_filename(filename, pattern)
 
 
@@ -212,7 +212,7 @@ class TimingInformation:
     def find_functions(self):
         functions = []
         for case in self.cases:
-            functions.append(list(self.data[case]["Counters"]["Cycles"].keys()))
+            functions.append(list(self.data[case]["Counters"]["PAPI_TOT_CYC"].keys()))
         functions = sum(functions, [])
         return list(set(functions))
 
@@ -287,7 +287,7 @@ class TimingInformation:
             warnings.warn("The scatter plot % vs %s could not be created: insufficient data" % (x_axis, y_axis))
 
         # Create output name
-        output_name = x_axis + "_" + y_axis + ".png"
+        output_name = x_axis + "-" + y_axis + ".png"
 
         # Get all the function names
         function_name = [name for name, info in self.data[max_core]["FunctionInfo"].items()]

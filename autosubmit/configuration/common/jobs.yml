@@ -34,10 +34,8 @@ JOBS:
     FILE: autosubmit/templates/compilation.sh
     DEPENDENCIES: REMOTE_INIDATA
     RUNNING: member
-    PROCESSORS: "4"
     WALLCLOCK: 00:50
     NOTIFY_ON: FAILED
-    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
     PLATFORM: marenostrum0
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:

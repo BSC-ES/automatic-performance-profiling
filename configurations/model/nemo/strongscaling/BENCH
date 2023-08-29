@@ -35,5 +35,7 @@ processes_per_node=48
 experiment_recipes = strong_scaling
 # Folder in which all the results will be stored
 main_folder = strong_scaling/BENCH
+# PAPI counters to trace, use the names from papi_avail
+papi_counters=PAPI_TOT_INS PAPI_TOT_CYC PAPI_L3_TCM PAPI_L1_DCM PAPI_L2_DCM
 # Plots that will be generated in the report, format x_axis-y_axis
-scatter_plots=Instructions_L1 Instructions_L2 Instructions_L3 Instructions_Time L3-IPC
+papi_counters_plots=PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC

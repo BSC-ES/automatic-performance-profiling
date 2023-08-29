@@ -91,6 +91,21 @@ cp $run_root/$test_name_/functions_dir/extrae_functions.txt $run_root/$test_name
 # Generate function list for xml
 ./generate_function_list.sh ${bin_name} extrae_functions.txt
 
+if [ "${papi_counters}" != "" ]; then
+    papi_counters_str=""
+    for papi_counter in ${papi_counters}; do
+        if command -v papi_avail &> /dev/null && [ "$(papi_avail | grep ${papi_counter} |  awk -F ' ' '{print $3}')" != "Yes" ]; then
+            echo Warning! ${papi_counter} is not available
+        fi
+        if [ "${papi_counters_str}" = "" ]; then
+            papi_counters_str=${papi_counter}
+        else 
+            papi_counters_str=${papi_counters_str}","${papi_counter}
+        fi
+    done
+    sed -i "s/PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_L3_TCM/${papi_counters_str}/" extrae.xml
+fi
+
 # Spinup run
 time mpirun -genv I_MPI_DEBUG=4 -n $numproc ./${trace} ./${bin_name}
 

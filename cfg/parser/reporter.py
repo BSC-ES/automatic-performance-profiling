@@ -71,8 +71,8 @@ if __name__ == "__main__":
     if scatter_plots:
         scatter_plots = scatter_plots.split()
         for scatter_plot in scatter_plots:
-            x_axis, y_axis = scatter_plot.split("_")
-            experiment_results.scatter_plots(x_axis=x_axis, y_axis=y_axis)
+            x_axis, y_axis = scatter_plot.split("-")
+            experiment_results.scatter_plots(x_axis=x_axis, y_axis=y_axis, length_summary=20)
 
     if dimemas_file is not None:
         experiment_results.dimemas_summary().save(dimemas_file)
