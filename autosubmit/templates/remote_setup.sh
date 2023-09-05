@@ -11,6 +11,8 @@ inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
+platform=%COMMON.PLATFORM%
+root_dir=%CURRENT_ROOTDIR%
 cd %COMMON.EXP_ROOT%
 
 
@@ -35,19 +37,27 @@ cd inidata
 #Download common ini data
 # Clone model
 branchs_to_clone=(%COMMON.BRANCH_LIST%)
-if [ "%COMMON.MODEL%" = "nemo" ];
-then
-    #nemo_source.target
-    # if the mirror has not been cloned yet
-    for branch in "${branchs_to_clone[@]}";
-    do
-        if [[ ! -d nemo_mirror_$branch ]]
-        then
-            $project/cfg/clone_nemo.sh $compilation/nemo_mirror_$branch $branch
-            ln -sf $compilation/nemo_mirror_$branch $compilation/%COMMON.MODEL%_source_$branch
-        fi
-    done
+
+#nemo_source.target
+# if the mirror has not been cloned yet
+for branch in "${branchs_to_clone[@]}";
+do
+    if [[ ! -d ${model}_${branch} ]]
+    then
+        $project/configurations/model/${model}/clone.sh $compilation $branch
+        ln -sf $compilation/${model}_${branch} $compilation/%COMMON.MODEL%_source_$branch
+    fi
+done
+
+if [ ${model} = "nemo" ] [ ! -d ${root_dir}/xios ]; then
+    module load svn
+    svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
+
+    cd ${root_dir}/xios
+    cp ${project}/cfg/arch/${platform}/xios/* arch
+    ./make_xios --dev --arch ifort_${platform} --job 4
 fi
+
 #This needs an if only HW is set on members
 # This is common except for HW so it is valid as running once. This could be at INI.sh but it is running = member
 mkdir -p original
