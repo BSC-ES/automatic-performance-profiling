@@ -27,16 +27,18 @@ JOBS:
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED
-    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
     PLATFORM: marenostrum0
   # Compiles all the tests, it requires connection to the internet due HW
   REMOTE_COMPILATION:
     FILE: autosubmit/templates/compilation.sh
     DEPENDENCIES: REMOTE_INIDATA
     RUNNING: member
-    WALLCLOCK: 00:50
+    WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
-    PLATFORM: marenostrum0
+    PLATFORM: marenostrum4
+    PROCESSORS: 4
+    TASKS: 4
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
     FILE: autosubmit/templates/Tests.sh
@@ -58,7 +60,7 @@ JOBS:
             DATES_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    PROCESSORS: "190"
+    PROCESSORS: "189"
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
