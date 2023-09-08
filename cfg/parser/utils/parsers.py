@@ -278,6 +278,7 @@ class TimingInformation:
         import re
         # Function plot L3 cache misses vs IPC
         import matplotlib.pyplot as plt
+        import numpy as np
 
         # Use the most expensive function on the bigger N of cores used
         max_core = self.cases[-1]
@@ -297,7 +298,7 @@ class TimingInformation:
         n_function = 0
         for f_name in function_name:
             # Track just the first Nth function
-            if n_function > length_summary + 1:
+            if n_function == length_summary:
                 break
             function_info[f_name] = {'x': [], 'y': []}
             n_function += 1
@@ -321,13 +322,26 @@ class TimingInformation:
         ax.set_title("%s vs %s per 1000 instructions" % (x_axis, y_axis))
         ax.set_xlabel(x_axis)
         ax.set_ylabel(y_axis)
+        i = 0
+        step = 1 / len(function_info)
         for f_name in function_info:
             if f_name[0] == "_":
                 # Remove leading underscores that python does not know how to render
                 legend_name = re.sub('^_+', "", f_name)
             else:
                 legend_name = f_name
-            ax.plot(function_info[f_name]['x'], function_info[f_name]['y'], '-o', label=legend_name)
+            x = function_info[f_name]['x']
+            y = function_info[f_name]['y']
+            u = np.diff(x) 
+            v = np.diff(y) 
+            pos_x = x[:-1]
+            pos_y = y[:-1]
+            norm = np.sqrt(u**2+v**2)
+
+            c = np.full(len(x), i * step)
+            ax.quiver(pos_x, pos_y, u, v, angles="xy", pivot="tail", headlength = 2, headaxislength = 2, scale_units = "xy", scale = 1, color = plt.cm.tab20(c))
+            ax.scatter(x, y, marker="o", label=legend_name, c = plt.cm.tab20(c), edgecolors = "black")
+            i += 1
 
         ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         fig.savefig(output_name,  bbox_inches='tight')
