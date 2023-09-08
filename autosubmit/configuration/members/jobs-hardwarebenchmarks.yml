@@ -12,7 +12,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    WALLCLOCK: 00:30
+    WALLCLOCK: 01:00
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED

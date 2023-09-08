@@ -60,7 +60,7 @@ JOBS:
             DATES_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    PROCESSORS: "189"
+    PROCESSORS: "%COMMON.USER_FUNCTIONS_PROC%"
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -92,6 +92,7 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
   dimemas_images:
     FILE: autosubmit/templates/dimemas_images.sh
     DEPENDENCIES:

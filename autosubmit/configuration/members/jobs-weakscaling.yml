@@ -67,8 +67,3 @@ JOBS:
     CHECK: "true"
     NOTIFY_ON: FAILED
     PLATFORM: marenostrum0
-  dimemas_traces:
-    PLATFORM: marenostrum4
-    QUEUE: bsc_es
-    WALLCLOCK: 4:00
-    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
