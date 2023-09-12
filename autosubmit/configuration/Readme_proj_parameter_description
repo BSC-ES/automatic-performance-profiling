@@ -1,0 +1,50 @@
+[common] # Modificable parameters. 
+GIT_REPO = #Actual git repository
+REFRESH_GIT_REPO = # Allows to Remote_setup script to refresh or not the git repository on the remote.
+MODEL = # Model in use, change some paths and some ifs depends on this parameter
+CONFIGURATION =  # Configuration in use, change some paths 
+EXP_ROOT = #Experiment root dir
+RUN_FOLDER =  # not in use at this moment
+TRACE_N_FUNCTIONS = # number of iterations for the trace script
+
+#Basic structure, it can be moded by the user, the scripts will understand it.
+[COMMON_PATH_LOCATIONS]
+PROJECT_ROOT = %EXP_ROOT%/%GIT_REPO% # Git repo path in the remote
+INIDATA_ROOT = %CURRENT_ROOTDIR%/inidata # Initial data storage
+BINARIES_ROOT = %CURRENT_ROOTDIR%/bin # Binary storage 
+RUN_ROOT = %CURRENT_ROOTDIR%/run # workdir directory
+COMPILATION_ROOT = %CURRENT_ROOTDIR%/compilation #build directory
+
+# Paths to current git repository, only change this if the project GIT structure has changed.
+[PARAMETERS_ENV_CONFIG]
+CONVERT_PARAM_FILE = %PROJECT_ROOT%/cfg/target/ConvertParamFile.py
+CONFIG_FOLDER = %PROJECT_ROOT%/configurations
+ENV_SOURCES = %PROJECT_ROOT%/cfg/env/MN4/environment.env
+
+
+#Not in use anymore, except model_config_folder. Remplaced by running == member. Now this workflow only can run in Autosubmit 3.14.0b or superior.
+[PROJECT_FLAGS]
+MODEL_CONFIG_FOLDER = %CONFIG_FOLDER%/model/%MODEL%
+ENABLE_HW_BENCHMARKS = false
+ENABLE_STRONGSCALING = true
+ENABLE_WEAKSCALING   = false
+ENABLE_COMPILATION_EFFICIENCY = false
+ENABLED_TESTS = %ENABLE_HW_BENCHMARKS% %ENABLE_COMPILATION_EFFICIENCY% %ENABLE_STRONGSCALING% %ENABLE_WEAKSCALING%
+
+######
+##SINGLE_EXP
+
+#Path to git folder configurations , this is to reduce complexity on the templates.
+
+[HW_BENCHMARKS] # In 4.0 this variable can be renamed to PARAMETERS_FILE
+HW_BENCHMARKS_PARAMETERS_ROOT = %CONFIG_FOLDER%/hardware_benchmarks
+
+[STRONGSCALING] # In 4.0 this variable can be renamed to PARAMETERS_FILE
+STRONGSCALING_PARAMETERS_ROOT = %MODEL_CONFIG_FOLDER%/strongscaling
+###MULTI_EXP
+[WEAKSCALING] # In 4.0 this variable can be renamed to PARAMETERS_FILE
+WEAKSCALING_PARAMETERS_ROOT = %MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling
+
+[COMPILATION_EFFICIENCY] # In 4.0 this variable can be renamed to PARAMETERS_FILE
+COMPILATION_EFFICIENCY_PARAMETERS_ROOT = %MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency
+

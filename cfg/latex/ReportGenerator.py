@@ -382,7 +382,7 @@ class Report:
         self.authors = ""
         self.newcommand = {}
         self.newcommand_file = "newcommand_file.tex"
-        self.bsc_logo_url = 'https://pbs.twimg.com/profile_images/378800000692705583/015be2057821ebe8382c21804a8504fc_400x400.png'
+        self.bsc_logo_url = 'https://urbandatalab.pt/images/partners/bsc.png'
         self.preamble = "\documentclass[11pt,a4paper,oldfontcommands]{article} \n" \
                         "\maxdeadcycles=2000 \n" \
                         "\\usepackage{graphicx} \n" \
@@ -472,7 +472,7 @@ class Report:
     def __create_newcommand_file(self):
         f_ncf = open(self.absolute_path + "/" + self.newcommand_file, "w")
         for key, value in self.newcommand.items():
-            clean_key = "".join([k.capitalize() for k in key.split("_")])
+            clean_key = "".join([k.capitalize() for k in key.split("_") if not k.isdigit()])
             f_ncf.write("\\newcommand\\" + clean_key + "{" + value + "}\n")
         f_ncf.close()
 

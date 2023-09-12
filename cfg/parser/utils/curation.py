@@ -508,7 +508,7 @@ def experiment_comparison(experiment1, experiment2):
 
 def multiexperiment_comparison(experiments, field1):
     # List of process per node used in experiments
-    processes_per_node = [int(exp.processes_per_node) for exp in experiments]
+    processes_per_node = [int(exp.processes_per_node.replace("'", "")) for exp in experiments]
 
     # Find cases with common number of node among the experiments
     common_cases = set([ex / processes_per_node[0] for ex in experiments[0].cases])
@@ -536,7 +536,7 @@ def multiexperiment_comparison(experiments, field1):
     log_text = "Resources:"
     for index, experiment in enumerate(experiments):
         # add info on layout of proc on nodes
-        if int(experiment.processes_per_node) != 48:
+        if int(experiment.processes_per_node.replace("'", "")) != 48:
             node_filling = "[" + experiment.processes_per_node + " cores per node]"
             log_text += ", %s %s" % (experiment.experiment_name, node_filling)
         else:

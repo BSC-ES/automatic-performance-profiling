@@ -28,7 +28,7 @@ def get_command_line_instructions():
                         help="Produce functions report")
     parser.add_argument("-m", "--most_expensive_function_summary", default=None,
                         help="Print a summary of the most expensive functions per core")
-    parser.add_argument("--scatter-plots", default=False, action="store_true",
+    parser.add_argument("--scatter-plots", default=None,
                         help="Produce a png with L3 cache misses vs IPC in it")
     parser.add_argument("--dimemas-file", default=None,
                         help="Produce dimemas report")
@@ -69,12 +69,10 @@ if __name__ == "__main__":
         experiment_results.most_expensive_function_summary(out_file_name=most_expensive_function_summary)
 
     if scatter_plots:
-        axes_dictionary = {"Instructions": ["L1", "L2", "L3", "Time", "IPC"],
-                           "L3": ["IPC"]
-                           }
-        for x_axis in axes_dictionary.keys():
-            for y_axis in axes_dictionary[x_axis]:
-                experiment_results.scatter_plots(x_axis=x_axis, y_axis=y_axis)
+        scatter_plots = scatter_plots.split()
+        for scatter_plot in scatter_plots:
+            x_axis, y_axis = scatter_plot.split("-")
+            experiment_results.scatter_plots(x_axis=x_axis, y_axis=y_axis, length_summary=20)
 
     if dimemas_file is not None:
         experiment_results.dimemas_summary().save(dimemas_file)
