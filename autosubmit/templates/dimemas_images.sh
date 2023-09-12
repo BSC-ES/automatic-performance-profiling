@@ -1,12 +1,10 @@
-root_dir=%CURRENT_ROOTDIR%
 current_member=%MEMBER%
 model=%COMMON.MODEL%
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
-project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
+platform=%COMMON.PLATFORM%
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
@@ -19,7 +17,7 @@ else
     folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 fi
 
-dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/mn4/*)
+dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 paraver_cfg=` readlink -f ${cfg}/trace_analysis/cfgs/UserFunctions.cfg`
 for test in $folders
 do

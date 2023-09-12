@@ -1,6 +1,4 @@
-root_dir=%CURRENT_ROOTDIR%
 current_member=%MEMBER%
-model=%COMMON.MODEL%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 

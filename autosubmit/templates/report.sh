@@ -1,9 +1,5 @@
-root_dir=%CURRENT_ROOTDIR%
-model=%COMMON.MODEL%
-run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
-analysis_tools=${cfg}/trace_analysis/
 report_folder=%REPORT.FOLDER%
 report_name=%REPORT.NAME%
 report_conffile=%REPORT.CONFIG%

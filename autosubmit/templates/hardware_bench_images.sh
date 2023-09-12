@@ -1,12 +1,8 @@
-root_dir=%CURRENT_ROOTDIR%
-current_member=%MEMBER%
 model=%COMMON.MODEL%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
-analysis_tools=${cfg}/trace_analysis/
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
 source $env_sources

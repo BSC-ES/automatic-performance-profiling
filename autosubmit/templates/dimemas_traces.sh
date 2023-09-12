@@ -1,11 +1,6 @@
-root_dir=%CURRENT_ROOTDIR%
 current_member=%MEMBER%
-model=%COMMON.MODEL%
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
-project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
 
 if [ "$current_member" = "StrongScaling" ]; then
@@ -19,7 +14,7 @@ else
     folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 fi
 
-dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/mn4/*)
+dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)

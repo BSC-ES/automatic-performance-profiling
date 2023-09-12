@@ -4,7 +4,6 @@ compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-mkdir -p $compilation
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
@@ -29,19 +28,24 @@ then
     test_name_=${test_name}/${test}
 fi
 
-source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+source ${env_sources}
 source $inidata/$test_name_/param_bash.cfg
 mkdir -p $run_folder/$test_name_/scalability_$number_of_cores
+
 # Link inidata
 cp $inidata/$test_name_/* $run_folder/$test_name_/scalability_$number_of_cores/
 ln -rsf $inidata/original $run_folder/$test_name_/scalability_$number_of_cores/
 rsync -rv --exclude=.nc $inidata $run_folder/$test_name_/scalability_$number_of_cores/
 
+export SCOREP_VERBOSE=1
+export SCOREP_EXPERIMENT_DIRECTORY=scorep
+
+cd $run_folder/$test_name_/scalability_$number_of_cores
+
 if [ "$model" = "nemo" ] || [ "$model" = "NEMO" ];
 then
     # Copy everything from reference run_folder
-    cp --remove-destination $compilation/$test_name_/${configuration_folder}/${configuration_name}_vanilla/EXP00/* $run_folder/$test_name_/scalability_$number_of_cores
-    # cp --remove-destination /gpfs/scratch/bsc32/bsc32070/a036/compilation/tests/BENCH_vanilla/EXP00/* $run_folder/strong_scaling/scalability_$number_of_cores
+    cp --remove-destination $compilation/$test_name_/${configuration_folder}/${configuration_name}_scorep/EXP00/* $run_folder/$test_name_/scalability_$number_of_cores
     # Copy xios server
     cp $binaries/$test_name_/xios_server.exe $run_folder/$test_name_/scalability_$number_of_cores/
     
@@ -55,10 +59,7 @@ then
     if [ ${output} = FALSE ] ; then \
         sed -i "s/^.*file_definition.*$$//g" $run_folder/$test_name_/scalability_$number_of_cores/context_nemo.xml ; \
     fi
-fi
-cd $run_folder/$test_name_/scalability_$number_of_cores
-if [ "$model" = "nemo" ] || [ "$model" = "NEMO" ];
-then
+
     time mpirun -genv I_MPI_DEBUG=4 -n $number_of_cores ./nemo # to change bin name
 fi
 

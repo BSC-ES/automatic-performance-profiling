@@ -3,9 +3,6 @@
 # TODO: change %_% placeholders in script for $var set at the beggining of the script like in the other files
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-run_folder=(%COMMON.RUN_FOLDER%)
-current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%

@@ -38,7 +38,7 @@ for current_member in ${members}; do
         test_name="strong_scaling"
         folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
 
-        dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/mn4/*)
+        dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 
         for test in $folders
         do
@@ -86,7 +86,7 @@ for current_member in ${members}; do
             # done
 
             # Function detail
-            functions=$(find function_csv/* tracking/MPI/*)
+            functions=$(find function_csv/*)
             python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" -T ${cfg}/latex/text/Function.txt
             python ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-csv most_expensive_function_summary.csv
             for scatter_plot in ${papi_counters_plots}; do

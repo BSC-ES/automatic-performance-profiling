@@ -2,15 +2,13 @@
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 numproc=%NUMPROC%
-mkdir -p $compilation
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
-mkdir -p $binaries
+
 source $env_sources
 cd $compilation
 #Load environment
@@ -90,7 +88,7 @@ EOF
     
     executable=${model_exec}
     # Spinup run
-    time mpirun -genv I_MPI_DEBUG=4 -n %NUMPROC% ${trace} ${executable}
+    time mpirun -genv I_MPI_DEBUG=4 -n ${numproc} ${trace} ${executable}
     $project/cfg/trace_analysis/paramedir ${executable}.prv sampling_user_function.cfg
     # Create list extrae_functions.txt
     set +xuve
