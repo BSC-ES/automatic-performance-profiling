@@ -21,7 +21,7 @@ do
         test_name_=${test_name}
     fi
     source $inidata/$test_name_/param_bash.cfg
-    if [ "$timestep_0" = "TRUE" ]; then
+    if [ "${timestep_zero}" = "TRUE" ]; then
         magiccut_steps=$(echo ${trace_steps}+1 | bc)
     else
         magiccut_steps=${trace_steps}
