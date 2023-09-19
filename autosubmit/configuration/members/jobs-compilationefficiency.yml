@@ -1,12 +1,10 @@
 JOBS:
   Scalability:
     FILE: autosubmit/templates/scalability.sh
-    # This generates 3 differents jobs which only changes the number of processors
     FOR:
       TEST_NAME: "%COMPILATION_EFFICIENCY.TEST_NAMES%"
       NAME: "%COMPILATION_EFFICIENCY.NAMES%"
       PROCESSORS: "%COMPILATION_EFFICIENCY.PROCESSORS%"
-    # This disables the HW tests from being generated
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:

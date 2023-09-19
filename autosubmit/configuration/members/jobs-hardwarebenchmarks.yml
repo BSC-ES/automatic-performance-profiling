@@ -16,7 +16,6 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
-  # HW TEST
   STREAM:
     FOR:
       NAME: "%HW_BENCHMARKS.STREAM_NAMES%"

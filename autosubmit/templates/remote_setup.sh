@@ -10,34 +10,29 @@ run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 platform=%COMMON.PLATFORM%
 root_dir=%CURRENT_ROOTDIR%
 members="%EXPERIMENT.MEMBERS%"
-
-cd %COMMON.EXP_ROOT%
-mkdir -p $compilation
+env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 
 # Clone repository to the remote for needed files
-# if exist or force refresh is true
 if [ ! -d $project ] || [ %COMMON.REFRESH_GIT_REPO% == true ];
 then
     chmod +w -R $project || :
     rm -rf $project% || :
-    git clone --single-branch --branch autosubmit-makefile1 https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git $project
+    git clone --single-branch --branch autosubmit https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git $project
 fi
-source %PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-export PYTHONPATH=$PYTHONPATH:$(pwd)
-mkdir -p $compilation
-mkdir -p $inidata
-mkdir -p $binaries
-mkdir -p $run_folder
 
-mkdir -p inidata
-cd inidata
+source ${env_sources}
+export PYTHONPATH=$PYTHONPATH:${project}
 
-#Download common ini data
-# Clone model
+mkdir -p ${compilation}
+mkdir -p ${inidata}
+mkdir -p ${binaries}
+mkdir -p ${run_folder}
+mkdir -p ${inidata}
+
+cd ${inidata}
+
+# Clone the model source code
 branchs_to_clone=(%COMMON.BRANCH_LIST%)
-
-#nemo_source.target
-# if the mirror has not been cloned yet
 for branch in "${branchs_to_clone[@]}";
 do
     if [[ ! -d ${model}_${branch} ]]
@@ -47,7 +42,7 @@ do
     fi
 done
 
-if [ ${model} = "nemo" ] [ ! -d ${root_dir}/xios ]; then
+if [ ${model} = "nemo" ] && [ ! -d ${root_dir}/xios ]; then
     module load svn
     svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
 
@@ -63,7 +58,7 @@ if [ ${model} = "nemo" ] [ ! -d ${root_dir}/xios ]; then
     rm ORCA2_ICE_v4.0.tar
 fi
 
-
+# If hardware benchmarks are run, clone OSU and STREAM
 if echo ${members[@]} | grep -q -w "HardwareBenchmarks"; then
     mkdir -p $compilation
     cd $compilation

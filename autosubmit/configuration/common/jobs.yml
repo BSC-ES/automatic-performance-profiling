@@ -78,6 +78,8 @@ JOBS:
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PROCESSORS: 4
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
   dimemas_traces:
     FILE: autosubmit/templates/dimemas_traces.sh
     DEPENDENCIES:

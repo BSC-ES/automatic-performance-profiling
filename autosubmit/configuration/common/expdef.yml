@@ -35,7 +35,6 @@ svn:
   PROJECT_REVISION: ""
 local:
   PROJECT_PATH: ""
-
 project_files:
   FILE_PROJECT_CONF: ""
   FILE_JOBS_CONF: ""
