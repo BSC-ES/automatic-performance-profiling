@@ -64,7 +64,7 @@ fi
 ### trace.target
 # Run extrae
 module load gcc/8.1.0
-module load EXTRAE/3.7.1
+module load EXTRAE/latest
 
 trace=trace.sh
 cat << EOF > $trace

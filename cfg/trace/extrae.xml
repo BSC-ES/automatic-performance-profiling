@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 
 <trace enabled="yes"
- home="/apps/BSCTOOLS/extrae/3.7.1/impi_2017_4/bin"
+ home="/apps/BSCTOOLS/extrae/latest/impi_2017_4/bin"
  initial-mode="detail"
  type="paraver"
  xml-parser-id="Id: xml-parse.c 3269 2015-04-23 15:12:21Z harald $"

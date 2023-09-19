@@ -10,12 +10,9 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
 
 source $env_sources
-cd $compilation
-#Load environment
-source $env_sources
-# End of experiment variables
-
 source $inidata/strong_scaling/param_bash.cfg
+
+cd $compilation
 
 test_name=""
 if [ "$current_member" = "CompilationEfficiency" ];
@@ -59,7 +56,7 @@ do
     
     # Load EXTRAE module and create wrapper
     module load gcc/8.1.0
-    module load EXTRAE/3.7.1
+    module load EXTRAE/latest
     
     trace=./trace.sh
     #TODO check if new $(test_name) is well passed

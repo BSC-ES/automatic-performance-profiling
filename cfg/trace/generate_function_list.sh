@@ -7,6 +7,6 @@
 
 
 # List all the objects from the binary, select only the ones from the functions list and create a function file as Extrae demands
-nm $1 | grep -i " T " | grep -w -f $2 | awk '{print $1" # "$3}' > extrae_functions_for_xml.txt
+nm $1 | grep -i " T " | grep -w -f $2 | awk '{print $3" # "$1}' > extrae_functions_for_xml.txt
 
 echo "See the function names in the file extrae_functions_for_xml.txt"

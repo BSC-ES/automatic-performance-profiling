@@ -27,7 +27,7 @@ git:
   # This is the gitlab url of the project, should be in the minimal.yml
   PROJECT_ORIGIN: https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git
   # This is the branch of the project, should be in the minimal.yml
-  PROJECT_BRANCH: autosubmit-makefile1
+  PROJECT_BRANCH: autosubmit
   PROJECT_COMMIT: ""
 # Rest is irrelevant
 svn:
