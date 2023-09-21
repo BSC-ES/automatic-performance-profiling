@@ -2,6 +2,7 @@ current_member=%MEMBER%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
+platform=%COMMON.PLATFORM%
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"

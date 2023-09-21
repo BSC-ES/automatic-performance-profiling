@@ -36,9 +36,9 @@ JOBS:
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
     PLATFORM: marenostrum4
-    PROCESSORS: 4
-    TASKS: 4
-    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+    PROCESSORS: 48
+    TASKS: 48
+    QUEUE: debug
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
     FILE: autosubmit/templates/Tests.sh

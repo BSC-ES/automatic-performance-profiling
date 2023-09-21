@@ -42,13 +42,12 @@ do
     fi
 done
 
-if [ ${model} = "nemo" ] && [ ! -d ${root_dir}/xios ]; then
+if [ "${model}" = "nemo" ] && [ ! -d ${root_dir}/xios ]; then
     module load svn
     svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
 
     cd ${root_dir}/xios
     cp ${project}/cfg/arch/${platform}/xios/* arch
-    ./make_xios --dev --arch ifort_${platform} --job 4
 
     mkdir -p original
     wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar

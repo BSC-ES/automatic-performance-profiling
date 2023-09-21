@@ -8,7 +8,7 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
 ntasks=%NUMTASK%
 branch=%COMMON.BRANCH_LIST%
-platform_id=%COMMON.PLATFORM%
+platform=%COMMON.PLATFORM%
 exp_root=%CURRENT_ROOTDIR%
 
 source $env_sources
@@ -28,6 +28,11 @@ then
     make install
     make
 else
+    if [ "${model}" = "nemo" ]; then
+        cd ${exp_root}/xios
+        ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
+    fi
+
     declare -a configuration_folders
     declare -a test_name
     if [ $current_member = "CompilationEfficiency" ];
@@ -75,7 +80,7 @@ else
         rsync -av --exclude='doc*' --exclude='*.svn*' ${model_sources}/* $compilation/${test_name[i]}
         cd $compilation/${test_name[i]}
         # This should also be astracted from the model
-        cp $project/cfg/arch/${platform_id}/${model}/arch-* $compilation/${test_name[i]}/arch/
+        cp $project/cfg/arch/${platform}/${model}/arch-* $compilation/${test_name[i]}/arch/
 
         if [ "$model" = "nemo" ];
         then

@@ -7,7 +7,7 @@ model_branch=avoid_error_partition
 # Configuration name
 configuration_name=orca1
 # Platform
-platform=mn4
+platform=MN4
 # If part 1 of the workflow is executed on an external cluster and traces and timing files are provided, only part 2 of the workflow will be executed (TRUE or FALSE)
 provided_traces=FALSE
 # Path to the traces and timing files in case they are generated on an external cluster
