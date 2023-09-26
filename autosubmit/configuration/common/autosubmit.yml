@@ -1,7 +1,7 @@
 # Autosubmit general stuff
 config:
   # Tune the amount of jobs that are able to be submitted
-  MAXWAITINGJOBS: "3"
+  MAXWAITINGJOBS: "4"
   TOTALJOBS: "20"
   # Sleeptime between iterations
   SAFETYSLEEPTIME: "10"

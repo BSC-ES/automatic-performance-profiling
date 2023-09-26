@@ -9,6 +9,7 @@ report_full_path=${report_folder}/%REPORT.NAME%.pkl
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=${cfg}/trace_analysis/
 members="%EXPERIMENT.MEMBERS%"
+project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
 source ${env_sources}
 export PYTHONPATH=$PYTHONPATH:${project}
