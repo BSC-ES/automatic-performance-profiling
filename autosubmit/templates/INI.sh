@@ -12,41 +12,27 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 mkdir -p ${inidata}
 cd ${inidata}
 
-declare -a folders
-if [ "${current_member}" = "HardwareBenchmarks" ];
-then
-    folders+="hardware_benchmarks"
-    mkdir -p hardware_benchmarks
-    python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p %HW_BENCHMARKS.HW_BENCHMARKS_PARAMETERS_ROOT% -o $inidata/hardware_benchmarks/param_bash.cfg
-fi
-if [ "${current_member}" = "CompilationEfficiency" ];
-then
+if [ "${current_member}" = "HardwareBenchmarks" ]; then
+    folder="hardware_benchmarks"
+    configs="$(find %HW_BENCHMARKS.HW_BENCHMARKS_PARAMETERS_ROOT%)"
+elif [ "${current_member}" = "CompilationEfficiency" ]; then
     folder="compilation_efficiency"
-    mkdir -p compilation_efficiency
-    multi_config=true
-    for config in %COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*; do
-        folders+=("$folder/${config##*/}")
-        mkdir -p compilation_efficiency/${config##*/}
-        python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p $config -o $inidata/compilation_efficiency/${config##*/}/param_bash.cfg
-    done
-fi
-if [ "${current_member}" = "WeakScaling" ];
-then
+    configs="$(find %WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*)"
+elif [ "${current_member}" = "WeakScaling" ]; then
     folder="weakscaling"
-    multi_config=true
-    mkdir -p weakscaling
-    for config in %WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*; do
-        folders+=("$folder/${config##*/}")
-        mkdir -p weakscaling/${config##*/}
-        python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p $config -o $inidata/weakscaling/${config##*/}/param_bash.cfg
-    done
+    configs="$(find %WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*)"
+elif [ "${current_member}" = "StrongScaling" ]; then
+    folder="strong_scaling"
+    configs="$(find %STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%)"
 fi
-if [ "${current_member}" = "StrongScaling" ];
-then
-    folders+="strong_scaling"
-    mkdir -p strong_scaling
-    python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p %STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION% -o $inidata/strong_scaling/param_bash.cfg
-fi
+
+mkdir -p ${folder}
+declare -a folders
+for config in ${configs}; do
+    folders+=("$folder/${config##*/}")
+    mkdir -p ${folder}/${config##*/}
+    python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p $config -o $inidata/${folder}/${config##*/}/param_bash.cfg
+done
 
 if [ "${current_member}" != "HardwareBenchmarks" ];
 then
