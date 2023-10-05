@@ -28,7 +28,7 @@ trace_steps=20
 # Model executes an initial setup timestep with value 0? (TRUE or FALSE)
 timestep_zero=FALSE
 # Processes used for the modelfactor
-number_of_processes=48 190
+number_of_processes=48 189
 # Tail size, needed for postproc
 tile_size=47x57 21x35
 # This value will be passed to the slurm parameter --ntasks-per-node (default on MN4 is 48) to run part 1 of the workflow (if provided_traces=FALSE). Note that this variable is NOT necessary if provided_traces=TRUE.
