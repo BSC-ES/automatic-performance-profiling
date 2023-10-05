@@ -249,6 +249,8 @@ class TimingInformation:
         param_dictionary = {}
         for line in param:
             key, val = line.split("=")
+            if len(val) > 2 and val[0] == "\'" and val[-1] == "\'":
+                val = val[1:-1]
             param_dictionary[key.strip()] = val.strip().split(" ")
 
         # Set the real number of processes used
@@ -323,7 +325,6 @@ class TimingInformation:
         ax.set_xlabel(x_axis)
         ax.set_ylabel(y_axis)
         i = 0
-        step = 1 / len(function_info)
         for f_name in function_info:
             if f_name[0] == "_":
                 # Remove leading underscores that python does not know how to render
@@ -332,13 +333,14 @@ class TimingInformation:
                 legend_name = f_name
             x = function_info[f_name]['x']
             y = function_info[f_name]['y']
+            print(x)
+            print(y)
             u = np.diff(x) 
             v = np.diff(y) 
             pos_x = x[:-1]
             pos_y = y[:-1]
-            norm = np.sqrt(u**2+v**2)
 
-            c = np.full(len(x), i * step)
+            c = np.full(len(x), i * (1 / len(function_info)))
             ax.quiver(pos_x, pos_y, u, v, angles="xy", pivot="tail", headlength = 2, headaxislength = 2, scale_units = "xy", scale = 1, color = plt.cm.tab20(c))
             ax.scatter(x, y, marker="o", label=legend_name, c = plt.cm.tab20(c), edgecolors = "black")
             i += 1
