@@ -14,7 +14,9 @@ cd ${inidata}
 
 if [ "${current_member}" = "HardwareBenchmarks" ]; then
     folder="hardware_benchmarks"
-    configs="$(find %HW_BENCHMARKS.HW_BENCHMARKS_PARAMETERS_ROOT%)"
+    configs=""
+    mkdir -p ${folder}
+    python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p %HW_BENCHMARKS.HW_BENCHMARKS_PARAMETERS_ROOT% -o $inidata/${folder}/param_bash.cfg
 elif [ "${current_member}" = "CompilationEfficiency" ]; then
     folder="compilation_efficiency"
     configs="$(find %WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*)"

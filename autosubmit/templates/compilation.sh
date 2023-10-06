@@ -10,6 +10,7 @@ ntasks=%NUMTASK%
 branch=%COMMON.BRANCH_LIST%
 platform=%COMMON.PLATFORM%
 exp_root=%CURRENT_ROOTDIR%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
 
 source $env_sources
 
@@ -30,35 +31,34 @@ then
 else
     if [ "${model}" = "nemo" ]; then
         cd ${exp_root}/xios
+        source ${cfg}/arch/${platform}/xios/arch-ifort_impi_${platform}.env
         ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
+    fi
+
+    if [ $current_member = "CompilationEfficiency" ];
+    then
+        folder=compilation_efficiency
+        folders=$(ls $inidata/$folder)
+    elif [ $current_member = "WeakScaling" ];
+    then
+        folder=weakscaling
+        folders=$(ls $inidata/$folder)
+    else
+        folder=strong_scaling
+        folders=$inidata/$folder
     fi
 
     declare -a configuration_folders
     declare -a test_name
-    if [ $current_member = "CompilationEfficiency" ];
-    then
-        mkdir -p $compilation/compilation_efficiency
-        for config in $inidata/compilation_efficiency/*
-        do
-            configuration_folders+=($config/param_bash.cfg)
-            mkdir -p $compilation/compilation_efficiency/${config##*/}
-            test_name+=(compilation_efficiency/${config##*/})
-        done
-    elif [ $current_member = "WeakScaling" ];
-    then
-        mkdir -p $compilation/weakscaling
-        for config in $inidata/weakscaling/*
-        do
-            configuration_folders+=($config/param_bash.cfg)
-            mkdir -p $compilation/weakscaling/${config##*/}
-            test_name+=(weakscaling/${config##*/})
-        done
-    else
-        #STRONG_SCALING
-        configuration_folders+=($inidata/strong_scaling/param_bash.cfg)
-        mkdir -p $compilation/strong_scaling
-        test_name+=(strong_scaling)
-    fi
+    mkdir -p $compilation/${folder}
+    for config in $folders
+    do
+        configuration_folders+=($config/param_bash.cfg)
+        echo mkdir -p $compilation/$folder/${config##*/}
+        mkdir -p $compilation/$folder/${config##*/}
+        test_name+=($folder/${config##*/})
+    done
+
     i=0
     for param_file in ${configuration_folders[@]};
     do
@@ -79,7 +79,6 @@ else
         mkdir -p $binaries/${test_name[i]}
         rsync -av --exclude='doc*' --exclude='*.svn*' ${model_sources}/* $compilation/${test_name[i]}
         cd $compilation/${test_name[i]}
-        # This should also be astracted from the model
         cp $project/cfg/arch/${platform}/${model}/arch-* $compilation/${test_name[i]}/arch/
 
         if [ "$model" = "nemo" ];

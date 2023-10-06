@@ -43,7 +43,7 @@ do
 done
 
 if [ "${model}" = "nemo" ] && [ ! -d ${root_dir}/xios ]; then
-    module load svn
+    cd ${root_dir}
     svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
 
     cd ${root_dir}/xios
