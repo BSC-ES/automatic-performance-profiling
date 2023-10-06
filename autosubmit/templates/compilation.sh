@@ -38,11 +38,11 @@ else
     if [ $current_member = "CompilationEfficiency" ];
     then
         folder=compilation_efficiency
-        folders=$(ls $inidata/$folder)
+        folders=$(echo $inidata/$folder/*)
     elif [ $current_member = "WeakScaling" ];
     then
         folder=weakscaling
-        folders=$(ls $inidata/$folder)
+        folders=$(echo $inidata/$folder/*)
     else
         folder=strong_scaling
         folders=$inidata/$folder
