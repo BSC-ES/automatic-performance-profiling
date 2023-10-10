@@ -46,6 +46,7 @@ JOBS:
     DEPENDENCIES: REMOTE_COMPILATION
     RUNNING: member
     WALLCLOCK: 00:30
+    PLATFORM: marenostrum0
     QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
