@@ -19,9 +19,6 @@ paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
-    if [ $current_member = "StrongScaling" ]; then
-        test_name_=${test_name}
-    fi
 
     test_root=$run_root/$test_name_
     source $inidata/$test_name_/param_bash.cfg

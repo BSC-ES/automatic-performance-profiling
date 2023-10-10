@@ -24,9 +24,6 @@ export PYTHONPATH=$PYTHONPATH:${project}
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
-    if [ $current_member = "StrongScaling" ]; then
-        test_name_=${test_name}
-    fi
     source $inidata/$test_name_/param_bash.cfg
     cd $run_root/$test_name_
         

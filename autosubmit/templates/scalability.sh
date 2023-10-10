@@ -15,12 +15,11 @@ if [ "$current_member" = "CompilationEfficiency" ];
 then
     test_name="compilation_efficiency"
     export test_name="compilation_efficiency"
-    test_name_=${test_name}/${test}
 elif [ "$current_member" = "StrongScaling" ];
 then
     test_name="strong_scaling"
     export test_name="strong_scaling"
-    test_name_=${test_name}
+    test_name_=${test_name}/${test}
 elif [ "$current_member" = "WeakScaling" ];
 then
     test_name="weakscaling"
@@ -37,15 +36,12 @@ cp $inidata/$test_name_/* $run_folder/$test_name_/scalability_$number_of_cores/
 ln -rsf $inidata/original $run_folder/$test_name_/scalability_$number_of_cores/
 rsync -rv --exclude=.nc $inidata $run_folder/$test_name_/scalability_$number_of_cores/
 
-export SCOREP_VERBOSE=1
-export SCOREP_EXPERIMENT_DIRECTORY=scorep
-
 cd $run_folder/$test_name_/scalability_$number_of_cores
 
 if [ "$model" = "nemo" ] || [ "$model" = "NEMO" ];
 then
     # Copy everything from reference run_folder
-    cp --remove-destination $compilation/$test_name_/${configuration_folder}/${configuration_name}_scorep/EXP00/* $run_folder/$test_name_/scalability_$number_of_cores
+    cp --remove-destination $compilation/$test_name_/${configuration_folder}/${configuration_name}_vanilla/EXP00/* $run_folder/$test_name_/scalability_$number_of_cores
     # Copy xios server
     cp $binaries/$test_name_/xios_server.exe $run_folder/$test_name_/scalability_$number_of_cores/
     

@@ -19,9 +19,6 @@ dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
-    if [ $current_member = "StrongScaling" ]; then
-        test_name_=${test_name}
-    fi
     source $inidata/$test_name_/param_bash.cfg
     
     # WORKING DIR: test's root folder

@@ -59,7 +59,6 @@ fi
 
 # If hardware benchmarks are run, clone OSU and STREAM
 if echo ${members[@]} | grep -q -w "HardwareBenchmarks"; then
-    mkdir -p $compilation
     cd $compilation
     wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
     tar -xvf osu-micro-benchmarks-5.6.3.tar.gz

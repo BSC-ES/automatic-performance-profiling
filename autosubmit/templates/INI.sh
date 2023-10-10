@@ -19,7 +19,7 @@ if [ "${current_member}" = "HardwareBenchmarks" ]; then
     python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p %HW_BENCHMARKS.HW_BENCHMARKS_PARAMETERS_ROOT% -o $inidata/${folder}/param_bash.cfg
 elif [ "${current_member}" = "CompilationEfficiency" ]; then
     folder="compilation_efficiency"
-    configs="$(find %WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*)"
+    configs="$(find %COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*)"
 elif [ "${current_member}" = "WeakScaling" ]; then
     folder="weakscaling"
     configs="$(find %WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*)"

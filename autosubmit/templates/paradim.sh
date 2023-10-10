@@ -19,9 +19,6 @@ paradim_configurations=$(find ${analysis_tools}/paradim_configurations/*)
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
-    if [ $current_member = "StrongScaling" ]; then
-        test_name_=${test_name}
-    fi
     source $inidata/$test_name_/param_bash.cfg
     cd ${run_root}/${test_name_}
     trace_folders=$(find | grep trace_[0-9]*$)

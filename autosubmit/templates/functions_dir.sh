@@ -10,7 +10,6 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
 
 source $env_sources
-source $inidata/strong_scaling/param_bash.cfg
 
 cd $compilation
 
@@ -35,9 +34,6 @@ fi
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
-    if [ $current_member = "StrongScaling" ]; then
-        test_name_=${test_name}
-    fi
     source $inidata/$test_name_/param_bash.cfg
     mkdir -p $run_root/$test_name_/functions_dir
     cd $run_root/$test_name_/functions_dir

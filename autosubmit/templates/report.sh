@@ -5,7 +5,7 @@ report_name=%REPORT.NAME%
 report_conffile=%REPORT.CONFIG%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-parameters_conffile=$inidata/strong_scaling/param_bash.cfg
+parameters_conffile=$inidata/strong_scaling/BENCH/param_bash.cfg
 
 source ${env_sources}
 export PYTHONPATH=$PYTHONPATH:${project}

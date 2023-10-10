@@ -12,12 +12,42 @@ platform=%COMMON.PLATFORM%
 exp_root=%CURRENT_ROOTDIR%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 
-source $env_sources
+function compile_nemo()
+{
+    # Add xios lib and include path to NEMO fcms
+    for fcm in $compilation/${test_name[i]}/arch/*.fcm; do
+        sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
+        sed -i "0,/%XIOS_INC/ s/%XIOS_INC/%XIOS_INC            -I$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/inc/g" ${fcm}
+    done
+
+    # Compile NEMO
+    compilation_command=` echo $compilation/${test_name[i]}/makenemo -m ${arch_file_prefix}_${exe_flavor} -n ${configuration_name}_${exe_flavor} ${configuration_details} -j ${ntasks}`
+    eval ${compilation_command}
+    # Compile TRACE
+    compilation_command=` echo $compilation/${test_name[i]}/makenemo -m ${arch_file_prefix}_${exe_flavor_trace} -n ${configuration_name}_${exe_flavor_trace} ${configuration_details} -j ${ntasks}`
+    eval ${compilation_command}
+    # Copy binary into bin folder
+    cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/nemo $binaries/${test_name[i]}/${target_exe}
+    cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor_trace}/EXP00/nemo $binaries/${test_name[i]}/${target_exe_trace}
+
+    if [[ ! -z ${configuration_resolution+x} ]]
+    then
+        #EXE_FOLDER
+        cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/namelist_cfg_${configuration_resolution}_like  $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/namelist_cfg
+        cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/namelist_cfg_${configuration_resolution}_like  $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor_trace}/EXP00/namelist_cfg
+    fi
+    make $binaries/${test_name[i]}/nemo_vanilla.exe -j 48
+    make $binaries/${test_name[i]}/nemo_trace.exe -j 48
+
+    # Copy xios binary
+    cp ${exp_root}/xios/bin/xios_server.exe $binaries/${test_name[i]}/xios_server.exe
+}
 
 mkdir -p $compilation
 mkdir -p $binaries
 
-# End of experiment variables
+source $env_sources
+
 if [ $current_member = "HardwareBenchmarks" ];
 then
     source $inidata/hardware_benchmarks/param_bash.cfg
@@ -31,7 +61,6 @@ then
 else
     if [ "${model}" = "nemo" ]; then
         cd ${exp_root}/xios
-        source ${cfg}/arch/${platform}/xios/arch-ifort_impi_${platform}.env
         ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
     fi
 
@@ -45,7 +74,7 @@ else
         folders=$(echo $inidata/$folder/*)
     else
         folder=strong_scaling
-        folders=$inidata/$folder
+        folders=$(echo $inidata/$folder/*)
     fi
 
     declare -a configuration_folders
@@ -66,11 +95,9 @@ else
 
         exe_flavor=vanilla
         exe_flavor_trace=trace
-        exe_flavor_scalability=scorep
 
         target_exe=${bin_name}_vanilla.exe
         target_exe_trace=${bin_name}_trace.exe
-        target_exe_scalability=${bin_name}_scalability.exe
 
         model_sources=%COMMON.MODEL%_${branch}
 
@@ -81,41 +108,9 @@ else
         cd $compilation/${test_name[i]}
         cp $project/cfg/arch/${platform}/${model}/arch-* $compilation/${test_name[i]}/arch/
 
-        if [ "$model" = "nemo" ];
-        then
-            # Add xios lib and include path to NEMO fcms
-            for fcm in $compilation/${test_name[i]}/arch/*.fcm; do
-                sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
-                sed -i "0,/%XIOS_INC/ s/%XIOS_INC/%XIOS_INC            -I$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/inc/g" ${fcm}
-            done
+        # Call the corresponding compile function
+        compile_${model}
 
-            # Compile NEMO
-            compilation_command=` echo $compilation/${test_name[i]}/makenemo -m ${arch_file_prefix}_${exe_flavor} -n ${configuration_name}_${exe_flavor} ${configuration_details} -j ${ntasks}`
-            eval ${compilation_command}
-            # Compile TRACE
-            compilation_command=` echo $compilation/${test_name[i]}/makenemo -m ${arch_file_prefix}_${exe_flavor_trace} -n ${configuration_name}_${exe_flavor_trace} ${configuration_details} -j ${ntasks}`
-            eval ${compilation_command}
-            # Compile SCOREP
-            compilation_command=` echo $compilation/${test_name[i]}/makenemo -m ${arch_file_prefix}_${exe_flavor_scalability} -n ${configuration_name}_${exe_flavor_scalability} ${configuration_details} -j ${ntasks}`
-            eval ${compilation_command}
-            # Copy binary into bin folder
-            cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/nemo $binaries/${test_name[i]}/${target_exe}
-            cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor_trace}/EXP00/nemo $binaries/${test_name[i]}/${target_exe_trace}
-            cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor_scalability}/EXP00/nemo $binaries/${test_name[i]}/${target_exe_scalability}
-            
-            if [[ ! -z ${configuration_resolution+x} ]]
-            then
-                #EXE_FOLDER
-                cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/namelist_cfg_${configuration_resolution}_like  $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/namelist_cfg
-                cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/namelist_cfg_${configuration_resolution}_like  $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor_trace}/EXP00/namelist_cfg
-                cp $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor}/EXP00/namelist_cfg_${configuration_resolution}_like  $compilation/${test_name[i]}/${configuration_folder}/${configuration_name}_${exe_flavor_scalability}/EXP00/namelist_cfg
-            fi
-            make $binaries/${test_name[i]}/nemo_vanilla.exe -j 48
-            make $binaries/${test_name[i]}/nemo_trace.exe -j 48
-
-            # Copy xios binary
-            cp ${exp_root}/xios/bin/xios_server.exe $binaries/${test_name[i]}/xios_server.exe
-        fi
         i=$((i+1))
     done
 fi
