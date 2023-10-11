@@ -23,7 +23,7 @@ elif [ "$current_member" = "StrongScaling" ];
 then
     test_name="strong_scaling"
     export test_name="strong_scaling"
-    test_name_=${test_name}
+    test_name_=${test_name}/${test}
 elif [ "$current_member" = "WeakScaling" ];
 then
     test_name="weakscaling"

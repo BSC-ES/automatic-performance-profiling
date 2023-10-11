@@ -10,6 +10,7 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=${cfg}/trace_analysis/
 members="%EXPERIMENT.MEMBERS%"
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
+platform=%COMMON.PLATFORM%
 
 source ${env_sources}
 export PYTHONPATH=$PYTHONPATH:${project}
@@ -43,7 +44,7 @@ for current_member in ${members}; do
 
         for test in $folders
         do
-            test_name_=${test_name}
+            test_name_=${test_name}/$(basename $test)
             test_root=$run_root/$test_name_
 
             source $inidata/$test_name_/param_bash.cfg
