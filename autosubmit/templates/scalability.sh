@@ -15,6 +15,7 @@ if [ "$current_member" = "CompilationEfficiency" ];
 then
     test_name="compilation_efficiency"
     export test_name="compilation_efficiency"
+    test_name_=${test_name}/${test}
 elif [ "$current_member" = "StrongScaling" ];
 then
     test_name="strong_scaling"
