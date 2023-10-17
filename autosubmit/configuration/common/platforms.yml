@@ -11,8 +11,8 @@ PLATFORMS:
     HOST: mn0.bsc.es
     PROJECT: bsc32
     USER: "TOFILL"
-    MAXWAITINGJOBS: '100'
-    ADD_PROJECT_TO_HOST: 'false'
+    MAXWAITINGJOBS: "100"
+    ADD_PROJECT_TO_HOST: "false"
     SCRATCH_DIR: /gpfs/scratch
   marenostrum4:
     TYPE: slurm
@@ -20,11 +20,22 @@ PLATFORMS:
     PROJECT: bsc32
     USER: "TOFILL"
     SCRATCH_DIR: /gpfs/scratch
-    ADD_PROJECT_TO_HOST: 'False'
+    ADD_PROJECT_TO_HOST: "False"
     MAX_WALLCLOCK: 48:00
-    MAX_PROCESSORS: '2400'
-    MAXWAITINGJOBS: '100'
-    PROCESSORS_PER_NODE: '48'
+    MAX_PROCESSORS: "2400"
+    MAXWAITINGJOBS: "100"
+    PROCESSORS_PER_NODE: "48"
     SERIAL_QUEUE: debug
     QUEUE: bsc_es
-
+  hpc2020:
+    TYPE: ecaccess
+    VERSION: slurm
+    HOST: hpc-login
+    PROJECT: spesiccf
+    USER: "TOFILL"
+    QUEUE: nf
+    EC_QUEUE: hpc
+    SCRATCH_DIR: /ec/res4/scratch/c3rs
+    ADD_PROJECT_TO_HOST: false
+    MAX_WALLCLOCK: 48:00
+    CUSTOM_DIRECTIVES: "[ '#SBATCH --hint=nomultithread' ]"
