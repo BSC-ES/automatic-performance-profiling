@@ -1,4 +1,7 @@
 set -xuve
+###################
+# AS variables
+###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 current_member=%MEMBER%
@@ -7,7 +10,9 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%COMMON.MODEL%
 
 source ${env_sources}
+set +u
 export PYTHONPATH=$PYTHONPATH:$(pwd)
+set -u
 
 mkdir -p ${inidata}
 cd ${inidata}
@@ -16,7 +21,7 @@ if [ "${current_member}" = "HardwareBenchmarks" ]; then
     folder="hardware_benchmarks"
     configs=""
     mkdir -p ${folder}
-    python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p %HW_BENCHMARKS.HW_BENCHMARKS_PARAMETERS_ROOT% -o $inidata/${folder}/param_bash.cfg
+    python3 %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p %HW_BENCHMARKS.HW_BENCHMARKS_PARAMETERS_ROOT% -o $inidata/${folder}/param_bash.cfg
 elif [ "${current_member}" = "CompilationEfficiency" ]; then
     folder="compilation_efficiency"
     configs="$(find %COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*)"
@@ -33,7 +38,7 @@ declare -a folders
 for config in ${configs}; do
     folders+=("$folder/${config##*/}")
     mkdir -p ${folder}/${config##*/}
-    python %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p $config -o $inidata/${folder}/${config##*/}/param_bash.cfg
+    python3 %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p $config -o $inidata/${folder}/${config##*/}/param_bash.cfg
 done
 
 if [ "${current_member}" != "HardwareBenchmarks" ];

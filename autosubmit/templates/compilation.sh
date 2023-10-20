@@ -1,4 +1,7 @@
 set -xv
+###################
+# AS variables
+###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
@@ -12,6 +15,9 @@ platform=%COMMON.PLATFORM%
 exp_root=%CURRENT_ROOTDIR%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 
+###################
+# Compile NEMO
+###################
 function compile_nemo()
 {
     # Add xios lib and include path to NEMO fcms
@@ -43,6 +49,17 @@ function compile_nemo()
     cp ${exp_root}/xios/bin/xios_server.exe $binaries/${test_name[i]}/xios_server.exe
 }
 
+###################
+# Compile ECEARTH4 using SE
+###################
+function compile_ecearth4()
+{
+    echo "Starting compilation"
+}
+
+###################
+# Start script
+###################
 mkdir -p $compilation
 mkdir -p $binaries
 

@@ -1,6 +1,6 @@
-# This script needs to be run in marenostrum0 (or any other machine with connection to outside)
-# It will download the needed files to run the experiment
-# TODO: change %_% placeholders in script for $var set at the beggining of the script like in the other files
+###################
+# AS variables
+###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
@@ -17,11 +17,13 @@ if [ ! -d $project ] || [ %COMMON.REFRESH_GIT_REPO% == true ];
 then
     chmod +w -R $project || :
     rm -rf $project% || :
-    git clone --single-branch --branch autosubmit https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git $project
+    git clone --single-branch --branch ecearth4 https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git $project
 fi
 
 source ${env_sources}
+set +u
 export PYTHONPATH=$PYTHONPATH:${project}
+set -u
 
 mkdir -p ${compilation}
 mkdir -p ${inidata}
@@ -38,10 +40,10 @@ do
     if [[ ! -d ${model}_${branch} ]]
     then
         $project/configurations/model/${model}/clone.sh $compilation $branch
-        ln -sf $compilation/${model}_${branch} $compilation/%COMMON.MODEL%_source_$branch
     fi
 done
 
+# Clone XIOS if NEMO is run
 if [ "${model}" = "nemo" ] && [ ! -d ${root_dir}/xios ]; then
     cd ${root_dir}
     svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios

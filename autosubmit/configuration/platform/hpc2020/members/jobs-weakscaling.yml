@@ -1,0 +1,63 @@
+JOBS:
+  Scalability:
+    FILE: autosubmit/templates/scalability.sh
+    FOR:
+      TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
+      NAME: "%WEAKSCALING.NAMES%"
+      PROCESSORS: "%WEAKSCALING.PROCESSORS%"
+    DEPENDENCIES:
+      PREPARE_TESTS:
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  trace:
+    FILE: autosubmit/templates/extrae.sh
+    FOR:
+      TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
+      NAME: "%WEAKSCALING.NAMES%"
+      PROCESSORS: "%WEAKSCALING.PROCESSORS%"
+    DEPENDENCIES:
+      functions_dir:
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
+  report_setup:
+    FILE: autosubmit/templates/report_setup.sh
+    DEPENDENCIES:
+      trace:
+        FOR:
+          TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
+          NAME: "%WEAKSCALING.NAMES%"
+          PROCESSORS: "%WEAKSCALING.PROCESSORS%"
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
+      Scalability:
+        FOR:
+          TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
+          NAME: "%WEAKSCALING.NAMES%"
+          PROCESSORS: "%WEAKSCALING.PROCESSORS%"
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    NOTIFY_ON: FAILED

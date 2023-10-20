@@ -29,8 +29,6 @@ JOBS:
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
     PROCESSORS: 64
-    TASKS: 64
-    QUEUE: np
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
     FILE: autosubmit/templates/Tests.sh
