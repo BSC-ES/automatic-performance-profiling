@@ -41,7 +41,7 @@ for config in ${configs}; do
     python3 %PARAMETERS_ENV_CONFIG.CONVERT_PARAM_FILE% -p $config -o $inidata/${folder}/${config##*/}/param_bash.cfg
 done
 
-if [ "${current_member}" != "HardwareBenchmarks" ];
+if [ "${current_member}" != "HardwareBenchmarks" ] && [ "${model}" = "nemo" ];
 then
     #Load parameter configuration depending on the test
     for folder in "${folders[@]}";
@@ -50,8 +50,8 @@ then
         if [[ ! -z ${configuration_resolution+x} ]]
         then
             # It is BENCH, copy the namelist into the configuration namelist_cfg
-            cp $project/cfg/utils/%COMMON.MODEL%/iodef.xml  $inidata/$folder
-            cp $project/cfg/utils/%COMMON.MODEL%/context_%COMMON.MODEL%.xml  $inidata/$folder
+            cp $project/cfg/utils/${model}/iodef.xml  $inidata/$folder
+            cp $project/cfg/utils/${model}/context_${model}.xml  $inidata/$folder
         else
             # Link inidata to each model
             ln -rsf original/* $inidata/$folder

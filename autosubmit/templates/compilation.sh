@@ -20,6 +20,28 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 ###################
 function compile_nemo()
 {
+    # Compile XIOS
+    cd ${exp_root}/xios
+    ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
+
+    source $param_file
+
+    exe_flavor=vanilla
+    exe_flavor_trace=trace
+
+    target_exe=${bin_name}_vanilla.exe
+    target_exe_trace=${bin_name}_trace.exe
+
+    model_sources=${model}_${branch}
+
+    cd $compilation
+    mkdir -p ${test_name[i]}
+    mkdir -p $binaries/${test_name[i]}
+    rsync -av --exclude='doc*' --exclude='*.svn*' ${model_sources}/* $compilation/${test_name[i]}
+    cd $compilation/${test_name[i]}
+    cp $project/cfg/arch/${platform}/${model}/arch-* $compilation/${test_name[i]}/arch/
+
+
     # Add xios lib and include path to NEMO fcms
     for fcm in $compilation/${test_name[i]}/arch/*.fcm; do
         sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
@@ -54,7 +76,43 @@ function compile_nemo()
 ###################
 function compile_ecearth4()
 {
-    echo "Starting compilation"
+    model_sources=${model}_${branch}
+
+    mkdir -p ${compilation}/${test_name[i]}
+    mkdir -p ${binaries}/${test_name[i]}
+    rsync -av --exclude='*.svn*' ${compilation}/${model_sources}/* ${compilation}/${test_name[i]}
+
+    cd ${compilation}/${test_name[i]}/sources/se
+
+    if [ $current_member = "CompilationEfficiency" ];
+    then
+        configs=${cfg}/arch/${platform}/${model}/${test_name[i]##*/}-*.yml
+    else 
+        configs=${cfg}/arch/${platform}/${model}/O3-*.yml
+    fi
+
+    set +u
+    module load conda
+    conda activate /hpcperm/c3et/conda/ece4
+    for config in ${configs}; do
+        cp ${config} platforms/${config##*/}
+        se user-settings-hpc2020.yml platforms/${config##*/} compile-all.yml
+    done
+}
+
+
+###################
+# Compile HW benchmarks
+###################
+function compile_hw()
+{
+    cd ${compilation}/STREAM
+    gcc -fopenmp -D_OPENMP stream.c -o stream
+
+    cd ${compilation}/osu-micro-benchmarks-5.6.3
+    ./configure CC=`which mpicxx` CXX=`which mpicc` --prefix=`pwd`
+    make install
+    make
 }
 
 ###################
@@ -67,20 +125,8 @@ source $env_sources
 
 if [ $current_member = "HardwareBenchmarks" ];
 then
-    source $inidata/hardware_benchmarks/param_bash.cfg
-    cd ${compilation}/STREAM
-    gcc -fopenmp -D_OPENMP stream.c -o stream
-
-    cd ${compilation}/osu-micro-benchmarks-5.6.3
-    ./configure CC=`which mpicxx` CXX=`which mpicc` --prefix=`pwd`
-    make install
-    make
+    compile_hw
 else
-    if [ "${model}" = "nemo" ]; then
-        cd ${exp_root}/xios
-        ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
-    fi
-
     if [ $current_member = "CompilationEfficiency" ];
     then
         folder=compilation_efficiency
@@ -108,23 +154,6 @@ else
     i=0
     for param_file in ${configuration_folders[@]};
     do
-        source $param_file
-
-        exe_flavor=vanilla
-        exe_flavor_trace=trace
-
-        target_exe=${bin_name}_vanilla.exe
-        target_exe_trace=${bin_name}_trace.exe
-
-        model_sources=%COMMON.MODEL%_${branch}
-
-        cd $compilation
-        mkdir -p ${test_name[i]}
-        mkdir -p $binaries/${test_name[i]}
-        rsync -av --exclude='doc*' --exclude='*.svn*' ${model_sources}/* $compilation/${test_name[i]}
-        cd $compilation/${test_name[i]}
-        cp $project/cfg/arch/${platform}/${model}/arch-* $compilation/${test_name[i]}/arch/
-
         # Call the corresponding compile function
         compile_${model}
 

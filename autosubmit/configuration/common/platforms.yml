@@ -37,5 +37,6 @@ PLATFORMS:
     EC_QUEUE: hpc
     SCRATCH_DIR: /ec/res4/scratch/c3rs
     ADD_PROJECT_TO_HOST: false
+    PROCESSORS_PER_NODE: "128"
     MAX_WALLCLOCK: 48:00
     CUSTOM_DIRECTIVES: "[ '#SBATCH --hint=nomultithread' ]"
