@@ -13,6 +13,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
+    QUEUE: np
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -30,6 +31,7 @@ JOBS:
             CHUNKS_TO: None
             DATES_TO: None
     RUNNING: member
+    QUEUE: np
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED

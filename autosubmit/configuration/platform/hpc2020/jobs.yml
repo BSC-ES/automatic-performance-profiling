@@ -4,7 +4,7 @@ JOBS:
   CLEAN:
     FILE: autosubmit/templates/clean.sh
     RUNNING: once
-    WALLCLOCK: 00:30
+    WALLCLOCK: 00:10
     CHECK: "true"
   # Downloads the git in the remote and some other stuff required by HW test, it requires connection to the internet
   REMOTE_SETUP:
@@ -28,9 +28,8 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
-    QUEUE: np
-    PROCESSORS: 128
-    TASKS: 128
+    PROCESSORS: 32
+    TASKS: 32
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
     FILE: autosubmit/templates/Tests.sh
@@ -81,7 +80,7 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-    TASKS: 48
+    TASKS: 64
   dimemas_images:
     FILE: autosubmit/templates/dimemas_images.sh
     DEPENDENCIES:
@@ -108,7 +107,7 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-    TASKS: 48
+    TASKS: 64
   paradim:
     FILE: autosubmit/templates/paradim.sh
     DEPENDENCIES:
@@ -122,7 +121,7 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-    TASKS: 48
+    TASKS: 64
   paraver:
     FILE: autosubmit/templates/paraver.sh
     DEPENDENCIES:

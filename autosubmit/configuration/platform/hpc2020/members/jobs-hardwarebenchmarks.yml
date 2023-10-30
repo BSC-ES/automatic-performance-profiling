@@ -29,6 +29,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
+    QUEUE: np
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED
