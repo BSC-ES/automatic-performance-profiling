@@ -22,6 +22,7 @@ function compile_nemo()
 {
     # Compile XIOS
     cd ${exp_root}/xios
+    cp $project/cfg/arch/${platform}/xios/arch-* arch
     ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
 
     source $param_file
@@ -84,6 +85,7 @@ function compile_ecearth4()
 
     cd ${compilation}/${test_name[i]}/sources/se
 
+    # Use O3 config for all members except for Compilation Efficiency
     if [ $current_member = "CompilationEfficiency" ];
     then
         configs=${cfg}/arch/${platform}/${model}/${test_name[i]##*/}-*.yml
@@ -91,9 +93,15 @@ function compile_ecearth4()
         configs=${cfg}/arch/${platform}/${model}/O3-*.yml
     fi
 
+    # Set number of compilation tasks 
+    sed -i "0,/jobs:/s/        jobs:.*/        jobs: ${ntasks}/" user-settings-hpc2020.yml
+
+    # Activate SE enviroment
     set +u
     module load conda
     conda activate /hpcperm/c3et/conda/ece4
+
+    # Compile all member configurations
     for config in ${configs}; do
         cp ${config} platforms/${config##*/}
         se user-settings-hpc2020.yml platforms/${config##*/} compile-all.yml

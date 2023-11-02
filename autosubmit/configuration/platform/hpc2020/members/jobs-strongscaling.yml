@@ -5,6 +5,9 @@ JOBS:
       TEST_NAME: "%STRONGSCALING.TEST_NAMES%"
       NAME: "%STRONGSCALING.NAMES%"
       PROCESSORS: "%STRONGSCALING.PROCESSORS%"
+      OIFS_PROCS: "%STRONGSCALING.OIFS_PROCS%"
+      NEMO_PROCS: "%STRONGSCALING.NEMO_PROCS%"
+      XIOS_PROCS: "%STRONGSCALING.XIOS_PROCS%"
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
@@ -23,6 +26,9 @@ JOBS:
       TEST_NAME: "%STRONGSCALING.TEST_NAMES%"
       NAME: "%STRONGSCALING.NAMES%"
       PROCESSORS: "%STRONGSCALING.PROCESSORS%"
+      OIFS_PROCS: "%STRONGSCALING.OIFS_PROCS%"
+      NEMO_PROCS: "%STRONGSCALING.NEMO_PROCS%"
+      XIOS_PROCS: "%STRONGSCALING.XIOS_PROCS%"
     DEPENDENCIES:
       functions_dir:
         MEMBERS_FROM:
@@ -45,7 +51,7 @@ JOBS:
           NAME: "%STRONGSCALING.NAMES%"
           PROCESSORS: "%STRONGSCALING.PROCESSORS%"
         MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, HardwareBenchmarks:
+          CompilationEfficiency, STRONGSCALING, HardwareBenchmarks:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
@@ -55,7 +61,7 @@ JOBS:
           NAME: "%STRONGSCALING.NAMES%"
           PROCESSORS: "%STRONGSCALING.PROCESSORS%"
         MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, HardwareBenchmarks:
+          CompilationEfficiency, STRONGSCALING, HardwareBenchmarks:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
