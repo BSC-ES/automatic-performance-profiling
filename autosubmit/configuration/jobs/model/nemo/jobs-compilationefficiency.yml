@@ -14,7 +14,6 @@ JOBS:
             CHUNKS_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED
   trace:
@@ -32,10 +31,9 @@ JOBS:
             DATES_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    QUEUE: debug
     CHECK: "true"
-    NOTIFY_ON: FAILED
     CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
+    NOTIFY_ON: FAILED
   report_setup:
     FILE: autosubmit/templates/report_setup.sh
     DEPENDENCIES:
@@ -61,6 +59,5 @@ JOBS:
             CHUNKS_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    QUEUE: debug
     CHECK: "true"
     NOTIFY_ON: FAILED

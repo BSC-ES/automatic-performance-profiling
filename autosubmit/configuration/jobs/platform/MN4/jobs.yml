@@ -1,0 +1,37 @@
+JOBS:
+  CLEAN:
+    PLATFORM: marenostrum0
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  REMOTE_SETUP:
+    PLATFORM: marenostrum0
+  REMOTE_INIDATA:
+    PLATFORM: marenostrum0
+  REMOTE_COMPILATION:
+    PROCESSORS: 4
+    TASKS: 4
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+    QUEUE: debug
+  PREPARE_TESTS:
+    PLATFORM: marenostrum0
+  trace_cut:
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  report_setup:
+    PLATFORM: marenostrum0
+  dimemas_traces:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
+  dimemas_images:
+    PLATFORM: marenostrum0
+  paramedir:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
+  paradim:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
+  paraver:
+    PLATFORM: marenostrum0
+  hardware_bench_images:
+    PLATFORM: marenostrum0
+  configuration_json:
+    PLATFORM: marenostrum0
+  add_section:
+    PLATFORM: marenostrum0
+  report:
+    PLATFORM: marenostrum0

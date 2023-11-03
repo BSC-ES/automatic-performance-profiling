@@ -1,0 +1,9 @@
+# This file defines the workflow
+JOBS:
+  REMOTE_COMPILATION:
+    PROCESSORS: 64
+    TASKS: 64
+  Scalability:
+    QUEUE: np
+  trace:
+    QUEUE: np

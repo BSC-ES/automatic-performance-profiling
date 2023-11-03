@@ -16,7 +16,19 @@ JOBS:
   # Creates the folder "inidata" with the param_bash.cfg specific to each test, it requires connection to the internet due HW tests
   REMOTE_INIDATA:
     FILE: autosubmit/templates/INI.sh
-    DEPENDENCIES: REMOTE_SETUP CLEAN
+    DEPENDENCIES:
+      REMOTE_SETUP:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+      CLEAN:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
     RUNNING: member
     WALLCLOCK: 00:30
     CHECK: "true"
@@ -24,7 +36,19 @@ JOBS:
   # Compiles all the tests, it requires connection to the internet due HW
   REMOTE_COMPILATION:
     FILE: autosubmit/templates/compilation.sh
-    DEPENDENCIES: REMOTE_INIDATA
+    DEPENDENCIES: 
+      REMOTE_INIDATA:
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+      REMOTE_SETUP:
+        MEMBERS_FROM:
+          CompilationEfficiency, WeakScaling, StrongScaling:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None  
     RUNNING: member
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
@@ -50,7 +74,7 @@ JOBS:
             DATES_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    PROCESSORS: "%COMMON.USER_FUNCTIONS_PROC%"
+    PROCESSORS: "%TRACING.USER_FUNCTIONS_PROC%"
     CHECK: "true"
     NOTIFY_ON: FAILED
   trace_cut:
