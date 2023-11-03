@@ -19,7 +19,9 @@ else
 fi
 
 source ${env_sources}
+set +u
 export PYTHONPATH=$PYTHONPATH:${project}
+set -u
 
 for test in $folders
 do
@@ -27,12 +29,12 @@ do
     source $inidata/$test_name_/param_bash.cfg
     cd $run_root/$test_name_
         
-    python ${cfg}/parser/collector.py \
+    python3 ${cfg}/parser/collector.py \
                                     --input-files scalability_*/*.timing.pkl paramedir/*pm dimemas_traces/*dm \
                                     --output-file ${configuration_name} \
                                     --param-file $inidata/$test_name_/param_bash.cfg
 
-	python ${cfg}/parser/reporter.py \
+	python3 ${cfg}/parser/reporter.py \
                                     -j ${configuration_name}.json \
                                     --sypd-file ${configuration_name}_scaling.csv \
                                     --sypd-plot ${configuration_name}_scaling.png \
