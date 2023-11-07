@@ -1,15 +1,15 @@
 ###################
 # AS variables
 ###################
-model=%COMMON.MODEL%
+model=%MODEL.NAME%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
+osu_tests=(%HW_BENCHMARKS.OSU_TESTS%)
 
 source $env_sources
-source $inidata/hardware_benchmarks/param_bash.cfg
 set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u

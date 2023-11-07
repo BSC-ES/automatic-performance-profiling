@@ -1,4 +1,6 @@
-# Set the experiment variables
+###################
+# AS variables
+###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
@@ -7,34 +9,28 @@ numproc=%NUMPROC%
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-model=%COMMON.MODEL%
+model=%MODEL.NAME%
 
 source $env_sources
 
-cd $compilation
-
-test_name=""
-if [ "$current_member" = "CompilationEfficiency" ];
-then
+if [ "${current_member}" = "CompilationEfficiency" ]; then
     test_name="compilation_efficiency"
-    export test_name="compilation_efficiency"
-    folders=%COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
-elif [ "$current_member" = "StrongScaling" ];
-then
-    test_name="strong_scaling"
-    export test_name="strong_scaling"
-    folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
-elif [ "$current_member" = "WeakScaling" ];
-then
+    tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+elif [ "${current_member}" = "WeakScaling" ]; then
     test_name="weakscaling"
-    export test_name="weakscaling"
-    folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
+    tests="%WEAKSCALING.TEST_NAMES%"
+elif [ "${current_member}" = "StrongScaling" ]; then
+    test_name="strong_scaling"
+    tests="%STRONGSCALING.TEST_NAMES%"
 fi
 
-for test in $folders
+configuration_folder=tests
+tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
+tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+
+for test in $tests
 do
-    test_name_=$test_name"/"$(basename $test)
-    source $inidata/$test_name_/param_bash.cfg
+    test_name_=${test_name}/${test}
     mkdir -p $run_root/$test_name_/functions_dir
     cd $run_root/$test_name_/functions_dir
     cp $binaries/$test_name_/$model*trace.exe $run_root/$test_name_/functions_dir/$model
@@ -42,20 +38,18 @@ do
     
     # Copy function and extrae configuration
     cp -r $project/cfg/generate_func_list/* $run_root/$test_name_/functions_dir/
-    cp --remove-destination $compilation/$test_name_/${configuration_folder}/${configuration_name}_trace/EXP00/* $run_root/$test_name_/functions_dir
+    cp --remove-destination $compilation/$test_name_/${configuration_folder}/${test}_trace/EXP00/* $run_root/$test_name_/functions_dir
     
-    
-    $project/cfg/replace_namelist_parameter $run_root/$test_name_/functions_dir/namelist_cfg nn_itend 5
-    $project/cfg/replace_namelist_parameter $run_root/$test_name_/functions_dir/namelist_cfg ln_icebergs .false.
-    $project/cfg/replace_namelist_parameter $run_root/$test_name_/functions_dir/namelist_ref ln_meshmask .false.
-    n_functions=%COMMON.TRACE_N_FUNCTIONS%
+    ${project}/cfg/replace_namelist_parameter $run_root/$test_name_/functions_dir/namelist_cfg nn_itend 5
+    ${project}/cfg/replace_namelist_parameter $run_root/$test_name_/functions_dir/namelist_cfg ln_icebergs .false.
+    ${project}/cfg/replace_namelist_parameter $run_root/$test_name_/functions_dir/namelist_ref ln_meshmask .false.
+    n_functions=%TRACING.TRACE_N_FUNCTIONS%
     
     # Load EXTRAE module and create wrapper
     module load gcc/8.1.0
     module load EXTRAE/latest
     
     trace=./trace.sh
-    #TODO check if new $(test_name) is well passed
     cat << EOF > $trace
 #!/bin/bash
 

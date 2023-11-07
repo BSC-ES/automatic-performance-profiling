@@ -14,7 +14,6 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 01:00
     CHECK: "true"
-    QUEUE: np
     NOTIFY_ON: FAILED
   STREAM:
     FOR:
@@ -29,7 +28,6 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
     RUNNING: member
-    QUEUE: np
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED

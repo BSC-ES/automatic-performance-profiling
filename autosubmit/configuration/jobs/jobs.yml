@@ -20,15 +20,9 @@ JOBS:
       REMOTE_SETUP:
         MEMBERS_FROM:
           HardwareBenchmarks:
-            DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
-      CLEAN:
-        MEMBERS_FROM:
-          HardwareBenchmarks:
             DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
     RUNNING: member
     WALLCLOCK: 00:30
     CHECK: "true"
@@ -40,15 +34,14 @@ JOBS:
       REMOTE_INIDATA:
         MEMBERS_FROM:
           HardwareBenchmarks:
-            DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
-      REMOTE_SETUP:
-        MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, StrongScaling:
             DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None  
+      REMOTE_SETUP:
+        CompilationEfficiency, WeakScaling, StrongScaling:
+          DATES_TO: None
+          MEMBERS_TO: None
+          CHUNKS_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED

@@ -43,7 +43,7 @@ JOBS:
           NAME: "%STRONGSCALING.NAMES%"
           PROCESSORS: "%STRONGSCALING.PROCESSORS%"
         MEMBERS_FROM:
-          CompilationEfficiency, StrongScaling, HardwareBenchmarks:
+          CompilationEfficiency, WeakScaling, HardwareBenchmarks:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
@@ -53,7 +53,7 @@ JOBS:
           NAME: "%STRONGSCALING.NAMES%"
           PROCESSORS: "%STRONGSCALING.PROCESSORS%"
         MEMBERS_FROM:
-          CompilationEfficiency, StrongScaling, HardwareBenchmarks:
+          CompilationEfficiency, WeakScaling, HardwareBenchmarks:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None

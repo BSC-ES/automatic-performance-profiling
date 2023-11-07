@@ -5,14 +5,47 @@ compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-model=%COMMON.MODEL%
+model=%MODEL.NAME%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 platform=%COMMON.PLATFORM%
 root_dir=%CURRENT_ROOTDIR%
 members="%EXPERIMENT.MEMBERS%"
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 
-# Clone repository to the remote for needed files
+function clone_nemo()
+{
+    mkdir -p ${dest_dir}
+    cd ${dest_dir}
+    
+    # Clone NEMO repository
+    if [ ! -d nemo_${branch} ]; then
+        git config --global http.sslVerify "false"
+        git clone https://forge.nemo-ocean.eu/nemo/nemo.git nemo_${branch}
+        git config --global http.sslVerify "true"
+    fi
+    
+    cd nemo_${branch}
+    git checkout tags/${branch}
+}
+
+function clone_ecearth4()
+{    
+    # Create target directory
+    mkdir -p ${dest_dir}
+    cd ${dest_dir}
+    
+    # Clone ECEARTH4 repository
+    if [ ! -d ecearth4_${branch} ]; then
+        git clone --recurse-submodules https://git.smhi.se/ec-earth/ecearth4.git ecearth4_${branch}
+    fi
+    
+    cd ecearth4_${branch}
+    git checkout ${branch}
+}
+
+###################
+# Start script
+###################
 if [ ! -d $project ] || [ %COMMON.REFRESH_GIT_REPO% == true ];
 then
     chmod +w -R $project || :
@@ -34,29 +67,34 @@ mkdir -p ${inidata}
 cd ${inidata}
 
 # Clone the model source code
-branchs_to_clone=(%COMMON.BRANCH_LIST%)
+branchs_to_clone=(%MODEL.BRANCH_LIST%)
+dest_dir=${compilation}
 for branch in "${branchs_to_clone[@]}";
 do
     if [[ ! -d ${model}_${branch} ]]
     then
-        $project/configurations/model/${model}/clone.sh $compilation $branch
+        clone_${model}
     fi
 done
 
 # Clone XIOS if NEMO is run
-if [ "${model}" = "nemo" ] && [ ! -d ${root_dir}/xios ]; then
-    cd ${root_dir}
-    svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
+if [ "${model}" = "nemo" ]; then
+    if [ ! -d ${root_dir}/xios ]; then
+        cd ${root_dir}
+        svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
 
-    cd ${root_dir}/xios
-    cp ${project}/cfg/arch/${platform}/xios/* arch
+        cp ${project}/cfg/arch/${platform}/xios/* ${root_dir}/xios/arch
+    fi
 
-    mkdir -p original
-    wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar
-    tar -xf ORCA2_ICE_v4.0.tar -C original
-    gunzip original/*
-    chmod -w original
-    rm ORCA2_ICE_v4.0.tar
+    if [ ! -d ${inidata}/original ]; then
+        cd ${inidata}
+        mkdir -p original
+        wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar
+        tar -xf ORCA2_ICE_v4.0.tar -C original
+        gunzip original/*
+        chmod -w original
+        rm ORCA2_ICE_v4.0.tar
+    fi
 fi
 
 # If hardware benchmarks are run, clone OSU and STREAM

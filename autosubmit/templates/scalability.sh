@@ -8,7 +8,7 @@ run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-model=%COMMON.MODEL%
+model=%MODEL.NAME%
 number_of_cores=%NUMPROC%
 test="%CURRENT_TEST_NAME%"
 
@@ -19,7 +19,9 @@ test="%CURRENT_TEST_NAME%"
 #####################################################################################################################
 function run_nemo()
 {
-    source ${inidata}/$test_name_/param_bash.cfg
+    output="%MODEL.OUTPUT%"
+    test_steps="%MODEL.TEST_STEPS%"
+    configuration_folder=tests
     
     # Link inidata
     cp ${inidata}/$test_name_/* ${run_dir}
@@ -27,7 +29,7 @@ function run_nemo()
     rsync -rv --exclude=.nc ${inidata} ${run_dir}
 
     # Copy everything from reference run_folder
-    cp --remove-destination ${compilation}/${test_name_}/${configuration_folder}/${configuration_name}_vanilla/EXP00/* ${run_dir}
+    cp --remove-destination ${compilation}/${test_name_}/${configuration_folder}/${test}_vanilla/EXP00/* ${run_dir}
     # Copy xios server
     cp ${binaries}/${test_name_}/xios_server.exe ${run_dir}
     
@@ -38,12 +40,12 @@ function run_nemo()
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_timing   .true.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_timing   .true.
     # Disable output
-    if [ ${output} = FALSE ] ; then \
+    if [ ${output} = False ] ; then \
         sed -i "s/^.*file_definition.*$$//g" ${run_dir}/context_nemo.xml ; \
     fi
 
     cd ${run_dir}
-    time mpirun -genv I_MPI_DEBUG=4 -n $number_of_cores ./nemo # to change bin name
+    time mpirun -genv I_MPI_DEBUG=4 -n $number_of_cores ./nemo
 
     # Rename timing output
     mv timing.output ${number_of_cores}_test.timing
@@ -96,17 +98,14 @@ function run_ecearth4()
 if [ "$current_member" = "CompilationEfficiency" ];
 then
     test_name="compilation_efficiency"
-    export test_name="compilation_efficiency"
     test_name_=${test_name}/${test}
 elif [ "$current_member" = "StrongScaling" ];
 then
     test_name="strong_scaling"
-    export test_name="strong_scaling"
     test_name_=${test_name}/${test}
 elif [ "$current_member" = "WeakScaling" ];
 then
     test_name="weakscaling"
-    export test_name="weakscaling"
     test_name_=${test_name}/${test}
 fi
 

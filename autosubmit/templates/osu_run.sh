@@ -1,13 +1,16 @@
+###################
+# AS variables
+###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 n_cores=%NUMPROC%
+osu_tests=(%HW_BENCHMARKS.OSU_TESTS%)
 
 source ${env_sources}
-source $inidata/hardware_benchmarks/param_bash.cfg
-mkdir -p $run_folder/hardware_benchmarks/OSU_RUN/%NUMPROC%
-cd $run_folder/hardware_benchmarks/OSU_RUN/%NUMPROC%
+mkdir -p $run_folder/hardware_benchmarks/OSU_RUN/${n_cores}
+cd $run_folder/hardware_benchmarks/OSU_RUN/${n_cores}
 
 for test in ${osu_tests[@]}
 do
