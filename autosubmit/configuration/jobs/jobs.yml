@@ -97,7 +97,6 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-    TASKS: 64
   dimemas_images:
     FILE: autosubmit/templates/dimemas_images.sh
     DEPENDENCIES:
@@ -124,7 +123,6 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-    TASKS: 64
   paradim:
     FILE: autosubmit/templates/paradim.sh
     DEPENDENCIES:
@@ -138,7 +136,6 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-    TASKS: 64
   paraver:
     FILE: autosubmit/templates/paraver.sh
     DEPENDENCIES:

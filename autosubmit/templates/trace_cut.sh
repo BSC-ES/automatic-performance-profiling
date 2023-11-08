@@ -1,12 +1,15 @@
 current_member=%MEMBER%
+model=%MODEL.NAME%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 magiccut=%CURRENT_ROOTDIR%/magiccut/magicCut
+timestep_zero=%TRACING.TIMESTEP_ZERO%
+trace_steps=%TRACING.TRACE_STEPS%
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
     folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
-    elif [ "$current_member" = "CompilationEfficiency" ]; then
+elif [ "$current_member" = "CompilationEfficiency" ]; then
     test_name="compilation_efficiency"
     folders=%COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
 else
@@ -17,7 +20,6 @@ fi
 for test in $folders
 do
     test_name_=$test_name"/"$(basename $test)
-    source $inidata/$test_name_/param_bash.cfg
     if [ "${timestep_zero}" = "TRUE" ]; then
         magiccut_steps=$(echo ${trace_steps}+1 | bc)
     else
@@ -28,6 +30,6 @@ do
     for trace_folder in ${run_root}/${test_name_}/trace_*
     do
         cd ${trace_folder}
-        ${magiccut} ${bin_name}.prv ${magiccut_steps}
+        ${magiccut} ${model}.prv ${magiccut_steps}
     done
 done

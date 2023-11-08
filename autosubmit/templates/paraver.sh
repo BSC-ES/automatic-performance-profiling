@@ -3,32 +3,34 @@ run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 analysis_tools=${cfg}/trace_analysis/
+model=%MODEL.NAME%
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
-    folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
+    tests="%STRONGSCALING.TEST_NAMES%"
 elif [ "$current_member" = "CompilationEfficiency" ]; then
     test_name="compilation_efficiency"
-    folders=%COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
-else
+    tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+else 
     test_name="weakscaling"
-    folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
+    tests="%WEAKSCALING.TEST_NAMES%"
 fi
 
+tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
+tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
-for test in $folders
+for test in $tests
 do
-    test_name_=$test_name"/"$(basename $test)
+    test_name_=$test_name/$test
 
     test_root=$run_root/$test_name_
-    source $inidata/$test_name_/param_bash.cfg
 
     cd ${test_root}
     mkdir -p paraver_images
     trace_folders=$(find | grep trace_[0-9]*$)
     for trace_folder in ${trace_folders}
     do
-        trace=${trace_folder}/${bin_name}.best_cut.prv
+        trace=${trace_folder}/${model}.best_cut.prv
         n_cores=$(echo $trace_folder | sed 's/.*trace_//')
         mkdir -p paraver_images/${n_cores}
         export analysis_tools=$analysis_tools

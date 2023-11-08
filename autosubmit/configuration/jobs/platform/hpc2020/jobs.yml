@@ -7,3 +7,9 @@ JOBS:
     QUEUE: np
   trace:
     QUEUE: np
+  dimemas_traces:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=64"
+  paramedir:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=64"
+  paradim:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=64"

@@ -1,5 +1,5 @@
 current_member=%MEMBER%
-model=%COMMON.MODEL%
+model=%MODEL.NAME%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
@@ -8,21 +8,22 @@ platform=%COMMON.PLATFORM%
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
-    folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
+    tests="%STRONGSCALING.TEST_NAMES%"
 elif [ "$current_member" = "CompilationEfficiency" ]; then
     test_name="compilation_efficiency"
-    folders=%COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
-else
+    tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+else 
     test_name="weakscaling"
-    folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
+    tests="%WEAKSCALING.TEST_NAMES%"
 fi
 
+tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
+tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 paraver_cfg=` readlink -f ${cfg}/trace_analysis/cfgs/UserFunctions.cfg`
-for test in $folders
+for test in $tests
 do
-    test_name_=$test_name"/"$(basename $test)
-    source $inidata/$test_name_/param_bash.cfg
+    test_name_=$test_name/${test}
     test_root=$run_root/$test_name_
 
     mkdir -p $test_root/dimemas_images
