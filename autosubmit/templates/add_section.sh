@@ -31,6 +31,7 @@ function add_HardwareBenchmarks()
 function add_StrongScaling()
 {
     test_name="strong_scaling"
+    papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
     tests="%STRONGSCALING.TEST_NAMES%"
     tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
     tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
@@ -51,9 +52,9 @@ function add_StrongScaling()
         python3 ${latex_folder}/ReportGenerator.py \
                                                 -O ${report_full_path} \
                                                 -S "Scalability" \
-                                                --add-img ${configuration_name}_scaling.png \
+                                                --add-img ${test}_scaling.png \
                                                 --add-img-caption ${cfg}/latex/text/captions/Scalability.txt \
-                                                --add-csv ${configuration_name}_scaling.csv \
+                                                --add-csv ${test}_scaling.csv \
                                                 -T ${cfg}/latex/text/Scalability.txt
         # Paramedir
         trace_folders=$(find | grep trace_[0-9]*$)
