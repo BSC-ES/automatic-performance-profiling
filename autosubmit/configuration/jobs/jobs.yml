@@ -45,8 +45,6 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
-    PROCESSORS: 32
-    TASKS: 32
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
     FILE: autosubmit/templates/Tests.sh
