@@ -1,0 +1,9 @@
+NETCDF_DIR="/usr/local/apps/netcdf4/4.9.1/INTEL/2021.4/"
+HDF5_DIR="/usr/local/apps/netcdf4/4.9.1/INTEL/2021.4/"
+
+NETCDF_INCDIR="-I${NETCDF_DIR}/include"
+NETCDF_LIBDIR="-L${NETCDF_DIR}/lib"
+NETCDF_LIB="-lnetcdf -lnetcdff"
+HDF5_INCDIR="-I${HDF5_DIR}/include"
+HDF5_LIBDIR="-L${HDF5_DIR}/lib"
+HDF5_LIB="-lhdf5_hl -lhdf5 -lhdf5 -lz"

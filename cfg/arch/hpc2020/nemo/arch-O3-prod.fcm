@@ -13,18 +13,18 @@
 # USER_LIB    additional libraries to pass to the linker, e.g. -l<library>
 
 %CPP                 cpp
-%NCDF_INC            -I/apps/NETCDF/4.4.1.1/INTEL/IMPI/include
-%NCDF_LIB            -L/apps/NETCDF/4.4.1.1/INTEL/IMPI/lib -lnetcdf -lnetcdff -L/apps/HDF5/1.8.19/INTEL/IMPI -lhdf5_hl -lhdf5   -lz  -lm
+%NCDF_INC            -I/usr/local/apps/netcdf4/4.9.1/INTEL/2021.4/include/
+%NCDF_LIB            -L/usr/local/apps/netcdf4/4.9.1/INTEL/2021.4/lib -lnetcdf -lnetcdff -L/usr/local/apps/hdf5/1.12.2/INTEL/2021.4/lib -lhdf5_hl -lhdf5 -lz -lm
 
 %XIOS_INC           
 %XIOS_LIB           
 
-%FC                  scorep mpiifort
-%CC                  scorep icc
+%FC                  mpiifort
+%CC                  icc
 %CFLAGS              -O3
 %FCFLAGS             -ip -r8 -O3 -fp-model strict -extend-source 132 -heap-arrays
 %FFFLAGS             %FCFLAGS
-%LD                  scorep mpiifort
+%LD                  mpiifort
 %FPPFLAGS            -P -traditional
 %LDFLAGS             -lstdc++
 %AR                  ar

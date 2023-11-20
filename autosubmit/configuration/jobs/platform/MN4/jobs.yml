@@ -7,9 +7,8 @@ JOBS:
   REMOTE_INIDATA:
     PLATFORM: marenostrum0
   REMOTE_COMPILATION:
-    PROCESSORS: 4
-    TASKS: 4
-    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+    PROCESSORS: 48
+    TASKS: 48
     QUEUE: debug
   PREPARE_TESTS:
     PLATFORM: marenostrum0

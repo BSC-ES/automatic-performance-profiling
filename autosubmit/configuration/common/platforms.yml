@@ -32,7 +32,7 @@ PLATFORMS:
     HOST: hpc-login
     PROJECT: spesiccf
     USER: "TOFILL"
-    QUEUE: nf
+    QUEUE: np
     EC_QUEUE: hpc
     SCRATCH_DIR: /ec/res4/scratch/c3rs
     ADD_PROJECT_TO_HOST: false

@@ -19,12 +19,12 @@
 %XIOS_INC           
 %XIOS_LIB           
 
-%FC                  scorep mpiifort
-%CC                  scorep icc
+%FC                  mpiifort
+%CC                  icc
 %CFLAGS              -O0
-%FCFLAGS             -ip -r8 -O0 -fp-model strict -extend-source 132 -heap-arrays
+%FCFLAGS             -ip -r8 -O0 -fp-model strict -extend-source 132 -heap-arrays -g -finstrument-functions
 %FFFLAGS             %FCFLAGS
-%LD                  scorep mpiifort
+%LD                  mpiifort
 %FPPFLAGS            -P -traditional
 %LDFLAGS             -lstdc++
 %AR                  ar

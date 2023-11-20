@@ -8,18 +8,21 @@ trace_steps=%TRACING.TRACE_STEPS%
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
-    folders=%STRONGSCALING.STRONGSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%
+    tests="%STRONGSCALING.TEST_NAMES%"
 elif [ "$current_member" = "CompilationEfficiency" ]; then
     test_name="compilation_efficiency"
-    folders=%COMPILATION_EFFICIENCY.COMPILATION_EFFICIENCY_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
+    tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
 else
     test_name="weakscaling"
-    folders=%WEAKSCALING.WEAKSCALING_PARAMETERS_ROOT%/%COMMON.CONFIGURATION%/*
+    tests="%WEAKSCALING.TEST_NAMES%"
 fi
 
-for test in $folders
+tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
+tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+
+for test in $tests
 do
-    test_name_=$test_name"/"$(basename $test)
+    test_name_=$test_name/$test
     if [ "${timestep_zero}" = "TRUE" ]; then
         magiccut_steps=$(echo ${trace_steps}+1 | bc)
     else

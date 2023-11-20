@@ -9,16 +9,18 @@ current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
+branch=%MODEL.BRANCH_LIST%
 number_of_cores=%NUMPROC%
 test="%CURRENT_TEST_NAME%"
 
 #####################################################################################################################
 # Path variables: inidata, binaries, compilation, run_dir
 # Other variables: test_name_, number_of_cores
-# Purpose: Updates the namelists with the param files config and runs NEMO
+# Purpose: Updates the namelists with the AS member configuration and runs NEMO
 #####################################################################################################################
 function run_nemo()
 {
+    model_sources=${model}_${branch}
     output="%MODEL.OUTPUT%"
     test_steps="%MODEL.TEST_STEPS%"
     configuration_folder=tests
@@ -29,10 +31,9 @@ function run_nemo()
     rsync -rv --exclude=.nc ${inidata} ${run_dir}
 
     # Copy everything from reference run_folder
-    cp --remove-destination ${compilation}/${test_name_}/${configuration_folder}/${test}_vanilla/EXP00/* ${run_dir}
-    # Copy xios server
-    cp ${binaries}/${test_name_}/xios_server.exe ${run_dir}
-    
+    cp --remove-destination ${compilation}/${model_sources}/${configuration_folder}/${arch_name}_prod/EXP00/* ${run_dir}
+    cp ${run_dir}/namelist_cfg_${model_resolution}_like ${run_dir}/namelist_cfg
+
     # Change namelist parameters
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg nn_itend    ${test_steps}
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_icebergs .false.
@@ -62,14 +63,14 @@ function run_ecearth4()
     # Remove all run folder content just in case
     rm -rf ${run_dir}/*
 
-    cd ${compilation}/${test_name_}/runtime/se
+    cd ${compilation}/${arch_name}-prod/runtime/se
 
     # Update all variable according to AS config
     config_file=config-${test}-${number_of_cores}.yml
     cp ${project}/configurations/model/${model}/config.yml ${config_file}
 
     sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
-    ecearth_root=${compilation}/${test_name_}
+    ecearth_root=${compilation}/${arch_name}-prod
     sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
 
     oifs_procs=%CURRENT_OIFS_PROCS%
@@ -99,14 +100,20 @@ if [ "$current_member" = "CompilationEfficiency" ];
 then
     test_name="compilation_efficiency"
     test_name_=${test_name}/${test}
+    arch_name=${test}
+    model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
 elif [ "$current_member" = "StrongScaling" ];
 then
     test_name="strong_scaling"
     test_name_=${test_name}/${test}
+    arch_name=%STRONGSCALING.ARCH_NAME%
+    model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
 elif [ "$current_member" = "WeakScaling" ];
 then
     test_name="weakscaling"
     test_name_=${test_name}/${test}
+    arch_name=%WEAKSCALING.ARCH_NAME%
+    model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
 fi
 
 source ${env_sources}

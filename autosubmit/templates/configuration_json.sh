@@ -11,12 +11,12 @@ papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
     tests="%STRONGSCALING.TEST_NAMES%"
-    tile_size=""
+    tile_size="-"
     n_procs="%WEAKSCALING.PROCESSORS%"
 elif [ "$current_member" = "CompilationEfficiency" ]; then
     test_name="compilation_efficiency"
     tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-    tile_size=""
+    tile_size="-"
     n_procs="%WEAKSCALING.PROCESSORS%"
 else
     test_name="weakscaling"

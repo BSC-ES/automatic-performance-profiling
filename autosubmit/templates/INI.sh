@@ -51,6 +51,11 @@ function ini_ecearth4()
     echo INI
 }
 
+function ini_hw()
+{
+    echo INI
+}
+
 ###################
 # Start script
 ###################
@@ -71,6 +76,8 @@ elif [ "${current_member}" = "StrongScaling" ]; then
     folder="strong_scaling"
     tests="%STRONGSCALING.TEST_NAMES%"
     test_config="%STRONGSCALING.TEST_CONFIG%"
+else
+    model=hw
 fi
 
 tests=($(echo $tests | sed "s/\[\|\]\|,//g"))

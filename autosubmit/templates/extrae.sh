@@ -10,6 +10,7 @@ numproc=%NUMPROC%
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 model=%MODEL.NAME%
+branch=%MODEL.BRANCH_LIST%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 test="%CURRENT_TEST_NAME%"
 trace_steps="%TRACING.TRACE_STEPS%"
@@ -23,29 +24,30 @@ papi_counters="%TRACING.PAPI_COUNTERS%"
 #####################################################################################################################
 function trace_nemo()
 {
+    model_sources=${model}_${branch}
     configuration_folder=tests
-    # Link data
-    cp $inidata/$test_name_/* $run_root/$test_name_/trace_$numproc/
-    #Doble check this #TODO not sure if it should be original after the member changes
-    ln -rsf $inidata/original $run_root/$test_name_/trace_$numproc/
-    rsync -rv --exclude=.nc $inidata $run_root/$test_name_/trace_$numproc/
-    cd $run_root/$test_name_/trace_$numproc/
+    run_dir=$run_root/$test_name_/trace_$numproc/
 
-    run_folder=$run_root/$test_name_/trace_$numproc/
-    number_of_cores=$numproc
+    # Link data
+    cp $inidata/$test_name_/* ${run_dir}
+    #Doble check this #TODO not sure if it should be original after the member changes
+    ln -rsf $inidata/original ${run_dir}
+    rsync -rv --exclude=.nc $inidata ${run_dir}
+    cd ${run_dir}
+
     # Copy everything from reference folder
-    cp --remove-destination $compilation/$test_name_/${configuration_folder}/${test}_trace/EXP00/* $run_root/$test_name_/trace_$numproc
-    # Copy xios server
-    cp $binaries/$test_name_/xios_server.exe $run_root/$test_name_/trace_$numproc/
+    cp --remove-destination ${compilation}/${model_sources}/${configuration_folder}/${arch_name}_trace/EXP00/* ${run_dir}
+    cp ${run_dir}/namelist_cfg_${model_resolution}_like ${run_dir}/namelist_cfg
+
     # Fix namelist parameters
-    ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_cfg nn_itend ${trace_steps}
-    ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_cfg ln_icebergs .false.
-    ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_ref ln_meshmask .false.
-    # Set ice frequency to 1
-    ${cfg}/replace_namelist_parameter $run_root/$test_name_/trace_$numproc/namelist_ref nn_fsbc 1
+    ${cfg}/replace_namelist_parameter ${run_dir}/namelist_cfg nn_itend    ${trace_steps}
+    ${cfg}/replace_namelist_parameter ${run_dir}/namelist_cfg ln_icebergs .false.
+    ${cfg}/replace_namelist_parameter ${run_dir}/namelist_ref ln_meshmask .false.
+    ${cfg}/replace_namelist_parameter ${run_dir}/namelist_ref nn_fsbc     1
+
     # Disable output
     if [ "${output}" = FALSE ] ; then \
-        sed -i "s/^.*file_definition.*$$//g" $run_root/$test_name_/trace_$numproc/context_nemo.xml ; \
+        sed -i "s/^.*file_definition.*$$//g" ${run_dir}/context_nemo.xml ; \
     fi
 
     ### trace.target
@@ -57,7 +59,7 @@ function trace_nemo()
     cat << EOF > $trace
 #!/bin/bash
 
-export EXTRAE_CONFIG_FILE=$run_root/$test_name_/trace_$numproc/extrae.xml
+export EXTRAE_CONFIG_FILE=${run_dir}/extrae.xml
 source \$EXTRAE_HOME/etc/extrae.sh
 
 export LD_PRELOAD=\${EXTRAE_HOME}/lib/libmpitracecf.so
@@ -68,7 +70,7 @@ EOF
     chmod +x ${trace}
 
     # Copy function.txt
-    cp $run_root/$test_name_/functions_dir/extrae_functions.txt $run_root/$test_name_/trace_$numproc/extrae_functions.txt
+    cp $run_root/$test_name_/functions_dir/extrae_functions.txt ${run_dir}/extrae_functions.txt
 
     # Generate function list for xml
     ./generate_function_list.sh ./nemo extrae_functions.txt
@@ -115,14 +117,20 @@ if [ "$current_member" = "CompilationEfficiency" ];
 then
     test_name="compilation_efficiency"
     test_name_=${test_name}/${test}
+    arch_name=${test}
+    model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
 elif [ "$current_member" = "StrongScaling" ];
 then
     test_name="strong_scaling"
     test_name_=${test_name}/${test}
+    arch_name=%STRONGSCALING.ARCH_NAME%
+    model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
 elif [ "$current_member" = "WeakScaling" ];
 then
     test_name="weakscaling"
     test_name_=${test_name}/${test}
+    arch_name=%WEAKSCALING.ARCH_NAME%
+    model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
 fi
 
 mkdir -p ${run_root}/${test_name_}/trace_${numproc}

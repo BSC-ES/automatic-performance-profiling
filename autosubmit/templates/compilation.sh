@@ -14,11 +14,15 @@ branch=%MODEL.BRANCH_LIST%
 platform=%COMMON.PLATFORM%
 exp_root=%CURRENT_ROOTDIR%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
+project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
+arch_names="%MODEL.ARCH_NAMES%"
+arch_names=($(echo $arch_names | sed "s/\[\|\]\|,//g"))
+arch_names=$(for v in "${arch_names[@]}"; do echo "$v";done| sort| uniq| xargs)
 
 #####################################################################################################################
 # Path variables: TODO
 # Other variables: TODO
-# Purpose: Compiles NEMO
+# Purpose: Compiles all arch FCM configurations for NEMO configured in the ARCH_NAMES AS variable
 #####################################################################################################################
 function compile_nemo()
 {
@@ -26,102 +30,89 @@ function compile_nemo()
     cd ${exp_root}/xios
     cp $project/cfg/arch/${platform}/xios/arch-* arch
     ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
-
+    
     # Compile NEMO
-    configuration_folder=tests
-    exe_flavor=vanilla
-    exe_flavor_trace=trace
-    target_exe=${model}_vanilla.exe
-    target_exe_trace=${model}_trace.exe
-    model_sources=${model}_${branch}
+    model_sources=${compilation}/${model}_${branch}
+    cd ${model_sources}
+    for arch_name in ${arch_names}; do
+        arch_file_prod=${cfg}/arch/${platform}/${model}/arch-${arch_name}-prod.fcm
+        arch_file_trace=${cfg}/arch/${platform}/${model}/arch-${arch_name}-trace.fcm
 
-    mkdir -p ${bin_folder}
-    rsync -av --exclude='doc*' --exclude='*.svn*' ${compilation}/${model_sources}/* ${test_folder}
-    cp $project/cfg/arch/${platform}/${model}/arch-* ${test_folder}/arch/
+        configuration_folder=tests
+        exe_flavor=prod
+        exe_flavor_trace=trace
+        target_exe=${model}_prod.exe
+        target_exe_trace=${model}_trace.exe
+        bin_folder=${binaries}/${arch_name}
 
-    # Add xios lib and include path to NEMO fcms
-    for fcm in ${test_folder}/arch/*.fcm; do
-        sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
-        sed -i "0,/%XIOS_INC/ s/%XIOS_INC/%XIOS_INC            -I$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/inc/g" ${fcm}
+        mkdir -p ${bin_folder}
+        cp ${arch_file_prod} ${model_sources}/arch/
+        cp ${arch_file_trace} ${model_sources}/arch/
+
+        # Add xios lib and include path to NEMO fcms
+        for fcm in ${model_sources}/arch/*.fcm; do
+            sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
+            sed -i "0,/%XIOS_INC/ s/%XIOS_INC/%XIOS_INC            -I$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/inc/g" ${fcm}
+        done
+
+        # Compile NEMO
+        compilation_command=` echo ${model_sources}/makenemo -m ${arch_name}-prod -n ${arch_name}_prod -a BENCH -j ${ntasks}`
+        eval ${compilation_command}
+
+        # Compile TRACE
+        compilation_command=` echo ${model_sources}/makenemo -m ${arch_name}-trace -n ${arch_name}_trace -a BENCH -j ${ntasks}`
+        eval ${compilation_command}
+
+        # Copy binary into bin folder
+        cp ${model_sources}/${configuration_folder}/${arch_name}_prod/EXP00/nemo ${bin_folder}/${target_exe}
+        cp ${model_sources}/${configuration_folder}/${arch_name}_trace/EXP00/nemo ${bin_folder}/${target_exe_trace}
+
+        # Copy xios binary
+        cp ${exp_root}/xios/bin/xios_server.exe ${bin_folder}/xios_server.exe
     done
-
-    if [ $current_member = "CompilationEfficiency" ]; then
-        arch_file_prefix=${test}
-        if [ "${test}" = "O3" ]; then
-            arch_file_prefix=prod
-        fi
-    else
-        arch_file_prefix=prod
-    fi
-
-    # Compile NEMO
-    compilation_command=` echo ${test_folder}/makenemo -m ${arch_file_prefix}_${exe_flavor} -n ${test}_${exe_flavor} -a BENCH -j ${ntasks}`
-    eval ${compilation_command}
-
-    # Compile TRACE
-    compilation_command=` echo ${test_folder}/makenemo -m ${arch_file_prefix}_${exe_flavor_trace} -n ${test}_${exe_flavor_trace} -a BENCH -j ${ntasks}`
-    eval ${compilation_command}
-
-    # Copy binary into bin folder
-    cp ${test_folder}/${configuration_folder}/${test}_${exe_flavor}/EXP00/nemo ${bin_folder}/${target_exe}
-    cp ${test_folder}/${configuration_folder}/${test}_${exe_flavor_trace}/EXP00/nemo ${bin_folder}/${target_exe_trace}
-
-    if [[ ! -z ${model_resolution+x} ]]
-    then
-        cp ${test_folder}/${configuration_folder}/${test}_${exe_flavor}/EXP00/namelist_cfg_${model_resolution}_like  ${test_folder}/${configuration_folder}/${test}_${exe_flavor}/EXP00/namelist_cfg
-        cp ${test_folder}/${configuration_folder}/${test}_${exe_flavor}/EXP00/namelist_cfg_${model_resolution}_like  ${test_folder}/${configuration_folder}/${test}_${exe_flavor_trace}/EXP00/namelist_cfg
-    fi
-
-    make ${bin_folder}/nemo_vanilla.exe -j 48
-    make ${bin_folder}/nemo_trace.exe -j 48
-
-    # Copy xios binary
-    cp ${exp_root}/xios/bin/xios_server.exe ${bin_folder}/xios_server.exe
 }
 
 #####################################################################################################################
-# Path variables: TODO
-# Other variables: TODO
-# Purpose: Compiles ECEARTH4
+# Path variables: compilation, project
+# Other variables: model, branch, platform, ntasks
+# Purpose: Compiles all arch YML configurations for ECEARTH 4 configured in the ARCH_NAMES AS variable
 #####################################################################################################################
 function compile_ecearth4()
 {
-    model_sources=${model}_${branch}
+    model_sources=${compilation}/${model}_${branch}
 
-    mkdir -p ${test_folder}
-    mkdir -p ${bin_folder}
-    rsync -av --exclude='*.svn*' ${compilation}/${model_sources}/* ${test_folder}
-
-    cd ${test_folder}/sources/se
-
-    # Use O3 config for all members except for Compilation Efficiency
-    if [ $current_member = "CompilationEfficiency" ];
-    then
-        configs=${cfg}/arch/${platform}/${model}/${test_name[i]##*/}-*.yml
-    else 
-        configs=${cfg}/arch/${platform}/${model}/O3-*.yml
-    fi
-
-    # Set number of compilation tasks 
-    sed -i "0,/jobs:/s/        jobs:.*/        jobs: ${ntasks}/" user-settings-hpc2020.yml
-
-    # Activate SE enviroment
     set +u
     module load conda
-    conda activate /hpcperm/c3et/conda/ece4
+    conda activate /hpcperm/c3et/conda/ece4 
 
-    # Compile all member configurations
-    for config in ${configs}; do
-        cp ${config} platforms/${config##*/}
-        se user-settings-hpc2020.yml platforms/${config##*/} compile-all.yml
+    cp ${project}/configurations/model/${model}/user-settings-hpc2020.yml ${model_sources}/sources/se
+    sed -i "s/JOBS/${ntasks}" ${model_sources}/sources/se/user-settings-hpc2020.yml
+
+    for arch_name in ${arch_names}; do
+        cd ${compilation}
+        arch_name_prod=${arch_name}-prod
+        arch_file=${cfg}/arch/${platform}/${model}/${arch_name_prod}.yml
+        mkdir -p ${arch_name_prod}
+        rsync -av --exclude='*.svn*' ${model_sources}/* ${arch_name_prod}
+        cd ${arch_name_prod}/sources/se
+        cp ${arch_file} platforms
+        se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
+
+        cd ${compilation}
+        arch_name_trace=${arch_name}-trace
+        arch_file=${cfg}/arch/${platform}/${model}/${arch_name_trace}.yml
+        mkdir -p ${arch_name_trace}
+        rsync -av --exclude='*.svn*' ${model_sources}/* ${arch_name_trace}
+        cd ${arch_name_trace}/sources/se
+        cp ${arch_file} platforms
+        se user-settings-hpc2020.yml platforms/${arch_name_trace}.yml compile-all.yml
     done
 }
 
 
 #####################################################################################################################
-# Path variables: TODO
-# Other variables: TODO
-# Purpose: Compiles HW benchmarks
+# Path variables: compilation
+# Purpose: Compiles STREAM and OSU HW benchmarks
 #####################################################################################################################
 function compile_hw()
 {
@@ -142,37 +133,8 @@ mkdir -p $binaries
 
 source $env_sources
 
-if [ $current_member = "HardwareBenchmarks" ];
-then
-    compile_hw
-else
-    if [ $current_member = "CompilationEfficiency" ];
-    then
-        folder=compilation_efficiency
-        tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-        model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
-    elif [ $current_member = "WeakScaling" ];
-    then
-        folder=weakscaling
-        tests="%WEAKSCALING.TEST_NAMES%"
-        model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
-    else
-        folder=strong_scaling
-        tests="%STRONGSCALING.TEST_NAMES%"
-        model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
-    fi
+# Compile hardware benchmarks
+compile_hw
 
-    mkdir -p $compilation/${folder}
-
-    # Convert from [O0, O1, O1] to "O0 O1"
-    tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
-    tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
-
-    for test in $tests
-    do
-        test_folder=$compilation/$folder/$test
-        bin_folder=$binaries/$folder/$test
-        mkdir -p ${test_folder}
-        compile_${model}
-    done
-fi
+# Compile all model arch configurations
+compile_${model}

@@ -1,8 +1,5 @@
 # This file defines the workflow
 JOBS:
-  CLEAN:
-    QUEUE: ef
-    EC_QUEUE: ecs
   REMOTE_SETUP:
     QUEUE: ef
     EC_QUEUE: ecs
@@ -19,8 +16,8 @@ JOBS:
     QUEUE: ef
     EC_QUEUE: ecs
   REMOTE_COMPILATION:
-    PROCESSORS: 64
-    TASKS: 64
+    PROCESSORS: 128
+    TASKS: 128
   dimemas_traces:
     CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=64"
   paramedir:

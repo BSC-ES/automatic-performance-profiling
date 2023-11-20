@@ -14,14 +14,7 @@
 
       monitoring:
         activate: false
-
-    model_config:
-      oifs:
-        grid: !noparse "{{model_config.oifs.all_grids.TL159L91}}"
-
-      oasis:
-        copy_weights: false
-
+  
     model_config:
       components: [oifs, xios, nemo, rnfm, oasis]
       oifs:
