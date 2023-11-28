@@ -3,29 +3,25 @@
     experiment:
       id: a00a
       run_dir: "RUN_FOLDER"
+
       schedule:
         all: !rrule >
           DTSTART:19900101
           RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1
-      description: A new ECE4 experiment
-      
+
       nemo:
         initial_state: null
 
       monitoring:
         activate: false
-  
+
     model_config:
       components: [oifs, xios, nemo, rnfm, oasis]
       oifs:
         grid: !noparse "{{model_config.oifs.all_grids.TCO95L91}}"
-        nudging_path: "/hpcperm/c3et/nudging/data/era5_"
 
       oasis:
         copy_weights: true
-
-      nemo:
-        initial_state: null
 
     job:
       launch:
@@ -44,10 +40,14 @@
       xios:
         ntasks: XIOS_PROCS
         ntasks_per_node: XIOS_PPN
+
       slurm:
         sbatch:
           opts:
-            time: 01:00
-# if conversion needed from HH:MM to MM something like this will need to be done: echo "05:00" | awk -F: '{ print ($1 * 60) + $2 }'
-            qos: np
-            account: spesiccf
+            threads-per-core: 1
+            time: 01:00:00
+            account: spesiccf 
+            output: !noparse "{{experiment.id}}.log"
+            job-name: !noparse "ECE4_{{experiment.id}}"
+        srun:
+          args: [--label, --kill-on-bad-exit]

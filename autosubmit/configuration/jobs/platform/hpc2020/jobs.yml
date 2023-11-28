@@ -12,6 +12,9 @@ JOBS:
   ADD_SECTION:
     QUEUE: ef
     EC_QUEUE: ecs
+  REMOTE_INIDATA:
+    QUEUE: ef
+    EC_QUEUE: ecs
   REPORT:
     QUEUE: ef
     EC_QUEUE: ecs

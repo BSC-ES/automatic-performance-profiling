@@ -85,9 +85,14 @@ function compile_ecearth4()
     module load conda
     conda activate /hpcperm/c3et/conda/ece4 
 
-    cp ${project}/configurations/model/${model}/user-settings-hpc2020.yml ${model_sources}/sources/se
-    sed -i "s/JOBS/${ntasks}" ${model_sources}/sources/se/user-settings-hpc2020.yml
+    # Fix for autosubmit logs
+    sed -i "s/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'\n    ignore_not_found: true/" ${model_sources}/runtime/se/scriptlib/main.yml
 
+    # Update number of tasks
+    cp ${project}/configurations/model/${model}/user-settings-hpc2020.yml ${model_sources}/sources/se
+    sed -i "s/JOBS/${ntasks}/" ${model_sources}/sources/se/user-settings-hpc2020.yml
+
+    # Compile all arch stated in AS
     for arch_name in ${arch_names}; do
         cd ${compilation}
         arch_name_prod=${arch_name}-prod

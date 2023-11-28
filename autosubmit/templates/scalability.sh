@@ -86,11 +86,14 @@ function run_ecearth4()
     sed -i "s/XIOS_PROCS/${xios_procs}/"         ${config_file}
     sed -i "s/XIOS_PPN/${xios_procs}/"           ${config_file}
 
+    # Disable DR HOOK as it may cause issues
+    sed -i "s/DR_HOOK=1/DR_HOOK=0/"              templates/launch/run-srun-multiprog.sh.j2
+
     # Activate the SE enviroment and run
     set +u
     module load conda
     conda activate /hpcperm/c3et/conda/ece4
-    se --nocolor --loglevel debug ../../sources/se/platforms/ecmwf-hpc2020-intel+openmpi.yml ${config_file} scriptlib/main.yml   
+    se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-prod.yml ${config_file} scriptlib/main.yml   
 }
 
 ###################
