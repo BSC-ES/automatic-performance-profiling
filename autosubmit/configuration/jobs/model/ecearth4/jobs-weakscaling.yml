@@ -37,7 +37,6 @@ JOBS:
             DATES_TO: None
     RUNNING: member
     WALLCLOCK: 02:00
-    CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
     CHECK: "true"
     NOTIFY_ON: FAILED
   report_setup:

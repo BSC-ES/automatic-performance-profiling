@@ -46,7 +46,7 @@ function run_nemo()
     fi
 
     cd ${run_dir}
-    time mpirun -genv I_MPI_DEBUG=4 -n $number_of_cores ./nemo
+    time mpirun -n $number_of_cores ./nemo
 
     # Rename timing output
     mv timing.output ${number_of_cores}_test.timing

@@ -16,6 +16,7 @@ test="%CURRENT_TEST_NAME%"
 trace_steps="%TRACING.TRACE_STEPS%"
 output="%MODEL.OUTPUT%"
 papi_counters="%TRACING.PAPI_COUNTERS%"
+project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
 #####################################################################################################################
 # Path variables: TODO
@@ -26,7 +27,6 @@ function trace_nemo()
 {
     model_sources=${model}_${branch}
     configuration_folder=tests
-    run_dir=$run_root/$test_name_/trace_$numproc/
 
     # Link data
     cp $inidata/$test_name_/* ${run_dir}
@@ -104,8 +104,53 @@ EOF
 #####################################################################################################################
 function trace_ecearth4()
 {
-    # TODO
-    echo TRACE
+    cd ${compilation}/${arch_name}-trace/runtime/se
+
+    trace=${run_dir}/trace.sh
+    cat << EOF > $trace
+#!/bin/bash
+
+export EXTRAE_CONFIG_FILE=${run_dir}/extrae.xml
+source \$EXTRAE_DIR/etc/extrae.sh
+
+export LD_PRELOAD=\${EXTRAE_DIR}/lib/libmpitracecf.so
+export LD_LIBRARY_PATH=\${EXTRAE_DIR}/lib/:\$LD_LIBRARY_PATH
+
+\$*
+EOF
+    chmod +x ${trace}
+
+    # Update all variable according to AS config
+    config_file=trace-${test}-${numproc}.yml
+    cp ${project}/configurations/model/${model}/config.yml ${config_file}
+
+    sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
+    ecearth_root=${compilation}/${arch_name}-trace
+    sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
+
+    oifs_procs=%CURRENT_OIFS_PROCS%
+    nemo_procs=%CURRENT_NEMO_PROCS%
+    xios_procs=%CURRENT_XIOS_PROCS%
+
+    sed -i "s/RUN_FOLDER/${sed_run_dir}/"         ${config_file}
+    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"  ${config_file}
+    sed -i "s/OIFS_PROCS/${oifs_procs}/"          ${config_file}
+    sed -i "s/OIFS_PPN/${oifs_procs}/"            ${config_file}
+    sed -i "s/NEMO_PROCS/${nemo_procs}/"          ${config_file}
+    sed -i "s/NEMO_PPN/${nemo_procs}/"            ${config_file}
+    sed -i "s/XIOS_PROCS/${xios_procs}/"          ${config_file}
+    sed -i "s/XIOS_PPN/${xios_procs}/"            ${config_file}
+
+    # Change launch script
+    sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
+
+    sed -i "s/RRULE:FREQ=DAILY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=MONTHLY;UNTIL=19900102;INTERVAL=1/" ${config_file}
+
+    # Activate the SE enviroment and run
+    set +u
+    module load conda
+    conda activate /hpcperm/c3et/conda/ece4
+    se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-trace.yml ${config_file} scriptlib/main.yml   
 }
 
 ###################
@@ -133,8 +178,12 @@ then
     model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
 fi
 
-mkdir -p ${run_root}/${test_name_}/trace_${numproc}
-cp ${cfg}/trace/* $run_root/$test_name_/trace_$numproc/
+run_dir=${run_root}/${test_name_}/trace_${numproc}
+mkdir -p ${run_dir}
+# Remove all run folder content just in case it was already created
+rm -rf ${run_dir}/*
+cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
+cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
-cd $run_root/$test_name_/trace_$numproc/
+cd ${run_dir}
 trace_${model}

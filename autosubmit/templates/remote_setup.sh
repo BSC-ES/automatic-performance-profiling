@@ -36,7 +36,7 @@ function clone_ecearth4()
     
     # Clone ECEARTH4 repository
     if [ ! -d ecearth4_${branch} ]; then
-        git clone --recurse-submodules https://git.smhi.se/ec-earth/ecearth4.git ecearth4_${branch}
+        git clone --recurse-submodules https://git.smhi.se/e7992/ecearth4.git ecearth4_${branch}
     fi
     
     cd ecearth4_${branch}

@@ -17,7 +17,6 @@ JOBS:
   REMOTE_INIDATA:
     FILE: autosubmit/templates/INI.sh
     DEPENDENCIES: REMOTE_SETUP
-    RUNNING: member
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED

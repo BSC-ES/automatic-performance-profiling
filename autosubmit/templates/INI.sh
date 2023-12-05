@@ -4,10 +4,10 @@ set -xuve
 ###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
+members="%EXPERIMENT.MEMBERS%"
 
 #####################################################################################################################
 # Path variables: TODO
@@ -51,11 +51,6 @@ function ini_ecearth4()
     echo INI
 }
 
-function ini_hw()
-{
-    echo INI
-}
-
 ###################
 # Start script
 ###################
@@ -64,29 +59,33 @@ set +u
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 set -u
 
-if [ "${current_member}" = "CompilationEfficiency" ]; then
-    folder="compilation_efficiency"
-    tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-    test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
-elif [ "${current_member}" = "WeakScaling" ]; then
-    folder="weakscaling"
-    tests="%WEAKSCALING.TEST_NAMES%"
-    test_config="%WEAKSCALING.TEST_CONFIG%"
-elif [ "${current_member}" = "StrongScaling" ]; then
-    folder="strong_scaling"
-    tests="%STRONGSCALING.TEST_NAMES%"
-    test_config="%STRONGSCALING.TEST_CONFIG%"
-else
-    model=hw
-fi
-
-tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
-tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 
 mkdir -p ${inidata}
 cd ${inidata}
 
-ini_${model}
+for member in ${members}; do
+    if [ "${member}" = "CompilationEfficiency" ]; then
+        folder="compilation_efficiency"
+        tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+        test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
+    elif [ "${member}" = "WeakScaling" ]; then
+        folder="weakscaling"
+        tests="%WEAKSCALING.TEST_NAMES%"
+        test_config="%WEAKSCALING.TEST_CONFIG%"
+    elif [ "${member}" = "StrongScaling" ]; then
+        folder="strong_scaling"
+        tests="%STRONGSCALING.TEST_NAMES%"
+        test_config="%STRONGSCALING.TEST_CONFIG%"
+    else
+        continue
+    fi
+
+    tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
+    tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+
+    ini_${model}
+done
+
 
 
 
