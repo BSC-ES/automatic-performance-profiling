@@ -20,6 +20,8 @@ test="%CURRENT_TEST_NAME%"
 #####################################################################################################################
 function run_nemo()
 {
+    source ${env_sources}
+
     model_sources=${model}_${branch}
     output="%MODEL.OUTPUT%"
     test_steps="%MODEL.TEST_STEPS%"
@@ -94,6 +96,11 @@ function run_ecearth4()
     module load conda
     conda activate /hpcperm/c3et/conda/ece4
     se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-prod.yml ${config_file} scriptlib/main.yml   
+
+    source ${env_sources}
+
+    cd ${run_dir}
+    python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 30
 }
 
 ###################
@@ -119,7 +126,6 @@ then
     model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
 fi
 
-source ${env_sources}
 run_dir=${run_folder}/${test_name_}/scalability_${number_of_cores}
 mkdir -p ${run_dir}
 

@@ -41,6 +41,11 @@ function clone_ecearth4()
     
     cd ecearth4_${branch}
     git checkout ${branch}
+
+    cd ${dest_dir}
+    if [ ! -d lucia-alternative ]; then
+    	git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
+    fi
 }
 
 ###################

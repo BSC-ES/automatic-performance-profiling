@@ -104,6 +104,8 @@ EOF
 #####################################################################################################################
 function trace_ecearth4()
 {
+    models="nemo oifs"
+
     cd ${compilation}/${arch_name}-trace/runtime/se
 
     trace=${run_dir}/trace.sh
@@ -144,13 +146,43 @@ EOF
     # Change launch script
     sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
 
-    sed -i "s/RRULE:FREQ=DAILY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=MONTHLY;UNTIL=19900102;INTERVAL=1/" ${config_file}
+    sed -i "s/RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=DAILY;UNTIL=19900102;INTERVAL=1/" ${config_file}
 
     # Activate the SE enviroment and run
     set +u
     module load conda
     conda activate /hpcperm/c3et/conda/ece4
-    se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-trace.yml ${config_file} scriptlib/main.yml   
+    se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-trace.yml ${config_file} scriptlib/main.yml
+
+    # Reload modules to exit from SE
+    source ${env_sources}
+
+    cd ${run_dir}
+
+    # Rename output trace
+    mv xios_server.exe.prv ${model}.prv
+    mv xios_server.exe.pcf ${model}.pcf
+    mv xios_server.exe.row ${model}.row
+    
+    # Get NEMO trace
+    cp ${cfg}/trace/model/${model}/cutter.xml ${run_dir}
+    sed -i "s/TASKS/1-${nemo_procs}/" cutter.xml
+    paramedir -c cutter.xml ${model}.prv
+
+    mv ${model}.chop1.prv nemo.prv
+    mv ${model}.chop1.pcf nemo.pcf
+    mv ${model}.chop1.row nemo.row
+
+    # Get OIFS trace
+    cp ${cfg}/trace/model/${model}/cutter.xml ${run_dir}
+    sed -i "s/TASKS/$((nemo_procs+1))-$((nemo_procs+1+oifs_procs))/" cutter.xml
+    paramedir -c cutter.xml ${model}.prv
+
+    mv ${model}.chop1.prv oifs.prv
+    mv ${model}.chop1.pcf oifs.pcf
+    mv ${model}.chop1.row oifs.row
+
+    rm -rf set-* *.nc
 }
 
 ###################
