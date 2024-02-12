@@ -1,0 +1,4 @@
+jobs:
+  functions_dir:
+    oifs_procs: "%TRACING.USER_FUNCTIONS_OIFS_PROCS%" 
+    nemo_procs: "%TRACING.USER_FUNCTIONS_NEMO_PROCS%"

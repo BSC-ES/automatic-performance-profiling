@@ -1,7 +1,7 @@
 # This file defines the workflow
 JOBS:
   REMOTE_SETUP:
-    QUEUE: ef
+    QUEUE: nf
     EC_QUEUE: ecs
   PREPARE_TESTS:
     QUEUE: ef

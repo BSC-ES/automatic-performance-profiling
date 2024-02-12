@@ -5,8 +5,6 @@ set -xv
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-current_member=%MEMBER%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 ntasks=%NUMTASK%
@@ -56,11 +54,11 @@ function compile_nemo()
         done
 
         # Compile NEMO
-        compilation_command=` echo ${model_sources}/makenemo -m ${arch_name}-prod -n ${arch_name}_prod -a BENCH -j ${ntasks}`
+        compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name}-prod -n ${arch_name}_prod -a BENCH -j ${ntasks})
         eval ${compilation_command}
 
         # Compile TRACE
-        compilation_command=` echo ${model_sources}/makenemo -m ${arch_name}-trace -n ${arch_name}_trace -a BENCH -j ${ntasks}`
+        compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name}-trace -n ${arch_name}_trace -a BENCH -j ${ntasks})
         eval ${compilation_command}
 
         # Copy binary into bin folder
@@ -125,7 +123,7 @@ function compile_hw()
     gcc -fopenmp -D_OPENMP stream.c -o stream
 
     cd ${compilation}/osu-micro-benchmarks-5.6.3
-    ./configure CC=`which mpicxx` CXX=`which mpicc` --prefix=`pwd`
+    ./configure CC=$(which mpicxx) CXX=$(which mpicc) --prefix=$(pwd)
     make install
     make
 }

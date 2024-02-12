@@ -6,8 +6,8 @@
 
       schedule:
         all: !rrule >
-          DTSTART:19900101
-          RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1
+          DTSTART:START_DATE
+          RRULE:FREQ=FREQUENCY;UNTIL=END_DATE;INTERVAL=INTERVAL_VAL
 
       nemo:
         initial_state: null

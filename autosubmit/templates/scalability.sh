@@ -2,7 +2,6 @@
 # AS variables
 ###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
-binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 current_member=%MEMBER%
@@ -79,6 +78,10 @@ function run_ecearth4()
     nemo_procs=%CURRENT_NEMO_PROCS%
     xios_procs=%CURRENT_XIOS_PROCS%
 
+    start_date=%MODEL.START_DATE%
+    end_date=%MODEL.END_DATE%
+    freq=%MODEL.FREQ%
+
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"        ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/" ${config_file}
     sed -i "s/OIFS_PROCS/${oifs_procs}/"         ${config_file}
@@ -87,6 +90,9 @@ function run_ecearth4()
     sed -i "s/NEMO_PPN/${nemo_procs}/"           ${config_file}
     sed -i "s/XIOS_PROCS/${xios_procs}/"         ${config_file}
     sed -i "s/XIOS_PPN/${xios_procs}/"           ${config_file}
+    sed -i "s/FREQUENCY/${freq}/"                ${config_file}
+    sed -i "s/START_DATE/${start_date}/"         ${config_file}
+    sed -i "s/END_DATE/${end_date}/"             ${config_file}
 
     # Disable DR HOOK as it may cause issues
     sed -i "s/DR_HOOK=1/DR_HOOK=0/"              templates/launch/run-srun-multiprog.sh.j2

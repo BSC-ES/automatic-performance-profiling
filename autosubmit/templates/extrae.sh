@@ -2,9 +2,7 @@
 # AS variables
 ###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
-binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
-run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 numproc=%NUMPROC%
 current_member=%MEMBER%
@@ -54,7 +52,7 @@ function trace_nemo()
     # Run extrae
     module load gcc/8.1.0
     module load EXTRAE/latest
-
+    
     trace=trace.sh
     cat << EOF > $trace
 #!/bin/bash
@@ -104,7 +102,8 @@ EOF
 #####################################################################################################################
 function trace_ecearth4()
 {
-    models="nemo oifs"
+    cp $run_root/$test_name_/functions_dir/extrae_functions.txt ${run_dir}/extrae_functions.txt
+    components="nemo oifs"
 
     cd ${compilation}/${arch_name}-trace/runtime/se
 
@@ -134,19 +133,35 @@ EOF
     nemo_procs=%CURRENT_NEMO_PROCS%
     xios_procs=%CURRENT_XIOS_PROCS%
 
-    sed -i "s/RUN_FOLDER/${sed_run_dir}/"         ${config_file}
-    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"  ${config_file}
-    sed -i "s/OIFS_PROCS/${oifs_procs}/"          ${config_file}
-    sed -i "s/OIFS_PPN/${oifs_procs}/"            ${config_file}
-    sed -i "s/NEMO_PROCS/${nemo_procs}/"          ${config_file}
-    sed -i "s/NEMO_PPN/${nemo_procs}/"            ${config_file}
-    sed -i "s/XIOS_PROCS/${xios_procs}/"          ${config_file}
-    sed -i "s/XIOS_PPN/${xios_procs}/"            ${config_file}
+    start_date=%TRACING.START_DATE%
+    end_date=%TRACING.END_DATE%
+    freq=%TRACING.FREQ%
+    interval=%TRACING.INTERVAL%
+
+    sed -i "s/RUN_FOLDER/${sed_run_dir}/"        ${config_file}
+    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/" ${config_file}
+    sed -i "s/OIFS_PROCS/${oifs_procs}/"         ${config_file}
+    sed -i "s/OIFS_PPN/${oifs_procs}/"           ${config_file}
+    sed -i "s/NEMO_PROCS/${nemo_procs}/"         ${config_file}
+    sed -i "s/NEMO_PPN/${nemo_procs}/"           ${config_file}
+    sed -i "s/XIOS_PROCS/${xios_procs}/"         ${config_file}
+    sed -i "s/XIOS_PPN/${xios_procs}/"           ${config_file}
+    sed -i "s/FREQUENCY/${freq}/"                ${config_file}
+    sed -i "s/START_DATE/${start_date}/"         ${config_file}
+    sed -i "s/END_DATE/${end_date}/"             ${config_file}
+    sed -i "s/INTERVAL_VAL/${interval}/"         ${config_file}
 
     # Change launch script
     sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
 
     sed -i "s/RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=DAILY;UNTIL=19900102;INTERVAL=1/" ${config_file}
+
+    # Generate extrae function list from functions directory since the binaries are still not copied in the current run dir
+    functions_dir=$run_root/$test_name_/functions_dir
+    cd ${run_dir}
+    ./generate_function_list.sh $functions_dir/nemo.exe $functions_dir/oifs.exe $functions_dir/extrae_functions.txt
+
+    cd ${compilation}/${arch_name}-trace/runtime/se
 
     # Activate the SE enviroment and run
     set +u
@@ -169,20 +184,20 @@ EOF
     sed -i "s/TASKS/1-${nemo_procs}/" cutter.xml
     paramedir -c cutter.xml ${model}.prv
 
-    mv ${model}.chop1.prv nemo.prv
-    mv ${model}.chop1.pcf nemo.pcf
-    mv ${model}.chop1.row nemo.row
+    mv ${model}.chop*.prv nemo.prv
+    mv ${model}.chop*.pcf nemo.pcf
+    mv ${model}.chop*.row nemo.row
 
     # Get OIFS trace
     cp ${cfg}/trace/model/${model}/cutter.xml ${run_dir}
     sed -i "s/TASKS/$((nemo_procs+1))-$((nemo_procs+1+oifs_procs))/" cutter.xml
     paramedir -c cutter.xml ${model}.prv
 
-    mv ${model}.chop1.prv oifs.prv
-    mv ${model}.chop1.pcf oifs.pcf
-    mv ${model}.chop1.row oifs.row
+    mv ${model}.chop*.prv oifs.prv
+    mv ${model}.chop*.pcf oifs.pcf
+    mv ${model}.chop*.row oifs.row
 
-    rm -rf set-* *.nc
+    rm -rf set-* ./*.nc
 }
 
 ###################

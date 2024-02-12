@@ -42,6 +42,11 @@ function clone_ecearth4()
     cd ecearth4_${branch}
     git checkout ${branch}
 
+    # Update config for AS to worl with SE
+    sed -i "/- base.move:/a \ \ \ \ ignore_not_found: true" runtime/se/scriptlib/main.yml
+    # Add trace launch script
+    cp ${project}/configurations/model/ecearth4/trace-run.sh.j2 runtime/se/templates/launch/
+
     cd ${dest_dir}
     if [ ! -d lucia-alternative ]; then
     	git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git

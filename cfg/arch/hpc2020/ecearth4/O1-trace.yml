@@ -100,7 +100,7 @@
             lang:
                 fortran:
                     flags: !noparse "-fpe0 -convert big_endian -march=core-avx2 -qopenmp"
-                    flags_fixed: -r8
+                    flags_fixed: -r8 -finstrument-functions -g
                     macros: BLAS LITTLE LINUX INTEGER_IS_INT
                 c:
                     macros: BLAS LITTLE LINUX INTEGER_IS_INT _ABI64
@@ -109,6 +109,6 @@
         oasis:
             lang:
                 fortran:
-                    flags_shared: -fPIC
+                    flags_shared: -fPIC -finstrument-functions -g
                 linker:
                     flags_shared: -shared
