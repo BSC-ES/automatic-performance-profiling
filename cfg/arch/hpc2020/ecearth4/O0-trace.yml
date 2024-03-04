@@ -100,7 +100,7 @@
             lang:
                 fortran:
                     flags: !noparse "-fpe0 -convert big_endian -march=core-avx2 -qopenmp"
-                    flags_fixed: -r8 -finstrument-functions -g
+                    flags_fixed: -r8 -finstrument-functions -g -DMAGICCUT
                     macros: BLAS LITTLE LINUX INTEGER_IS_INT
                 c:
                     macros: BLAS LITTLE LINUX INTEGER_IS_INT _ABI64

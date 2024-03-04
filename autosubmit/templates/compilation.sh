@@ -73,7 +73,7 @@ function compile_nemo()
 #####################################################################################################################
 # Path variables: compilation, project
 # Other variables: model, branch, platform, ntasks
-# Purpose: Compiles all arch YML configurations for ECEARTH 4 configured in the ARCH_NAMES AS variable
+# Purpose: Compiles all arch YML configurations for ECEARTH 4 stated in the ARCH_NAMES AS variable
 #####################################################################################################################
 function compile_ecearth4()
 {
@@ -92,21 +92,27 @@ function compile_ecearth4()
 
     # Compile all arch stated in AS
     for arch_name in ${arch_names}; do
+        # Compile production
         cd ${compilation}
         arch_name_prod=${arch_name}-prod
         arch_file=${cfg}/arch/${platform}/${model}/${arch_name_prod}.yml
         mkdir -p ${arch_name_prod}
-        rsync -av --exclude='*.svn*' ${model_sources}/* ${arch_name_prod}
+        rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_prod}
         cd ${arch_name_prod}/sources/se
         cp ${arch_file} platforms
         se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
 
+        # Compile trace
         cd ${compilation}
         arch_name_trace=${arch_name}-trace
         arch_file=${cfg}/arch/${platform}/${model}/${arch_name_trace}.yml
         mkdir -p ${arch_name_trace}
-        rsync -av --exclude='*.svn*' ${model_sources}/* ${arch_name_trace}
-        cd ${arch_name_trace}/sources/se
+        rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_trace}
+        # Apply magiccut sentinel patch
+        cd ${compilation}/${arch_name_trace}/sources/oifs-43r3v2
+        git apply ${cfg}/trace/model/${model}/sentinel.diff
+
+        cd ${compilation}/${arch_name_trace}/sources/se
         cp ${arch_file} platforms
         se user-settings-hpc2020.yml platforms/${arch_name_trace}.yml compile-all.yml
     done

@@ -86,96 +86,99 @@ EOF
     rm -rf *nc
 }
 
-function functions_dir_ecearth4()
+function functions_dir_ecearth4() 
 {
-    cd ${compilation}/${arch_name}-trace/runtime/se
+#     cd ${compilation}/${arch_name}-trace/runtime/se
 
-    trace=${run_dir}/trace.sh
-    cat << EOF > $trace
-#!/bin/bash
+#     trace=${run_dir}/trace.sh
+#     cat << EOF > $trace
+# #!/bin/bash
 
-export EXTRAE_CONFIG_FILE=${run_dir}/extrae.xml
-source \$EXTRAE_DIR/etc/extrae.sh
+# export EXTRAE_CONFIG_FILE=${run_dir}/extrae.xml
+# source \$EXTRAE_DIR/etc/extrae.sh
 
-export LD_PRELOAD=\${EXTRAE_DIR}/lib/libmpitracecf.so
-export LD_LIBRARY_PATH=\${EXTRAE_DIR}/lib/:\$LD_LIBRARY_PATH
+# export LD_PRELOAD=\${EXTRAE_DIR}/lib/libmpitracecf.so
+# export LD_LIBRARY_PATH=\${EXTRAE_DIR}/lib/:\$LD_LIBRARY_PATH
 
-\$*
-EOF
-    chmod +x ${trace}
+# \$*
+# EOF
+#     chmod +x ${trace}
 
-    # Update all variable according to AS config
-    config_file=functions-dir-${test}-${numproc}.yml
-    cp ${project}/configurations/model/${model}/config.yml ${config_file}
+#     # Update all variable according to AS config
+#     config_file=functions-dir-${test}-${numproc}.yml
+#     cp ${project}/configurations/model/${model}/config.yml ${config_file}
 
-    # Change / to \/ for sed to work
-    sed_run_dir=$(echo $run_dir | sed 's_/_\\/_g')
-    ecearth_root=${compilation}/${arch_name}-trace
-    sed_ecearth_root=$(echo $ecearth_root | sed 's_/_\\/_g')
+#     # Change / to \/ for sed to work
+#     sed_run_dir=$(echo $run_dir | sed 's_/_\\/_g')
+#     ecearth_root=${compilation}/${arch_name}-trace
+#     sed_ecearth_root=$(echo $ecearth_root | sed 's_/_\\/_g')
 
-    oifs_procs=%TRACING.USER_FUNCTIONS_OIFS_PROCS%
-    nemo_procs=%TRACING.USER_FUNCTIONS_NEMO_PROCS%
-    xios_procs=%TRACING.USER_FUNCTIONS_XIOS_PROCS%
+#     oifs_procs=%TRACING.USER_FUNCTIONS_OIFS_PROCS%
+#     nemo_procs=%TRACING.USER_FUNCTIONS_NEMO_PROCS%
+#     xios_procs=%TRACING.USER_FUNCTIONS_XIOS_PROCS%
 
-    start_date=%TRACING.START_DATE%
-    end_date=%TRACING.END_DATE%
-    freq=%TRACING.FREQ%
+#     start_date=%TRACING.START_DATE%
+#     end_date=%TRACING.END_DATE%
+#     freq=%TRACING.FREQ%
 
-    sed -i "s/RUN_FOLDER/${sed_run_dir}/"        ${config_file}
-    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/" ${config_file}
-    sed -i "s/OIFS_PROCS/${oifs_procs}/"         ${config_file}
-    sed -i "s/OIFS_PPN/${oifs_procs}/"           ${config_file}
-    sed -i "s/NEMO_PROCS/${nemo_procs}/"         ${config_file}
-    sed -i "s/NEMO_PPN/${nemo_procs}/"           ${config_file}
-    sed -i "s/XIOS_PROCS/${xios_procs}/"         ${config_file}
-    sed -i "s/XIOS_PPN/${xios_procs}/"           ${config_file}
-    sed -i "s/FREQUENCY/${freq}/"                ${config_file}
-    sed -i "s/START_DATE/${start_date}/"         ${config_file}
-    sed -i "s/END_DATE/${end_date}/"             ${config_file}
+#     sed -i "s/RUN_FOLDER/${sed_run_dir}/"        ${config_file}
+#     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/" ${config_file}
+#     sed -i "s/OIFS_PROCS/${oifs_procs}/"         ${config_file}
+#     sed -i "s/OIFS_PPN/${oifs_procs}/"           ${config_file}
+#     sed -i "s/NEMO_PROCS/${nemo_procs}/"         ${config_file}
+#     sed -i "s/NEMO_PPN/${nemo_procs}/"           ${config_file}
+#     sed -i "s/XIOS_PROCS/${xios_procs}/"         ${config_file}
+#     sed -i "s/XIOS_PPN/${xios_procs}/"           ${config_file}
+#     sed -i "s/FREQUENCY/${freq}/"                ${config_file}
+#     sed -i "s/START_DATE/${start_date}/"         ${config_file}
+#     sed -i "s/END_DATE/${end_date}/"             ${config_file}
 
-    # Change launch script
-    sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
+#     # Change launch script
+#     sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
 
-    # Activate the SE enviroment and run
-    set +u
-    module load conda
-    conda activate /hpcperm/c3et/conda/ece4
-    se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-trace.yml ${config_file} scriptlib/main.yml   
+#     # Activate the SE enviroment and run
+#     set +u
+#     module load conda
+#     conda activate /hpcperm/c3et/conda/ece4
+#     se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-trace.yml ${config_file} scriptlib/main.yml   
 
-    # Reload modules to exit from SE
-    source ${env_sources}
+#     # Reload modules to exit from SE
+#     source ${env_sources}
 
-    cd ${run_dir}
+#     cd ${run_dir}
 
-    # Rename trace
-    mv xios_server.exe.prv ${model}.prv
-    mv xios_server.exe.pcf ${model}.pcf
-    mv xios_server.exe.row ${model}.row
+#     # Rename trace
+#     mv xios_server.exe.prv ${model}.prv
+#     mv xios_server.exe.pcf ${model}.pcf
+#     mv xios_server.exe.row ${model}.row
 
-    paramedir ${model}.prv sampling_user_function.cfg
-    histo_file=sampling_user_function
-    function_file=extrae_functions.txt
-    function_avg_dur_file=function_avg_dur.txt
-    cat /dev/null > ${function_file}
-    cat /dev/null > ${function_avg_dur_file}
+#     paramedir ${model}.prv sampling_user_function.cfg
+#     histo_file=sampling_user_function
+#     function_file=extrae_functions.txt
+#     function_avg_dur_file=function_avg_dur.txt
+#     cat /dev/null > ${function_file}
+#     cat /dev/null > ${function_avg_dur_file}
     
-    # Take function names
-    readarray -t func_name < <(head -1 sampling_user_function | grep -o '\[[^]]*\]' | sed 's/\]//g' | sed 's/\[//g' | sed 's/ //g')
-    # Take function average duration
-    read -a func_avg_dur < <(grep -E "Average.*([0-9]+\.[0-9]+)+" ${histo_file} | sed 's/Average//g')
+#     # Take function names
+#     readarray -t func_name < <(head -1 sampling_user_function | grep -o '\[[^]]*\]' | sed 's/\]//g' | sed 's/\[//g' | sed 's/ //g')
+#     # Take function average duration
+#     read -a func_avg_dur < <(grep -E "Average.*([0-9]+\.[0-9]+)+" ${histo_file} | sed 's/Average//g')
     
-    # Save info to a file
-    for i_func_name in $(seq 0 $((${#func_name[@]}-1)))
-    do
-        echo  "${func_name[${i_func_name}]}" "${func_avg_dur[$i_func_name]}" >> ${function_avg_dur_file}
-    done
+#     # Save info to a file
+#     for i_func_name in $(seq 0 $((${#func_name[@]}-1)))
+#     do
+#         echo  "${func_name[${i_func_name}]}" "${func_avg_dur[$i_func_name]}" >> ${function_avg_dur_file}
+#     done
     
-    # Order data in decreasing order of average time
-    cat ${function_avg_dur_file} > ${function_avg_dur_file}_tmp
-    cat ${function_avg_dur_file}_tmp | sort -k 2 -nr >  ${function_avg_dur_file}
+#     # Order data in decreasing order of average time
+#     cat ${function_avg_dur_file} > ${function_avg_dur_file}_tmp
+#     cat ${function_avg_dur_file}_tmp | sort -k 2 -nr >  ${function_avg_dur_file}
     
-    # Output first $n_function names
-    awk '{print $1}' ${function_avg_dur_file} | grep '_mp_' | head -n ${n_functions}> ${function_file}
+#     # Output first $n_function names
+#     awk '{print $1}' ${function_avg_dur_file} | grep '_mp_' | head -n ${n_functions}> ${function_file}
+
+#     cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}
+    echo Functions dir not used in ece4 yet
 }
 
 ###################

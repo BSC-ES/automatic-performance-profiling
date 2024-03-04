@@ -17,6 +17,75 @@ papi_counters="%TRACING.PAPI_COUNTERS%"
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
 #####################################################################################################################
+# Parameters: run_dir
+# Purpose: Creates the extrae launch script
+#####################################################################################################################
+function create_trace_sh()
+{
+    local run_directory=$1
+    trace=${run_dir}/trace.sh
+    cat << EOF > $trace
+#!/bin/bash
+
+export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
+source \$EXTRAE_DIR/etc/extrae.sh
+
+export LD_PRELOAD=\${EXTRAE_DIR}/lib/libmpitracecf.so
+export LD_LIBRARY_PATH=\${EXTRAE_DIR}/lib/:\$LD_LIBRARY_PATH
+
+\$*
+EOF
+    chmod +x ${trace}
+}
+
+#####################################################################################################################
+# Parameters: components_names components_processors trace_file
+# Purpose: Cut the whole model trace by its components
+#####################################################################################################################
+function cut_trace()
+{
+    local -n components_names="$1"
+    local -n components_processors="$2"
+    trace_file=$3
+
+    first_proc=1
+    i=0
+    while [ $i -lt ${#components_names[@]} ]; do
+        component_procs=${components_processors[i]}
+        last_proc=$((first_proc+component_procs-1))
+
+        cat << EOF > cutter.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <!-- CUTTER OPTIONS -->
+  <cutter>
+    <tasks>${first_proc}-${last_proc}</tasks>
+    <max_trace_size>0</max_trace_size>
+    <by_time>0</by_time>
+    <minimum_time>0</minimum_time>
+    <maximum_time>100</maximum_time>
+    <minimum_time_percentage>0</minimum_time_percentage>
+    <maximum_time_percentage>100</maximum_time_percentage>
+    <original_time>0</original_time>
+    <break_states>1</break_states>
+    <remove_first_states>0</remove_first_states>
+    <remove_last_states>0</remove_last_states>
+    <keep_events>0</keep_events>
+  </cutter>
+</config>
+EOF
+        paramedir -c cutter.xml ${trace_file}
+
+        mv ${model}.chop*.prv ${components_names[i]}.prv
+        mv ${model}.chop*.pcf ${components_names[i]}.pcf
+        mv ${model}.chop*.row ${components_names[i]}.row
+
+        first_proc=$((last_proc+1))
+        i=$((i+1))
+    done
+}
+
+#####################################################################################################################
 # Path variables: TODO
 # Other variables: TODO
 # Purpose: Traces NEMO using extrae
@@ -53,19 +122,7 @@ function trace_nemo()
     module load gcc/8.1.0
     module load EXTRAE/latest
     
-    trace=trace.sh
-    cat << EOF > $trace
-#!/bin/bash
-
-export EXTRAE_CONFIG_FILE=${run_dir}/extrae.xml
-source \$EXTRAE_HOME/etc/extrae.sh
-
-export LD_PRELOAD=\${EXTRAE_HOME}/lib/libmpitracecf.so
-export LD_LIBRARY_PATH=\${EXTRAE_HOME}/lib/:\$LD_LIBRARY_PATH
-
-\$*
-EOF
-    chmod +x ${trace}
+    create_trace_sh $run_dir
 
     # Copy function.txt
     cp $run_root/$test_name_/functions_dir/extrae_functions.txt ${run_dir}/extrae_functions.txt
@@ -102,24 +159,9 @@ EOF
 #####################################################################################################################
 function trace_ecearth4()
 {
-    cp $run_root/$test_name_/functions_dir/extrae_functions.txt ${run_dir}/extrae_functions.txt
-    components="nemo oifs"
-
     cd ${compilation}/${arch_name}-trace/runtime/se
 
-    trace=${run_dir}/trace.sh
-    cat << EOF > $trace
-#!/bin/bash
-
-export EXTRAE_CONFIG_FILE=${run_dir}/extrae.xml
-source \$EXTRAE_DIR/etc/extrae.sh
-
-export LD_PRELOAD=\${EXTRAE_DIR}/lib/libmpitracecf.so
-export LD_LIBRARY_PATH=\${EXTRAE_DIR}/lib/:\$LD_LIBRARY_PATH
-
-\$*
-EOF
-    chmod +x ${trace}
+    create_trace_sh ${run_dir}
 
     # Update all variable according to AS config
     config_file=trace-${test}-${numproc}.yml
@@ -156,10 +198,10 @@ EOF
 
     sed -i "s/RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=DAILY;UNTIL=19900102;INTERVAL=1/" ${config_file}
 
-    # Generate extrae function list from functions directory since the binaries are still not copied in the current run dir
-    functions_dir=$run_root/$test_name_/functions_dir
     cd ${run_dir}
-    ./generate_function_list.sh $functions_dir/nemo.exe $functions_dir/oifs.exe $functions_dir/extrae_functions.txt
+
+    # Copy user functions list
+    cp ${cfg}/trace/model/${model}/extrae_functions.txt .
 
     cd ${compilation}/${arch_name}-trace/runtime/se
 
@@ -174,28 +216,17 @@ EOF
 
     cd ${run_dir}
 
+    actual_nemo_procs=$(grep "exceeds the maximum number of ocean subdomains" log/001/ocean.output | grep -oE "[0-9]+" || echo ${nemo_procs})
+
     # Rename output trace
     mv xios_server.exe.prv ${model}.prv
     mv xios_server.exe.pcf ${model}.pcf
     mv xios_server.exe.row ${model}.row
-    
-    # Get NEMO trace
-    cp ${cfg}/trace/model/${model}/cutter.xml ${run_dir}
-    sed -i "s/TASKS/1-${nemo_procs}/" cutter.xml
-    paramedir -c cutter.xml ${model}.prv
 
-    mv ${model}.chop*.prv nemo.prv
-    mv ${model}.chop*.pcf nemo.pcf
-    mv ${model}.chop*.row nemo.row
+    components=("xios" "nemo" "rnf" "oifs")
+    processors=($xios_procs $nemo_procs 1 $oifs_procs)
 
-    # Get OIFS trace
-    cp ${cfg}/trace/model/${model}/cutter.xml ${run_dir}
-    sed -i "s/TASKS/$((nemo_procs+1))-$((nemo_procs+1+oifs_procs))/" cutter.xml
-    paramedir -c cutter.xml ${model}.prv
-
-    mv ${model}.chop*.prv oifs.prv
-    mv ${model}.chop*.pcf oifs.pcf
-    mv ${model}.chop*.row oifs.row
+    cut_trace components processors "${model}.prv"
 
     rm -rf set-* ./*.nc
 }

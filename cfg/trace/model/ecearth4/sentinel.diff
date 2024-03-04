@@ -1,0 +1,26 @@
+diff --git a/src/ifs/control/cnt4.F90 b/src/ifs/control/cnt4.F90
+index 1c7698f..b718430 100644
+--- a/src/ifs/control/cnt4.F90
++++ b/src/ifs/control/cnt4.F90
+@@ -524,6 +524,9 @@ ELSE
+ ENDIF
+ 
+ DO JSTEP=NSTAR2,ISTOP
++  #ifdef MAGICCUT
++  CALL MAGICCUT()
++  #endif
+ 
+   CALL USER_CLOCK(PTOTAL_CP=ZT1)
+ 
+@@ -1378,3 +1381,10 @@ END ASSOCIATE
+ END ASSOCIATE
+ IF (LHOOK) CALL DR_HOOK('CNT4',1,ZHOOK_HANDLE)
+ END SUBROUTINE CNT4
++
++
++SUBROUTINE MAGICCUT()
++  IF (MYPROC == 1) THEN
++    PRINT *, "Magiccut sentinel"
++  ENDIF
++END SUBROUTINE MAGICCUT
+\ No newline at end of file

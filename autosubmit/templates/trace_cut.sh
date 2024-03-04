@@ -1,10 +1,9 @@
 current_member=%MEMBER%
-model=%MODEL.NAME%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 magiccut=%CURRENT_ROOTDIR%/magiccut/magicCut
 timestep_zero=%TRACING.TIMESTEP_ZERO%
 trace_steps=%TRACING.TRACE_STEPS%
+components="%MODEL.COMPONENTS%"
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
@@ -19,6 +18,8 @@ fi
 
 tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
 tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+components=($(echo $components | sed "s/\[\|\]\|,//g"))
+components=$(for v in "${components[@]}"; do echo "$v";done| sort| uniq| xargs)
 
 for test in $tests
 do
@@ -33,6 +34,12 @@ do
     for trace_folder in ${run_root}/${test_name_}/trace_*
     do
         cd ${trace_folder}
-        ${magiccut} ${model}.prv ${magiccut_steps}
+        for component in $components; do
+            if [ "${timestep_zero}" != "TRUE" ] && [ "${component}" = "oifs" ]; then
+                ${magiccut} $component.prv $((magiccut_steps+1))
+            else
+                ${magiccut} $component.prv ${magiccut_steps}
+            fi
+        done
     done
 done
