@@ -99,6 +99,7 @@ function compile_ecearth4()
         mkdir -p ${arch_name_prod}
         rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_prod}
         cd ${arch_name_prod}/sources/se
+        sed -i 's/NLOGPRT//' templates/oasis/namcouple.j2
         cp ${arch_file} platforms
         se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
 

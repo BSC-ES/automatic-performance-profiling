@@ -181,7 +181,7 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, timing_files=None, paramedir_files=None, dimemas_files=None,
+    def __init__(self, lucia_files=None, timing_files=None, paramedir_files=None, dimemas_files=None,
                  processes_per_node=48, json_file=None, param_file=None):
         # Init class variables
         self.experiment_name = None
@@ -192,7 +192,7 @@ class TimingInformation:
         self.functions = None
         self.param_file = self.load_param(param_file)
 
-        if not timing_files and not paramedir_files and not json_file and not dimemas_files:
+        if not lucia_files and not timing_files and not paramedir_files and not json_file and not dimemas_files:
             raise AssertionError("No files provided")
 
         # Update values with the provided files
@@ -233,6 +233,29 @@ class TimingInformation:
         ret_val = {k: v for k, v in sorted(ret_val.items(), key=lambda item: item[1][self.base_case])}
 
         return ret_val
+
+    def load_lucia(self, lucia_files):
+        import pandas as pd
+        lucia_dict = {}
+        for lucia_file in lucia_files:
+            lucia_csv = pd.read_csv(lucia_file)
+            for _, component_data in lucia_csv.iterrows():
+                component_name = component_data[0]
+                if component_data[0] == "Coupled":
+                    lucia_dict |= component_data
+                    lucia_dict["SYPD"] = lucia_dict["sypd"]
+                else:
+                    if component_name == "oceanx":
+                        component_name = "nemo"
+                    elif component_name == "OpenIFS":
+                        component_name = "oifs"
+                    lucia_dict[component_name] = component_data
+                    lucia_dict[component_name]["SYPD"] = lucia_dict[component_name]["sypd"]
+
+        if self.data is None:
+            self.data = lucia_dict
+        else:
+            self.data = merge_dictionaries(self.data, lucia_dict)
 
     def load_param(self, param_file):
         from os.path import isfile

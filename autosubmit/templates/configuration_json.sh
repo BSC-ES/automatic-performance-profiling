@@ -1,28 +1,23 @@
 current_member=%MEMBER%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-
+model=%MODEL.NAME%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
-analysis_tools=${cfg}/trace_analysis/
 papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
     tests="%STRONGSCALING.TEST_NAMES%"
     tile_size="-"
-    n_procs="%WEAKSCALING.PROCESSORS%"
 elif [ "$current_member" = "CompilationEfficiency" ]; then
     test_name="compilation_efficiency"
     tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
     tile_size="-"
-    n_procs="%WEAKSCALING.PROCESSORS%"
 else
     test_name="weakscaling"
     tests="%WEAKSCALING.TEST_NAMES%"
     tile_size="%WEAKSCALING.TILE_SIZE%"
-    n_procs="%WEAKSCALING.PROCESSORS%"
 fi
 
 tests=($(echo $tests | sed "s/\[\|\]\|,//g"))

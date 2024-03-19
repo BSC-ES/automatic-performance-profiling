@@ -63,7 +63,7 @@ function cut_trace()
     <max_trace_size>0</max_trace_size>
     <by_time>0</by_time>
     <minimum_time>0</minimum_time>
-    <maximum_time>100</maximum_time>
+    <maximum_time>0</maximum_time>
     <minimum_time_percentage>0</minimum_time_percentage>
     <maximum_time_percentage>100</maximum_time_percentage>
     <original_time>0</original_time>
