@@ -92,6 +92,15 @@ EOF
 #####################################################################################################################
 function trace_nemo()
 {
+    run_dir=${run_root}/${test_name_}/trace_nemo_${numproc}
+    mkdir -p ${run_dir}
+    # Remove all run folder content just in case it was already created
+    rm -rf ${run_dir}/*
+    cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
+    cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+
+    cd ${run_dir}
+
     model_sources=${model}_${branch}
     configuration_folder=tests
 
@@ -159,6 +168,17 @@ function trace_nemo()
 #####################################################################################################################
 function trace_ecearth4()
 {
+    oifs_procs=%CURRENT_OIFS_PROCS%
+    nemo_procs=%CURRENT_NEMO_PROCS%
+    xios_procs=%CURRENT_XIOS_PROCS%
+
+    run_dir=${run_root}/${test_name_}/trace_xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    mkdir -p ${run_dir}
+    # Remove all run folder content just in case it was already created
+    rm -rf ${run_dir}/*
+    cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
+    cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+
     cd ${compilation}/${arch_name}-trace/runtime/se
 
     create_trace_sh ${run_dir}
@@ -170,10 +190,6 @@ function trace_ecearth4()
     sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
     ecearth_root=${compilation}/${arch_name}-trace
     sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
-
-    oifs_procs=%CURRENT_OIFS_PROCS%
-    nemo_procs=%CURRENT_NEMO_PROCS%
-    xios_procs=%CURRENT_XIOS_PROCS%
 
     start_date=%TRACING.START_DATE%
     end_date=%TRACING.END_DATE%
@@ -256,12 +272,4 @@ then
     model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
 fi
 
-run_dir=${run_root}/${test_name_}/trace_${numproc}
-mkdir -p ${run_dir}
-# Remove all run folder content just in case it was already created
-rm -rf ${run_dir}/*
-cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
-cp ${cfg}/trace/generate_function_list.sh ${run_dir}
-
-cd ${run_dir}
 trace_${model}
