@@ -51,7 +51,7 @@ def parse_paramedir_filename(filename):
     :return: number of cores, information type
     """
     # The pattern of the paramedir filenames goes as follows: CORES_PARAMEDIRCFG.pm
-    pattern = "([0-9]+)_([0-9a-zA-Z_]+).pm"
+    pattern = "([a-z]+)-([0-9a-zA-Z_]+)-([0-9a-zA-Z_]+).pm"
     return parse_filename(filename, pattern)
 
 
@@ -99,11 +99,12 @@ def parse_paramedir_files(files):
     results = {}
     for filename in files:
         # Get core count and information type from filename
-        cores, information_type = parse_paramedir_filename(filename)
-        cores = int(cores)
+        component, id, information_type = parse_paramedir_filename(filename)
         # Initialize dictionary in case it does not exists
         # Retrieve the section to store the data
-        address = (cores,
+        address = (id,
+                   "Components",
+                   component,
                    "Counters",
                    information_type,
                    )
@@ -181,30 +182,37 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, lucia_files=None, timing_files=None, paramedir_files=None, dimemas_files=None,
-                 processes_per_node=48, json_file=None, param_file=None):
+    def __init__(self, timing_files=None, lucia_files=None, paramedir_files=None, dimemas_files=None,
+                 processes_per_node=48, json_file=None, param_file=None, components=None):
         # Init class variables
         self.experiment_name = None
-        self.data = None
         self.cases = None
         self.base_case = None
         self.processes_per_node = processes_per_node
         self.functions = None
+        self.function_info_src = ""
         self.param_file = self.load_param(param_file)
+        self.data = None
+        self.components = components
 
-        if not lucia_files and not timing_files and not paramedir_files and not json_file and not dimemas_files:
+        if not timing_files and not lucia_files and not paramedir_files and not json_file and not dimemas_files:
             raise AssertionError("No files provided")
 
         # Update values with the provided files
         if json_file:
             import json
             self.load_json(json_file)
+        if timing_files:
+            self.load_timings(timing_files)
+            self.function_info_src = "timing"
+        else:
+            self.function_info_src = "paramedir"
         if paramedir_files:
             self.load_paramedir(paramedir_files)
         if dimemas_files:
             self.load_dimemas(dimemas_files)
-        if timing_files:
-            self.load_timings(timing_files)
+        if lucia_files:
+            self.load_lucia(lucia_files)
 
     def __getitem__(self, item):
         return self.data[item]
@@ -212,7 +220,8 @@ class TimingInformation:
     def find_functions(self):
         functions = []
         for case in self.cases:
-            functions.append(list(self.data[case]["Counters"]["PAPI_TOT_CYC"].keys()))
+            for component in self.components:
+                functions.append(list(self.data[case]["Components"][component]["Counters"]["PAPI_TOT_CYC"].keys()))
         functions = sum(functions, [])
         return list(set(functions))
 
@@ -233,29 +242,6 @@ class TimingInformation:
         ret_val = {k: v for k, v in sorted(ret_val.items(), key=lambda item: item[1][self.base_case])}
 
         return ret_val
-
-    def load_lucia(self, lucia_files):
-        import pandas as pd
-        lucia_dict = {}
-        for lucia_file in lucia_files:
-            lucia_csv = pd.read_csv(lucia_file)
-            for _, component_data in lucia_csv.iterrows():
-                component_name = component_data[0]
-                if component_data[0] == "Coupled":
-                    lucia_dict |= component_data
-                    lucia_dict["SYPD"] = lucia_dict["sypd"]
-                else:
-                    if component_name == "oceanx":
-                        component_name = "nemo"
-                    elif component_name == "OpenIFS":
-                        component_name = "oifs"
-                    lucia_dict[component_name] = component_data
-                    lucia_dict[component_name]["SYPD"] = lucia_dict[component_name]["sypd"]
-
-        if self.data is None:
-            self.data = lucia_dict
-        else:
-            self.data = merge_dictionaries(self.data, lucia_dict)
 
     def load_param(self, param_file):
         from os.path import isfile
@@ -406,7 +392,8 @@ class TimingInformation:
             "base_case": self.base_case,
             "processes_per_node": self.processes_per_node,
             "functions": self.functions,
-            "param_file": self.param_file
+            "param_file": self.param_file,
+            "components": self.components
         }
 
         with open(filename, "w") as f:
@@ -431,10 +418,42 @@ class TimingInformation:
             self.base_case = json_data["base_case"]
             self.processes_per_node = json_data["processes_per_node"]
             self.functions = json_data["functions"]
+            self.components = json_data["components"]
             try:
                 self.param_file = json_data["param_file"]
             except KeyError:
                 pass
+
+    def load_lucia(self, lucia_files):
+        import pandas as pd
+        lucia_dict = {}
+        for lucia_file in lucia_files:
+            pattern = "(scalability)_([0-9a-zA-Z_]+)/(lucia_lite_results/*)"
+            _, id, _ = re.match(pattern, lucia_file).groups()
+            lucia_df = pd.read_csv(lucia_file)
+            lucia_dict[id] = {"Components" : {}}
+            for _, row in lucia_df.iterrows():
+                component = row["component_name"]
+                if component == "oceanx":
+                    component = "nemo"
+                elif component == "OpenIFS":
+                    component = "oifs"
+        
+                if component == "Coupled":
+                    lucia_dict[id] |= row[1:].to_dict()
+                    lucia_dict[id]["SYPD"] = lucia_dict[id]["sypd"]
+                else:   
+                    lucia_dict[id]["Components"][component] = row[1:].to_dict()
+                    lucia_dict[id]["Components"][component]["SYPD"] = lucia_dict[id]["Components"][component]["sypd"]
+
+        if self.data is None:
+            self.data = lucia_dict
+        else:
+            self.data = merge_dictionaries(self.data, lucia_dict)
+                
+        if self.cases is None:
+            self.cases = list(sorted(self.data.keys()))
+            self.base_case = min(self.cases)
 
     def load_timings(self, timing_files):
         import pickle
@@ -469,6 +488,14 @@ class TimingInformation:
             self.cases = list(sorted(self.data.keys()))
             self.base_case = min(self.cases)
         self.functions = self.find_functions()
+
+        if self.function_info_src == "paramedir":
+            for case in self.cases:
+                case_function_info = {}
+                for component in self.data[case]["Components"]:
+                    for function_name in  self.data[case]["Components"][component]["Counters"]["Time"]:
+                        case_function_info[function_name] = self.data[case]["Components"][component]["Counters"]["Time"][function_name]["Average"][0]
+                self.data[case]["FunctionInfo"] = case_function_info
 
         pass
 

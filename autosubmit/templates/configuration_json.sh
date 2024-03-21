@@ -5,6 +5,7 @@ model=%MODEL.NAME%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
+components="%MODEL.COMPONENTS%"
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
@@ -22,11 +23,21 @@ fi
 
 tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
 tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+components=($(echo $components | sed "s/\[\|\]\|,//g"))
+components=$(for v in "${components[@]}"; do echo "$v";done| sort| uniq| xargs)
 
 source ${env_sources}
 set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
+
+if [ "${model}" = "nemo" ]; then
+    input_files="scalability_*/*.timing.pkl"
+elif [ "${model}" = "ecearth4" ]; then
+    input_files="scalability_*/lucia_lite_results/table.csv"
+fi
+
+input_files="${input_files} paramedir/*pm"
 
 for test in $tests
 do
@@ -40,9 +51,10 @@ do
     echo tile_size=\'${tile_size}\' >> param.cfg
     echo number_of_processes=\'$(ls | grep -E trace_ | sed 's/.*trace_//')\' >> param.cfg
     python3 ${cfg}/parser/collector.py \
-                                    --input-files scalability_*/*.timing.pkl paramedir/*pm dimemas_traces/*dm \
+                                    --input-files ${input_files} \
                                     --output-file ${test} \
-                                    --param-file param.cfg
+                                    --param-file param.cfg \
+                                    --components "${components}"
 
 	python3 ${cfg}/parser/reporter.py \
                                     -j ${test}.json \

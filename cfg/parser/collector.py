@@ -17,6 +17,8 @@ def get_command_line_arguments():
                         help="name of the output .json file")
     parser.add_argument("-p", "--param-file", default=None,
                         help="Parameter file to supply some info")
+    parser.add_argument("-c", "--components", default=[],
+                        help="Components to report")
     return parser.parse_args()
 
 
@@ -25,6 +27,7 @@ if __name__ == "__main__":
     timing_files = []
     paramedir_files = []
     dimemas_files = []
+    lucia_files = []
 
     # Get arguments from command line
     args = get_command_line_arguments()
@@ -38,11 +41,14 @@ if __name__ == "__main__":
                 paramedir_files.append(f)
             elif f.count(".dm"):
                 dimemas_files.append(f)
+            elif f.count("table.csv"):
+                lucia_files.append(f)
             else:
                 continue
 
     output_file = args.output_file
     param_file = args.param_file
+    components = args.components.split()
     if param_file is not None:
         try:
             assert isfile(param_file)
@@ -54,7 +60,9 @@ if __name__ == "__main__":
         timing_files=timing_files,
         paramedir_files=paramedir_files,
         dimemas_files=dimemas_files,
-        param_file=param_file
+        param_file=param_file,
+        lucia_files=lucia_files,
+        components=components
     )
     # Save json file
     experiment_results.save_json(output_file)
