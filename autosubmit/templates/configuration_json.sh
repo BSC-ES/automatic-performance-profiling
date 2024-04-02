@@ -46,7 +46,7 @@ do
 
     tile_size=($(echo $tile_size | sed "s/\[\|\]\|,//g"))
 
-    echo processes_per_node='48' > param.cfg
+    echo processes_per_node='128' > param.cfg
     echo configuration_name=${test} >> param.cfg
     echo tile_size=\'${tile_size}\' >> param.cfg
     echo number_of_processes=\'$(ls | grep -E trace_ | sed 's/.*trace_//')\' >> param.cfg
@@ -64,6 +64,5 @@ do
                                     --functions-file functions_summary.txt \
                                     --most_expensive_function_summary most_expensive_function_summary.csv \
 		          	                --scatter-plots "${papi_counters_plots}" \
-				                    --dimemas-file dimemas.csv \
     	                            --tracking-folder tracking
 done

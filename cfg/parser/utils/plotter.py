@@ -5,6 +5,7 @@ def plotter(data, experiment_name, filename=None):
         matplotlib.use('Agg')
         from matplotlib import pyplot as plt
         import numpy as np
+        import os
     except ModuleNotFoundError:
         return
 
@@ -25,7 +26,7 @@ def plotter(data, experiment_name, filename=None):
     plt.plot(ideal_range, ideal_speed, ":", alpha=.25, color="k")
 
     # Format stuff
-    plt.title(experiment_name)
+    plt.title(os.path.splitext(os.path.basename(filename))[0])
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.yscale("log")
@@ -41,3 +42,4 @@ def plotter(data, experiment_name, filename=None):
     if filename is None:
         filename = experiment_name + ".png"
     plt.savefig(filename)
+    plt.close()

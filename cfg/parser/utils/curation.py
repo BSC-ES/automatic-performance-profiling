@@ -79,7 +79,7 @@ def function_curated_summary(experiment_data):
         for case in experiment_data.cases:
             if case == experiment_data.base_case:
                 continue
-            resource_increase = case / experiment_data.base_case
+            resource_increase = experiment_data[case]["nproc"] / experiment_data[experiment_data.base_case]["nproc"]
             resources += " %.2f" % resource_increase
             # Avoid dividing by zero
             speedup += " %.2f" % (base_result / (fun_results[k][case] + 1e-10))
@@ -129,27 +129,35 @@ def dimemas_curated_summary(experiment_data):
 
     return log
 
-
-def most_expensive_function_summary(experiment_data, out_file_name, length_summary=10):
+def generate_most_expensive_function_summary_data(experiment_data, out_file_name, length_summary=10, component=""):
     import csv
     from os.path import abspath
     header = []
     TIME_data = [[] for x in range(length_summary + 1)]
     function_names = [[] for x in range(len(experiment_data.cases))]
-    L3_data = [[] for x in range(len(experiment_data.cases))]
-    IPC_data = [[] for x in range(len(experiment_data.cases))]
-    for core_index, core in enumerate(experiment_data.cases):
+    for case_idx, case in enumerate(experiment_data.cases):
         header.append("function_name")
-        header.append(core)
+        header.append(case)
         n_function = 0
-        for function_name, elapsed_time in experiment_data.data[core]["FunctionInfo"].items():
-            if n_function < length_summary + 1:
-                function_names[core_index].append(function_name)
-                TIME_data[n_function].append(function_name)
-                TIME_data[n_function].append(str(elapsed_time))
-                n_function += 1
-            else:
-                break
+        if component == "":
+            for component in experiment_data.components:
+                for function_name, elapsed_time in experiment_data.data[case]["Components"][component]["FunctionInfo"].items():
+                    if n_function < length_summary + 1:
+                        function_names[case_idx].append(function_name)
+                        TIME_data[n_function].append(function_name)
+                        TIME_data[n_function].append(str(elapsed_time))
+                        n_function += 1
+                    else:
+                        break
+        else:
+            for function_name, elapsed_time in experiment_data.data[case]["Components"][component]["FunctionInfo"].items():
+                if n_function < length_summary + 1:
+                    function_names[case_idx].append(function_name)
+                    TIME_data[n_function].append(function_name)
+                    TIME_data[n_function].append(str(elapsed_time))
+                    n_function += 1
+                else:
+                    break
 
     with open(out_file_name, mode='w') as output:
         out_writer = csv.writer(output, delimiter=',')
@@ -158,6 +166,11 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
             out_writer.writerow(TIME_data[func])
         print("Written file in " + abspath(out_file_name))
 
+def most_expensive_function_summary(experiment_data, out_file_name, length_summary=10):
+    generate_most_expensive_function_summary_data(experiment_data, out_file_name, length_summary)
+    
+    for component in experiment_data.components:
+        generate_most_expensive_function_summary_data(experiment_data, component + "_" + out_file_name, length_summary, component)
 
 def function_info_csv(experiment_data, csv_folder):
     """
@@ -189,7 +202,7 @@ def function_info_csv(experiment_data, csv_folder):
         for case in experiment_data.cases:
             if case == experiment_data.base_case:
                 continue
-            resource_increase = case / experiment_data.base_case
+            resource_increase = experiment_data.data[case]["nproc"] / experiment_data.data[experiment_data.base_case]["nproc"]
 
             resources.append("{:.0f}".format(resource_increase))
             # Avoid division by zero
@@ -241,7 +254,7 @@ def tracking_function_info(experiment_data):
     return log
 
 
-def function_information_from_paramedir_outputs(experiment_data):
+def function_information_from_paramedir_outputs(experiment_data, component):
     """
     This funciton only returns the functions that are defined in the base case counters part with the elapsed time on
     each one of them and the total execution time.
@@ -249,64 +262,58 @@ def function_information_from_paramedir_outputs(experiment_data):
     :return: total_time, sorted dictionary with the time for each function
     """
     base_case = experiment_data.base_case
-    address = (base_case, "Counters")
-    counters_dictionary = go_to_dictionary_address(experiment_data, address)
-    counter = "Time"
-    functions = list(counters_dictionary["Time"].keys())
-
-    def get_address(function):
-        return (base_case,
-                "Counters",
-                counter,
-                function,
-                "Average"
-                )
-
-    times = [go_to_dictionary_address(experiment_data, get_address(function))[0] for function in functions]
-    total_time = sum(times)
-
+    address = (base_case, "Components", component)
+    component_dictionary = go_to_dictionary_address(experiment_data, address)
     functions_time = {}
-    for index, function in enumerate(functions):
-        functions_time[function] = times[index]
-    functions_time = {k: v for k, v in sorted(functions_time.items(), key=lambda item: - item[1])}
+    total_time = 0
+    for function_name in component_dictionary["Counters"]["Time"]:
+        function_time = component_dictionary["Counters"]["Time"][function_name]["Average"][0]
+        functions_time |= {function_name : function_time}
+        total_time += function_time
+
     return total_time, functions_time
 
 
 def tracking(experiment_data, folder, threshold=0.01):
     from os import makedirs
     from os.path import abspath
-    total_time, functions_time = function_information_from_paramedir_outputs(experiment_data)
 
     # Keep only the functions that represent more time than the defined threshold
-    functions = [function for function, time in functions_time.items() if time / total_time >= threshold]
     MPI_folder = folder + "/MPI"
     counters_folder = folder + "/counters"
     makedirs(MPI_folder, exist_ok=True)
     makedirs(counters_folder, exist_ok=True)
     # Joint log
     full_log = Log()
-    for function in functions:
-        MPI_log = Log()
-        counters_log = Log()
-        mpi_profile = tracking_mpi_profile_per_function(experiment_data, function)
-        counters = tracking_counters_per_function(experiment_data, function)
-        if not mpi_profile or not counters:
-            continue
+    for component in experiment_data.components:
+        total_time, functions_time = function_information_from_paramedir_outputs(experiment_data, component)
+        functions = [function for function, time in functions_time.items() if time / total_time >= threshold]
 
-        MPI_log += mpi_profile
-        counters_log += counters
+        for function in functions:
+            MPI_log = Log()
+            counters_log = Log()
+            mpi_profile = tracking_mpi_profile_per_function(experiment_data, function, component)            
+            counters = tracking_counters_per_function(experiment_data, function, component)
 
-        MPI_log.save("%s/%s.csv" % (MPI_folder, function))
-        counters_log.save("%s/%s.csv" % (counters_folder, function))
-        full_log += mpi_profile + counters
+            if mpi_profile:
+                MPI_log += mpi_profile
+                MPI_log.save("%s/%s-%s.csv" % (MPI_folder, component, function))
+                full_log += mpi_profile
+            
+            if counters:
+                counters_log += counters
+                counters_log.save("%s/%s-%s.csv" % (counters_folder, component, function))
+                full_log += counters_log
 
-    full_log.print()
+    # full_log.print()
 
 
-def tracking_mpi_profile_per_function(experiment_data, function):
+def tracking_mpi_profile_per_function(experiment_data, function, component):
     base_case = experiment_data.base_case
     address = (
         base_case,
+        "Components",
+        component,
         "Counters",
         "MPIcallprofile",
     )
@@ -351,9 +358,11 @@ def tracking_mpi_profile_per_function(experiment_data, function):
         log_txt += ",%s" % field
     log.add(log_txt)
     for case in cases:
-        log_txt = "%i" % case
+        log_txt = "%s" % case
         address = (
             case,
+            "Components",
+            component,
             "Counters",
             "MPIcallprofile",
             function,
@@ -363,16 +372,16 @@ def tracking_mpi_profile_per_function(experiment_data, function):
         for index, field in enumerate(mpi_fields):
             if index not in mpi_indices_to_keep:
                 continue
-            log_txt += ",%.1f" % data[index]
+            log_txt += ",%.1f" % data[index]            
         log.add(log_txt)
     return log
 
 
-def tracking_counters_per_function(experiment_data, function):
+def tracking_counters_per_function(experiment_data, function, component):
     log = Log()
     base_case = experiment_data.base_case
     cases = experiment_data.cases
-    address = (base_case, "Counters")
+    address = (base_case, "Components", "nemo", "Counters")
     counters_dictionary = go_to_dictionary_address(experiment_data, address)
     available_counters = list(counters_dictionary.keys())
     available_counters = ["Instructions", "Cycles", "IPC", "Time"]
@@ -385,9 +394,11 @@ def tracking_counters_per_function(experiment_data, function):
     log.add(log_text)
 
     for case in cases:
-        log_text = "%i" % case
+        log_text = "%s" % case
         for counter in available_counters:
             address = (case,
+                       "Components",
+                       component,
                        "Counters",
                        counter,
                        function,
@@ -396,7 +407,8 @@ def tracking_counters_per_function(experiment_data, function):
             try:
                 section = go_to_dictionary_address(experiment_data, address)
             except AssertionError as err:
-                return None
+                log_text += ","
+                continue
             data = section[0]
             log_text += ", %.1f" % data
 
@@ -405,7 +417,39 @@ def tracking_counters_per_function(experiment_data, function):
     return log
 
 
-def simulated_years_per_day_summary(experiment_data):
+def generate_sypd_summary_data(experiment_data, component=""):
+    log = Log()
+
+    base_case = experiment_data.base_case
+    if component == "":
+        base_case_data = experiment_data.data[base_case]
+    else:
+        address = (base_case, "Components", component)
+        base_case_data = go_to_dictionary_address(experiment_data.data, address)
+    
+    base_case_procs = base_case_data["nproc"]
+    base_case_speed = base_case_data["SYPD"]
+
+    log.add("Case, Processes, Comunication, SpeedUp, Efficiency")
+    for case in experiment_data.cases:
+        if case == experiment_data.base_case:
+            continue
+        if component == "":
+            case_data = experiment_data.data[case]
+        else:
+            address = (case, "Components", component)
+            case_data = go_to_dictionary_address(experiment_data.data, address)
+        speed = case_data["SYPD"]
+        speedup = speed / base_case_speed
+        case_procs = case_data["nproc"]
+        resource_increase = case_procs / base_case_procs
+        efficiency = speedup / resource_increase
+        log.add("%s, %4i, %.1f, %.1fx, %.2f" %
+                (case, case_procs, speed, speedup, efficiency))
+
+    return log
+
+def simulated_years_per_day_summary(experiment_data, filename):
     from cfg.parser.utils.plotter import plotter
     """
     Produces a simple log showing the simulated years per day of the different cases contained in the experiment,
@@ -413,22 +457,47 @@ def simulated_years_per_day_summary(experiment_data):
     :param experiment_data:
     :return:  Log object with a summary of the simulated years per day and few more metrics.
     """
-    # Log object to output the text
-    log = Log()
+    model_sypd_summary = generate_sypd_summary_data(experiment_data)
+    model_sypd_summary.save(filename)
+
+    for component in experiment_data.components:
+        component_sypd_summary = generate_sypd_summary_data(experiment_data, component)
+        component_sypd_summary.save(component + "_" + filename)
+
+def generate_sypd_plot_data(experiment_data, component=""):
+    x_label = "Number of processes"
+    y_label = "Simulated Years Per Day "
+    plot_data = {x_label: [], y_label: []}
 
     base_case = experiment_data.base_case
-    base_case_speed = experiment_data[base_case]["SYPD"]
+    if component == "":
+        base_case_data = experiment_data.data[base_case]
+    else:
+        address = (base_case, "Components", component)
+        base_case_data = go_to_dictionary_address(experiment_data.data, address)
+    
+    base_case_speed = base_case_data["SYPD"]
+    base_case_procs = base_case_data["nproc"]
+    
+    plot_data[x_label].append(base_case_procs)
+    plot_data[y_label].append(base_case_speed)
 
-    log.add("Processes, Comunication, SpeedUp, Efficiency")
     for case in experiment_data.cases:
-        speed = experiment_data[case]["SYPD"]
+        if case == experiment_data.base_case:
+            continue
+        if component == "":
+            case_data = experiment_data.data[case]
+        else:
+            address = (case, "Components", component)
+            case_data = go_to_dictionary_address(experiment_data.data, address)
+        speed = case_data["SYPD"]
         speedup = speed / base_case_speed
-        resource_increase = case / base_case
+        case_procs = case_data["nproc"]
+        resource_increase = case_procs / base_case_procs
         efficiency = speedup / resource_increase
-        log.add("%4i, %.1f, %.1fx, %.2f" %
-                (case, speed, speedup, efficiency))
-
-    return log
+        plot_data[x_label].append(case_procs)
+        plot_data[y_label].append(speed)
+    return plot_data
 
 
 def simulated_years_per_day_plot(experiment_data, filename):
@@ -439,29 +508,12 @@ def simulated_years_per_day_plot(experiment_data, filename):
     :param experiment_data:
     :return:  Log object with a summary of the simulated years per day and few more metrics.
     """
-    # Data to plot
-    x_label = "Number of processes"
-    y_label = "Simulated Years Per Day "
-    plot_data = {x_label: [], y_label: []}
-
-    base_case = experiment_data.base_case
-    base_case_speed = experiment_data[base_case]["SYPD"]
-
-    plot_data[x_label].append(base_case)
-    plot_data[y_label].append(base_case_speed)
-
-    for case in experiment_data.cases:
-        if case == experiment_data.base_case:
-            continue
-        speed = experiment_data[case]["SYPD"]
-        speedup = speed / base_case_speed
-        resource_increase = case / base_case
-        efficiency = speedup / resource_increase
-        plot_data[x_label].append(case)
-        plot_data[y_label].append(speed)
-
+    plot_data = generate_sypd_plot_data(experiment_data)
     plotter(experiment_name=experiment_data.experiment_name, data=plot_data, filename=filename)
 
+    for component in experiment_data.components:
+        component_plot_data = generate_sypd_plot_data(experiment_data, component)
+        plotter(experiment_name=experiment_data.experiment_name, data=component_plot_data, filename=component + "_" + filename)
 
 def experiment_comparison(experiment1, experiment2):
     cases_to_compare = list(sorted([c for c in experiment1.cases if c in experiment2.cases]))

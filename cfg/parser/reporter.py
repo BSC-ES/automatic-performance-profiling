@@ -60,7 +60,7 @@ if __name__ == "__main__":
         experiment_results.function_info_csv(csv_folder=csv_function_folder)
 
     if sypd_file is not None:
-        experiment_results.simulated_years_per_day_summary().save(sypd_file)
+        experiment_results.simulated_years_per_day_summary(sypd_file)
     if sypd_plot_file is not None:
         experiment_results.simulated_years_per_day_plot(sypd_plot_file)
     if functions_file is not None:
