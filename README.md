@@ -1,4 +1,12 @@
 # Automatic Performance Profiling
 
-The idea is to prepare all the necessary scripts to make a profile analysis as automatic as possible.
+Tool to generate preliminary performance reports of climate models. 
 
+For now the supported models are:
+
+- NEMO
+- ECE4
+
+## How to run
+
+Check the [wiki](https://earth.bsc.es/gitlab/ces/hpc-for-es-team/automatic_performance_profiling/-/wikis/_sidebar/).
