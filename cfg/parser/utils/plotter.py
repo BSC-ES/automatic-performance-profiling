@@ -1,5 +1,5 @@
 
-def plotter(data, experiment_name, filename=None):
+def plotter(data, experiment_name, scatter_labels=None, filename=None):
     try:
         import matplotlib
         matplotlib.use('Agg')
@@ -8,10 +8,14 @@ def plotter(data, experiment_name, filename=None):
         import os
     except ModuleNotFoundError:
         return
-
+    
+    if filename is None:
+        filename = experiment_name + ".png"
+    
     # Plot data
     x_label, y_label = data.keys()
     x, y = data[x_label], data[y_label]
+
     plt.plot(x, y, alpha=.25)
     plt.scatter(x, y, alpha=.5)
 
@@ -29,17 +33,14 @@ def plotter(data, experiment_name, filename=None):
     plt.title(os.path.splitext(os.path.basename(filename))[0])
     plt.xlabel(x_label)
     plt.ylabel(y_label)
+    plt.xticks(list(range(len(x))), x)
+    plt.yticks(list(range(len(y))), y)
     plt.yscale("log")
     plt.xscale("log")
-    ax = plt.gca()
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
+    
+    if not scatter_labels is None:
+        for i, label in enumerate(scatter_labels):
+            plt.annotate(label, (x[i] + 2, y[i]))
 
-    # Only show ticks on the left and bottom spines
-    ax.yaxis.set_ticks_position('left')
-    ax.xaxis.set_ticks_position('bottom')
-
-    if filename is None:
-        filename = experiment_name + ".png"
     plt.savefig(filename)
     plt.close()

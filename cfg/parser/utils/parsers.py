@@ -7,7 +7,8 @@ from cfg.parser.utils.curation import function_curated_summary, \
     function_info_csv, \
     most_expensive_function_summary, \
     simulated_years_per_day_plot, \
-    tracking
+    tracking, \
+    cases_component_data
 
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
@@ -194,6 +195,7 @@ class TimingInformation:
         self.param_file = self.load_param(param_file)
         self.data = None
         self.components = components
+        self.components_cases = None
 
         if not timing_files and not lucia_files and not paramedir_files and not json_file and not dimemas_files:
             raise AssertionError("No files provided")
@@ -225,22 +227,32 @@ class TimingInformation:
         functions = sum(functions, [])
         return list(set(functions))
 
-    def get_function_info(self):
+    # Returns the information of the functions with the following structure
+    # {function_name: {case: {"nproc": nprocs, "elapsed_time": elapsed_time}}}
+    # with the cases sorted by the nproc of the component corresponding the function
+    def get_function_info(self, component=""):
         # Create a dictionary with function info for all cases available
         ret_val = {}
-        for function in self.functions:
-            ret_val[function] = {}
-            for case in self.cases:
-                try:
-                    # Store results in dictionary if present
-                    ret_val[function][case] = self[case]["FunctionInfo"][function]
-                except KeyError:
-                    # Remove the entry and pass to the next function
-                    del ret_val[function]
-                    break
-        # Order the function results by 'Elap. Time(s)'
-        ret_val = {k: v for k, v in sorted(ret_val.items(), key=lambda item: item[1][self.base_case])}
-
+        if component == "":
+            components = self.components
+            cases = self.cases
+        else:
+            components = [component]
+            cases = self.components_cases[component]
+            
+        for component_name in components:
+            for function in self.functions:
+                ret_val[function] = {}
+                for case in cases:
+                    nproc = self[case]["Components"][component_name]["nproc"]
+                    ret_val[function][case] = {"nproc": nproc, "elapsed_time": 0}
+                    try:
+                        # Store results in dictionary if present
+                        ret_val[function][case]["elapsed_time"] = self[case]["Components"][component_name]["FunctionInfo"][function]
+                    except KeyError:
+                        # Remove the entry and pass to the next function
+                        del ret_val[function]
+                        break
         return ret_val
 
     def load_param(self, param_file):
@@ -277,9 +289,9 @@ class TimingInformation:
                 pass
         return param_dictionary
 
-    def function_summary(self):
+    def function_summary(self, filename):
         # Adding calls to different ways of processing the data
-        return function_curated_summary(self)
+        return function_curated_summary(self, filename)
 
     def most_expensive_function_summary(self, out_file_name):
         return most_expensive_function_summary(self, out_file_name)
@@ -325,8 +337,7 @@ class TimingInformation:
             ax.set_title("%s vs %s per 1000 instructions in %s" % (x_axis, y_axis, component))
             ax.set_xlabel(x_axis)
             ax.set_ylabel(y_axis)
-            i = 0
-            for f_name in function_info[component]:
+            for i, f_name in enumerate(function_info[component]):
                 if f_name[0] == "_":
                     # Remove leading underscores that python does not know how to render
                     legend_name = re.sub('^_+', "", f_name)
@@ -339,10 +350,12 @@ class TimingInformation:
                 pos_x = x[:-1]
                 pos_y = y[:-1]
 
-                c = np.full(len(x), i * (1 / len(function_info)))
+                c = np.full(len(x), i / len(function_info[component]))
                 ax.quiver(pos_x, pos_y, u, v, angles="xy", pivot="tail", headlength = 2, headaxislength = 2, scale_units = "xy", scale = 1, color = plt.cm.tab20(c))
                 ax.scatter(x, y, marker="o", label=legend_name, c = plt.cm.tab20(c), edgecolors = "black")
-                i += 1
+            
+            if len(function_info[component]) == 0:
+                ax.text(0.5, 0.5, "%s vs %s not available" % (x_axis, y_axis), ha="center", va="center")
 
             ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             fig.savefig(output_name,  bbox_inches='tight')
@@ -364,6 +377,9 @@ class TimingInformation:
     def tracking(self, folder):
         return tracking(self, folder)
 
+    def cases_component_data(self):
+        return cases_component_data(self)
+
     def save_json(self, filename=None):
         import json
         # Check if file name has been passed, if not use experiment name
@@ -383,7 +399,8 @@ class TimingInformation:
             "processes_per_node": self.processes_per_node,
             "functions": self.functions,
             "param_file": self.param_file,
-            "components": self.components
+            "components": self.components,
+            "components_cases": self.components_cases
         }
 
         with open(filename, "w") as f:
@@ -409,10 +426,26 @@ class TimingInformation:
             self.processes_per_node = json_data["processes_per_node"]
             self.functions = json_data["functions"]
             self.components = json_data["components"]
+            self.components_cases = json_data["components_cases"]
             try:
                 self.param_file = json_data["param_file"]
             except KeyError:
                 pass
+        
+        self.rename_cases()
+
+    # This function renames the cases after getting all the info about them to have shorter names in the report
+    # it is not done before because is easier to merge the same cases if they have the same id
+    def rename_cases(self):
+        for i in range(0, len(self.cases)): 
+            new_case_name = "Case %i" % i           
+            if self.cases[i] == self.base_case:
+                self.base_case = new_case_name
+            self.data[new_case_name] = self.data.pop(self.cases[i])
+            for components in self.components:
+                self.components_cases[components][self.components_cases[components].index(self.cases[i])] = new_case_name
+            self.cases[i] = new_case_name
+
 
     def load_lucia(self, lucia_files):
         import pandas as pd
@@ -445,6 +478,11 @@ class TimingInformation:
             self.cases = list(sorted(self.data.keys()))
             self.base_case = min(self.cases)
 
+        if self.components_cases is None:
+            self.components_cases = {}   
+            for component in self.components:
+                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["Components"][component]["nproc"])
+
     def load_timings(self, timing_files):
         import pickle
         timing_info_dict = {}
@@ -463,7 +501,7 @@ class TimingInformation:
             self.data = merge_dictionaries(self.data, timing_info_dict)
 
         if self.cases is None:
-            self.cases = list(sorted(self.data.keys()))
+            self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
             self.base_case = min(self.cases)
 
     def load_paramedir(self, files):

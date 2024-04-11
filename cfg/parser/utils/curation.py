@@ -61,7 +61,7 @@ def go_to_dictionary_address(dictionary, address):
     return dictionary
 
 
-def function_curated_summary(experiment_data):
+def function_curated_summary(experiment_data, filename):
     """
     This is an example of a function to curate the results and return something understandable
     :param experiment_data:
@@ -69,26 +69,32 @@ def function_curated_summary(experiment_data):
     """
     log = Log()
     # Get the dictionary of function
-    fun_results = experiment_data.get_function_info()
 
-    for k, v in fun_results.items():
-        resources = ""
-        speedup = ""
-        efficiency = ""
-        base_result = fun_results[k][experiment_data.base_case]
-        for case in experiment_data.cases:
-            if case == experiment_data.base_case:
-                continue
-            resource_increase = experiment_data[case]["nproc"] / experiment_data[experiment_data.base_case]["nproc"]
-            resources += " %.2f" % resource_increase
-            # Avoid dividing by zero
-            speedup += " %.2f" % (base_result / (fun_results[k][case] + 1e-10))
-            efficiency += " %.2f" % ((base_result / (fun_results[k][case] + 1e-10)) / resource_increase)
-        log.add("%20s\tResources : %s" % (k, resources))
-        log.add("%20s\tSpeed-up  : %s" % ("", speedup))
-        log.add("%20s\tEfficiency: %s" % ("", efficiency))
-        log.add("_" * 30)
-    return log
+    for component in experiment_data.components: 
+        fun_results = experiment_data.get_function_info(component) 
+        for k, v in fun_results.items():
+            resources = ""
+            speedup = ""
+            efficiency = ""
+            
+            base_case = experiment_data.components_cases[component][0]
+            base_result = fun_results[k][base_case]["elapsed_time"]
+            base_nproc = fun_results[k][base_case]["nproc"]
+            for case in experiment_data.components_cases[component]:
+                case_nproc = fun_results[k][case]["nproc"]
+                case_speed = fun_results[k][case]["elapsed_time"]
+                resource_increase = case_nproc / base_nproc
+                resources += " %.2f" % case_nproc
+                # Avoid dividing by zero
+                speedup += " %.2f" % (base_result / (case_speed + 1e-10))
+                efficiency += " %.2f" % ((base_result / (case_speed + 1e-10)) / resource_increase)
+            
+            log.add("%20s\tResources : %s" % (k, resources))
+            log.add("%20s\tSpeed-up  : %s" % ("", speedup))
+            log.add("%20s\tEfficiency: %s" % ("", efficiency))
+            log.add("_" * 30)
+
+    log.save(filename)
 
 
 def dimemas_curated_summary(experiment_data):
@@ -188,39 +194,39 @@ def function_info_csv(experiment_data, csv_folder):
     log = Log()
 
     # Get a dictionary with function info ordered by elapsed Time
-    fun_results = experiment_data.get_function_info()
+    for component in experiment_data.components:
+        fun_results = experiment_data.get_function_info(component)
+        
+        for k, v in fun_results.items():
 
-    for k, v in fun_results.items():
+            # List to store data
+            resources = []
+            speedup = []
+            efficiency = []
 
-        # List to store data
-        resources = []
-        speedup = []
-        efficiency = []
+            base_case = next(iter(fun_results[k]))
+            base_case_nprocs = fun_results[k][base_case]["nproc"]
+            base_result = fun_results[k][base_case]["elapsed_time"]
+            # Fill list with formatted data
+            for case in fun_results[k].keys():
+                nproc = fun_results[k][case]["nproc"]
+                resource_increase = nproc / base_case_nprocs
+                resources.append("%i" % nproc)
+                # Avoid division by zero
+                speedup.append("{:.2f}".format(base_result / (fun_results[k][case]["elapsed_time"] + 1e-10)))
+                efficiency.append("{:.2f}".format((base_result / (fun_results[k][case]["elapsed_time"] + 1e-10)) / resource_increase))
 
-        base_result = fun_results[k][experiment_data.base_case]
-        # Fill list with formatted data
-        for case in experiment_data.cases:
-            if case == experiment_data.base_case:
-                continue
-            resource_increase = experiment_data.data[case]["nproc"] / experiment_data.data[experiment_data.base_case]["nproc"]
+            # Declare array to be saved in csv
+            header = np.array(['resources', 'speedup', 'efficiency'], dtype=str)
 
-            resources.append("{:.0f}".format(resource_increase))
-            # Avoid division by zero
-            speedup.append("{:.2f}".format(base_result / (fun_results[k][case] + 1e-10)))
-            efficiency.append("{:.2f}".format((base_result / (fun_results[k][case] + 1e-10)) / resource_increase))
+            data = np.empty((3, len(resources)))
+            data[0, :] = resources
+            data[1, :] = speedup
+            data[2, :] = efficiency
 
-        # Declare array to be saved in csv
-        header = np.array(['resources', 'speedup', 'efficiency'], dtype=str)
-
-        data = np.empty((3, len(resources)))
-        data[0, :] = resources
-        data[1, :] = speedup
-        data[2, :] = efficiency
-
-        final_table = np.column_stack((header, data))
-        np.savetxt(csv_folder + '/' + k + '.csv', final_table, delimiter=',', fmt="%s")
+            final_table = np.column_stack((header, data))
+            np.savetxt(csv_folder + '/' + component + '_' + k + '.csv', final_table, delimiter=',', fmt="%s")
     return log
-
 
 def tracking_function_info(experiment_data):
     log = Log()
@@ -420,20 +426,21 @@ def tracking_counters_per_function(experiment_data, function, component):
 def generate_sypd_summary_data(experiment_data, component=""):
     log = Log()
 
-    base_case = experiment_data.base_case
     if component == "":
+        base_case = experiment_data.base_case
         base_case_data = experiment_data.data[base_case]
+        cases = experiment_data.cases
     else:
+        cases = experiment_data.components_cases[component]
+        base_case = cases[0]
         address = (base_case, "Components", component)
         base_case_data = go_to_dictionary_address(experiment_data.data, address)
     
     base_case_procs = base_case_data["nproc"]
     base_case_speed = base_case_data["SYPD"]
 
-    log.add("Case, Processes, Comunication, SpeedUp, Efficiency")
-    for case in experiment_data.cases:
-        if case == experiment_data.base_case:
-            continue
+    log.add("Case, Processes, SYPD, SpeedUp, Efficiency")
+    for case in cases:
         if component == "":
             case_data = experiment_data.data[case]
         else:
@@ -467,24 +474,20 @@ def simulated_years_per_day_summary(experiment_data, filename):
 def generate_sypd_plot_data(experiment_data, component=""):
     x_label = "Number of processes"
     y_label = "Simulated Years Per Day "
-    plot_data = {x_label: [], y_label: []}
-
-    base_case = experiment_data.base_case
+    plot_data = {x_label: np.empty(0), y_label: np.empty(0)}
+    
     if component == "":
-        base_case_data = experiment_data.data[base_case]
+        base_case = experiment_data.base_case
+        base_case_speed = experiment_data.data[base_case]["SYPD"]
+        base_case_procs = experiment_data.data[base_case]["nproc"]
+        cases = experiment_data.cases
     else:
-        address = (base_case, "Components", component)
-        base_case_data = go_to_dictionary_address(experiment_data.data, address)
+        base_case = experiment_data.components_cases[component][0]
+        base_case_speed = experiment_data.data[base_case]["Components"][component]["SYPD"]
+        base_case_procs = experiment_data.data[base_case]["Components"][component]["nproc"]
+        cases = experiment_data.components_cases[component]
     
-    base_case_speed = base_case_data["SYPD"]
-    base_case_procs = base_case_data["nproc"]
-    
-    plot_data[x_label].append(base_case_procs)
-    plot_data[y_label].append(base_case_speed)
-
-    for case in experiment_data.cases:
-        if case == experiment_data.base_case:
-            continue
+    for case in cases:
         if component == "":
             case_data = experiment_data.data[case]
         else:
@@ -495,8 +498,9 @@ def generate_sypd_plot_data(experiment_data, component=""):
         case_procs = case_data["nproc"]
         resource_increase = case_procs / base_case_procs
         efficiency = speedup / resource_increase
-        plot_data[x_label].append(case_procs)
-        plot_data[y_label].append(speed)
+        plot_data[x_label] = np.append(plot_data[x_label], case_procs)
+        plot_data[y_label] = np.append(plot_data[y_label], speed)
+
     return plot_data
 
 
@@ -509,11 +513,27 @@ def simulated_years_per_day_plot(experiment_data, filename):
     :return:  Log object with a summary of the simulated years per day and few more metrics.
     """
     plot_data = generate_sypd_plot_data(experiment_data)
-    plotter(experiment_name=experiment_data.experiment_name, data=plot_data, filename=filename)
+    plotter(experiment_name=experiment_data.experiment_name, data=plot_data, scatter_labels=experiment_data.cases, filename=filename)
 
     for component in experiment_data.components:
         component_plot_data = generate_sypd_plot_data(experiment_data, component)
-        plotter(experiment_name=experiment_data.experiment_name, data=component_plot_data, filename=component + "_" + filename)
+        plotter(experiment_name=experiment_data.experiment_name, data=component_plot_data,  scatter_labels=experiment_data.components_cases[component], filename=component + "_" + filename)
+
+def cases_component_data(experiment_data):
+    log = Log()
+    
+    header = "Case"
+    for component in experiment_data.components:
+        header += ",%s" % component
+    log.add(header)
+    
+    for case in experiment_data.cases:
+        row = case
+        for component in experiment_data.components:
+            row += ",%i" % experiment_data[case]["Components"][component]["nproc"]
+        log.add(row)
+    
+    log.save("cases_info.csv")
 
 def experiment_comparison(experiment1, experiment2):
     cases_to_compare = list(sorted([c for c in experiment1.cases if c in experiment2.cases]))
@@ -563,10 +583,18 @@ def multiexperiment_comparison(experiments, field1):
     processes_per_node = [int(exp.processes_per_node.replace("'", "")) for exp in experiments]
 
     # Find cases with common number of node among the experiments
-    common_cases = set([ex / processes_per_node[0] for ex in experiments[0].cases])
-    for index, exp in enumerate(experiments[1:]):
-        n_node = [case / processes_per_node[index + 1] for case in exp.cases]
-        common_cases.intersection_update(n_node)
+    common_cases = {}
+    
+    # 
+    for experiment in experiments:
+        for case in experiments.cases:
+            nproc = experiment[case]["nproc"]
+            common_cases[nproc] = case  
+    
+    # common_cases = set([experiments[0][ex]["nproc"] / processes_per_node[0] for ex in experiments[0].cases])
+    # for index, exp in enumerate(experiments[1:]):
+    #     n_node = [exp[case]["nproc"] / processes_per_node[index + 1] for case in exp.cases]
+    #     common_cases.intersection_update(n_node)
 
     cases_to_compare = list(common_cases)
     base_case = min(cases_to_compare)

@@ -1,15 +1,20 @@
+#!/bin/bash
+
 model=%MODEL.NAME%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 latex_folder=${cfg}/latex/
 report_folder=%REPORT.FOLDER%
 report_full_path=${report_folder}/%REPORT.NAME%.pkl
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=${cfg}/trace_analysis/
-members="%EXPERIMENT.MEMBERS%"
+members="StrongScaling HardwareBenchmarks"
+components="%MODEL.COMPONENTS%"
 platform=%COMMON.PLATFORM%
+
+components=($(echo $components | sed "s/\[\|\]\|,//g"))
+components=$(for v in "${components[@]}"; do echo "$v";done| sort| uniq| xargs)
 
 function add_HardwareBenchmarks()
 {
@@ -36,7 +41,7 @@ function add_StrongScaling()
     tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
     tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 
-    dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
+    # dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 
     for test in $tests
     do
@@ -49,6 +54,13 @@ function add_StrongScaling()
         python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Model Factors" --add-img modelfactors -T ${cfg}/latex/text/ModelFactors.txt
         
         # Scalability
+
+        python3 ${latex_folder}/ReportGenerator.py \
+                                                -O ${report_full_path} \
+                                                -S "Scalability" \
+                                                --add-csv cases_info.csv
+
+
         python3 ${latex_folder}/ReportGenerator.py \
                                                 -O ${report_full_path} \
                                                 -S "Scalability" \
@@ -56,49 +68,56 @@ function add_StrongScaling()
                                                 --add-img-caption ${cfg}/latex/text/captions/Scalability.txt \
                                                 --add-csv ${test}_scaling.csv \
                                                 -T ${cfg}/latex/text/Scalability.txt
-        # Paramedir
-        trace_folders=$(find | grep trace_[0-9]*$)
-        for trace_folder in ${trace_folders}
-        do
-            n_cores=$(echo $trace_folder | sed 's/trace_//')
-            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "MPI Call Profile" --add-csv ${test_root}/paramedir/${n_cores}_MPIcallprofile.csv --csv-convert -p
+        
+        for component in ${components}; do
+            python3 ${latex_folder}/ReportGenerator.py \
+                                                    -O ${report_full_path} \
+                                                    -S "${component^^} Scalability" \
+                                                    --add-img ${component}_${test}_scaling.png \
+                                                    --add-csv ${component}_${test}_scaling.csv
         done
 
-        # Paraver TODO X11 issue
-        # for paraver_image in paraver_images/*; do
-        #     n_cores=${paraver_image##*/}
-        #     python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Paraver" -s $n_cores' Core' --add-img $paraver_image
-        # done
-        # python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Paraver" -T ${cfg}/latex/text/ParaverViews.txt
-
-        # Dimemas TODO X11 issue
-        # python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Dimemas" --add-csv dimemas.csv -T ${cfg}/latex/text/Dimemas.txt
-        # for config in ${dimemas_configurations}; do \
-        #     config_type=${config##*/} ;\
-        #     config_type=${config_type%.*} ;\
-        #     for cores in ${number_of_processes}; do \
-        #         image_name=${cores}_${config_type}.png ;\
-        #         python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Dimemas" -s ${config_type} --add-img dimemas_images/${image_name} ;\
-        #     done ;\
-        # done
+        # Paramedir
+        for trace_folder in trace_*
+        do
+            trace_id=$(echo $trace_folder | sed 's/trace_//')
+            for component in ${components}; do
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} MPI Call Profile" --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv --csv-convert -p
+            done
+        done
 
         # Function detail
-        functions=$(find function_csv/*)
         python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" -T ${cfg}/latex/text/Function.txt
-        python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-csv most_expensive_function_summary.csv
-        for scatter_plot in ${papi_counters_plots}; do
-            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" --add-img ${scatter_plot}.png
-        done 
-
-        for func in ${functions} ; do \
-            file_name=${func##function_csv/} ;\
-            file_name=${file_name##tracking/MPI/} ;\
-            func_name=${file_name%.csv} ;\
-            echo ${func_name} ;\
-            echo ${file_name} ;\
-            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" -s  ${func_name} --add-csv  function_csv/${file_name}  --silent;\
-            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" -s  ${func_name} --add-csv  tracking/MPI/${file_name} -p  --silent ;\
-            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" -s  ${func_name} --add-csv  tracking/counters/${file_name} -p --silent ;\
+        python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "Functions detailed report" -s "Most expensive function summary" --add-csv most_expensive_function_summary.csv
+        for component in ${components}; do
+            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} Functions detailed report" -s "Most expensive function summary" --add-csv ${component}_most_expensive_function_summary.csv
+            for scatter_plot in ${papi_counters_plots}; do
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} Functions detailed report" -s "PAPI counters plots" --add-img ${component}-${scatter_plot}.png
+            done 
+        done
+    
+        for component in ${components}; do
+            functions=$(find function_csv/* | grep ${component})
+            for func in ${functions} ; do \
+                file_name=${func##function_csv/} ;\
+                file_name=${file_name##tracking/MPI/} ;\
+                func_name=${file_name%.csv} ;\
+                echo ${func_name} ;\
+                echo ${file_name} ;\
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} Functions detailed report" -s  ${func_name} --add-csv  function_csv/${file_name}  --silent;\
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} Functions detailed report" -s  ${func_name} --add-csv  tracking/MPI/${file_name} -p  --silent ;\
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} Functions detailed report" -s  ${func_name} --add-csv  tracking/counters/${file_name} -p --silent ;\
+            done
+        done
+        
+        # Paraver TODO X11 issue
+        for component in ${components}; do
+            for case in paraver_images/*; do
+                for paraver_image in $(find $case | grep -E ".*@${component}.*png"); do 
+                    python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} Paraver" -s "$(basename ${case})" --add-img ${paraver_image}
+                done 
+            done
+            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path} -S "${component^^} Paraver" -T ${cfg}/latex/text/ParaverViews.txt
         done
     done
 }

@@ -64,7 +64,7 @@ if __name__ == "__main__":
     if sypd_plot_file is not None:
         experiment_results.simulated_years_per_day_plot(sypd_plot_file)
     if functions_file is not None:
-        experiment_results.function_summary().save(functions_file)
+        experiment_results.function_summary(functions_file)
     if most_expensive_function_summary is not None:
         experiment_results.most_expensive_function_summary(out_file_name=most_expensive_function_summary)
 
@@ -78,3 +78,5 @@ if __name__ == "__main__":
         experiment_results.dimemas_summary().save(dimemas_file)
     if tracking_folder is not None:
         experiment_results.tracking(tracking_folder)
+    
+    experiment_results.cases_component_data()
