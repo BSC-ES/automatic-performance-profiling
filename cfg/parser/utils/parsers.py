@@ -8,7 +8,8 @@ from cfg.parser.utils.curation import function_curated_summary, \
     most_expensive_function_summary, \
     simulated_years_per_day_plot, \
     tracking, \
-    cases_component_data
+    cases_component_data, \
+    coupling_info
 
 from os.path import basename
 from cfg.parser.utils.histograms import process_category_histogram, split_3d_histogram
@@ -196,6 +197,7 @@ class TimingInformation:
         self.data = None
         self.components = components
         self.components_cases = None
+        self.cases_translation = {}
 
         if not timing_files and not lucia_files and not paramedir_files and not json_file and not dimemas_files:
             raise AssertionError("No files provided")
@@ -376,6 +378,9 @@ class TimingInformation:
 
     def tracking(self, folder):
         return tracking(self, folder)
+    
+    def coupling_info(self, folder):
+        return coupling_info(self, folder)
 
     def cases_component_data(self):
         return cases_component_data(self)
@@ -400,7 +405,8 @@ class TimingInformation:
             "functions": self.functions,
             "param_file": self.param_file,
             "components": self.components,
-            "components_cases": self.components_cases
+            "components_cases": self.components_cases,
+            "cases_translation": self.cases_translation
         }
 
         with open(filename, "w") as f:
@@ -427,6 +433,7 @@ class TimingInformation:
             self.functions = json_data["functions"]
             self.components = json_data["components"]
             self.components_cases = json_data["components_cases"]
+            self.cases_translation = json_data["cases_translation"]
             try:
                 self.param_file = json_data["param_file"]
             except KeyError:
@@ -438,7 +445,8 @@ class TimingInformation:
     # it is not done before because is easier to merge the same cases if they have the same id
     def rename_cases(self):
         for i in range(0, len(self.cases)): 
-            new_case_name = "Case %i" % i           
+            new_case_name = "Case %i" % i      
+            self.cases_translation[new_case_name] = self.cases[i]     
             if self.cases[i] == self.base_case:
                 self.base_case = new_case_name
             self.data[new_case_name] = self.data.pop(self.cases[i])

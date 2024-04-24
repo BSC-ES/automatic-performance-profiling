@@ -64,5 +64,6 @@ do
                                     --functions-file functions_summary.txt \
                                     --most_expensive_function_summary most_expensive_function_summary.csv \
 		          	                --scatter-plots "${papi_counters_plots}" \
-    	                            --tracking-folder tracking
+    	                            --tracking-folder tracking \
+    	                            --coupling-folder coupling
 done

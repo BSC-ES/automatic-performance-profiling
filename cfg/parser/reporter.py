@@ -34,7 +34,8 @@ def get_command_line_instructions():
                         help="Produce dimemas report")
     parser.add_argument("--tracking-folder", default=None,
                         help="Produce tracking report")
-
+    parser.add_argument("--coupling-folder", default=None,
+                        help="Produce coupling report")
     return parser.parse_args()
 
 
@@ -51,6 +52,7 @@ if __name__ == "__main__":
     scatter_plots = arguments.scatter_plots
     dimemas_file = arguments.dimemas_file
     tracking_folder = arguments.tracking_folder
+    coupling_folder = arguments.coupling_folder
 
     # Load the json file provided
     experiment_results = TimingInformation(json_file=json_file)
@@ -78,5 +80,7 @@ if __name__ == "__main__":
         experiment_results.dimemas_summary().save(dimemas_file)
     if tracking_folder is not None:
         experiment_results.tracking(tracking_folder)
+    if coupling_folder is not None:
+        experiment_results.coupling_info(coupling_folder)
     
     experiment_results.cases_component_data()

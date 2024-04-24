@@ -135,6 +135,34 @@ def dimemas_curated_summary(experiment_data):
 
     return log
 
+def coupling_info(experiment_data, coupling_folder):
+    import numpy as np
+    import os
+
+    for case in experiment_data.cases:
+        columns = 6
+        # components + model + header
+        rows = len(experiment_data.components) + 2
+        case_data = np.empty((rows, columns), "U25")
+        case_data[0, :] = np.array(["component", "nproc", "chsy", "cpl_cost", "waiting_time", "interpo_time"], dtype=str)
+        i = 1
+        
+        for component in experiment_data.components:
+            component_dict = go_to_dictionary_address(experiment_data.data, (case, "Components", component))
+            case_data[i, 0] = component
+            for j in range(1, columns):
+                case_data[i, j] = str(component_dict[case_data[0, j]])
+            i += 1
+        
+        case_dict = experiment_data.data[case]
+        case_data[i, 0] = "coupled"
+        for j in range(1, columns):
+            case_data[i, j] = str(case_dict[case_data[0, j]])
+        
+        case_folder = os.path.join(coupling_folder, experiment_data.cases_translation[case])
+        os.makedirs(case_folder, exist_ok=True)
+        np.savetxt(os.path.join(case_folder, "summary.csv"), case_data, delimiter=',', fmt="%s")
+
 def generate_most_expensive_function_summary_data(experiment_data, out_file_name, length_summary=10, component=""):
     import csv
     from os.path import abspath
