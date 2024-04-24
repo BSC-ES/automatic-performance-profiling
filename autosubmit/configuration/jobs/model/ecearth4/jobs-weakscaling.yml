@@ -19,39 +19,9 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-  trace:
-    FILE: autosubmit/templates/extrae.sh
-    FOR:
-      TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
-      NAME: "%WEAKSCALING.NAMES%"
-      PROCESSORS: "%WEAKSCALING.PROCESSORS%"
-      OIFS_PROCS: "%WEAKSCALING.OIFS_PROCS%"
-      NEMO_PROCS: "%WEAKSCALING.NEMO_PROCS%"
-      XIOS_PROCS: "%WEAKSCALING.XIOS_PROCS%"
-    DEPENDENCIES:
-      functions_dir:
-        MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-            DATES_TO: None
-    RUNNING: member
-    WALLCLOCK: 02:00
-    CHECK: "true"
-    NOTIFY_ON: FAILED
   report_setup:
     FILE: autosubmit/templates/report_setup.sh
     DEPENDENCIES:
-      trace:
-        FOR:
-          TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
-          NAME: "%WEAKSCALING.NAMES%"
-          PROCESSORS: "%WEAKSCALING.PROCESSORS%"
-        MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-            DATES_TO: None
       Scalability:
         FOR:
           TEST_NAME: "%WEAKSCALING.TEST_NAMES%"

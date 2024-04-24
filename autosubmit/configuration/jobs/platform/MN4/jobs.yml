@@ -32,7 +32,5 @@ JOBS:
     PLATFORM: marenostrum0
   configuration_json:
     PLATFORM: marenostrum0
-  add_section:
-    PLATFORM: marenostrum0
   report:
     PLATFORM: marenostrum0
