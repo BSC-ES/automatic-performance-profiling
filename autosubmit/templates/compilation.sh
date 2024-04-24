@@ -13,6 +13,7 @@ platform=%COMMON.PLATFORM%
 exp_root=%CURRENT_ROOTDIR%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
+members="%EXPERIMENT.MEMBERS%"
 arch_names="%MODEL.ARCH_NAMES%"
 arch_names=($(echo $arch_names | sed "s/\[\|\]\|,//g"))
 arch_names=$(for v in "${arch_names[@]}"; do echo "$v";done| sort| uniq| xargs)
@@ -98,8 +99,8 @@ function compile_ecearth4()
         arch_file=${cfg}/arch/${platform}/${model}/${arch_name_prod}.yml
         mkdir -p ${arch_name_prod}
         rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_prod}
+        sed -i "/NLOGPRT/{n;s/.*/    1 0 1/}" ${arch_name_prod}/runtime/se/templates/oasis/namcouple.j2
         cd ${arch_name_prod}/sources/se
-        sed -i 's/NLOGPRT//' templates/oasis/namcouple.j2
         cp ${arch_file} platforms
         se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
 
@@ -144,7 +145,9 @@ mkdir -p $binaries
 source $env_sources
 
 # Compile hardware benchmarks
-compile_hw
+if echo ${members[@]} | grep -q -w "HardwareBenchmarks"; then
+    compile_hw
+fi
 
 # Compile all model arch configurations
 compile_${model}
