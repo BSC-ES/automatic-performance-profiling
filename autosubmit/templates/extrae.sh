@@ -1,3 +1,4 @@
+#!/bin/bash
 ###################
 # AS variables
 ###################
@@ -17,8 +18,9 @@ papi_counters="%TRACING.PAPI_COUNTERS%"
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
 #####################################################################################################################
-# Parameters: run_dir
-# Purpose: Creates the extrae launch script
+# Brief: Creates the extrae launch script trace.sh in the provided directory
+# Parameters:
+#   $1 - Directory where to store the trace.sh
 #####################################################################################################################
 function create_trace_sh()
 {
@@ -39,8 +41,11 @@ EOF
 }
 
 #####################################################################################################################
-# Parameters: components_names components_processors trace_file
-# Purpose: Cut the whole model trace by its components
+# Brief: Cut the whole model trace by its components
+# Param: 
+#   $1 - Components names array name
+#   $2 - Components processors array name
+#   $3 - Trace file *.prv
 #####################################################################################################################
 function cut_trace()
 {
@@ -171,8 +176,10 @@ function trace_ecearth4()
     oifs_procs=%CURRENT_OIFS_PROCS%
     nemo_procs=%CURRENT_NEMO_PROCS%
     xios_procs=%CURRENT_XIOS_PROCS%
+    oifs_omp_threads=%CURRENT_OIFS_OMP_THREADS%
 
-    run_dir=${run_root}/${test_name_}/trace_xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    run_dir=${run_root}/${test_name_}/trace_${run_id}
     mkdir -p ${run_dir}
     # Remove all run folder content just in case it was already created
     rm -rf ${run_dir}/*
@@ -184,7 +191,7 @@ function trace_ecearth4()
     create_trace_sh ${run_dir}
 
     # Update all variable according to AS config
-    config_file=trace-${test}-${numproc}.yml
+    config_file=trace-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/config.yml ${config_file}
 
     sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
@@ -196,18 +203,19 @@ function trace_ecearth4()
     freq=%TRACING.FREQ%
     interval=%TRACING.INTERVAL%
 
-    sed -i "s/RUN_FOLDER/${sed_run_dir}/"        ${config_file}
-    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/" ${config_file}
-    sed -i "s/OIFS_PROCS/${oifs_procs}/"         ${config_file}
-    sed -i "s/OIFS_PPN/${oifs_procs}/"           ${config_file}
-    sed -i "s/NEMO_PROCS/${nemo_procs}/"         ${config_file}
-    sed -i "s/NEMO_PPN/${nemo_procs}/"           ${config_file}
-    sed -i "s/XIOS_PROCS/${xios_procs}/"         ${config_file}
-    sed -i "s/XIOS_PPN/${xios_procs}/"           ${config_file}
-    sed -i "s/FREQUENCY/${freq}/"                ${config_file}
-    sed -i "s/START_DATE/${start_date}/"         ${config_file}
-    sed -i "s/END_DATE/${end_date}/"             ${config_file}
-    sed -i "s/INTERVAL_VAL/${interval}/"         ${config_file}
+    sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
+    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
+    sed -i "s/OIFS_PROCS/${oifs_procs}/"             ${config_file}
+    sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
+    sed -i "s/OIFS_PPN/${oifs_procs}/"               ${config_file}
+    sed -i "s/NEMO_PROCS/${nemo_procs}/"             ${config_file}
+    sed -i "s/NEMO_PPN/${nemo_procs}/"               ${config_file}
+    sed -i "s/XIOS_PROCS/${xios_procs}/"             ${config_file}
+    sed -i "s/XIOS_PPN/${xios_procs}/"               ${config_file}
+    sed -i "s/FREQUENCY/${freq}/"                    ${config_file}
+    sed -i "s/START_DATE/${start_date}/"             ${config_file}
+    sed -i "s/END_DATE/${end_date}/"                 ${config_file}
+    sed -i "s/INTERVAL_VAL/${interval}/"             ${config_file}
 
     # Change launch script
     sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}

@@ -13,13 +13,20 @@ number_of_cores=%NUMPROC%
 test="%CURRENT_TEST_NAME%"
 
 #####################################################################################################################
-# Path variables: inidata, binaries, compilation, run_dir
-# Other variables: test_name_, number_of_cores
-# Purpose: Updates the namelists with the AS member configuration and runs NEMO
+# Biref: Updates the namelists with the AS member configuration and runs NEMO
+# Param: None
+# Path variables: 
+#   - inidata
+#   - binaries
+#   - compilation
+#   - run_dir
+# Other variables: 
+#   - test_name
+#   - number_of_cores
 #####################################################################################################################
 function run_nemo()
 {
-    run_dir=${run_root}/${test_name_}/scalability_nemo_${number_of_cores}
+    run_dir=${run_root}/${test_name}/scalability_nemo_${number_of_cores}
     mkdir -p ${run_dir}
 
     source ${env_sources}
@@ -30,7 +37,7 @@ function run_nemo()
     configuration_folder=tests
     
     # Link inidata
-    cp ${inidata}/$test_name_/* ${run_dir}
+    cp ${inidata}/$test_name/* ${run_dir}
     ln -rsf ${inidata}/original ${run_dir}
     rsync -rv --exclude=.nc ${inidata} ${run_dir}
 
@@ -58,17 +65,27 @@ function run_nemo()
 }
 
 #####################################################################################################################
-# Path variables: run_root, compilation
-# Other variables: test_name_, model, number_of_cores, test
-# Purpose: Updates the SE config file with the AS config and runs EC-Earth 4
+# Brief: Updates the SE config file with the AS config and runs EC-Earth 4
+# Param: None
+# Path variables: 
+#   - run_root
+#   - compilation
+# Other variables:
+#   - test_name
+#   - model
+#   - number_of_cores
+#   - test
 #####################################################################################################################
 function run_ecearth4()
 {
     oifs_procs=%CURRENT_OIFS_PROCS%
     nemo_procs=%CURRENT_NEMO_PROCS%
     xios_procs=%CURRENT_XIOS_PROCS%
+    oifs_omp_threads=%CURRENT_OIFS_OMP_THREADS%
 
-    run_dir=${run_root}/${test_name_}/scalability_xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    test_dir=${run_root}/${test_name}
+    run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    run_dir=${test_dir}/scalability_${run_id}
 
     # Remove all run folder content just in case
     rm -rf ${run_dir}/*
@@ -76,34 +93,31 @@ function run_ecearth4()
     cd ${compilation}/${arch_name}-prod/runtime/se
 
     # Update all variable according to AS config
-    config_file=config-${test}-${number_of_cores}.yml
+    config_file=config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/config.yml ${config_file}
 
     sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
     ecearth_root=${compilation}/${arch_name}-prod
     sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
 
-    oifs_procs=%CURRENT_OIFS_PROCS%
-    nemo_procs=%CURRENT_NEMO_PROCS%
-    xios_procs=%CURRENT_XIOS_PROCS%
-
     start_date=%MODEL.START_DATE%
     end_date=%MODEL.END_DATE%
     freq=%MODEL.FREQ%
     interval=%MODEL.INTERVAL%
 
-    sed -i "s/RUN_FOLDER/${sed_run_dir}/"        ${config_file}
-    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/" ${config_file}
-    sed -i "s/OIFS_PROCS/${oifs_procs}/"         ${config_file}
-    sed -i "s/OIFS_PPN/${oifs_procs}/"           ${config_file}
-    sed -i "s/NEMO_PROCS/${nemo_procs}/"         ${config_file}
-    sed -i "s/NEMO_PPN/${nemo_procs}/"           ${config_file}
-    sed -i "s/XIOS_PROCS/${xios_procs}/"         ${config_file}
-    sed -i "s/XIOS_PPN/${xios_procs}/"           ${config_file}
-    sed -i "s/FREQUENCY/${freq}/"                ${config_file}
-    sed -i "s/START_DATE/${start_date}/"         ${config_file}
-    sed -i "s/END_DATE/${end_date}/"             ${config_file}
-    sed -i "s/INTERVAL_VAL/${interval}/"         ${config_file}
+    sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
+    sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
+    sed -i "s/OIFS_PROCS/${oifs_procs}/"             ${config_file}
+    sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
+    sed -i "s/OIFS_PPN/${oifs_procs}/"               ${config_file}
+    sed -i "s/NEMO_PROCS/${nemo_procs}/"             ${config_file}
+    sed -i "s/NEMO_PPN/${nemo_procs}/"               ${config_file}
+    sed -i "s/XIOS_PROCS/${xios_procs}/"             ${config_file}
+    sed -i "s/XIOS_PPN/${xios_procs}/"               ${config_file}
+    sed -i "s/FREQUENCY/${freq}/"                    ${config_file}
+    sed -i "s/START_DATE/${start_date}/"             ${config_file}
+    sed -i "s/END_DATE/${end_date}/"                 ${config_file}
+    sed -i "s/INTERVAL_VAL/${interval}/"             ${config_file}
 
     # Disable DR HOOK as it may cause issues
     sed -i "s/DR_HOOK=1/DR_HOOK=0/"              templates/launch/run-srun-multiprog.sh.j2
@@ -118,6 +132,12 @@ function run_ecearth4()
 
     cd ${run_dir}
     python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 30
+
+    run_id=$(echo $(basename $run_dir) | sed 's/scalability_//')
+    coupling_dir=${test_dir}/coupling/${run_id}
+    mkdir -p ${coupling_dir}
+    cp ${run_dir}/lucia_lite_plots/* ${coupling_dir}
+    cp ${run_dir}/lucia_lite_results/* ${coupling_dir}
 }
 
 ###################
@@ -125,20 +145,20 @@ function run_ecearth4()
 ###################
 if [ "$current_member" = "CompilationEfficiency" ];
 then
-    test_name="compilation_efficiency"
-    test_name_=${test_name}/${test}
+    member="compilation_efficiency"
+    test_name=${member}/${test}
     arch_name=${test}
     model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
 elif [ "$current_member" = "StrongScaling" ];
 then
-    test_name="strong_scaling"
-    test_name_=${test_name}/${test}
+    member="strong_scaling"
+    test_name=${member}/${test}
     arch_name=%STRONGSCALING.ARCH_NAME%
     model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
 elif [ "$current_member" = "WeakScaling" ];
 then
-    test_name="weakscaling"
-    test_name_=${test_name}/${test}
+    member="weakscaling"
+    test_name=${member}/${test}
     arch_name=%WEAKSCALING.ARCH_NAME%
     model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
 fi

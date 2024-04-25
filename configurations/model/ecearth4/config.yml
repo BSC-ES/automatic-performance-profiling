@@ -32,7 +32,7 @@
       oifs:
         ntasks: OIFS_PROCS
         ntasks_per_node: OIFS_PPN
-        omp_num_threads: 1
+        omp_num_threads: OIFS_OMP_THREADS
         omp_stacksize: "64M"
       nemo:
         ntasks: NEMO_PROCS
