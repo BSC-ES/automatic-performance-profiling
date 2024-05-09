@@ -4,6 +4,7 @@ magiccut=%CURRENT_ROOTDIR%/magiccut/magicCut
 timestep_zero=%TRACING.TIMESTEP_ZERO%
 trace_steps=%TRACING.TRACE_STEPS%
 components="%MODEL.COMPONENTS%"
+env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 
 if [ "$current_member" = "StrongScaling" ]; then
     test_name="strong_scaling"
@@ -20,6 +21,8 @@ tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
 tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 components=($(echo $components | sed "s/\[\|\]\|,//g"))
 components=$(for v in "${components[@]}"; do echo "$v";done| sort| uniq| xargs)
+
+source ${env_sources}
 
 for test in $tests
 do

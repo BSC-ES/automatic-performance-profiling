@@ -29,6 +29,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
+    THREADS: "%TRACING.CPUS_PER_TASK%"
     RUNNING: member
     WALLCLOCK: 02:00
     CHECK: "true"

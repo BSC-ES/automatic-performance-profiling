@@ -99,8 +99,6 @@ function trace_nemo()
 {
     run_dir=${run_root}/${test_name_}/trace_nemo_${numproc}
     mkdir -p ${run_dir}
-    # Remove all run folder content just in case it was already created
-    rm -rf ${run_dir}/*
     cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
@@ -133,9 +131,7 @@ function trace_nemo()
 
     ### trace.target
     # Run extrae
-    module load gcc/8.1.0
-    module load EXTRAE/latest
-    
+    export EXTRAE_DIR=$EXTRAE_HOME
     create_trace_sh $run_dir
 
     # Copy function.txt
@@ -160,7 +156,7 @@ function trace_nemo()
     fi
 
     # Spinup run
-    time mpirun -genv I_MPI_DEBUG=4 -n $numproc ./${trace} ./nemo
+    time srun -n $numproc ${trace} ./nemo
 
     # Clean a little bit
     rm -rf set-* *.nc

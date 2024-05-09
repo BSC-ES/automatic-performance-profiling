@@ -1,0 +1,35 @@
+JOBS:
+  CLEAN:
+    PLATFORM: mn5-login
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  REMOTE_SETUP:
+    PLATFORM: mn5-login
+  REMOTE_INIDATA:
+    PLATFORM: mn5-login
+  REMOTE_COMPILATION:
+    PROCESSORS: 112
+    TASKS: 112
+  PREPARE_TESTS:
+    PLATFORM: mn5-login
+  trace_cut:
+    CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
+  modelfactors:
+    PLATFORM: mn5-login
+  report_setup:
+    PLATFORM: mn5-login
+  dimemas_traces:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=112"
+  dimemas_images:
+    PLATFORM: mn5-login
+  paramedir:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=112"
+  paradim:
+    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=112"
+  paraver:
+    PLATFORM: mn5-login
+  hardware_bench_images:
+    PLATFORM: mn5-login
+  configuration_json:
+    PLATFORM: mn5-login
+  report:
+    PLATFORM: mn5-login

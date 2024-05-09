@@ -39,3 +39,23 @@ PLATFORMS:
     PROCESSORS_PER_NODE: "128"
     MAX_WALLCLOCK: 48:00
     CUSTOM_DIRECTIVES: "[ '#SBATCH --hint=nomultithread' ]"
+  mn5:
+    TYPE: slurm
+    HOST: glogin4.bsc.es
+    PROJECT: bsc32
+    USER: bsc032333
+    QUEUE: gp_debug
+    SCRATCH_DIR: /gpfs/scratch
+    ADD_PROJECT_TO_HOST: false
+    MAX_WALLCLOCK: 02:00
+    MAX_PROCESSORS: 3584
+    TEMP_DIR: ''
+  mn5-login:
+    TYPE: ps
+    HOST: glogin4.bsc.es
+    PROJECT: bsc32
+    USER: bsc032333
+    SCRATCH_DIR: /gpfs/scratch
+    ADD_PROJECT_TO_HOST: false
+    MAX_PROCESSORS: 3584
+    TEMP_DIR: ''
