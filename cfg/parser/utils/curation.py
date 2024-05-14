@@ -611,13 +611,12 @@ def multiexperiment_comparison(experiments, field1):
     processes_per_node = [int(exp.processes_per_node.replace("'", "")) for exp in experiments]
 
     # Find cases with common number of node among the experiments
-    common_cases = {}
     
-    # 
-    for experiment in experiments:
-        for case in experiments.cases:
-            nproc = experiment[case]["nproc"]
-            common_cases[nproc] = case  
+    for i, experiment in enumerate(experiments):
+        if i == 0:
+            common_cases = set(experiment.cases)
+        else:
+            common_cases.intersection_update(experiment.cases)
     
     # common_cases = set([experiments[0][ex]["nproc"] / processes_per_node[0] for ex in experiments[0].cases])
     # for index, exp in enumerate(experiments[1:]):
@@ -625,13 +624,13 @@ def multiexperiment_comparison(experiments, field1):
     #     common_cases.intersection_update(n_node)
 
     cases_to_compare = list(common_cases)
-    base_case = min(cases_to_compare)
-
+    print(common_cases)
+    base_case = experiments[0].base_case
     # Initialize results printout
     log = Log()
 
     # Simulated Years per Day
-    base_case_speed = [experiment[base_case * ppn][field1] for experiment, ppn in zip(experiments, processes_per_node)]
+    base_case_speed = [experiment[base_case][field1] for experiment in experiments]
 
     # Find index of slowest experiment
     slowest_index = np.argmin(base_case_speed)
@@ -645,7 +644,7 @@ def multiexperiment_comparison(experiments, field1):
     for index, experiment in enumerate(experiments):
         # add info on layout of proc on nodes
         if int(experiment.processes_per_node.replace("'", "")) != 48:
-            node_filling = "[" + experiment.processes_per_node + " cores per node]"
+            node_filling = "[" + experiment.processes_per_node + " ppn]"
             log_text += ", %s %s" % (experiment.experiment_name, node_filling)
         else:
             log_text += ", %s" % (experiment.experiment_name + " [" + field1 + "]")
@@ -653,45 +652,46 @@ def multiexperiment_comparison(experiments, field1):
     log.add(log_text)
 
     # Add data
-    log_text = "%4i" % base_case
+    log_text = base_case
     for index, experiment in enumerate(experiments):
         log_text += ",%5.2f " % base_case_speed[index]
 
     log.add(log_text)
 
+    base_case_nprocs = experiments[0][base_case]["nproc"]
     for case in cases_to_compare:
         if case == base_case:
             continue
-        resource_increase = case / base_case
-        exp_speeds = [experiment[case * ppn][field1] for experiment, ppn in
-                      zip(experiments, processes_per_node)]
+        case_nprocs = experiments[0][case]["nproc"]
+        resource_increase = case_nprocs / base_case_nprocs
+        exp_speeds = [experiment[case][field1] for experiment in experiments]
         exp_speedups = [exp_speeds[i] / base_case_speed[i] for i in range(len(experiments))]
         exp_efficiency = [es / resource_increase for es in exp_speedups]
 
         ratios = [es / exp_speeds[slowest_index] for es in exp_speeds]
 
-        log_text = "%4i" % case
+        log_text = case
         for index, experiment in enumerate(experiments):
             log_text += ", %5.2f " % exp_speeds[index]
         log.add(log_text)
     return log
 
 
-def weakscaling_compute(experiment):
+def weakscaling_compute(experiments):
     # Get used configurations
-    configurations = [exp.param_file["configuration_name"][0] for exp in experiment]
+    configurations = [exp.param_file["configuration_name"][0] for exp in experiments]
     # Get tail sizes for configurations
-    tile_size = [exp.param_file["tile_size"] for exp in experiment]
+    tile_size = [exp.param_file["tile_size"] for exp in experiments]
     # Get number of cores
-    number_of_processes = [exp.param_file["number_of_processes"] for exp in experiment]
+    number_of_processes = [experiment[experiment.base_case]["nproc"] for experiment in experiments]
     # Get average duration of the timesteps with this config
-    TimeStepTime = [[exp.data[core]["TimeStepTime"] for core in exp.data] for exp in experiment]
+    sypd = [[exp.data[core]["SYPD"] for core in exp.data] for exp in experiments]
     log = Log()
-    log.add("Config:, Tile Size, Ncores, Timestep per second ")
+    log.add("Config:, Tile Size, Ncores, SYPD")
     for index_conf, conf in enumerate(configurations):
         for index_size, size in enumerate(tile_size):
-            log.add(conf + "," + size[index_conf] + "," + number_of_processes[index_conf][index_size] +
-                    ", %5.2f " % TimeStepTime[index_conf][index_size])
+            log.add(conf + "," + size[index_conf] + ",%i" % number_of_processes[index_conf] +
+                    ", %5.2f " % sypd[index_conf][index_size])
     return log
 
 

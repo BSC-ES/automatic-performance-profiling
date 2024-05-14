@@ -225,7 +225,7 @@ class TimingInformation:
         functions = []
         for case in self.cases:
             for component in self.components:
-                functions.append(list(self.data[case]["Components"][component]["Counters"]["PAPI_TOT_CYC"].keys()))
+                functions.append(list(self.data[case]["Components"][component]["Counters"]["Time"].keys()))
         functions = sum(functions, [])
         return list(set(functions))
 
@@ -439,7 +439,7 @@ class TimingInformation:
             except KeyError:
                 pass
         
-        self.rename_cases()
+        # self.rename_cases()
 
     # This function renames the cases after getting all the info about them to have shorter names in the report
     # it is not done before because is easier to merge the same cases if they have the same id
@@ -493,15 +493,24 @@ class TimingInformation:
 
     def load_timings(self, timing_files):
         import pickle
+        import copy
         timing_info_dict = {}
         # Merge the dictionary into single one
+        functions = set()
         for file in timing_files:
             timing_info = pickle.load(open(file, "rb"))
             timing_info_dict[[*timing_info][0]] = timing_info[[*timing_info][0]]
-
-        if self.functions:
-            # Change function names to match the one in traces
-            self.fix_function_names(timing_info_dict)
+            pattern = "(scalability)_([0-9a-zA-Z_]+)/(.*timing.pkl)"
+            _, id, _ = re.match(pattern, file).groups()
+            nproc = [*timing_info][0]
+            timing_info_dict[id] = timing_info_dict.pop(nproc)
+            timing_info_dict[id]["nproc"] = nproc
+            timing_info_dict[id]["Components"] = {}
+            timing_info_dict[id]["Components"]["nemo"] = copy.deepcopy(timing_info_dict[id])
+            test_function_names = set(timing_info_dict[id]["Components"]["nemo"]["FunctionInfo"].keys())
+            functions.intersection_update(test_function_names)
+        functions = list(functions)
+        timing_info_dict[id]["functions"] = functions
 
         if self.data is None:
             self.data = timing_info_dict
@@ -511,6 +520,11 @@ class TimingInformation:
         if self.cases is None:
             self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
             self.base_case = min(self.cases)
+            
+        if self.components_cases is None:
+            self.components_cases = {}   
+            for component in self.components:
+                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["nproc"])
 
     def load_paramedir(self, files):
         if not files:
