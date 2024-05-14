@@ -119,7 +119,7 @@ JOBS:
   paraver:
     FILE: autosubmit/templates/paraver.sh
     DEPENDENCIES:
-      configuration_json:
+      trace_cut:
         MEMBERS_FROM:
           HardwareBenchmarks, WeakScaling, CompilationEfficiency:
             DATES_TO: None
@@ -192,7 +192,7 @@ JOBS:
       modelfactors:
         MEMBERS_TO: StrongScaling
       configuration_json:
-        MEMBERS_TO: CompilationEfficiency,WeakScaling
+        MEMBERS_TO: CompilationEfficiency,WeakScaling,StrongScaling
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED

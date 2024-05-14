@@ -25,7 +25,7 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 function create_trace_sh()
 {
     local run_directory=$1
-    trace=${run_dir}/trace.sh
+    local trace=${run_dir}/trace.sh
     cat << EOF > $trace
 #!/bin/bash
 
@@ -51,10 +51,10 @@ function cut_trace()
 {
     local -n components_names="$1"
     local -n components_processors="$2"
-    trace_file=$3
+    local trace_file=$3
 
-    first_proc=1
-    i=0
+    local first_proc=1
+    local i=0
     while [ $i -lt ${#components_names[@]} ]; do
         component_procs=${components_processors[i]}
         last_proc=$((first_proc+component_procs-1))
@@ -97,15 +97,15 @@ EOF
 #####################################################################################################################
 function trace_nemo()
 {
-    run_dir=${run_root}/${test_name_}/trace_nemo_${numproc}
+    local run_dir=${run_root}/${test_name_}/trace_nemo_${numproc}
     mkdir -p ${run_dir}
     cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
     cd ${run_dir}
 
-    model_sources=${model}_${branch}
-    configuration_folder=tests
+    local model_sources=${model}_${branch}
+    local configuration_folder=tests
 
     # Link data
     cp $inidata/$test_name_/* ${run_dir}
@@ -172,7 +172,11 @@ function trace_ecearth4()
     oifs_procs=%CURRENT_OIFS_PROCS%
     nemo_procs=%CURRENT_NEMO_PROCS%
     xios_procs=%CURRENT_XIOS_PROCS%
-    oifs_omp_threads=%CURRENT_OIFS_OMP_THREADS%
+    use_omp_threads="%USE_OMP_THREDS%"
+    oifs_omp_threads=1
+    if [ "${use_omp_threads^^}" == "TRUE" ]; then
+        oifs_omp_threads=%CURRENT_THREADS%
+    fi
 
     run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
     run_dir=${run_root}/${test_name_}/trace_${run_id}
@@ -256,24 +260,26 @@ function trace_ecearth4()
 ###################
 source ${env_sources}
 
-if [ "$current_member" = "CompilationEfficiency" ];
-then
-    test_name="compilation_efficiency"
-    test_name_=${test_name}/${test}
-    arch_name=${test}
-    model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
-elif [ "$current_member" = "StrongScaling" ];
-then
-    test_name="strong_scaling"
-    test_name_=${test_name}/${test}
-    arch_name=%STRONGSCALING.ARCH_NAME%
-    model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
-elif [ "$current_member" = "WeakScaling" ];
-then
-    test_name="weakscaling"
-    test_name_=${test_name}/${test}
-    arch_name=%WEAKSCALING.ARCH_NAME%
-    model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
-fi
+
+case "$current_member" in
+    "CompilationEfficiency")
+        test_name="compilation_efficiency"
+        test_name_=${test_name}/${test}
+        arch_name=${test}
+        model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%       
+        ;;
+    "StrongScaling")
+        test_name="strong_scaling"
+        test_name_=${test_name}/${test}
+        arch_name=%STRONGSCALING.ARCH_NAME%
+        model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
+        ;;
+    "WeakScaling")
+        test_name="weakscaling"
+        test_name_=${test_name}/${test}
+        arch_name=%WEAKSCALING.ARCH_NAME%
+        model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
+        ;;
+esac
 
 trace_${model}

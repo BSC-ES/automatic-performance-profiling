@@ -81,7 +81,11 @@ function run_ecearth4()
     oifs_procs=%CURRENT_OIFS_PROCS%
     nemo_procs=%CURRENT_NEMO_PROCS%
     xios_procs=%CURRENT_XIOS_PROCS%
-    oifs_omp_threads=%CURRENT_OIFS_OMP_THREADS%
+    use_omp_threads="%USE_OMP_THREDS%"
+    oifs_omp_threads=1
+    if [ "${use_omp_threads^^}" == "TRUE" ]; then
+        oifs_omp_threads=%CURRENT_THREADS%
+    fi
 
     test_dir=${run_root}/${test_name}
     run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
@@ -143,25 +147,26 @@ function run_ecearth4()
 ###################
 # Start script
 ###################
-if [ "$current_member" = "CompilationEfficiency" ];
-then
-    member="compilation_efficiency"
-    test_name=${member}/${test}
-    arch_name=${test}
-    model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
-elif [ "$current_member" = "StrongScaling" ];
-then
-    member="strong_scaling"
-    test_name=${member}/${test}
-    arch_name=%STRONGSCALING.ARCH_NAME%
-    model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
-elif [ "$current_member" = "WeakScaling" ];
-then
-    member="weakscaling"
-    test_name=${member}/${test}
-    arch_name=%WEAKSCALING.ARCH_NAME%
-    model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
-fi
+case "$current_member" in
+    "CompilationEfficiency")
+        member="compilation_efficiency"
+        test_name=${member}/${test}
+        arch_name=${test}
+        model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
+        ;;
+    "StrongScaling")
+        member="strong_scaling"
+        test_name=${member}/${test}
+        arch_name=%STRONGSCALING.ARCH_NAME%
+        model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
+        ;;
+    "WeakScaling")
+        member="weakscaling"
+        test_name=${member}/${test}
+        arch_name=%WEAKSCALING.ARCH_NAME%
+        model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
+        ;;
+esac
 
 run_${model}
 
