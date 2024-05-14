@@ -15,7 +15,7 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None):
     # Plot data
     x_label, y_label = data.keys()
     x, y = data[x_label], data[y_label]
-
+    
     plt.plot(x, y, alpha=.25)
     plt.scatter(x, y, alpha=.5)
 
@@ -35,9 +35,7 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None):
     plt.ylabel(y_label)
     plt.xticks(list(range(len(x))), x)
     plt.yticks(list(range(len(y))), y)
-    plt.yscale("log")
-    plt.xscale("log")
-    
+
     if not scatter_labels is None:
         for i, label in enumerate(scatter_labels):
             plt.annotate(label, (x[i] + 2, y[i]))

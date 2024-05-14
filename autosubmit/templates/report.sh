@@ -10,7 +10,7 @@ report_conffile=%REPORT.CONFIG%
 report_name=%REPORT.NAME%
 report_full_path=${report_folder}/%REPORT.NAME%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-members="StrongScaling HardwareBenchmarks"
+members="%EXPERIMENT.MEMBERS%"
 components="%MODEL.COMPONENTS%"
 configuration_name=%STRONGSCALING.TEST_CONFIG%
 
@@ -19,7 +19,7 @@ components=$(for v in "${components[@]}"; do echo "$v";done| sort| uniq| xargs)
 
 function add_HardwareBenchmarks()
 {
-    hardware_benchmarks_root=$run_root/hardware_benchmarks
+    local hardware_benchmarks_root=$run_root/hardware_benchmarks
 
     python3 ${latex_folder}/ReportGenerator.py \
                                             -O ${report_full_path}.pkl \
@@ -36,9 +36,9 @@ function add_HardwareBenchmarks()
 
 function add_StrongScaling()
 {
-    test_name="strong_scaling"
-    papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
-    tests="%STRONGSCALING.TEST_NAMES%"
+    local test_name="strong_scaling"
+    local papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
+    local tests="%STRONGSCALING.TEST_NAMES%"
     tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
     tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 
@@ -52,7 +52,7 @@ function add_StrongScaling()
         cd ${test_root}
 
         # Modelfactors
-        python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Model Factors" --add-img modelfactors -T ${cfg}/latex/text/ModelFactors.txt
+        # python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Model Factors" --add-img modelfactors -T ${cfg}/latex/text/ModelFactors.txt
         
         # Scalability
 
@@ -112,14 +112,16 @@ function add_StrongScaling()
         done
         
         # Paraver TODO X11 issue
-        for component in ${components}; do
-            for case in paraver_images/*; do
-                for paraver_image in $(find $case | grep -E ".*@${component}.*png"); do 
-                    python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "${component^^} Paraver" -s "$(basename ${case})" --add-img ${paraver_image}
-                done 
+        if [ -d paraver_images ]; then
+            for component in ${components}; do
+                for case in paraver_images/*; do
+                    for paraver_image in $(find $case | grep -E ".*@${component}.*png"); do 
+                        python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "${component^^} Paraver" -s "$(basename ${case})" --add-img ${paraver_image}
+                    done 
+                done
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "${component^^} Paraver" -T ${cfg}/latex/text/ParaverViews.txt
             done
-            python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "${component^^} Paraver" -T ${cfg}/latex/text/ParaverViews.txt
-        done
+        fi
 
         # Coupling info (ECE4 only)
         if [ -d coupling ]; then
@@ -131,20 +133,26 @@ function add_StrongScaling()
     done
 }
 
-function add_CompilationEfficiency()
+function add_multiexperiment()
 {
-    test_name="compilation_efficiency"
-    flag=-s
+    local test_name=$1
+    local flag=$2
     python3 ${cfg}/parser/comparator.py --json-files $run_root/$test_name/*/*.json ${flag} --file-out ${current_member}.csv
     python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl -S "Multi Experiment" -s ${current_member} --add-csv ${current_member}.csv
 }
 
+function add_CompilationEfficiency()
+{
+    local test_name="compilation_efficiency"
+    local flag=-s
+    add_multiexperiment $test_name $flag
+}
+
 function add_WeakScaling()
 {
-    test_name="weakscaling"
-    flag=-w
-    python3 ${cfg}/parser/comparator.py --json-files $run_root/$test_name/*/*.json ${flag} --file-out ${current_member}.csv
-    python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl -S "Multi Experiment" -s ${current_member} --add-csv ${current_member}.csv
+    local test_name="weakscaling"
+    local flag=-w
+    add_multiexperiment $test_name $flag
 }
 
 

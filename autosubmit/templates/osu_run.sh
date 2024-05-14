@@ -16,7 +16,7 @@ for test in ${osu_tests[@]}
 do
     test_name=${test##*/}
     cp $compilation/osu-micro-benchmarks-5.6.3/mpi/${test} ${test_name}
-    mpirun -np ${n_cores} ./${test_name} > ${test_name}_${n_cores}.txt
+    srun -n ${n_cores} ./${test_name} > ${test_name}_${n_cores}.txt
 done
 
 mkdir -p $run_folder/hardware_benchmarks/OSU_RUN/DATA

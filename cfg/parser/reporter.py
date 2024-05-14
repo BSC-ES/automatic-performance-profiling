@@ -71,7 +71,7 @@ if __name__ == "__main__":
         experiment_results.most_expensive_function_summary(out_file_name=most_expensive_function_summary)
 
     if scatter_plots:
-        scatter_plots = scatter_plots.split()
+        scatter_plots = scatter_plots.split(":")
         for scatter_plot in scatter_plots:
             x_axis, y_axis = scatter_plot.split("-")
             experiment_results.scatter_plots(x_axis=x_axis, y_axis=y_axis, length_summary=20)
