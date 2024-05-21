@@ -28,10 +28,6 @@ function functions_dir_nemo()
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_icebergs .false.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_meshmask .false.
     
-    # Load EXTRAE module and create wrapper
-    module load gcc/8.1.0
-    module load EXTRAE/latest
-    
     trace=./trace.sh
     cat << EOF > $trace
 #!/bin/bash
