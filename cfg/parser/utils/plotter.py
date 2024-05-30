@@ -1,3 +1,4 @@
+from matplotlib.ticker import StrMethodFormatter
 
 def plotter(data, experiment_name, scatter_labels=None, filename=None):
     try:
@@ -30,11 +31,11 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None):
     plt.plot(ideal_range, ideal_speed, ":", alpha=.25, color="k")
 
     # Format stuff
+    plt.xticks(x, [int(j) for j in x])
+    plt.yticks(y, [int(j) for j in y])
     plt.title(os.path.splitext(os.path.basename(filename))[0])
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.xticks(list(range(len(x))), x)
-    plt.yticks(list(range(len(y))), y)
 
     if not scatter_labels is None:
         for i, label in enumerate(scatter_labels):
