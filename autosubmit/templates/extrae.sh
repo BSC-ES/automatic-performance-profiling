@@ -156,7 +156,7 @@ function trace_nemo()
     fi
 
     # Spinup run
-    time srun -n $numproc ${trace} ./nemo
+    time srun -n $numproc ${run_dir}/trace.sh ./nemo
 
     # Clean a little bit
     rm -rf set-* *.nc

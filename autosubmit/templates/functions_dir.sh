@@ -52,10 +52,12 @@ EOF
     cat /dev/null > ${function_file}
     cat /dev/null > ${function_avg_dur_file}
     
+    ulimit -c unlimited
     executable=${model_exec}
     # Spinup run
-    time mpirun -genv I_MPI_DEBUG=4 -n ${numproc} ${trace} ${executable}
-    $project/cfg/trace_analysis/paramedir ${executable}.prv sampling_user_function.cfg
+    time srun -n ${numproc} ${trace} ${executable}
+   
+    paramedir ${executable}.prv sampling_user_function.cfg
     # Create list extrae_functions.txt
     set +xuve
     histo_file=sampling_user_function
