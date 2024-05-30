@@ -23,7 +23,6 @@ JOBS:
       TEST_NAME: "%STRONGSCALING.TEST_NAMES%"
       NAME: "%STRONGSCALING.NAMES%"
       PROCESSORS: "%STRONGSCALING.PROCESSORS%"
-      THREADS: "%STRONGSCALING.THREADS%"
     DEPENDENCIES:
       functions_dir:
         MEMBERS_FROM:
@@ -31,7 +30,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
-    THREADS: "%TRACING.CPUS_PER_TASK%"
+    THREADS: "%TRACING.THREADS%"
     RUNNING: member
     WALLCLOCK: 02:00
     CHECK: "true"

@@ -45,6 +45,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
+    THREADS: "%TRACING.THREADS%"
     RUNNING: member
     WALLCLOCK: 02:00
     PROCESSORS: "%TRACING.USER_FUNCTIONS_PROC%"

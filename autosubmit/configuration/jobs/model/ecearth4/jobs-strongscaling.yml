@@ -29,7 +29,6 @@ JOBS:
       OIFS_PROCS: "%STRONGSCALING.OIFS_PROCS%"
       NEMO_PROCS: "%STRONGSCALING.NEMO_PROCS%"
       XIOS_PROCS: "%STRONGSCALING.XIOS_PROCS%"
-      THREADS: "%STRONGSCALING.THREADS%"
     DEPENDENCIES:
       functions_dir:
         MEMBERS_FROM:
@@ -37,6 +36,7 @@ JOBS:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
+    THREADS: "%TRACING.THREADS%"
     RUNNING: member
     WALLCLOCK: 02:00
     CHECK: "true"
