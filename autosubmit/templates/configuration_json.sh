@@ -7,6 +7,7 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
 components="%MODEL.COMPONENTS%"
 
+reporter_params=""
 case  "${model}" in
     "nemo")
         input_files="scalability_*/*.timing.pkl"
@@ -56,14 +57,13 @@ set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
 
-
 for test in $tests
 do
     test_name_=$test_name/$test
     cd $run_root/$test_name_
 
     tmp_reporter_params="${reporter_params} -j ${test}.json"
-    if "${current_member}" != "Tracing"; then
+    if [ "${current_member}" != "Tracing" ]; then
         tmp_reporter_params="${tmp_reporter_params} \
                             --sypd-file ${test}_scaling.csv \
                             --sypd-plot ${test}_scaling.png"
