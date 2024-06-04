@@ -11,6 +11,7 @@ platform=%COMMON.PLATFORM%
 root_dir=%CURRENT_ROOTDIR%
 members="%EXPERIMENT.MEMBERS%"
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+model_origin="%MODEL.ORIGIN%"
 
 function clone_nemo()
 {
@@ -20,7 +21,7 @@ function clone_nemo()
     # Clone NEMO repository
     if [ ! -d nemo_${branch} ]; then
         git config --global http.sslVerify "false"
-        git clone https://forge.nemo-ocean.eu/nemo/nemo.git nemo_${branch}
+        git clone ${model_origin} nemo_${branch}
         git config --global http.sslVerify "true"
     fi
     
@@ -36,7 +37,7 @@ function clone_ecearth4()
     
     # Clone ECEARTH4 repository
     if [ ! -d ecearth4_${branch} ]; then
-        git clone --recurse-submodules https://git.smhi.se/e7992/ecearth4.git ecearth4_${branch}
+        git clone --recurse-submodules ${model_origin} ecearth4_${branch}
     fi
     
     cd ecearth4_${branch}
