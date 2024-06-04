@@ -1,9 +1,9 @@
 #!/bin/bash
 #####################################################################################################################
 # images.sh
-# Brief: Generate all the strong scaling paraver images from the configuartions in 
+# Brief: Generate all the traces paraver images from the configuartions in 
 #           ${cfg}/trace_analysis/paraver_configurations manually since X11 does not work in sbatch jobs in HPC2020
-#           and MN4
+#           and MN5 atm
 # Usage: ./images.sh experiment_root "components"
 #####################################################################################################################
 
@@ -80,6 +80,11 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
+if ! which wxparaver &> /dev/null; then
+    echo wxparaver command not found, load its corresponding module!
+    exit 1
+fi
+
 root=$1
 components=$2
 
@@ -89,9 +94,7 @@ cfg=$root/automatic_performance_profile/cfg
 export analysis_tools=${cfg}/trace_analysis
 paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
 
-module load wxparaver/4.11.3
-
-for test in ${root}/run/strong_scaling/*; do
+for test in ${root}/run/tracing/*; do
     for trace_folder in ${test}/trace_*; do
         trace_folder_basename=$(basename ${trace_folder})
         trace_id=$(echo ${trace_folder_basename} | sed 's/trace_//')
