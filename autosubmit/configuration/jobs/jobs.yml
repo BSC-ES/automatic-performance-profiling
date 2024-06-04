@@ -41,11 +41,11 @@ JOBS:
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             MEMBERS_TO: None
             CHUNKS_TO: None
             DATES_TO: None
-    THREADS: "%TRACING.THREADS%"
+    THREADS: "%TRACING.USER_FUNCTIONS_THREADS%"
     RUNNING: member
     WALLCLOCK: 02:00
     PROCESSORS: "%TRACING.USER_FUNCTIONS_PROC%"
@@ -56,7 +56,7 @@ JOBS:
     DEPENDENCIES:
       report_setup:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -70,7 +70,7 @@ JOBS:
     DEPENDENCIES:
       trace_cut:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -83,7 +83,7 @@ JOBS:
     DEPENDENCIES:
       dimemas_traces:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -96,7 +96,7 @@ JOBS:
     DEPENDENCIES:
       trace_cut:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -109,7 +109,7 @@ JOBS:
     DEPENDENCIES:
       dimemas_traces:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -122,7 +122,7 @@ JOBS:
     DEPENDENCIES:
       trace_cut:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -135,7 +135,7 @@ JOBS:
     DEPENDENCIES:
       report_setup:
         MEMBERS_FROM:
-          StrongScaling, WeakScaling, CompilationEfficiency:
+          StrongScaling, WeakScaling, CompilationEfficiency, StrongScaling, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -148,7 +148,7 @@ JOBS:
     DEPENDENCIES:
       trace_cut:
         MEMBERS_FROM:
-          HardwareBenchmarks, CompilationEfficiency, WeakScaling:
+          HardwareBenchmarks, CompilationEfficiency, WeakScaling, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -161,19 +161,19 @@ JOBS:
     DEPENDENCIES:
       paramedir:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
       paradim:
         MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency:
+          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
       report_setup:
         MEMBERS_FROM:
-          HardwareBenchmarks, StrongScaling:
+          HardwareBenchmarks, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -185,15 +185,15 @@ JOBS:
     FILE: autosubmit/templates/report.sh
     DEPENDENCIES:
       paraver:
-        MEMBERS_TO: StrongScaling
+        MEMBERS_TO: Tracing
       dimemas_images:
-        MEMBERS_TO: StrongScaling
+        MEMBERS_TO: Tracing
       hardware_bench_images:
         MEMBERS_TO: HardwareBenchmarks
       modelfactors:
-        MEMBERS_TO: StrongScaling
+        MEMBERS_TO: Tracing
       configuration_json:
-        MEMBERS_TO: CompilationEfficiency,WeakScaling,StrongScaling
+        MEMBERS_TO: CompilationEfficiency,WeakScaling,Tracing,StrongScaling
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED

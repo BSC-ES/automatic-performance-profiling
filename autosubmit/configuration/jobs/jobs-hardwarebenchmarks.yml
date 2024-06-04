@@ -7,7 +7,7 @@ JOBS:
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, StrongScaling:
+          CompilationEfficiency, WeakScaling, StrongScaling, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -23,7 +23,7 @@ JOBS:
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, StrongScaling:
+          CompilationEfficiency, WeakScaling, StrongScaling, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -39,7 +39,7 @@ JOBS:
           NAME: "%HW_BENCHMARKS.STREAM_NAMES%"
           PROCESSORS: "%HW_BENCHMARKS.STREAM_PROCESSORS%"
         MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, WeakScaling:
+          StrongScaling, CompilationEfficiency, WeakScaling, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -48,7 +48,7 @@ JOBS:
           NAME: "%HW_BENCHMARKS.OSU_NAMES%"
           PROCESSORS: "%HW_BENCHMARKS.OSU_PROCESSORS%"
         MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, WeakScaling:
+          StrongScaling, CompilationEfficiency, WeakScaling, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None

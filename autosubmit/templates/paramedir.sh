@@ -1,4 +1,3 @@
-current_member=%MEMBER%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=${project}/cfg/trace_analysis/
@@ -8,8 +7,8 @@ env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 function generate_threads_to_ignore_str()
 {
     threads_to_ignore=""
-    i=0
-    first_proc=0
+    local i=0
+    local first_proc=0
     while [ $i -lt ${#components_names[@]} ]; do
         component_procs=${components_procs[i]}
         last_proc=$((first_proc+component_procs-1))
@@ -26,19 +25,14 @@ function generate_threads_to_ignore_str()
     done
 }
 
-if [ "$current_member" = "StrongScaling" ]; then
-    member="strong_scaling"
-    tests="%STRONGSCALING.TEST_NAMES%"
-elif [ "$current_member" = "CompilationEfficiency" ]; then
-    member="compilation_efficiency"
-    tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-else 
-    member="weakscaling"
-    tests="%WEAKSCALING.TEST_NAMES%"
-fi
+###################
+# Start script
+###################
 
 source ${env_sources}
 
+member="tracing"
+tests="%TRACING.TEST_NAMES%"
 tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
 tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 components=($(echo $components | sed "s/\[\|\]\|,//g"))

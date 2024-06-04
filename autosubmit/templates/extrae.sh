@@ -6,7 +6,6 @@ compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 numproc=%NUMPROC%
-current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 model=%MODEL.NAME%
 branch=%MODEL.BRANCH_LIST%
@@ -260,26 +259,9 @@ function trace_ecearth4()
 ###################
 source ${env_sources}
 
-
-case "$current_member" in
-    "CompilationEfficiency")
-        test_name="compilation_efficiency"
-        test_name_=${test_name}/${test}
-        arch_name=${test}
-        model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%       
-        ;;
-    "StrongScaling")
-        test_name="strong_scaling"
-        test_name_=${test_name}/${test}
-        arch_name=%STRONGSCALING.ARCH_NAME%
-        model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
-        ;;
-    "WeakScaling")
-        test_name="weakscaling"
-        test_name_=${test_name}/${test}
-        arch_name=%WEAKSCALING.ARCH_NAME%
-        model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
-        ;;
-esac
+test_name="tracing"
+test_name_=${test_name}/${test}
+arch_name=%TRACING.ARCH_NAME%
+model_resolution=%TRACING.MODEL_RESOLUTION%       
 
 trace_${model}

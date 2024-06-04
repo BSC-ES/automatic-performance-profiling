@@ -64,22 +64,29 @@ mkdir -p ${inidata}
 cd ${inidata}
 
 for member in ${members}; do
-    if [ "${member}" = "CompilationEfficiency" ]; then
-        folder="compilation_efficiency"
-        tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-        test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
-    elif [ "${member}" = "WeakScaling" ]; then
-        folder="weakscaling"
-        tests="%WEAKSCALING.TEST_NAMES%"
-        test_config="%WEAKSCALING.TEST_CONFIG%"
-    elif [ "${member}" = "StrongScaling" ]; then
-        folder="strong_scaling"
-        tests="%STRONGSCALING.TEST_NAMES%"
-        test_config="%STRONGSCALING.TEST_CONFIG%"
-    else
-        continue
-    fi
-
+    case "$member" in
+        "CompilationEfficiency")
+            folder="compilation_efficiency"
+            tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+            test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
+            ;;
+        "WeakScaling")
+            folder="weakscaling"
+            tests="%WEAKSCALING.TEST_NAMES%"
+            test_config="%WEAKSCALING.TEST_CONFIG%"
+            ;;
+        "StrongScaling")
+            folder="strong_scaling"
+            tests="%STRONGSCALING.TEST_NAMES%"
+            test_config="%STRONGSCALING.TEST_CONFIG%"
+            ;;
+        "Tracing")
+            folder="tracing"
+            tests="%TRACING.TEST_NAMES%"
+            test_config="%TRACING.TEST_CONFIG%"
+            ;;    
+    esac
+    
     tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
     tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 

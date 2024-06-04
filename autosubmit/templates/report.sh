@@ -37,12 +37,9 @@ function add_HardwareBenchmarks()
 function add_StrongScaling()
 {
     local test_name="strong_scaling"
-    local papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
     local tests="%STRONGSCALING.TEST_NAMES%"
     tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
     tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
-
-    # dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 
     for test in $tests
     do
@@ -50,12 +47,8 @@ function add_StrongScaling()
         test_root=$run_root/$test_name_
 
         cd ${test_root}
-
-        # Modelfactors
-        # python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Model Factors" --add-img modelfactors -T ${cfg}/latex/text/ModelFactors.txt
         
         # Scalability
-
         python3 ${latex_folder}/ReportGenerator.py \
                                                 -O ${report_full_path}.pkl \
                                                 -S "Scalability" \
@@ -77,6 +70,36 @@ function add_StrongScaling()
                                                     --add-img ${component}_${test}_scaling.png \
                                                     --add-csv ${component}_${test}_scaling.csv
         done
+
+        # Coupling info (ECE4 only)
+        if [ -d coupling ]; then
+            for case in coupling/*; do
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Coupling" -s "$(basename ${case})" --add-csv ${case}/summary.csv
+                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Coupling" -s "$(basename ${case})" --add-img ${case}/stacked_events.png
+            done
+        fi
+    done
+}
+
+function add_Tracing()
+{
+    local test_name="tracing"
+    local papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
+    local tests="%TRACING.TEST_NAMES%"
+    tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
+    tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+
+    # dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
+
+    for test in $tests
+    do
+        test_name_=${test_name}/$(basename $test)
+        test_root=$run_root/$test_name_
+
+        cd ${test_root}
+
+        # Modelfactors
+        # python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Model Factors" --add-img modelfactors -T ${cfg}/latex/text/ModelFactors.txt
 
         # Paramedir
         for trace_folder in trace_*
@@ -111,7 +134,7 @@ function add_StrongScaling()
             done
         done
         
-        # Paraver TODO X11 issue
+        # Paraver
         if [ -d paraver_images ]; then
             for component in ${components}; do
                 for case in paraver_images/*; do
@@ -120,14 +143,6 @@ function add_StrongScaling()
                     done 
                 done
                 python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "${component^^} Paraver" -T ${cfg}/latex/text/ParaverViews.txt
-            done
-        fi
-
-        # Coupling info (ECE4 only)
-        if [ -d coupling ]; then
-            for case in coupling/*; do
-                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Coupling" -s "$(basename ${case})" --add-csv ${case}/summary.csv
-                python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Coupling" -s "$(basename ${case})" --add-img ${case}/stacked_events.png
             done
         fi
     done
@@ -154,7 +169,6 @@ function add_WeakScaling()
     local flag=-w
     add_multiexperiment $test_name $flag
 }
-
 
 ###################
 # Start script

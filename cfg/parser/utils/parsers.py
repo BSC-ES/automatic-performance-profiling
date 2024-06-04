@@ -102,6 +102,19 @@ def parse_paramedir_files(files):
     for filename in files:
         # Get core count and information type from filename
         component, id, information_type = parse_paramedir_filename(filename)
+        
+        nproc = 0
+        split_id = id.split("_")
+        i = 0
+        while i < len(split_id):
+            address = (id,
+                       "Components",
+                       split_id[i])
+            component_section = dictionary_pointer(results, address)
+            component_section["nproc"] = int(split_id[i + 1])
+            nproc += int(split_id[i + 1])
+            i += 2
+        results[id]["nproc"] = nproc
         # Initialize dictionary in case it does not exists
         # Retrieve the section to store the data
         address = (id,
@@ -547,6 +560,14 @@ class TimingInformation:
                         component_function_info[function_name] = self.data[case]["Components"][component]["Counters"]["Time"][function_name]["Average"][0]
                     self.data[case]["Components"][component]["FunctionInfo"] = component_function_info
 
+        if self.cases is None:
+            self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
+            self.base_case = min(self.cases)
+
+        if self.components_cases is None:
+            self.components_cases = {}   
+            for component in self.components:
+                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["Components"][component]["nproc"])
         pass
 
     def load_dimemas(self, files):

@@ -6,17 +6,8 @@ trace_steps=%TRACING.TRACE_STEPS%
 components="%MODEL.COMPONENTS%"
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 
-if [ "$current_member" = "StrongScaling" ]; then
-    test_name="strong_scaling"
-    tests="%STRONGSCALING.TEST_NAMES%"
-elif [ "$current_member" = "CompilationEfficiency" ]; then
-    test_name="compilation_efficiency"
-    tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-else
-    test_name="weakscaling"
-    tests="%WEAKSCALING.TEST_NAMES%"
-fi
-
+test_name="tracing"
+tests="%TRACING.TEST_NAMES%"
 tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
 tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 components=($(echo $components | sed "s/\[\|\]\|,//g"))
@@ -38,7 +29,7 @@ do
     do
         cd ${trace_folder}
         for component in $components; do
-            if [ "${timestep_zero}" != "TRUE" ] && [ "${component}" = "oifs" ]; then
+            if [ "${timestep_zero^^}" != "TRUE" ] && [ "${component}" = "oifs" ]; then
                 ${magiccut} $component.prv $((magiccut_steps+1))
             else
                 ${magiccut} $component.prv ${magiccut_steps}

@@ -182,26 +182,12 @@ function functions_dir_ecearth4()
 ###################
 # Start script
 ###################
-case "${current_member}" in
-    "CompilationEfficiency")
-        test_name="compilation_efficiency"
-        tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-        model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
-        ;;
-    "WeakScaling")
-        test_name="weakscaling"
-        tests="%WEAKSCALING.TEST_NAMES%"
-        arch_name=%WEAKSCALING.ARCH_NAME%
-        model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
-        ;;
-    "StrongScaling")
-        test_name="strong_scaling"
-        tests="%STRONGSCALING.TEST_NAMES%"
-        arch_name=%STRONGSCALING.ARCH_NAME%
-        model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
-        ;;
-esac
 
+test_name="tracing"
+arch_name=%TRACING.ARCH_NAME%
+model_resolution=%TRACING.MODEL_RESOLUTION%
+
+tests="%TRACING.TEST_NAMES%"
 tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
 tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
 

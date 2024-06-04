@@ -10,7 +10,7 @@ experiment:
   DATELIST: "20210811"
   # You can disable some tests to be run by Autosubmit if you delete them from the list
   # This can be done in your $expid/conf to don't change the proj configuration
-  MEMBERS: CompilationEfficiency HardwareBenchmarks WeakScaling StrongScaling
+  MEMBERS: CompilationEfficiency HardwareBenchmarks WeakScaling StrongScaling Tracing
   # Irevelant
   CHUNKSIZEUNIT: month
   # Irrelevant

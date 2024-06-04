@@ -12,7 +12,7 @@ JOBS:
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
@@ -29,7 +29,7 @@ JOBS:
           NAME: "%WEAKSCALING.NAMES%"
           PROCESSORS: "%WEAKSCALING.PROCESSORS%"
         MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, HardwareBenchmarks:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks, Tracing:
             DATES_TO: None
             MEMBERS_TO: None
             CHUNKS_TO: None
