@@ -16,8 +16,8 @@ JOBS:
     QUEUE: ef
     EC_QUEUE: ecs
   REMOTE_COMPILATION:
-    PROCESSORS: 128
-    TASKS: 128
+    PROCESSORS: 1
+    THREADS: 128
   dimemas_traces:
     CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=64"
   paramedir:

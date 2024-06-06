@@ -7,8 +7,8 @@ JOBS:
   REMOTE_INIDATA:
     PLATFORM: mn5-login
   REMOTE_COMPILATION:
-    PROCESSORS: 112
-    TASKS: 112
+    PROCESSORS: 1
+    THREADS: 112
   PREPARE_TESTS:
     PLATFORM: mn5-login
   trace_cut:

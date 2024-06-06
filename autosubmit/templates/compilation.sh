@@ -7,7 +7,7 @@ binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
-ntasks=%NUMTASK%
+ntasks=%THREADS%
 branch=%MODEL.BRANCH_LIST%
 platform=%COMMON.PLATFORM%
 exp_root=%CURRENT_ROOTDIR%
@@ -34,37 +34,35 @@ function compile_nemo()
     model_sources=${compilation}/${model}_${branch}
     cd ${model_sources}
     for arch_name in ${arch_names}; do
-        arch_file_prod=${cfg}/arch/${platform}/${model}/arch-${arch_name}-prod.fcm
-        arch_file_trace=${cfg}/arch/${platform}/${model}/arch-${arch_name}-trace.fcm
-
         configuration_folder=tests
-        exe_flavor=prod
-        exe_flavor_trace=trace
-        target_exe=${model}_prod.exe
-        target_exe_trace=${model}_trace.exe
         bin_folder=${binaries}/${arch_name}
-
         mkdir -p ${bin_folder}
-        cp ${arch_file_prod} ${model_sources}/arch/
-        cp ${arch_file_trace} ${model_sources}/arch/
 
-        # Add xios lib and include path to NEMO fcms
-        for fcm in ${model_sources}/arch/*.fcm; do
+        # Compile PROD
+        if ${compile_prod}; then
+            arch_file_prod=${cfg}/arch/${platform}/${model}/arch-${arch_name}-prod.fcm
+            target_exe=${model}_prod.exe
+            fcm=${model_sources}/arch/arch-${arch_name}-prod.fcm
+            cp ${arch_file_prod} ${model_sources}/arch/
             sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB.*/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
             sed -i "0,/%XIOS_INC/ s/%XIOS_INC.*/%XIOS_INC            -I$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/inc/g" ${fcm}
-        done
-
-        # Compile NEMO
-        compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name}-prod -n ${arch_name}_prod -a BENCH -j ${ntasks})
-        eval ${compilation_command}
+            compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name}-prod -n ${arch_name}_prod -a BENCH -j ${ntasks})
+            eval ${compilation_command}
+            cp ${model_sources}/${configuration_folder}/${arch_name}_prod/EXP00/nemo ${bin_folder}/${target_exe}
+        fi
 
         # Compile TRACE
-        compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name}-trace -n ${arch_name}_trace -a BENCH -j ${ntasks})
-        eval ${compilation_command}
-
-        # Copy binary into bin folder
-        cp ${model_sources}/${configuration_folder}/${arch_name}_prod/EXP00/nemo ${bin_folder}/${target_exe}
-        cp ${model_sources}/${configuration_folder}/${arch_name}_trace/EXP00/nemo ${bin_folder}/${target_exe_trace}
+        if ${compile_trace}; then
+            arch_file_trace=${cfg}/arch/${platform}/${model}/arch-${arch_name}-trace.fcm
+            target_exe_trace=${model}_trace.exe
+            fcm=${model_sources}/arch/arch-${arch_name}-trace.fcm
+            cp ${arch_file_trace} ${model_sources}/arch/
+            sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB.*/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
+            sed -i "0,/%XIOS_INC/ s/%XIOS_INC.*/%XIOS_INC            -I$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/inc/g" ${fcm}
+            compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name}-trace -n ${arch_name}_trace -a BENCH -j ${ntasks})
+            eval ${compilation_command}
+            cp ${model_sources}/${configuration_folder}/${arch_name}_trace/EXP00/nemo ${bin_folder}/${target_exe_trace}
+        fi
 
         # Copy xios binary
         cp ${exp_root}/xios/bin/xios_server.exe ${bin_folder}/xios_server.exe
@@ -94,29 +92,33 @@ function compile_ecearth4()
     # Compile all arch stated in AS
     for arch_name in ${arch_names}; do
         # Compile production
-        cd ${compilation}
-        arch_name_prod=${arch_name}-prod
-        arch_file=${cfg}/arch/${platform}/${model}/${arch_name_prod}.yml
-        mkdir -p ${arch_name_prod}
-        rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_prod}
-        sed -i "/NLOGPRT/{n;s/.*/    1 0 1/}" ${arch_name_prod}/runtime/se/templates/oasis/namcouple.j2
-        cd ${arch_name_prod}/sources/se
-        cp ${arch_file} platforms
-        se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
+        if ${compile_prod}; then
+            cd ${compilation}
+            arch_name_prod=${arch_name}-prod
+            arch_file=${cfg}/arch/${platform}/${model}/${arch_name_prod}.yml
+            mkdir -p ${arch_name_prod}
+            rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_prod}
+            sed -i "/NLOGPRT/{n;s/.*/    1 0 1/}" ${arch_name_prod}/runtime/se/templates/oasis/namcouple.j2
+            cd ${arch_name_prod}/sources/se
+            cp ${arch_file} platforms
+            se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
+        fi
 
         # Compile trace
-        cd ${compilation}
-        arch_name_trace=${arch_name}-trace
-        arch_file=${cfg}/arch/${platform}/${model}/${arch_name_trace}.yml
-        mkdir -p ${arch_name_trace}
-        rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_trace}
-        # Apply magiccut sentinel patch
-        cd ${compilation}/${arch_name_trace}/sources/oifs-43r3v2
-        git apply ${cfg}/trace/model/${model}/sentinel.diff
+        if ${compile_trace}; then
+            cd ${compilation}
+            arch_name_trace=${arch_name}-trace
+            arch_file=${cfg}/arch/${platform}/${model}/${arch_name_trace}.yml
+            mkdir -p ${arch_name_trace}
+            rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_trace}
+            # Apply magiccut sentinel patch
+            cd ${compilation}/${arch_name_trace}/sources/oifs-43r3v2
+            git apply ${cfg}/trace/model/${model}/sentinel.diff
 
-        cd ${compilation}/${arch_name_trace}/sources/se
-        cp ${arch_file} platforms
-        se user-settings-hpc2020.yml platforms/${arch_name_trace}.yml compile-all.yml
+            cd ${compilation}/${arch_name_trace}/sources/se
+            cp ${arch_file} platforms
+            se user-settings-hpc2020.yml platforms/${arch_name_trace}.yml compile-all.yml
+        fi
     done
 }
 
@@ -149,5 +151,12 @@ if echo ${members[@]} | grep -q -w "HardwareBenchmarks"; then
     compile_hw
 fi
 
+compile_prod=true
+compile_trace=true
+echo ${members[@]} | grep -qwE "CompilationEfficiency|WeakScaling|StrongScaling" || compile_prod=false
+echo ${members[@]} | grep -qw Tracing || compile_trace=false
+
 # Compile all model arch configurations
-compile_${model}
+if ${compile_prod} || ${compile_trace}; then
+    compile_${model}
+fi
