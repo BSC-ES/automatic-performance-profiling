@@ -1,3 +1,9 @@
+#!/bin/bash
+#####################################################################################################################
+# tests.sh
+# Brief: This creates the members necessary folders
+#####################################################################################################################
+
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%

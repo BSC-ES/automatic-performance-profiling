@@ -1,3 +1,10 @@
+#!/bin/bash
+#####################################################################################################################
+# functions_dir.sh
+# Brief: This script runs a short model run to gather the most expensive user functions to be traced afterwards
+#           using the extrae.sh script
+#####################################################################################################################
+
 ###################
 # AS variables
 ###################
@@ -188,8 +195,8 @@ arch_name=%TRACING.ARCH_NAME%
 model_resolution=%TRACING.MODEL_RESOLUTION%
 
 tests="%TRACING.TEST_NAMES%"
-tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
-tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+tests=${tests//[\[,\]]/}
+tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
 
 model_sources=${model}_${branch}
 

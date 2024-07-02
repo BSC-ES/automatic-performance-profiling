@@ -1,3 +1,9 @@
+#!/bin/bash
+#####################################################################################################################
+# scalability.sh
+# Brief: This script runs the model to get the SYPD of the current procs config
+#####################################################################################################################
+
 ###################
 # AS variables
 ###################
@@ -14,15 +20,9 @@ test="%CURRENT_TEST_NAME%"
 
 #####################################################################################################################
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
-# Param: None
-# Path variables: 
-#   - inidata
-#   - binaries
-#   - compilation
-#   - run_dir
-# Other variables: 
-#   - test_name
-#   - number_of_cores
+# Global:
+#   - Paths: inidata, binaries, compilation, run_dir
+#   - Other: test_name, number_of_cores
 #####################################################################################################################
 function run_nemo()
 {
@@ -66,15 +66,9 @@ function run_nemo()
 
 #####################################################################################################################
 # Brief: Updates the SE config file with the AS config and runs EC-Earth 4
-# Param: None
-# Path variables: 
-#   - run_root
-#   - compilation
-# Other variables:
-#   - test_name
-#   - model
-#   - number_of_cores
-#   - test
+# Global:
+#   - Paths: run_root, compilation
+#   - Other: test_name, model, number_of_cores, test
 #####################################################################################################################
 function run_ecearth4()
 {
@@ -147,6 +141,7 @@ function run_ecearth4()
 ###################
 # Start script
 ###################
+
 case "$current_member" in
     "CompilationEfficiency")
         member="compilation_efficiency"

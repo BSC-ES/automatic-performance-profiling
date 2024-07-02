@@ -1,8 +1,13 @@
+#!/bin/bash
+#####################################################################################################################
+# ini.sh
+# Brief: This script creates the necessary inidata folders 
+#####################################################################################################################
+
 set -xuve
 ###################
 # AS variables
 ###################
-compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
@@ -54,11 +59,8 @@ function ini_ecearth4()
 ###################
 # Start script
 ###################
-source ${env_sources}
-set +u
-export PYTHONPATH=$PYTHONPATH:$(pwd)
-set -u
 
+source ${env_sources}
 
 mkdir -p ${inidata}
 cd ${inidata}
@@ -84,11 +86,14 @@ for member in ${members}; do
             folder="tracing"
             tests="%TRACING.TEST_NAMES%"
             test_config="%TRACING.TEST_CONFIG%"
+            ;;
+        *)
+            continue
             ;;    
     esac
     
-    tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
-    tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+    tests=${tests//[\[,\]]/}
+    tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
 
     ini_${model}
 done

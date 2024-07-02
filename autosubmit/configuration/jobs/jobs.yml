@@ -16,7 +16,7 @@ JOBS:
     CHECK: "true"
   # Creates the folder "inidata" with the param_bash.cfg specific to each test, it requires connection to the internet due HW tests
   REMOTE_INIDATA:
-    FILE: autosubmit/templates/INI.sh
+    FILE: autosubmit/templates/ini.sh
     DEPENDENCIES: REMOTE_SETUP
     WALLCLOCK: 00:30
     CHECK: "true"
@@ -29,7 +29,7 @@ JOBS:
     NOTIFY_ON: FAILED
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
-    FILE: autosubmit/templates/Tests.sh
+    FILE: autosubmit/templates/tests.sh
     DEPENDENCIES: REMOTE_COMPILATION
     RUNNING: member
     WALLCLOCK: 00:30

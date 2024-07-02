@@ -18,15 +18,17 @@ JOBS:
   report_setup:
     PLATFORM: mn5-login
   dimemas_traces:
-    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=112"
+    THREADS: 112
   dimemas_images:
     PLATFORM: mn5-login
   paramedir:
-    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=112"
+    THREADS: 112
   paradim:
-    CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=112"
+    THREADS: 112
   paraver:
     PLATFORM: mn5-login
+    X11: True
+    X11_OPTIONS: "-A bsc32 --qos=gp_debug --x11=all --time=02:00:00 -c 12"
   hardware_bench_images:
     PLATFORM: mn5-login
   configuration_json:

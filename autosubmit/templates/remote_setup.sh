@@ -1,3 +1,9 @@
+#!/bin/bash
+#####################################################################################################################
+# remote_setup.sh
+# Brief: This script clones and downloads the inidata if needed 
+#####################################################################################################################
+
 ###################
 # AS variables
 ###################
@@ -16,7 +22,7 @@ model_origin="%MODEL.ORIGIN%"
 function clone_nemo()
 {
     mkdir -p ${dest_dir}
-    cd ${dest_dir}
+    cd ${dest_dir} || exit
     
     # Clone NEMO repository
     if [ ! -d nemo_${branch} ]; then
@@ -25,7 +31,7 @@ function clone_nemo()
         git config --global http.sslVerify "true"
     fi
     
-    cd nemo_${branch}
+    cd nemo_${branch} || exit
     git checkout tags/${branch}
 }
 
@@ -33,14 +39,14 @@ function clone_ecearth4()
 {    
     # Create target directory
     mkdir -p ${dest_dir}
-    cd ${dest_dir}
+    cd ${dest_dir} || exit
     
     # Clone ECEARTH4 repository
     if [ ! -d ecearth4_${branch} ]; then
         git clone --recurse-submodules ${model_origin} ecearth4_${branch}
     fi
     
-    cd ecearth4_${branch}
+    cd ecearth4_${branch} || exit
     git checkout ${branch}
 
     # Update config for AS to worl with SE
@@ -48,7 +54,7 @@ function clone_ecearth4()
     # Add trace launch script
     cp ${project}/configurations/model/ecearth4/trace-run.sh.j2 runtime/se/templates/launch/
 
-    cd ${dest_dir}
+    cd ${dest_dir} || exit
     if [ ! -d lucia-alternative ]; then
     	git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
     fi
@@ -57,6 +63,7 @@ function clone_ecearth4()
 ###################
 # Start script
 ###################
+
 if [ ! -d $project ] || [ %COMMON.REFRESH_GIT_REPO% == true ];
 then
     chmod +w -R $project || :
@@ -75,7 +82,7 @@ mkdir -p ${binaries}
 mkdir -p ${run_folder}
 mkdir -p ${inidata}
 
-cd ${inidata}
+cd ${inidata} || exit
 
 # Clone the model source code
 branchs_to_clone=(%MODEL.BRANCH_LIST%)
@@ -91,14 +98,14 @@ done
 # Clone XIOS if NEMO is run
 if [ "${model}" = "nemo" ]; then
     if [ ! -d ${root_dir}/xios ]; then
-        cd ${root_dir}
+        cd ${root_dir} || exit
         svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
 
         cp ${project}/cfg/arch/${platform}/xios/* ${root_dir}/xios/arch
     fi
 
     if [ ! -d ${inidata}/original ]; then
-        cd ${inidata}
+        cd ${inidata} || exit
         mkdir -p original
         wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar
         tar -xf ORCA2_ICE_v4.0.tar -C original
@@ -109,8 +116,8 @@ if [ "${model}" = "nemo" ]; then
 fi
 
 # If hardware benchmarks are run, clone OSU and STREAM
-if echo ${members[@]} | grep -q -w "HardwareBenchmarks"; then
-    cd $compilation
+if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
+    cd ${compilation} || exit
     wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
     tar -xvf osu-micro-benchmarks-5.6.3.tar.gz
     rm osu-micro-benchmarks-5.6.3.tar.gz

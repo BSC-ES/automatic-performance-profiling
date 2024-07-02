@@ -1,4 +1,9 @@
 #!/bin/bash
+#####################################################################################################################
+# extrae.sh
+# Brief: This script runs the model with Extrae in order to trace the PAPI counters, user functions and MPI events
+#####################################################################################################################
+
 ###################
 # AS variables
 ###################
@@ -55,8 +60,8 @@ function cut_trace()
     local first_proc=1
     local i=0
     while [ $i -lt ${#components_names[@]} ]; do
-        component_procs=${components_processors[i]}
-        last_proc=$((first_proc+component_procs-1))
+        local component_procs=${components_processors[i]}
+        local last_proc=$((first_proc+component_procs-1))
 
         cat << EOF > cutter.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -90,28 +95,28 @@ EOF
 }
 
 #####################################################################################################################
-# Path variables: TODO
-# Other variables: TODO
-# Purpose: Traces NEMO using extrae
+# Brief: Traces NEMO using Extrae
+# Global:
+#   - Paths: run_root, inidata, compilation
+#   - Other: model, numproc, test_name, branch, arch_name, test_name
 #####################################################################################################################
 function trace_nemo()
 {
-    local run_dir=${run_root}/${test_name_}/trace_nemo_${numproc}
+    local run_dir=${run_root}/${test_name}/trace_nemo_${numproc}
     mkdir -p ${run_dir}
     cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
-    cd ${run_dir}
+    cd ${run_dir} || exit
 
     local model_sources=${model}_${branch}
     local configuration_folder=tests
 
     # Link data
-    cp $inidata/$test_name_/* ${run_dir}
+    cp $inidata/$test_name/* ${run_dir}
     #Doble check this #TODO not sure if it should be original after the member changes
     ln -rsf $inidata/original ${run_dir}
     rsync -rv --exclude=.nc $inidata ${run_dir}
-    cd ${run_dir}
 
     # Copy everything from reference folder
     cp --remove-destination ${compilation}/${model_sources}/${configuration_folder}/${arch_name}_trace/EXP00/* ${run_dir}
@@ -134,7 +139,7 @@ function trace_nemo()
     create_trace_sh $run_dir
 
     # Copy function.txt
-    cp $run_root/$test_name_/functions_dir/extrae_functions.txt ${run_dir}/extrae_functions.txt
+    cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/extrae_functions.txt
 
     # Generate function list for xml
     ./generate_function_list.sh ./nemo extrae_functions.txt
@@ -143,7 +148,7 @@ function trace_nemo()
         papi_counters_str=""
         for papi_counter in ${papi_counters}; do
             if command -v papi_avail &> /dev/null && [ "$(papi_avail | grep ${papi_counter} |  awk -F ' ' '{print $3}')" != "Yes" ]; then
-                echo Warning! ${papi_counter} is not available
+                echo "Warning! ${papi_counter} is not available"
             fi
             if [ "${papi_counters_str}" = "" ]; then
                 papi_counters_str=${papi_counter}
@@ -158,49 +163,50 @@ function trace_nemo()
     time srun -n $numproc ${run_dir}/trace.sh ./nemo
 
     # Clean a little bit
-    rm -rf set-* *.nc
+    rm -rf set-* ./*.nc
 }
 
 #####################################################################################################################
-# Path variables: TODO
-# Other variables: TODO
-# Purpose: Traces ECEARTH4 using extrae
+# Brief: Traces ECE4 execution using Extrae
+# Global:
+#   - Paths: cfg, run_root, compilation, project
+#   - Other: test_name, test, model, arch_name
 #####################################################################################################################
 function trace_ecearth4()
 {
-    oifs_procs=%CURRENT_OIFS_PROCS%
-    nemo_procs=%CURRENT_NEMO_PROCS%
-    xios_procs=%CURRENT_XIOS_PROCS%
-    use_omp_threads="%USE_OMP_THREDS%"
-    oifs_omp_threads=1
+    local oifs_procs=%CURRENT_OIFS_PROCS%
+    local nemo_procs=%CURRENT_NEMO_PROCS%
+    local xios_procs=%CURRENT_XIOS_PROCS%
+    local use_omp_threads="%USE_OMP_THREDS%"
+    local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
         oifs_omp_threads=%CURRENT_THREADS%
     fi
 
-    run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
-    run_dir=${run_root}/${test_name_}/trace_${run_id}
+    local run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    local run_dir=${run_root}/${test_name}/trace_${run_id}
     mkdir -p ${run_dir}
     # Remove all run folder content just in case it was already created
-    rm -rf ${run_dir}/*
+    rm -rf ${run_dir:?}/*
     cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
-    cd ${compilation}/${arch_name}-trace/runtime/se
+    cd ${compilation}/${arch_name}-trace/runtime/se || exit
 
     create_trace_sh ${run_dir}
 
     # Update all variable according to AS config
-    config_file=trace-${test}-${run_id}.yml
+    local config_file=trace-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/config.yml ${config_file}
 
-    sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
-    ecearth_root=${compilation}/${arch_name}-trace
-    sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
+    local sed_run_dir=${run_dir//\//\\\/}
+    local ecearth_root=${compilation}/${arch_name}-trace
+    local sed_ecearth_root=${ecearth_root//\//\\\/}
 
-    start_date=%TRACING.START_DATE%
-    end_date=%TRACING.END_DATE%
-    freq=%TRACING.FREQ%
-    interval=%TRACING.INTERVAL%
+    local start_date=%TRACING.START_DATE%
+    local end_date=%TRACING.END_DATE%
+    local freq=%TRACING.FREQ%
+    local interval=%TRACING.INTERVAL%
 
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
@@ -221,12 +227,10 @@ function trace_ecearth4()
 
     sed -i "s/RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=DAILY;UNTIL=19900102;INTERVAL=1/" ${config_file}
 
-    cd ${run_dir}
-
     # Copy user functions list
-    cp ${cfg}/trace/model/${model}/extrae_functions.txt .
+    cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}
 
-    cd ${compilation}/${arch_name}-trace/runtime/se
+    cd ${compilation}/${arch_name}-trace/runtime/se || exit
 
     # Activate the SE enviroment and run
     set +u
@@ -237,7 +241,7 @@ function trace_ecearth4()
     # Reload modules to exit from SE
     source ${env_sources}
 
-    cd ${run_dir}
+    cd ${run_dir} || exit
 
     actual_nemo_procs=$(grep "exceeds the maximum number of ocean subdomains" log/001/ocean.output | grep -oE "[0-9]+" || echo ${nemo_procs})
 
@@ -246,6 +250,7 @@ function trace_ecearth4()
     mv xios_server.exe.pcf ${model}.pcf
     mv xios_server.exe.row ${model}.row
 
+    declare -A components_processors
     components=("xios" "nemo" "rnf" "oifs")
     processors=($xios_procs $nemo_procs 1 $oifs_procs)
 
@@ -257,10 +262,11 @@ function trace_ecearth4()
 ###################
 # Start script
 ###################
+
 source ${env_sources}
 
-test_name="tracing"
-test_name_=${test_name}/${test}
+member="tracing"
+test_name=${member}/${test}
 arch_name=%TRACING.ARCH_NAME%
 model_resolution=%TRACING.MODEL_RESOLUTION%       
 

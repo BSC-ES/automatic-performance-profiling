@@ -1,3 +1,9 @@
+#!/bin/bash
+#####################################################################################################################
+# compilation.sh
+# Brief: This script compiles the model using the arch files set in the AS config
+#####################################################################################################################
+
 set -xv
 ###################
 # AS variables
@@ -15,18 +21,20 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 members="%EXPERIMENT.MEMBERS%"
 arch_names="%MODEL.ARCH_NAMES%"
-arch_names=($(echo $arch_names | sed "s/\[\|\]\|,//g"))
-arch_names=$(for v in "${arch_names[@]}"; do echo "$v";done| sort| uniq| xargs)
+arch_names=${arch_names//[\[,\]]/}
+arch_names=$(for v in $arch_names; do echo "$v";done| sort| uniq| xargs)
 
 #####################################################################################################################
-# Path variables: TODO
-# Other variables: TODO
-# Purpose: Compiles all arch FCM configurations for NEMO configured in the ARCH_NAMES AS variable
+# Brief: Compiles all arch FCM configurations for NEMO configured in the ARCH_NAMES AS variable
+# Global:
+#   - Paths: exp_root, project, binaries, compilation
+#   - Other: platform, ntasks, model, branch, arch_names
+# Param: None
 #####################################################################################################################
 function compile_nemo()
 {
     # Compile XIOS
-    cd ${exp_root}/xios
+    cd ${exp_root}/xios || exit
     cp $project/cfg/arch/${platform}/xios/arch-* arch
     ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
     
@@ -70,9 +78,11 @@ function compile_nemo()
 }
 
 #####################################################################################################################
-# Path variables: compilation, project
-# Other variables: model, branch, platform, ntasks
-# Purpose: Compiles all arch YML configurations for ECEARTH 4 stated in the ARCH_NAMES AS variable
+# Brief: Compiles all arch YML configurations for ECEARTH 4 stated in the ARCH_NAMES AS variable
+# Global:
+#   - Paths: compilation, project, cfg
+#   - Other: model, branch, arch_names, platform, ntasks
+# Param: None
 #####################################################################################################################
 function compile_ecearth4()
 {
@@ -99,7 +109,7 @@ function compile_ecearth4()
             mkdir -p ${arch_name_prod}
             rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_prod}
             sed -i "/NLOGPRT/{n;s/.*/    1 0 1/}" ${arch_name_prod}/runtime/se/templates/oasis/namcouple.j2
-            cd ${arch_name_prod}/sources/se
+            cd ${arch_name_projd}/sources/se
             cp ${arch_file} platforms
             se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
         fi
@@ -124,8 +134,9 @@ function compile_ecearth4()
 
 
 #####################################################################################################################
-# Path variables: compilation
-# Purpose: Compiles STREAM and OSU HW benchmarks
+# Brief: Compiles STREAM and OSU HW benchmarks
+# Global:
+#   - Paths: compilation
 #####################################################################################################################
 function compile_hw()
 {
@@ -141,20 +152,21 @@ function compile_hw()
 ###################
 # Start script
 ###################
+
 mkdir -p $compilation
 mkdir -p $binaries
 
 source $env_sources
 
-# Compile hardware benchmarks
-if echo ${members[@]} | grep -q -w "HardwareBenchmarks"; then
+# Compile hardware benchmarks if needed
+if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
     compile_hw
 fi
 
 compile_prod=true
 compile_trace=true
-echo ${members[@]} | grep -qwE "CompilationEfficiency|WeakScaling|StrongScaling" || compile_prod=false
-echo ${members[@]} | grep -qw Tracing || compile_trace=false
+echo "${members[@]}" | grep -qwE "CompilationEfficiency|WeakScaling|StrongScaling" || compile_prod=false
+echo "${members[@]}" | grep -qw Tracing || compile_trace=false
 
 # Compile all model arch configurations
 if ${compile_prod} || ${compile_trace}; then

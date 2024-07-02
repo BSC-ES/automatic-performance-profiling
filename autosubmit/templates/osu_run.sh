@@ -1,10 +1,15 @@
+#!/bin/bash
+#####################################################################################################################
+# osu_run.sh
+# Brief: This script runs the osu benchmark
+#####################################################################################################################
+
 ###################
 # AS variables
 ###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 n_cores=%NUMPROC%
 osu_tests=(%HW_BENCHMARKS.OSU_TESTS%)
 
@@ -12,7 +17,7 @@ source ${env_sources}
 mkdir -p $run_folder/hardware_benchmarks/OSU_RUN/${n_cores}
 cd $run_folder/hardware_benchmarks/OSU_RUN/${n_cores}
 
-for test in ${osu_tests[@]}
+for test in "${osu_tests[@]}"
 do
     test_name=${test##*/}
     cp $compilation/osu-micro-benchmarks-5.6.3/mpi/${test} ${test_name}

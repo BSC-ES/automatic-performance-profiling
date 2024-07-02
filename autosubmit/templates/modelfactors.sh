@@ -1,26 +1,30 @@
-current_member=%MEMBER%
-model=%MODEL.NAME%
+#!/bin/bash
+#####################################################################################################################
+# modelfactors.sh
+# Brief: This script runs the modelfactors script on the cut traces generated from trace_cut.sh
+#####################################################################################################################
+
+###################
+# AS variables
+###################
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
-project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-analysis_tools=${project}/cfg/trace_analysis
+tests="%TRACING.TEST_NAMES%"
+env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 
-if [ "$current_member" = "StrongScaling" ]; then
-    test_name="strong_scaling"
-    tests="%STRONGSCALING.TEST_NAMES%"
-fi
+source ${env_sources}
 
-tests=($(echo $tests | sed "s/\[\|\]\|,//g"))
-tests=$(for v in "${tests[@]}"; do echo "$v";done| sort| uniq| xargs)
+member="tracing"
+tests=${tests//[\[,\]]/}
+tests=$(for v in ${tests}; do echo "$v";done | sort | uniq | xargs)
 
 for test in $tests
 do
-    test_name_=$test_name"/"$(basename $test)
-    test_root=$run_root/$test_name_
+    test_name="${member}/$(basename $test)"
+    test_root=$run_root/$test_name
+    traces=($test_root/trace_*/*best_cut.prv)
+
     mkdir -p ${test_root}/modelfactors
-    trace_folders=$(find ${test_root} | grep trace_[0-9]*$)
-    traces=$(find ${trace_folders} | grep ${model}.best_cut.prv)
-    cd ${test_root}/modelfactors
-    ${analysis_tools}/modelfactors ${traces}
+    cd ${test_root}/modelfactors || exit
+    modelfactors.py "${traces[@]}"
 done
 

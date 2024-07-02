@@ -1,10 +1,15 @@
+#!/bin/bash
+#####################################################################################################################
+# hardware_benchmarks_images.sh
+# Brief: This script generates the hw benchmarks images from OSU and STREAM 
+#####################################################################################################################
+
 ###################
 # AS variables
 ###################
 model=%MODEL.NAME%
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 osu_tests=(%HW_BENCHMARKS.OSU_TESTS%)
@@ -14,10 +19,10 @@ set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
 
-cd $run_root/hardware_benchmarks
+cd $run_root/hardware_benchmarks || exit
 mkdir -p OSU_RUN/IMAGE
 
-for test in ${osu_tests[@]}
+for test in "${osu_tests[@]}"
 do
     test_name=${test##*/}
     python3 ${cfg}/benchmarks/OSU/OSU_test_plots.py -i OSU_RUN/DATA/${test_name}* -o OSU_RUN/IMAGE/
