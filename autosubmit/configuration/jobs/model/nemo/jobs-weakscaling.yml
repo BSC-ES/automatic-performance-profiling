@@ -6,6 +6,7 @@ JOBS:
       NAME: "%WEAKSCALING.NAMES%"
       PROCESSORS: "%WEAKSCALING.PROCESSORS%"
       THREADS: "%WEAKSCALING.THREADS%"
+      TILE_SIZE: "%WEAKSCALING.TILE_SIZE%"
     DEPENDENCIES:
       PREPARE_TESTS:
         MEMBERS_FROM:
@@ -17,6 +18,7 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
   report_setup:
     FILE: autosubmit/templates/report_setup.sh
     DEPENDENCIES:

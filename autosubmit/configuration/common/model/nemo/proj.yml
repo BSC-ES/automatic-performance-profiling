@@ -92,12 +92,13 @@ STRONGSCALING:
 # WEAKSCALING CONFIG
 WEAKSCALING:
   WEAKSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling'
-  TEST_NAMES: [orca025]
-  NAMES: [orca025_336]
-  PROCESSORS: [336]
-  THREADS: [1]
-  TILE_SIZE: [62x40]
-  MODEL_RESOLUTION: orca025
+  BASE_PROCS: 112
+  NAMES: [orca1, orca12, orca025]
+  TEST_NAMES: [orca1, orca12, orca025]
+  # 1 is the base tile size, the rest are the multiplication factor
+  TILE_SIZE: [1, 12, 4]
+  PROCESSORS: [1, 1, 1]
+  THREADS: [1, 1, 1]
   TEST_CONFIG: BENCH
   ARCH_NAME: O3
 

@@ -57,7 +57,13 @@ function run_nemo()
     fi
 
     cd ${run_dir}
-    time srun -n $number_of_cores ./nemo
+    if [ ${current_member} = "WeakScaling" ]; then
+        local queue=%HPCQUEUE%
+        local proj=%CURRENT_PROJ%
+        time srun -A ${proj} -q ${queue} -n $number_of_cores ./nemo
+    else
+        time srun -n $number_of_cores ./nemo
+    fi
 
     # Rename timing output
     mv timing.output ${number_of_cores}_test.timing
@@ -159,7 +165,10 @@ case "$current_member" in
         member="weakscaling"
         test_name=${member}/${test}
         arch_name=%WEAKSCALING.ARCH_NAME%
-        model_resolution=%WEAKSCALING.MODEL_RESOLUTION%
+        model_resolution=${test}
+        base_cores=%WEAKSCALING.BASE_PROCS%
+        current_tile_size=%CURRENT_TILE_SIZE%
+        number_of_cores=$((base_cores*current_tile_size))
         ;;
 esac
 

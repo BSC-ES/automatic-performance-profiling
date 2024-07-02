@@ -57,11 +57,14 @@ case "$current_member" in
         test_name="weakscaling"
         tests="%WEAKSCALING.TEST_NAMES%"
         tile_size="%WEAKSCALING.TILE_SIZE%"
+        tile_size=${tile_size//[\[,\]]/}
+        tile_size=($(for v in $tile_size; do echo "$v";done| uniq| xargs))
     ;;
 esac
 
 tests=${tests//[\[,\]]/}
-tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
+tests=$(for v in $tests; do echo "$v";done| uniq| xargs)
+
 components=${components//[\[,\]]/}
 components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 
@@ -70,6 +73,7 @@ set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
 
+i=0
 for test in $tests
 do
     test_name_=$test_name/$test
@@ -82,13 +86,14 @@ do
         --sypd-file ${test}_scaling.csv \
         --sypd-plot ${test}_scaling.png"
     fi
-    tile_size=($(echo $tile_size | sed "s/\[\|\]\|,//g"))
     
     # Create param file for the python script
     {
         echo processes_per_node=${ppn} 
         echo configuration_name=${test}
-        echo tile_size=\'${tile_size}\'
+        if [ "${current_member}" = "WeakScaling" ]; then
+            echo tile_size=\'${tile_size[$i]}\'
+        fi
         echo number_of_processes=\'$(ls | grep -E trace_ | sed 's/.*trace_//')\'
     } > param.cfg
     
@@ -98,4 +103,5 @@ do
         --param-file param.cfg \
         --components "${components}"
     python3 ${cfg}/parser/reporter.py ${tmp_reporter_params}
+    i=$((i+1))
 done
