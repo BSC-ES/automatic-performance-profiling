@@ -35,12 +35,10 @@ case "$current_member" in
     "StrongScaling")
         test_name="strong_scaling"
         tests="%STRONGSCALING.TEST_NAMES%"
-        tile_size="-"
     ;;
     "Tracing")
         test_name="tracing"
         tests="%TRACING.TEST_NAMES%"
-        tile_size="-"
         reporter_params="-f function_csv \
         --functions-file functions_summary.txt \
         --most_expensive_function_summary most_expensive_function_summary.csv \
@@ -51,14 +49,10 @@ case "$current_member" in
     "CompilationEfficiency")
         test_name="compilation_efficiency"
         tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
-        tile_size="-"
     ;;
     "WeakScaling")
         test_name="weakscaling"
         tests="%WEAKSCALING.TEST_NAMES%"
-        tile_size="%WEAKSCALING.TILE_SIZE%"
-        tile_size=${tile_size//[\[,\]]/}
-        tile_size=($(for v in $tile_size; do echo "$v";done| uniq| xargs))
     ;;
 esac
 
@@ -92,7 +86,8 @@ do
         echo processes_per_node=${ppn} 
         echo configuration_name=${test}
         if [ "${current_member}" = "WeakScaling" ]; then
-            echo tile_size=\'${tile_size[$i]}\'
+            source ${project}/configurations/model/${model}/resolutions.sh 
+            echo tile_size=\'${resolutions[$test]}\'
         fi
         echo number_of_processes=\'$(ls | grep -E trace_ | sed 's/.*trace_//')\'
     } > param.cfg

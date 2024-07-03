@@ -58,6 +58,12 @@ function run_nemo()
 
     cd ${run_dir}
     if [ ${current_member} = "WeakScaling" ]; then
+        source ${project}/configurations/model/${model}/resolutions.sh 
+        local base_procs=%WEAKSCALING.BASE_PROCS%
+        local base_resolution=%WEAKSCALING.BASE_RESOLUTION%
+        local base_tile_size=${resolutions[$base_resolution]}
+        local curr_tile_size=${resolutions[$model_resolution]}
+        number_of_cores=$((base_procs*curr_tile_size/base_tile_size))
         local queue=%HPCQUEUE%
         local proj=%CURRENT_PROJ%
         time srun -A ${proj} -q ${queue} -n $number_of_cores ./nemo
@@ -166,9 +172,6 @@ case "$current_member" in
         test_name=${member}/${test}
         arch_name=%WEAKSCALING.ARCH_NAME%
         model_resolution=${test}
-        base_cores=%WEAKSCALING.BASE_PROCS%
-        current_tile_size=%CURRENT_TILE_SIZE%
-        number_of_cores=$((base_cores*current_tile_size))
         ;;
 esac
 
