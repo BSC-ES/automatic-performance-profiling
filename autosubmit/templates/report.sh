@@ -128,7 +128,13 @@ function add_Tracing() {
         cd ${test_root} || exit
 
         # Modelfactors
-        # python3 ${latex_folder}/ReportGenerator.py -O ${report_full_path}.pkl -S "Model Factors" --add-img modelfactors -T ${cfg}/latex/text/ModelFactors.txt
+        for component in "${components[@]}"; do
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl\
+                -S "${component^^} Model Factors" \
+                --add-img modelfactors/$component \
+                -T ${cfg}/latex/text/ModelFactors.txt
+        done
 
         # Paramedir
         for trace_folder in trace_*; do
