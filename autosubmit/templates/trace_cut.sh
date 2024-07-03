@@ -37,11 +37,12 @@ do
     do
         cd ${trace_folder} || exit
         for component in $components; do
+            curr_mc_steps=${magiccut_steps}
             if [ "${timestep_zero^^}" != "TRUE" ] && [ "${component}" = "oifs" ]; then
-                ${magiccut} $component.prv $((magiccut_steps+1))
-            else
-                ${magiccut} $component.prv ${magiccut_steps}
+                curr_mc_steps=$((magiccut_steps+1))
             fi
+            # Run magiccut and save component's fastest step
+            ${magiccut} $component.prv $curr_mc_steps | grep "Worst / best" | awk -F ' ' '{print $8}' > ${component}_fastest_ts.txt
         done
     done
 done

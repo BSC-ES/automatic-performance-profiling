@@ -96,6 +96,16 @@ paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
 
 for test in ${tests}; do
     test_folder=${run_root}/${member}/${test}
+
+    declare -A components_slowest_ts
+    for component in $components; do components_slowest_ts[$component]=0; done
+    for trace_folder in ${test_folder}/trace_*; do
+        for components in $components; do 
+            max_time=${components_slowest_ts[$component]}
+            cur_time=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
+            components_slowest_ts[$component]=$(( cur_time  > max_time ? cur_time : max_time )); 
+        done
+    done
     for trace_folder in ${test_folder}/trace_*; do
         trace_folder_basename=$(basename ${trace_folder})
         trace_id=$(echo ${trace_folder_basename} | sed 's/trace_//')
@@ -110,7 +120,12 @@ for test in ${tests}; do
 
             cp ${paraver_configurations} ${img_folder}
 
+            slowest_ts=${components_slowest_ts[$component]}
+            cur_ts=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
             for paraver_cfg in ${img_folder}/*.cfg; do
+                if [ "$(basename $paraver_cfg)" = "MPI_call.cfg" ]; then
+                    sed -i "s/window_end_time_relative.*/window_end_time_relative $(echo $slowest_ts / $cur_ts | bc -l)/" ${paraver_cfg}
+                fi
                 sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg}
             done
 

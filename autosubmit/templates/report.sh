@@ -204,8 +204,23 @@ function add_Tracing() {
         # Paraver
         if [ -d paraver_images ]; then
             for component in "${components[@]}"; do
-                for case in paraver_images/*; do
-                    for paraver_image in $(find $case | grep -E ".*@${component}.*png"); do
+                case_comparison_cfg="MPI_call"
+                img_caption="Cases: "
+                case_comparison_imgs=""
+                for case in paraver_images/*; do 
+                    img_caption+="$(basename $case) "
+                    case_comparison_imgs+="$case/${case_comparison_cfg}@${component}.best_cut.png "
+                done
+                convert $case_comparison_imgs -append ${component}_case_comparison.png
+                python3 ${latex_folder}/ReportGenerator.py \
+                    -O ${report_full_path}.pkl \
+                    -S "${component^^} Paraver" \
+                    -s "Case comparison" \
+                    --add-img ${component}_case_comparison.png \
+                    --add-img-caption "$img_caption"
+                
+                for case in paraver_images/*; do                    
+                    for paraver_image in $(find $case | grep -E ".*@${component}.*png" | grep -v ${case_comparison_cfg}); do
                         python3 ${latex_folder}/ReportGenerator.py \
                             -O ${report_full_path}.pkl \
                             -S "${component^^} Paraver" \

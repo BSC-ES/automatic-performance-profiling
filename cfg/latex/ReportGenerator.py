@@ -161,6 +161,8 @@ class Section:
                         AssertionError("File %s not found", caption)
                     else:
                         pass
+                caption = caption.replace("_", "-")
+
             img_obj = ImgFile(img, self.section_name, subsection_name, caption)
             # Avoid adding item more than once ... useful in case of make target's failure
             for s_img in self.images:
@@ -230,7 +232,7 @@ class Subsection(Section):
 
     # Overwrites method adding images subsection info
     def add_image(self, file_path, caption=None):
-        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=None, )
+        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=caption, )
 
     # Overwrites method adding csv subsection info
     def add_csv(self, file_path, csv_convert, csv_purge, silent_mode):

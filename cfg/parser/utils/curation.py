@@ -681,7 +681,7 @@ def weakscaling_compute(experiments):
     # Get used configurations
     configurations = [exp.param_file["configuration_name"][0] for exp in experiments]
     # Get tail sizes for configurations
-    tile_size = [exp.param_file["tile_size"] for exp in experiments]
+    tile_size = [exp.param_file["tile_size"][0] for exp in experiments]
     # Get number of cores
     number_of_processes = [experiment[experiment.base_case]["nproc"] for experiment in experiments]
     # Get average duration of the timesteps with this config
@@ -689,9 +689,9 @@ def weakscaling_compute(experiments):
     log = Log()
     log.add("Config:, Tile Size, Ncores, SYPD")
     for index_conf, conf in enumerate(configurations):
-        for index_size, size in enumerate(tile_size):
-            log.add(conf + "," + size[index_conf] + ",%i" % number_of_processes[index_conf] +
-                    ", %5.2f " % sypd[index_conf][index_size])
+        for test_sypd in sypd[index_conf]:
+            log.add(conf + "," + tile_size[index_conf] + ",%i" % number_of_processes[index_conf] +
+                    ", %5.2f " % test_sypd)
     return log
 
 
