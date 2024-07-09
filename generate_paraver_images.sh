@@ -98,7 +98,7 @@ for test in ${root}/run/tracing/*; do
     declare -A components_slowest_ts
     for component in $components; do components_slowest_ts[$component]=0; done
     for trace_folder in ${test}/trace_*; do
-        for components in $components; do 
+        for component in $components; do 
             max_time=${components_slowest_ts[$component]}
             cur_time=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
             components_slowest_ts[$component]=$(( cur_time  > max_time ? cur_time : max_time )); 
@@ -131,8 +131,11 @@ for test in ${root}/run/tracing/*; do
             mod_paraver_configurations=$(find ${img_folder} | grep cfg)
             cd ${img_folder}
             for paraver_cfg in ${mod_paraver_configurations}; do
-                if wxparaver -i ${trace} ${paraver_cfg} &> /dev/null; then
+		        echo Generating $(basename ${paraver_cfg}) for ${trace}
+                if wxparaver -i ${trace} ${paraver_cfg} 1> /dev/null; then
                     create_paraver_legend ${paraver_cfg} ${trace}
+		        else
+		            echo Error! Not generated $(basename ${paraver_cfg}) for ${trace}
                 fi
             done
         done
