@@ -452,7 +452,7 @@ class TimingInformation:
             except KeyError:
                 pass
         
-        # self.rename_cases()
+        self.rename_cases()
 
     # This function renames the cases after getting all the info about them to have shorter names in the report
     # it is not done before because is easier to merge the same cases if they have the same id
@@ -542,27 +542,27 @@ class TimingInformation:
     def load_paramedir(self, files):
         if not files:
             raise AssertionError("Empty list of files")
+
         if self.data is None:
             self.data = parse_paramedir_files(files)
         else:
             paramedir_info = parse_paramedir_files(files)
             self.data = merge_dictionaries(self.data, paramedir_info)
-        if self.cases is None:
-            self.cases = list(sorted(self.data.keys()))
-            self.base_case = min(self.cases)
-        self.functions = self.find_functions()
-
-        if self.function_info_src == "paramedir":
-            for case in self.cases:
-                for component in self.data[case]["Components"]:
-                    component_function_info = {}
-                    for function_name in  self.data[case]["Components"][component]["Counters"]["Time"]:
-                        component_function_info[function_name] = self.data[case]["Components"][component]["Counters"]["Time"][function_name]["Average"][0]
-                    self.data[case]["Components"][component]["FunctionInfo"] = component_function_info
 
         if self.cases is None:
             self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
             self.base_case = min(self.cases)
+
+        self.functions = self.find_functions()
+
+        if self.function_info_src == "paramedir":
+            for case in self.cases:
+                for component in self.components:
+                    component_function_info = {}
+                    component_dict = dictionary_pointer(self.data, (case, "Components", component))
+                    for function_name in component_dict["Counters"]["Time"]:
+                        component_function_info[function_name] = component_dict["Counters"]["Time"][function_name]["Average"][0]
+                    component_dict["FunctionInfo"] = component_function_info
 
         if self.components_cases is None:
             self.components_cases = {}   

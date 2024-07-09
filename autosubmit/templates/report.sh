@@ -309,9 +309,10 @@ for current_member in ${members}; do
     add_${current_member}
 done
 
+cd ${report_folder}
 source ${report_conffile}
-echo model=${model^^} >param.cfg
-echo configuration_name=${configuration_name} >>param.cfg
+echo model=${model^^} > param.cfg
+echo configuration_name=${configuration_name} >> param.cfg
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --add-newcommand param.cfg
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-title "${title}"
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-authors "${authors}"
@@ -319,5 +320,4 @@ python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-auth
 # Create the tex file
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path} --dump-to-file
 # Compile the report
-cd ${report_folder}
 pdflatex ${report_name}.tex && pdflatex ${report_name}.tex
