@@ -231,7 +231,7 @@ class Subsection(Section):
 
     # Overwrites method adding images subsection info
     def add_image(self, file_path, caption=None):
-        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=None, )
+        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=caption, )
 
     # Overwrites method adding csv subsection info
     def add_csv(self, file_path, csv_convert, csv_purge, silent_mode):
@@ -266,9 +266,9 @@ class ImgFile:
                         self.caption = self.caption.replace(word, newcommand)
                     except AttributeError:
                         continue
-            self.caption = self.caption.replace("_", "-")
         else:
             self.caption = self.name
+        self.caption = self.caption.replace("_", "-")
 
     # Stores the image in an obj
     def store(self):
