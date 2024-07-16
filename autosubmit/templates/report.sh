@@ -143,7 +143,7 @@ function add_Tracing() {
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "${component^^} MPI Call Profile" \
-                    --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv --csv-convert -p
+                    --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv --csv-convert -p -r
             done
         done
 
