@@ -116,6 +116,7 @@ function add_Tracing() {
     local member="tracing"
     local papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
     local tests="%TRACING.TEST_NAMES%"
+    local case_comparison_cfgs="%TRACING.PV_CASE_COMPARISSON_CFGS%"
     tests=${tests//[\[,\]]/}
     tests=$(for v in $tests; do echo "$v"; done | sort | uniq | xargs)
 
@@ -204,20 +205,22 @@ function add_Tracing() {
         # Paraver
         if [ -d paraver_images ]; then
             for component in "${components[@]}"; do
-                case_comparison_cfg="MPI_call"
-                img_caption="Cases: "
-                case_comparison_imgs=""
-                for case in paraver_images/*; do 
-                    img_caption+="$(basename $case) "
-                    case_comparison_imgs+="$case/${case_comparison_cfg}@${component}.best_cut.png "
+                for case_comparison_cfg in ${case_comparison_cfgs}; do
+                    local img_caption="Cases: "
+                    local case_comparison_imgs=""
+                    for case in paraver_images/*; do 
+                        img_caption+="$(basename $case) "
+                        case_comparison_imgs+="$case/${case_comparison_cfg}@${component}.best_cut.png "
+                    done
+                    local img_name=${component}_${case_comparison_cfg}.png
+                    convert $case_comparison_imgs -append $img_name
+                    python3 ${latex_folder}/ReportGenerator.py \
+                        -O ${report_full_path}.pkl \
+                        -S "${component^^} Paraver" \
+                        -s "Case comparison" \
+                        --add-img $img_name \
+                        --add-img-caption "$img_caption"
                 done
-                convert $case_comparison_imgs -append ${component}_case_comparison.png
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl \
-                    -S "${component^^} Paraver" \
-                    -s "Case comparison" \
-                    --add-img ${component}_case_comparison.png \
-                    --add-img-caption "$img_caption"
                 
                 for case in paraver_images/*; do                    
                     for paraver_image in $(find $case | grep -E ".*@${component}.*png" | grep -v ${case_comparison_cfg}); do
