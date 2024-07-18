@@ -20,7 +20,7 @@
     - hdf5-parallel/1.12.2
     - netcdf4-parallel/4.9.1
     - ecmwf-toolbox/2023.04.1.0
-    - extrae/3.8.0
+    - extrae/4.0.6
 
 
 - base.getenv:
