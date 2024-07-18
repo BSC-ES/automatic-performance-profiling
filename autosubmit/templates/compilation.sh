@@ -103,29 +103,29 @@ function compile_ecearth4()
     for arch_name in ${arch_names}; do
         # Compile production
         if ${compile_prod}; then
-            cd ${compilation}
             arch_name_prod=${arch_name}-prod
             arch_file=${cfg}/arch/${platform}/${model}/${arch_name_prod}.yml
-            mkdir -p ${arch_name_prod}
-            rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_prod}
-            sed -i "/NLOGPRT/{n;s/.*/    1 0 1/}" ${arch_name_prod}/runtime/se/templates/oasis/namcouple.j2
-            cd ${arch_name_projd}/sources/se
+            prod_dir=${compilation}/${arch_name_prod}
+            mkdir -p ${prod_dir}
+            rsync -av --exclude='*.svn*' ${model_sources}/ ${prod_dir}
+            sed -i "/NLOGPRT/{n;s/.*/    1 0 1/}" ${prod_dir}/runtime/se/templates/oasis/namcouple.j2
+            cd ${prod_dir}/sources/se || exit
             cp ${arch_file} platforms
             se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
         fi
 
         # Compile trace
         if ${compile_trace}; then
-            cd ${compilation}
             arch_name_trace=${arch_name}-trace
             arch_file=${cfg}/arch/${platform}/${model}/${arch_name_trace}.yml
-            mkdir -p ${arch_name_trace}
-            rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_name_trace}
+            trace_dir=${compilation}/${arch_name_trace}
+            mkdir -p ${trace_dir}
+            rsync -av --exclude='*.svn*' ${model_sources}/ ${trace_dir}
             # Apply magiccut sentinel patch
-            cd ${compilation}/${arch_name_trace}/sources/oifs-43r3v2
+            cd ${trace_dir}/sources/oifs-43r3v2 || exit
             git apply ${cfg}/trace/model/${model}/sentinel.diff
 
-            cd ${compilation}/${arch_name_trace}/sources/se
+            cd ${trace_dir}/sources/se || exit
             cp ${arch_file} platforms
             se user-settings-hpc2020.yml platforms/${arch_name_trace}.yml compile-all.yml
         fi

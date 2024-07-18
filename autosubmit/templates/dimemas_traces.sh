@@ -34,7 +34,7 @@ do
     do
         for component in ${components}; do
             trace=${trace_folder}/${component}.best_cut.prv
-            trace_id=$(echo $trace_folder | sed 's/.*trace_//')
+            trace_id=${trace_folder//*trace_/}
             dim_trace=dimemas_traces/${trace_id}.dim
             
             prv2dim ${trace} ${dim_trace}
