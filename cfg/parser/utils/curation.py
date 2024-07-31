@@ -173,18 +173,13 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
         header.append("function_name")
         header.append(case)
         n_function = 0
+        components = [component]
         if component == "":
-            for component in experiment_data.components:
-                for function_name, elapsed_time in experiment_data.data[case]["Components"][component]["FunctionInfo"].items():
-                    if n_function < length_summary + 1:
-                        function_names[case_idx].append(function_name)
-                        TIME_data[n_function].append(function_name)
-                        TIME_data[n_function].append(str(elapsed_time))
-                        n_function += 1
-                    else:
-                        break
-        else:
-            for function_name, elapsed_time in experiment_data.data[case]["Components"][component]["FunctionInfo"].items():
+            components = experiment_data.components
+        for component in components:
+            functions_elapsed_time = go_to_dictionary_address(experiment_data.data, (case, "Components", component, "FunctionInfo"))
+            sorted_functions = list(sorted(functions_elapsed_time.items(), key=lambda f : f[1], reverse=True))
+            for function_name, elapsed_time in sorted_functions:
                 if n_function < length_summary + 1:
                     function_names[case_idx].append(function_name)
                     TIME_data[n_function].append(function_name)
