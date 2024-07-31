@@ -80,42 +80,46 @@ function run_nemo()
 # Brief: Updates the SE config file with the AS config and runs EC-Earth 4
 # Global:
 #   - Paths: run_root, compilation
-#   - Other: test_name, model, number_of_cores, test
+#   - Other: test_name, model, number_of_cores, test, branch
 #####################################################################################################################
 function run_ecearth4()
 {
-    oifs_procs=%CURRENT_OIFS_PROCS%
-    nemo_procs=%CURRENT_NEMO_PROCS%
-    xios_procs=%CURRENT_XIOS_PROCS%
-    use_omp_threads="%USE_OMP_THREDS%"
-    oifs_omp_threads=1
+    local model_sources=${compilation}/${model}_${branch}
+    local oifs_procs=%CURRENT_OIFS_PROCS%
+    local nemo_procs=%CURRENT_NEMO_PROCS%
+    local xios_procs=%CURRENT_XIOS_PROCS%
+    local use_omp_threads="%USE_OMP_THREDS%"
+    local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
         oifs_omp_threads=%CURRENT_THREADS%
     fi
 
-    test_dir=${run_root}/${test_name}
-    run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
-    run_dir=${test_dir}/scalability_${run_id}
+    local test_dir=${run_root}/${test_name}
+    local run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    local run_dir=${test_dir}/scalability_${run_id}
+    local src_dir=${compilation}/${arch_name}-prod/sources/
 
     # Remove all run folder content just in case
     rm -rf ${run_dir}/*
 
-    cd ${compilation}/${arch_name}-prod/runtime/se
+    cd ${compilation}/${arch_name}-prod/scripts/runtime
 
     # Update all variable according to AS config
-    config_file=config-${test}-${run_id}.yml
+    local config_file=config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/config.yml ${config_file}
 
-    sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
-    ecearth_root=${compilation}/${arch_name}-prod
-    sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
+    local sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
+    local sed_src_dir=$(echo ${src_dir} | sed 's_/_\\/_g')
+    local ecearth_root=${compilation}/${arch_name}-prod
+    local sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
 
-    start_date=%MODEL.START_DATE%
-    end_date=%MODEL.END_DATE%
-    freq=%MODEL.FREQ%
-    interval=%MODEL.INTERVAL%
+    local start_date=%MODEL.START_DATE%
+    local end_date=%MODEL.END_DATE%
+    local freq=%MODEL.FREQ%
+    local interval=%MODEL.INTERVAL%
 
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
+    sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
     sed -i "s/OIFS_PROCS/${oifs_procs}/"             ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
@@ -134,13 +138,14 @@ function run_ecearth4()
 
     # Activate the SE enviroment and run
     set +u
-    module load conda
-    conda activate /hpcperm/c3et/conda/ece4
-    se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-prod.yml ${config_file} scriptlib/main.yml   
+    SE_ENV_VERSION=trunk
+    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
+    micromamba activate ece4env-${SE_ENV_VERSION}
+    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-prod.yml scriptlib/main.yml   
 
     source ${env_sources}
 
-    cd ${run_dir}
+    cd ${run_dir} || exit
     python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 30
 
     run_id=$(echo $(basename $run_dir) | sed 's/scalability_//')

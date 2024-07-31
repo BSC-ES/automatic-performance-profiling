@@ -3,6 +3,7 @@
     experiment:
       id: a00a
       run_dir: "RUN_FOLDER"
+      src_dir: "SRC_FOLDER"
 
       schedule:
         all: !rrule >
@@ -10,7 +11,24 @@
           RRULE:FREQ=FREQUENCY;UNTIL=END_DATE;INTERVAL=INTERVAL_VAL
 
       nemo:
-        initial_state: null
+        start_from:
+          # Chose ONE of the options below:
+          # 1) Cold start
+          #    Do not fill in any of the parameters below
+          # 2) Start from initialisation of temperature and salinity (ts)
+          #    Set 'ts_state.file' with the path to a NetCDF file that contains the 3D
+          #    temperature (thetao) and salinity (so) fields. Optionally, set
+          #    'ts_state.weight_file' if the ts_state.file needs to be interpolated.
+          #    For the provided WOA Levitus climatology use 'ts_state.file: woa13-levitus.nc'
+          #    and 'ts_state.weight_file: weights_WOA13d1_2_eorca1_bilinear.nc'
+          # 3) Start from global restart files
+          #    Set 'restart.dir' where the 'restart.nc' (oce) and 'restart_ice.nc' (ice) files
+          #    are located
+          ts_state:
+            file:
+            weight_file:
+          restart:
+            dir:
 
       monitoring:
         activate: false
@@ -19,9 +37,6 @@
       components: [oifs, xios, nemo, rnfm, oasis]
       oifs:
         grid: !noparse "{{model_config.oifs.all_grids.TCO95L91}}"
-
-      oasis:
-        copy_weights: true
 
     job:
       launch:

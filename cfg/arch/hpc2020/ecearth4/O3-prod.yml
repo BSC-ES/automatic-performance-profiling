@@ -1,14 +1,24 @@
-# System-dependent configuration for EC-Earth 4 build and runtime
+# System-dependent configuration for ECE4 build and runtime
+#
 # ECMWF Atos Sequana XH2000 HPCF (HPC2020)
-# Uses intel compiler+lapack and openmpi
+#
+# This configuration uses the Intel compilers, MKL and OpenMPI
+#
+# Needs modules (versions below tested, newer versions might work):
+#   prgenv/intel
+#   intel/2021.4.0 (for reference, automatically loaded by prgenv/intel)
+#   intel-mkl/19.0.5
+#   hpcx-openmpi/2.9.0
+#   netcdf4-parallel/4.9.1
+#   ecmwf-toolbox/2023.04.1.0
 
 - base.echo:
-   msg: Apply system configuration for ecmwf-hpc2020
+    msg: Apply system configuration for ecmwf-hpc2020
 
 # load modules and set required environment variables
 
 - hpc.module:
-   cmd: reset
+    cmd: reset
 
 - hpc.module.load:
     names:
@@ -21,93 +31,98 @@
     - netcdf4-parallel/4.9.1
     - ecmwf-toolbox/2023.04.1.0
 
-
 - base.getenv:
     LD_LIBRARY_PATH: LD_LIBRARY_PATH
     ECCODES_DIR: ECCODES_DIR
     NETCDF4_PARALLEL_DIR: NETCDF4_PARALLEL_DIR
-    HDF5_DIR: HDF5_DIR
     MKLROOT: MKLROOT
+    HDF5_DIR: HDF5_DIR 
 
 - base.setenv:
-    LD_LIBRARY_PATH:  "{{LD_LIBRARY_PATH}}:{{NETCDF4_PARALLEL_DIR}}/lib:{{ECCODES_DIR}}/lib:{{HDF5_DIR}}/lib"
-
-# setup context variables
+    OASIS_BUILD_PATH: "{{ experiment.src_dir }}/oasis3-mct-5.2/arch_ecearth"
+    LD_LIBRARY_PATH:  "{{
+      experiment.src_dir + '/oasis3-mct-5.2/arch_ecearth/lib'
+      + ':' + NETCDF4_PARALLEL_DIR + '/lib'
+      + ':' + ECCODES_DIR + '/lib'
+      + ':' + HDF5_DIR + '/lib'
+      + (':' + LD_LIBRARY_PATH if LD_LIBRARY_PATH else '')
+    }}"
 
 - base.context:
+    platform:
+      cpus_per_node: 128
 
     experiment:
-        ini_dir: /hpcperm/c3et/models/ecearth/v4-trunk
-
-    platform:
-        cpus_per_node: 128
+      ini_dir: /hpcperm/c3et/models/ecearth/v4-trunk
 
     job:
-        slurm: {sbatch: {sbatch_command: "/usr/bin/sbatch",
-                         opts: {qos: "np"}}}
+      slurm:
+        sbatch:
+          opts:
+            export: ALL
+            qos: np
 
     build:
+      lang:
+        fortran:
+          compiler: mpifort
+          flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O3 -xHost
+          #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O2 -xHost
+          #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O0 -xHost -init=snan,arrays -check uninit,bounds -fpe0
+          preprocessor: fpp
 
+        c:
+          compiler: mpicc
+          flags: -traceback -g -O3 -xHost
+          preprocessor: cpp
+
+        linker:
+          command: !noparse "{{ build.lang.fortran.compiler }}"
+
+        make:
+          command: gmake
+
+      deps:
+        mpi: null
+
+        lapack:
+          base_dir: "{{ MKLROOT }}"
+          lib_dir: !noparse "{{ build.deps.lapack.base_dir }}/lib/intel64"
+          libs: [mkl_intel_lp64, mkl_core, mkl_sequential]
+
+        grib:
+          base_dir: "{{ ECCODES_DIR }}"
+          inc_dir: !noparse "{{ build.deps.grib.base_dir }}/include"
+          lib_dir: !noparse "{{ build.deps.grib.base_dir }}/lib"
+          libs: [eccodes_f90, eccodes, pthread]
+          samples_path: "/MEMFS/samples:/MEMFS/ifs_samples/grib1_mlgrib2"
+
+        netcdf:
+          base_dir: "{{ NETCDF4_PARALLEL_DIR }}"
+          inc_dir: !noparse "{{ build.deps.netcdf.base_dir }}/include"
+          mod_dir: !noparse "{{ build.deps.netcdf.base_dir }}/include"
+          lib_dir: !noparse "{{ build.deps.netcdf.base_dir }}/lib"
+          libs: [netcdff, netcdf]
+
+        hdf5: null
+
+      oifs:
         lang:
-            fortran:
-                compiler: mpifort
-                flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O3 -xHost 
-            #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O3 -xHost
-            #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O3 -xHost -init=snan,arrays -check uninit,bounds -fpe0
-                preprocessor: fpp
+          fortran:
+            flags: -fpe0 -convert big_endian -march=core-avx2 -qopenmp
+            flags_fixed: -r8
+            macros: BLAS LITTLE LINUX INTEGER_IS_INT
+          c:
+            macros: BLAS LITTLE LINUX INTEGER_IS_INT _ABI64
+          linker:
+            flags: -qmkl=sequential -qopenmp
+      oasis:
+        lang:
+          fortran:
+            flags: -qopenmp
+            flags_shared: -fPIC
+          linker:
+            flags: -qopenmp
+            flags_shared: -shared
 
-            c:
-                compiler: mpicc
-                flags: -traceback -g -O3 -xHost
-                preprocessor: cpp
 
-            linker:
-                command: !noparse "{{build.lang.fortran.compiler}}"
-
-            make:
-                command: gmake
-
-        deps:
-            mpi: null
-
-            lapack:
-                base_dir: !noparse "{{MKLROOT}}"
-                lib_dir: !noparse "{{build.deps.lapack.base_dir}}/lib/intel64"
-                libs: [mkl_intel_lp64, mkl_core, mkl_sequential]
-
-            grib:
-                base_dir: !noparse "{{ECCODES_DIR}}"
-                inc_dir: !noparse "{{build.deps.grib.base_dir}}/include"
-                lib_dir: !noparse "{{build.deps.grib.base_dir}}/lib"
-                libs: [eccodes_f90, eccodes, pthread]
-                samples_path: !noparse "/MEMFS/samples:/MEMFS/ifs_samples/grib1_mlgrib2"
-
-            netcdf:
-                base_dir: !noparse "{{NETCDF4_PARALLEL_DIR}}"
-                inc_dir: !noparse "{{build.deps.netcdf.base_dir}}/include"
-                mod_dir: !noparse "{{build.deps.netcdf.base_dir}}/include"
-                lib_dir: !noparse "{{build.deps.netcdf.base_dir}}/lib"
-                libs: [netcdff, netcdf]
-
-            hdf5:
-                base_dir: !noparse "{{HDF5_DIR}}"
-                inc_dir: !noparse "{{build.deps.hdf5.base_dir}}/include"
-                lib_dir: !noparse "{{build.deps.hdf5.base_dir}}/lib"
-                libs: [hdf5_hl, hdf5, z]
-
-        oifs:
-            lang:
-                fortran:
-                    flags: !noparse "-fpe0 -convert big_endian -march=core-avx2 -qopenmp"
-                    flags_fixed: -r8
-                    macros: BLAS LITTLE LINUX INTEGER_IS_INT
-                c:
-                    macros: BLAS LITTLE LINUX INTEGER_IS_INT _ABI64
-                linker:
-                    flags: -qmkl=sequential -qopenmp
-        oasis:
-            lang:
-                fortran:
-                    flags_shared: -fPIC
-                linker:
-                    flags_shared: -shared

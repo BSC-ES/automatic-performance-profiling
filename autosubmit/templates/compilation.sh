@@ -21,6 +21,7 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 members="%EXPERIMENT.MEMBERS%"
 arch_names="%MODEL.ARCH_NAMES%"
+current_arch=%HPCARCH%
 arch_names=${arch_names//[\[,\]]/}
 arch_names=$(for v in $arch_names; do echo "$v";done| sort| uniq| xargs)
 
@@ -93,11 +94,11 @@ function compile_ecearth4()
     conda activate /hpcperm/c3et/conda/ece4 
 
     # Fix for autosubmit logs
-    sed -i "s/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'\n    ignore_not_found: true/" ${model_sources}/runtime/se/scriptlib/main.yml
+    sed -i "s/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'\n    ignore_not_found: true/" ${model_sources}/scripts/runtime/scriptlib/main.yml
 
     # Update number of tasks
-    cp ${project}/configurations/model/${model}/user-settings-hpc2020.yml ${model_sources}/sources/se
-    sed -i "s/JOBS/${ntasks}/" ${model_sources}/sources/se/user-settings-hpc2020.yml
+    cp ${project}/configurations/model/${model}/user-settings-${current_arch,,}.yml ${model_sources}/scripts/build/user-settings.yml
+    sed -i "s/JOBS/${ntasks}/" ${model_sources}/scripts/build/user-settings.yml
 
     # Compile all arch stated in AS
     for arch_name in ${arch_names}; do
@@ -108,10 +109,10 @@ function compile_ecearth4()
             prod_dir=${compilation}/${arch_name_prod}
             mkdir -p ${prod_dir}
             rsync -av --exclude='*.svn*' ${model_sources}/ ${prod_dir}
-            sed -i "/NLOGPRT/{n;s/.*/    1 0 1/}" ${prod_dir}/runtime/se/templates/oasis/namcouple.j2
-            cd ${prod_dir}/sources/se || exit
-            cp ${arch_file} platforms
-            se user-settings-hpc2020.yml platforms/${arch_name_prod}.yml compile-all.yml
+            sed -i "s/nlogprt.*/nlogprt: \"1 0 1\"/" ${prod_dir}/scripts/runtime/templates/oasis/namcouple.yml
+            cd ${prod_dir}/scripts/build || exit
+            cp ${arch_file} ../platforms
+            se user-settings.yml ../platforms/${arch_name_prod}.yml compile-all.yml
         fi
 
         # Compile trace
@@ -125,9 +126,9 @@ function compile_ecearth4()
             cd ${trace_dir}/sources/oifs-43r3v2 || exit
             git apply ${cfg}/trace/model/${model}/sentinel.diff
 
-            cd ${trace_dir}/sources/se || exit
-            cp ${arch_file} platforms
-            se user-settings-hpc2020.yml platforms/${arch_name_trace}.yml compile-all.yml
+            cd ${trace_dir}/scripts/build || exit
+            cp ${arch_file} ../platforms
+            se user-settings.yml ../platforms/${arch_name_trace}.yml compile-all.yml
         fi
     done
 }

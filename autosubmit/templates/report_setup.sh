@@ -38,11 +38,13 @@ case "${current_member}" in
     "HardwareBenchmarks")
         member="hardware_benchmarks"
         ;;
+    "Tracing")
+        member="tracing"
+        if [ ! -d $root_dir/magiccut ]; then 
+            git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch numpy_version $root_dir/magiccut
+        fi
+        ;;
 esac
-
-if [ ! -d $root_dir/magiccut ]; then 
-    git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch numpy_version $root_dir/magiccut
-fi
 
 if [ "$traces_path" != "" ]; then 
     if [ -d $traces_path/$member ]; then 

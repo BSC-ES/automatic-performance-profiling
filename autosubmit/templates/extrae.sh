@@ -170,10 +170,11 @@ function trace_nemo()
 # Brief: Traces ECE4 execution using Extrae
 # Global:
 #   - Paths: cfg, run_root, compilation, project
-#   - Other: test_name, test, model, arch_name
+#   - Other: test_name, test, model, arch_name, branch
 #####################################################################################################################
 function trace_ecearth4()
 {
+    local model_sources=${compilation}/${model}_${branch}
     local oifs_procs=%CURRENT_OIFS_PROCS%
     local nemo_procs=%CURRENT_NEMO_PROCS%
     local xios_procs=%CURRENT_XIOS_PROCS%
@@ -185,13 +186,14 @@ function trace_ecearth4()
 
     local run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
     local run_dir=${run_root}/${test_name}/trace_${run_id}
+    local src_dir=${compilation}/${arch_name}-prod/sources/
     mkdir -p ${run_dir}
     # Remove all run folder content just in case it was already created
     rm -rf ${run_dir:?}/*
     cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
-    cd ${compilation}/${arch_name}-trace/runtime/se || exit
+    cd ${compilation}/${arch_name}-trace/scripts/runtime || exit
 
     create_trace_sh ${run_dir}
 
@@ -200,6 +202,7 @@ function trace_ecearth4()
     cp ${project}/configurations/model/${model}/config.yml ${config_file}
 
     local sed_run_dir=${run_dir//\//\\\/}
+    local sed_src_dir=$(echo ${src_dir} | sed 's_/_\\/_g')
     local ecearth_root=${compilation}/${arch_name}-trace
     local sed_ecearth_root=${ecearth_root//\//\\\/}
 
@@ -209,6 +212,7 @@ function trace_ecearth4()
     local interval=%TRACING.INTERVAL%
 
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
+    sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
     sed -i "s/OIFS_PROCS/${oifs_procs}/"             ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
@@ -230,13 +234,12 @@ function trace_ecearth4()
     # Copy user functions list
     cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}
 
-    cd ${compilation}/${arch_name}-trace/runtime/se || exit
-
     # Activate the SE enviroment and run
     set +u
-    module load conda
-    conda activate /hpcperm/c3et/conda/ece4
-    se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-trace.yml ${config_file} scriptlib/main.yml
+    SE_ENV_VERSION=trunk
+    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
+    micromamba activate ece4env-${SE_ENV_VERSION}
+    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-trace.yml scriptlib/main.yml
 
     # Reload modules to exit from SE
     source ${env_sources}
@@ -250,7 +253,6 @@ function trace_ecearth4()
     mv xios_server.exe.pcf ${model}.pcf
     mv xios_server.exe.row ${model}.row
 
-    declare -A components_processors
     components=("xios" "nemo" "rnf" "oifs")
     processors=($xios_procs $nemo_procs 1 $oifs_procs)
 

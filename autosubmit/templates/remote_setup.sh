@@ -18,6 +18,7 @@ root_dir=%CURRENT_ROOTDIR%
 members="%EXPERIMENT.MEMBERS%"
 env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 model_origin="%MODEL.ORIGIN%"
+refresh_git=%COMMON.REFRESH_GIT_REPO%
 
 function clone_nemo()
 {
@@ -50,12 +51,12 @@ function clone_ecearth4()
     git checkout ${branch}
 
     # Update config for AS to worl with SE
-    sed -i "/- base.move:/a \ \ \ \ ignore_not_found: true" runtime/se/scriptlib/main.yml
+    sed -i "/- base.move:/a \ \ \ \ ignore_not_found: true" scripts/runtime/scriptlib/main.yml
     # Add trace launch script
-    cp ${project}/configurations/model/ecearth4/trace-run.sh.j2 runtime/se/templates/launch/
+    cp ${project}/configurations/model/ecearth4/trace-run.sh.j2 scripts/runtime/templates/launch/
 
     cd ${dest_dir} || exit
-    if [ ! -d lucia-alternative ]; then
+    if echo ${members} | grep "StrongScaling" && [ ! -d lucia-alternative ]; then
     	git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
     fi
 }
@@ -64,7 +65,7 @@ function clone_ecearth4()
 # Start script
 ###################
 
-if [ ! -d $project ] || [ %COMMON.REFRESH_GIT_REPO% == true ];
+if [ ! -d $project ] || [ ${refresh_git^^} == TRUE ];
 then
     chmod +w -R $project || :
     rm -rf $project% || :
@@ -81,8 +82,6 @@ mkdir -p ${inidata}
 mkdir -p ${binaries}
 mkdir -p ${run_folder}
 mkdir -p ${inidata}
-
-cd ${inidata} || exit
 
 # Clone the model source code
 branchs_to_clone=(%MODEL.BRANCH_LIST%)

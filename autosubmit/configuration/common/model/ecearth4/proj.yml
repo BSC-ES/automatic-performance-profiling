@@ -27,7 +27,7 @@ PROJECT_FLAGS:
 MODEL:
   NAME: ecearth4
   COMPONENTS: [nemo, oifs]
-  ORIGIN: https://git.smhi.se/e7992/ecearth4.git
+  ORIGIN: https://git.smhi.se/ec-earth/ecearth4.git
   BRANCH_LIST: main
 
   START_DATE: 19900101
