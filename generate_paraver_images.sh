@@ -1,12 +1,24 @@
 #!/bin/bash
 #####################################################################################################################
-# images.sh
+# generate_paraver_images.sh
 # Brief: Generate all the traces paraver images from the configuartions in 
 #           ${cfg}/trace_analysis/paraver_configurations manually since X11 does not work in sbatch jobs in HPC2020
 #           and MN5 atm
-# Usage: ./images.sh experiment_root "components"
+# Usage:
+# ./generate_paraver_images.sh -c "components" [ -r root_dir -o -p "compare_cfgs" -d ] 
+# "-c|--components 'components'          names of the components"
+# "-r|--root-dir /root/dir               root relative/global path of the experiment"
+# "-p|--compare-cfgs 'compare cfgs'      paraver cfgs to generate a compare view with"
+# "-o|--overwrite                        overwrite images if already created"
+# "-d|--debug                            display debug info"
+# "-h|--help                             display this message"
 #####################################################################################################################
 
+
+function error()
+{
+    echo "[ERROR] $1" >&2 
+}
 
 #####################################################################################################################
 # Brief: Add paraver pictures and legends together
@@ -72,29 +84,94 @@ function create_paraver_legend()
     rm -f *_legend.png
 }
 
-if [ $# -lt 2 ]; then
-    echo "Usage:"
-    echo "./images.sh root_dir \"components\""
-    echo "Example:"
-    echo "./images.sh .. \"nemo oifs\""
-    exit 1
-fi
+#####################################################################################################################
+# Brief: Prints script usage 
+#####################################################################################################################
+function usage()
+{
+    echo Usage:
+    echo ./generate_paraver_images.sh -c \"components\" [ -r root_dir -o -p \"compare_cfgs\" -d ] 
+    echo "-c|--components 'components'          names of the components"
+    echo "-r|--root-dir /root/dir               root relative/global path of the experiment"
+    echo "-p|--compare-cfgs 'compare cfgs'      paraver cfgs to generate a compare view with"
+    echo "-o|--overwrite                        overwrite images if already created"
+    echo "-d|--debug                            display debug info"
+    echo "-h|--help                             display this message"
+}
 
-if ! which wxparaver &> /dev/null; then
-    echo wxparaver command not found, load its corresponding module!
-    exit 1
-fi
+#####################################################################################################################
+# Brief: Parses the script arguments 
+# Param:
+#   $@ - Command line arguments
+#####################################################################################################################
+function parse_args()
+{
+    local args=("$@")
+    local defined_components=false
 
-root=$1
-components=$2
+    root_dir=.
+    components=""
+    compare_cfgs=""
+    overwrite=false
+    debug=false
 
-cd ${root}
-root=$(pwd)
-cfg=$root/automatic_performance_profile/cfg
-export analysis_tools=${cfg}/trace_analysis
+    local i=0
+    while [ $i -lt $# ]; do
+        case ${args[$i]} in 
+            "-c"|"--components")
+                if [ $((i+1)) -ge $# ] || [[ ${args[$((i+1))]} = -[a-z] ]]; then error "Invalid args for ${args[$i]}"; usage; exit 1; fi
+                components="${args[$((i+1))]}"
+                defined_components=true   
+                i=$((i+1))
+            ;;
+            "-r"|"--root-dir")
+                if [ $((i+1)) -ge $# ] || [[ ${args[$((i+1))]} = -[a-z] ]]; then error "Invalid args for ${args[$i]}"; usage; exit 1; fi
+                root_dir=${args[$((i+1))]}
+                i=$((i+1))
+            ;;
+            "-o"|"--overwrite")
+                overwrite=true
+            ;;
+            "-p"|"--compare-cfgs")
+                if [ $((i+1)) -ge $# ] || [[ ${args[$((i+1))]} = -[a-z] ]]; then error "Invalid args for ${args[$i]}"; usage; exit 1; fi
+                compare_cfgs="${args[$((i+1))]}"
+                i=$((i+1))
+            ;;
+            "-d"|"--debug")
+                debug=true
+            ;;
+            "-h"|"--help")
+                usage
+                exit 0
+            ;; 
+            *)
+                echo "[WARNING] Unrecognised option ${args[$i]}"
+            ;;
+        esac 
+        i=$((i+1))
+    done
+
+    if ! $defined_components; then error "Mandatory args not defined"; usage; exit 1; fi
+}
+
+
+#####################################################################################################################
+# Start script
+#####################################################################################################################
+
+if ! which wxparaver &> /dev/null; then error "wxparaver command not found, load its corresponding module or add it to the PATH variable"; exit 1; fi
+
+parse_args "$@"
+
+cd ${root_dir} || exit
+root_dir=$(pwd)
+cfg=${root_dir}/automatic_performance_profile/cfg
+analysis_tools=${cfg}/trace_analysis
 paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
+log_file=${root_dir}/paraver_$(date +%s).log
 
-for test in ${root}/run/tracing/*; do
+for test in ${root_dir}/run/tracing/*; do
+    # Get the slowest timestep for all components
     declare -A components_slowest_ts
     for component in $components; do components_slowest_ts[$component]=0; done
     for trace_folder in ${test}/trace_*; do
@@ -104,6 +181,8 @@ for test in ${root}/run/tracing/*; do
             components_slowest_ts[$component]=$(( cur_time  > max_time ? cur_time : max_time )); 
         done
     done
+
+    # Iterate traces to generate the Paraver images
     for trace_folder in ${test}/trace_*; do
         trace_folder_basename=$(basename ${trace_folder})
         trace_id=$(echo ${trace_folder_basename} | sed 's/trace_//')
@@ -121,7 +200,8 @@ for test in ${root}/run/tracing/*; do
             slowest_ts=${components_slowest_ts[$component]}
             cur_ts=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
             for paraver_cfg in ${img_folder}/*.cfg; do
-                if [ "$(basename $paraver_cfg)" = "MPI_call.cfg" ]; then
+                # Change time axis when creating a Paraver image to compare
+                if [ "$(echo "$compare_cfgs" | grep ${paraver_cfg//\.cfg/})" != "" ]; then
                     sed -i "s/window_end_time_relative.*/window_end_time_relative $(echo $slowest_ts / $cur_ts | bc -l)/" ${paraver_cfg}
                 fi
                 sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg}
@@ -129,13 +209,21 @@ for test in ${root}/run/tracing/*; do
 
             trace=${trace_folder}/${component}.best_cut.prv
             mod_paraver_configurations=$(find ${img_folder} | grep cfg)
-            cd ${img_folder}
+            
+            # cd to the image folder to generate the images there
+            cd ${img_folder} || exit
             for paraver_cfg in ${mod_paraver_configurations}; do
-		        echo Generating $(basename ${paraver_cfg}) for ${trace}
-                if wxparaver -i ${trace} ${paraver_cfg} 1> /dev/null; then
+		        $debug && echo "[DEBUG] Generating $(basename ${paraver_cfg}) for ${trace}"
+                image_filename=${img_folder}/$(basename ${paraver_cfg//\.cfg/})@$component.best_cut.png
+                if ! $overwrite && [ -f $image_filename ]; then
+                    $debug && echo "[DEBUG] Skipping $image_filename generation because already exists"
+                    continue
+                fi
+                echo + wxparaver -i ${trace} ${paraver_cfg} &>> ${log_file}
+                if wxparaver -i ${trace} ${paraver_cfg} &>> ${log_file}; then
                     create_paraver_legend ${paraver_cfg} ${trace}
 		        else
-		            echo Error! Not generated $(basename ${paraver_cfg}) for ${trace}
+		            error "Not generated $(basename ${paraver_cfg}) for ${trace}, check ${log_file}"
                 fi
             done
         done
