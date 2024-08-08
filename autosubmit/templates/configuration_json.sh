@@ -67,7 +67,6 @@ set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
 
-i=0
 for test in $tests
 do
     test_name_=$test_name/$test
@@ -98,5 +97,4 @@ do
         --param-file param.cfg \
         --components "${components}"
     python3 ${cfg}/parser/reporter.py ${tmp_reporter_params}
-    i=$((i+1))
 done

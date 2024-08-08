@@ -496,7 +496,7 @@ class TimingInformation:
             self.data = merge_dictionaries(self.data, lucia_dict)
                 
         if self.cases is None:
-            self.cases = sorted(self.data, key=lambda f: self.data[f]["nproc"])
+            self.cases = list(sorted(self.data, key=lambda f: self.data[f]["nproc"]))
             self.base_case = min(self.cases)
 
         if self.components_cases is None:

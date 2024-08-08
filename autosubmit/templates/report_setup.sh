@@ -41,7 +41,7 @@ case "${current_member}" in
     "Tracing")
         member="tracing"
         if [ ! -d $root_dir/magiccut ]; then 
-            git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch numpy_version $root_dir/magiccut
+            git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch generic_platform $root_dir/magiccut
         fi
         ;;
 esac
