@@ -169,24 +169,28 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
     header = []
     TIME_data = [[] for x in range(length_summary + 1)]
     function_names = [[] for x in range(len(experiment_data.cases))]
+    components = [component]
+    if component == "":
+        components = experiment_data.components
+
     for case_idx, case in enumerate(experiment_data.cases):
         header.append("function_name")
         header.append(case)
         n_function = 0
-        components = [component]
-        if component == "":
-            components = experiment_data.components
+
+        functions_elapsed_time = {}
         for component in components:
-            functions_elapsed_time = go_to_dictionary_address(experiment_data.data, (case, "Components", component, "FunctionInfo"))
-            sorted_functions = list(sorted(functions_elapsed_time.items(), key=lambda f : f[1], reverse=True))
-            for function_name, elapsed_time in sorted_functions:
-                if n_function < length_summary + 1:
-                    function_names[case_idx].append(function_name)
-                    TIME_data[n_function].append(function_name)
-                    TIME_data[n_function].append(str(elapsed_time))
-                    n_function += 1
-                else:
-                    break
+            functions_elapsed_time.update(go_to_dictionary_address(experiment_data.data, (case, "Components", component, "FunctionInfo")))
+
+        sorted_functions = list(sorted(functions_elapsed_time.items(), key=lambda f : f[1], reverse=True))
+        for function_name, elapsed_time in sorted_functions:
+            if n_function < length_summary + 1:
+                function_names[case_idx].append(function_name)
+                TIME_data[n_function].append(function_name)
+                TIME_data[n_function].append(str(elapsed_time))
+                n_function += 1
+            else:
+                break
 
     with open(out_file_name, mode='w') as output:
         out_writer = csv.writer(output, delimiter=',')
