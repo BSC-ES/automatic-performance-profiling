@@ -155,6 +155,10 @@ function add_Tracing() {
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "Functions detailed report" \
+                --add-csv cases_info.csv    
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Functions detailed report" \
                 -T ${cfg}/latex/text/Function.txt
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
@@ -164,6 +168,10 @@ function add_Tracing() {
         fi
 
         for component in "${components[@]}"; do
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "${component^^} Functions detailed report" \
+                --add-csv cases_info.csv    
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "${component^^} Functions detailed report" \
@@ -188,17 +196,17 @@ function add_Tracing() {
                     -O ${report_full_path}.pkl \
                     -S "${component^^} Functions detailed report" \
                     -s "${func_name}" \
-                    --add-csv function_csv/${file_name} --silent
+                    --add-csv "function_csv/${file_name}" --silent
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "${component^^} Functions detailed report" \
                     -s "${func_name}" \
-                    --add-csv tracking/MPI/${file_name} -p --silent
+                    --add-csv "tracking/MPI/${file_name}" -p --silent
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "${component^^} Functions detailed report" \
-                    -s ${func_name} \
-                    --add-csv tracking/counters/${file_name} -p --silent
+                    -s "${func_name}" \
+                    --add-csv "tracking/counters/${file_name}" -p --silent
             done
         done
 

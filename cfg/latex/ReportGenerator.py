@@ -467,6 +467,8 @@ class Report:
         report_text.add_text("\maketitle")
         report_text.clearpage()
         report_text.add_text("\\tableofcontents")
+        report_text.add_text("\\listoftables")
+        report_text.add_text("\\listoffigures")
         report_text.clearpage()
         self.text = report_text
 

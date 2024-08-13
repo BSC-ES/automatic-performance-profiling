@@ -551,7 +551,7 @@ def cases_component_data(experiment_data):
     
     header = "Case"
     for component in experiment_data.components:
-        header += ",%s" % component
+        header += ",%s (nproc)" % component
     log.add(header)
     
     for case in experiment_data.cases:
@@ -616,11 +616,6 @@ def multiexperiment_comparison(experiments, field1):
             common_cases = set(experiment.cases)
         else:
             common_cases.intersection_update(experiment.cases)
-    
-    # common_cases = set([experiments[0][ex]["nproc"] / processes_per_node[0] for ex in experiments[0].cases])
-    # for index, exp in enumerate(experiments[1:]):
-    #     n_node = [exp[case]["nproc"] / processes_per_node[index + 1] for case in exp.cases]
-    #     common_cases.intersection_update(n_node)
 
     cases_to_compare = list(common_cases)
     print(common_cases)
@@ -642,11 +637,7 @@ def multiexperiment_comparison(experiments, field1):
     log_text = "Resources:"
     for index, experiment in enumerate(experiments):
         # add info on layout of proc on nodes
-        if int(experiment.processes_per_node.replace("'", "")) != 48:
-            node_filling = "[" + experiment.processes_per_node + " ppn]"
-            log_text += ", %s %s" % (experiment.experiment_name, node_filling)
-        else:
-            log_text += ", %s" % (experiment.experiment_name + " [" + field1 + "]")
+        log_text += ", %s (SYPD)" % (experiment.experiment_name)
 
     log.add(log_text)
 
