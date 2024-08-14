@@ -178,11 +178,13 @@ function add_Tracing() {
                 -s "Most expensive function summary" \
                 --add-csv ${component}_most_expensive_function_summary.csv
             for scatter_plot in ${papi_counters_plots}; do
+                local img_file=${component}-${scatter_plot}.png
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "${component^^} Functions detailed report" \
                     -s "PAPI counters plots" \
-                    --add-img ${component}-${scatter_plot}.png
+                    --add-img ${img_file} \
+                    --add-img-caption "${img_file//[-|.png]/ }"
             done
         done
 

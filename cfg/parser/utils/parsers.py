@@ -329,7 +329,7 @@ class TimingInformation:
                     break
                 function_info[component][f_name] = {'x': [], 'y': []}
                 n_function += 1
-                for case in self.cases:
+                for case in self.components_cases[component]:
                     try:
                         # Function name's are taken from timings, so it is possible they are not present in the trace
                         x_data = self.data[case]["Components"][component]['Counters'][x_axis][f_name]['Average']
@@ -349,7 +349,12 @@ class TimingInformation:
             output_name = component + "-" + x_axis + "-" + y_axis + ".png"
             
             fig, ax = plt.subplots()
-            ax.set_title("%s vs %s per 1000 instructions in %s" % (x_axis, y_axis, component))
+            case_str = ""
+            for i, case in enumerate(self.components_cases[component]):
+                if i != 0:
+                    case_str += " - "
+                case_str += case
+            ax.set_title("%s vs %s per 1000 instructions in %s\n%s" % (x_axis, y_axis, component, case_str))
             ax.set_xlabel(x_axis)
             ax.set_ylabel(y_axis)
             for i, f_name in enumerate(function_info[component]):
