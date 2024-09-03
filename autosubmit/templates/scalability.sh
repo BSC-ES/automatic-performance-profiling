@@ -17,6 +17,7 @@ model=%MODEL.NAME%
 branch=%MODEL.BRANCH_LIST%
 number_of_cores=%NUMPROC%
 test="%CURRENT_TEST_NAME%"
+platform="%DEFAULT.HPCARCH%"
 
 #####################################################################################################################
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
@@ -77,6 +78,30 @@ function run_nemo()
 }
 
 #####################################################################################################################
+# Brief: Load the enviroment to run SE in MN5 
+# Param: 
+#   - $1: SE version 
+#####################################################################################################################
+function se_env_mn5()
+{
+    module purge
+    module load miniconda/24.1.2
+    source /apps/GPP/MINICONDA/24.1.2/etc/profile.d/conda.sh
+    conda activate /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-${1}
+}
+
+#####################################################################################################################
+# Brief: Load the enviroment to run SE in HPC2020 
+# Param: 
+#   - $1: SE version 
+#####################################################################################################################
+function se_env_hpc2020()
+{
+    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
+    micromamba activate ece4env-${1}
+}
+
+#####################################################################################################################
 # Brief: Updates the SE config file with the AS config and runs EC-Earth 4
 # Global:
 #   - Paths: run_root, compilation
@@ -133,17 +158,26 @@ function run_ecearth4()
     sed -i "s/END_DATE/${end_date}/"                 ${config_file}
     sed -i "s/INTERVAL_VAL/${interval}/"             ${config_file}
 
+    if [ "$current_member" = "WeakScaling" ]; then
+        local queue=%HPCQUEUE%
+        local proj=%CURRENT_PROJ%
+        sed -i "s/QUEUE/${queue}/"                      ${config_file}
+        sed -i "s/ACCOUNT/${proj}/"                     ${config_file}
+    fi
+
     # Disable DR HOOK as it may cause issues
     sed -i "s/DR_HOOK=1/DR_HOOK=0/"              templates/launch/run-srun-multiprog.sh.j2
 
     # Activate the SE enviroment and run
     set +u
-    SE_ENV_VERSION=trunk
-    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
-    micromamba activate ece4env-${SE_ENV_VERSION}
-    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-prod.yml scriptlib/main.yml   
+    se_env_${platform,,} trunk
+    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-prod.yml scriptlib/main.yml
 
     source ${env_sources}
+    # Temporary issue regarding xarray module in mn5
+    if [ "${platform,,}" = "mn5" ]; then
+        source /gpfs/home/bsc/bsc032333/.venv/bin/activate
+    fi
 
     cd ${run_dir} || exit
     python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 30
@@ -151,8 +185,8 @@ function run_ecearth4()
     run_id=$(echo $(basename $run_dir) | sed 's/scalability_//')
     coupling_dir=${test_dir}/coupling/${run_id}
     mkdir -p ${coupling_dir}
-    cp ${run_dir}/lucia_lite_plots/* ${coupling_dir}
-    cp ${run_dir}/lucia_lite_results/* ${coupling_dir}
+    cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
+    cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
 }
 
 ###################

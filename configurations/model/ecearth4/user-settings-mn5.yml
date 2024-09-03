@@ -1,0 +1,14 @@
+# User-dependent configuration for EC-Earth 4 build
+
+- base.getenv:
+    home: HOME
+    scratch: SCRATCH
+    hpcperm: HPCPERM
+
+- base.context:
+    experiment:
+        base_dir: "{{se.cli.cwd}}/../.."
+        src_dir: !noparse "{{experiment.base_dir}}/sources"
+    build:
+        jobs: JOBS
+        clean: yes

@@ -79,6 +79,30 @@ function compile_nemo()
 }
 
 #####################################################################################################################
+# Brief: Load the enviroment to run SE in MN5 
+# Param: 
+#   - $1: SE version 
+#####################################################################################################################
+function se_env_mn5()
+{
+    module purge
+    module load miniconda/24.1.2
+    source /apps/GPP/MINICONDA/24.1.2/etc/profile.d/conda.sh
+    conda activate /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-${1}
+}
+
+#####################################################################################################################
+# Brief: Load the enviroment to run SE in HPC2020 
+# Param: 
+#   - $1: SE version 
+#####################################################################################################################
+function se_env_hpc2020()
+{
+    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
+    micromamba activate ece4env-${1}
+}
+
+#####################################################################################################################
 # Brief: Compiles all arch YML configurations for ECEARTH 4 stated in the ARCH_NAMES AS variable
 # Global:
 #   - Paths: compilation, project, cfg
@@ -90,8 +114,7 @@ function compile_ecearth4()
     model_sources=${compilation}/${model}_${branch}
 
     set +u
-    module load conda
-    conda activate /hpcperm/c3et/conda/ece4 
+    se_env_${current_arch,,} trunk
 
     # Fix for autosubmit logs
     sed -i "s/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'\n    ignore_not_found: true/" ${model_sources}/scripts/runtime/scriptlib/main.yml

@@ -55,13 +55,15 @@
       xios:
         ntasks: XIOS_PROCS
         ntasks_per_node: XIOS_PPN
-
+      
       slurm:
         sbatch:
           opts:
+            wait: ""
             threads-per-core: 1
             time: 01:00:00
-            account: spesiccf 
+            qos: QUEUE
+            account: ACCOUNT 
             output: !noparse "{{experiment.id}}.log"
             job-name: !noparse "ECE4_{{experiment.id}}"
         srun:
