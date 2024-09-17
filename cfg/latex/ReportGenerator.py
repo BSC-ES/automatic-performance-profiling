@@ -131,12 +131,12 @@ class LatexText:
         self.new_line()
         self.add_text("\\begin{table}[H]")
         self.add_text("\centering")
+        self.add_text("\caption{" + csv_file.caption + "}")
         if csv_file.rotate:
             self.add_text("\\rotatebox{90}{")
         self.add_text("\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}")
         if csv_file.rotate:
             self.add_text("}")
-        self.add_text("\caption{" + csv_file.caption + "}")
         self.add_text("\end{table}")
         self.new_line()
 
@@ -157,8 +157,8 @@ class Section:
             if caption is not None:
                 try:
                     assert (isfile(caption))
-                    with open(caption, 'r') as img_caption:
-                        actual_caption = img_caption.readlines()
+                    with open(caption, 'r') as caption:
+                        actual_caption = caption.readlines()
                     caption = actual_caption[0].replace("\n", "")
                 except AssertionError:
                     if caption.count(".txt"):
@@ -176,7 +176,7 @@ class Section:
             img_obj.store()
             self.images.append(img_obj)
 
-    def add_csv(self, file_path, subsection_name=None, csv_convert=False, csv_purge=False, silent_mode=False, rotate=False):
+    def add_csv(self, file_path, subsection_name=None, csv_convert=False, csv_purge=False, silent_mode=False, rotate=False, caption=None):
         try:
             csv_files = get_files_from_path(file_path, ".csv")
         except AssertionError:
@@ -184,13 +184,15 @@ class Section:
                 return
             else:
                 raise AssertionError()
+        if not caption is None:
+            caption = caption.replace("_", "\\_")
         for csv_file in csv_files:
             csv_obj = CsvFile(csv_file,
                               self.section_name,
                               subsection_name,
                               csv_purge,
                               csv_convert,
-                              None,
+                              caption,
                               _rotate=rotate)
             # Avoid adding item more than once ... useful in case of make target's failure
             for s_csv in self.csv_files:
@@ -240,8 +242,8 @@ class Subsection(Section):
         super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=caption, )
 
     # Overwrites method adding csv subsection info
-    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate):
-        super(Subsection, self).add_csv(file_path, self.subsection_name, csv_convert, csv_purge, silent_mode, rotate)
+    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, caption):
+        super(Subsection, self).add_csv(file_path, self.subsection_name, csv_convert, csv_purge, silent_mode, rotate, caption)
 
     # Overwrites method adding csv subsection info
     def add_text_as_csv(self, csv_format_text, computed_quantity):
@@ -628,7 +630,7 @@ def get_command_line_arguments():
     parser.add_argument("-i", "--add-img",
                         default=None, nargs='+',
                         help="path to an image or to an image folder which will be added to the section")
-    parser.add_argument("--add-img-caption",
+    parser.add_argument("--add-caption",
                         type=str, default=None,
                         help="If and image has been added, the caption can be specified either a string or a file")
     parser.add_argument("-c", "--add-csv", default=None,
@@ -665,7 +667,7 @@ def get_command_line_arguments():
     if args.silent:
         if not args.add_csv and not args.add_img:
             parser.error("Silent mode can be run just when adding items to pkl object")
-    if args.add_img_caption and not args.add_img:
+    if args.add_caption and not args.add_img and not args.add_csv:
         parser.error("A caption cannot be added if an image has not been specified")
 
     return args
@@ -682,7 +684,7 @@ if __name__ == "__main__":
     section_number = args.section_number
     subsection_title = args.subsection_title
     image = args.add_img
-    img_caption = args.add_img_caption
+    caption = args.add_caption
     csv_file = args.add_csv
     rotate_csv = args.rotate_csv
     csv_convert = args.csv_convert
@@ -714,10 +716,10 @@ if __name__ == "__main__":
             context = report.get_context(section_title, section_number, subsection_title)
             # Append images
             if image is not None:
-                context.add_image(image, caption=img_caption)
+                context.add_image(image, caption=caption)
             # Append csv table
             if csv_file is not None:
-                context.add_csv(csv_file, csv_convert=csv_convert, csv_purge=csv_purge, silent_mode=silent_mode, rotate=rotate_csv)
+                context.add_csv(csv_file, csv_convert=csv_convert, csv_purge=csv_purge, silent_mode=silent_mode, rotate=rotate_csv, caption=caption)
             # Add text to section
             if text_file is not None:
                 context.add_text(text_file)
