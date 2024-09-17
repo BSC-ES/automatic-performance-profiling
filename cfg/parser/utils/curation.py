@@ -175,7 +175,7 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
 
     for case_idx, case in enumerate(experiment_data.cases):
         header.append("function_name")
-        header.append(case)
+        header.append(case + " (s)")
         n_function = 0
 
         functions_elapsed_time = {}
@@ -244,7 +244,7 @@ def function_info_csv(experiment_data, csv_folder):
                 efficiency.append("{:.2f}".format((base_result / (fun_results[k][case]["elapsed_time"] + 1e-10)) / resource_increase))
 
             # Declare array to be saved in csv
-            header = np.array(['resources', 'speedup', 'efficiency'], dtype=str)
+            header = np.array(['resources (nproc)', 'speedup', 'efficiency'], dtype=str)
 
             data = np.empty((3, len(resources)))
             data[0, :] = resources
