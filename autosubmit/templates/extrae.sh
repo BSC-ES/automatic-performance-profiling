@@ -20,6 +20,7 @@ trace_steps="%TRACING.TRACE_STEPS%"
 output="%MODEL.OUTPUT%"
 papi_counters="%TRACING.PAPI_COUNTERS%"
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
+platform=%DEFAULT.HPCARCH%
 
 #####################################################################################################################
 # Brief: Creates the extrae launch script trace.sh in the provided directory
@@ -29,9 +30,13 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 function create_trace_sh()
 {
     local run_directory=$1
-    local trace=${run_dir}/trace.sh
+    local trace=${run_directory}/trace.sh
     cat << EOF > $trace
 #!/bin/bash
+
+if [ "\$EXTRAE_DIR" = "" ]; then
+    EXTRAE_DIR=\$EXTRAE_HOME
+fi
 
 export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
 source \$EXTRAE_DIR/etc/extrae.sh
@@ -167,6 +172,30 @@ function trace_nemo()
 }
 
 #####################################################################################################################
+# Brief: Load the enviroment to run SE in MN5 
+# Param: 
+#   - $1: SE version 
+#####################################################################################################################
+function se_env_mn5()
+{
+    module purge
+    module load miniconda/24.1.2
+    source /apps/GPP/MINICONDA/24.1.2/etc/profile.d/conda.sh
+    conda activate /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-${1}
+}
+
+#####################################################################################################################
+# Brief: Load the enviroment to run SE in HPC2020 
+# Param: 
+#   - $1: SE version 
+#####################################################################################################################
+function se_env_hpc2020()
+{
+    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
+    micromamba activate ece4env-${1}
+}
+
+#####################################################################################################################
 # Brief: Traces ECE4 execution using Extrae
 # Global:
 #   - Paths: cfg, run_root, compilation, project
@@ -236,9 +265,7 @@ function trace_ecearth4()
 
     # Activate the SE enviroment and run
     set +u
-    SE_ENV_VERSION=trunk
-    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
-    micromamba activate ece4env-${SE_ENV_VERSION}
+    se_env_${platform,,} trunk
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-trace.yml scriptlib/main.yml
 
     # Reload modules to exit from SE
