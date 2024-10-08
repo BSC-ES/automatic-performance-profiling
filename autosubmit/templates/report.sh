@@ -37,6 +37,8 @@ function add_HardwareBenchmarks() {
     for osu_img in ${hardware_benchmarks_root}/OSU_RUN/IMAGE/*.png; do
         local osu_caption=${osu_img//-/ }
         osu_caption=${osu_caption//.png}
+        osu_caption=${osu_caption//*\//}
+        osu_caption="${osu_caption} OSU test."
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Hardware Benchmarks" \
@@ -45,11 +47,6 @@ function add_HardwareBenchmarks() {
             --add-caption "${osu_caption}" \
             -T ${cfg}/latex/text/OSU.txt
     done
-    python3 ${latex_folder}/ReportGenerator.py \
-        -O ${report_full_path}.pkl \
-        -S "Hardware Benchmarks" \
-        -s "STREAM Benchmark" \
-        --add-img ${hardware_benchmarks_root}/OSU_RUN/IMAGE
 }
 
 #####################################################################################################################
@@ -85,7 +82,11 @@ function add_StrongScaling() {
                 -O ${report_full_path}.pkl \
                 -S "Scalability" \
                 --add-img ${test}_scaling.png \
-                --add-caption "Scalability plot for ${model^^}" \
+                --add-caption "Scalability plot for ${model^^}."
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Scalability" \
+                --add-caption "Scalability table for ${model^^}." \
                 --add-csv ${test}_scaling.csv
         fi
 
@@ -94,7 +95,11 @@ function add_StrongScaling() {
                 -O ${report_full_path}.pkl \
                 -S "${component^^} Scalability" \
                 --add-img ${component}_${test}_scaling.png \
-                --add-caption "Scalability plot for ${component^^}" \
+                --add-caption "Scalability plot for ${component^^}."
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "${component^^} Scalability" \
+                --add-caption "Scalability table for ${component^^}." \
                 --add-csv ${component}_${test}_scaling.csv
         done
 
@@ -106,13 +111,13 @@ function add_StrongScaling() {
                     -S "Coupling" \
                     -s "$(basename ${case})" \
                     --add-csv ${case}/summary.csv \
-                    --add-caption "Lucia results summary"
+                    --add-caption "Lucia results summary."
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "Coupling" \
                     -s "$(basename ${case})" \
                     --add-img ${case}/stacked_events.png \
-                    --add-caption "Components stacked events"
+                    --add-caption "Components' coupling stacked events."
             done
         fi
     done
@@ -157,7 +162,9 @@ function add_Tracing() {
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "${component^^} MPI Call Profile" \
-                    --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv  --csv-convert -p -r
+                    --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv \
+                    --add-caption "${trace_id} case MPI Call profile." \
+                    --csv-convert -p -r
             done
         done
 
@@ -169,7 +176,7 @@ function add_Tracing() {
                 -O ${report_full_path}.pkl \
                 -S "Functions detailed report" \
                 --add-csv cases_info.csv \
-                --add-caption "Cases processors configuration"  
+                --add-caption "Cases processors configuration."  
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "Functions detailed report" \
@@ -179,7 +186,7 @@ function add_Tracing() {
                 -S "Functions detailed report" \
                 -s "Most expensive function summary" \
                 --add-csv most_expensive_function_summary.csv \
-                --add-caption "Most time-consuming functions for the whole model"
+                --add-caption "Most time-consuming functions for the whole model."
         fi
 
         for component in "${components[@]}"; do
@@ -187,18 +194,18 @@ function add_Tracing() {
                 -O ${report_full_path}.pkl \
                 -S "${component^^} Functions detailed report" \
                 --add-csv cases_info.csv \
-                --add-caption "Cases processors configuration"
+                --add-caption "Cases processors configuration."
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "${component^^} Functions detailed report" \
                 -s "Most expensive function summary" \
                 --add-csv ${component}_most_expensive_function_summary.csv \
-                --add-caption "Most time-consuming functions for ${component^^}"
+                --add-caption "Most time-consuming functions for ${component^^}."
             for scatter_plot in ${papi_counters_plots}; do
                 local img_file=${component}-${scatter_plot}.png
                 local papi_caption=${img_file//.png}
                 papi_caption=${papi_caption#*-}
-                papi_caption="${papi_caption//-/ vs } counters plot for ${component}"
+                papi_caption="${papi_caption//-/ vs } counters plot for ${component}."
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "${component^^} Functions detailed report" \
@@ -219,19 +226,19 @@ function add_Tracing() {
                     -S "${component^^} Functions detailed report" \
                     -s "${func_name}" \
                     --add-csv "function_csv/${file_name}" \
-                    --add-caption "$func_name scalability" --silent
+                    --add-caption "$func_name scalability." --silent
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report" \
+                    -S "${component^^} Functions detailed report." \
                     -s "${func_name}" \
                     --add-csv "tracking/MPI/${file_name}" \
-                    --add-caption "$func_name MPI scalability" -p --silent
+                    --add-caption "$func_name MPI scalability." -p --silent
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report" \
+                    -S "${component^^} Functions detailed report." \
                     -s "${func_name}" \
                     --add-csv "tracking/counters/${file_name}" \
-                    --add-caption "$func_name counters scalability" -p --silent 
+                    --add-caption "$func_name counters scalability." -p --silent 
             done
         done
 
@@ -239,7 +246,7 @@ function add_Tracing() {
         if [ -d paraver_images ]; then
             for component in "${components[@]}"; do
                 for case_comparison_cfg in ${case_comparison_cfgs}; do
-                    local img_caption="Cases: "
+                    local img_caption="${case_comparison_cfg} for the fastest timestep of the cases (top to bottom): "
                     local case_comparison_imgs=""
                     for case in paraver_images/*; do 
                         img_caption+="$(basename $case) "
@@ -252,7 +259,7 @@ function add_Tracing() {
                         -S "${component^^} Paraver" \
                         -s "Case comparison" \
                         --add-img $img_name \
-                        --add-caption "$img_caption"
+                        --add-caption "$img_caption."
                 done
                 
                 for case in paraver_images/*; do                    
@@ -264,7 +271,7 @@ function add_Tracing() {
                             -S "${component^^} Paraver" \
                             -s "$(basename ${case})" \
                             --add-img ${paraver_image} \
-                            --add-caption "${paraver_caption}"
+                            --add-caption "${paraver_caption}."
                     done
                 done
                 python3 ${latex_folder}/ReportGenerator.py \
@@ -300,7 +307,7 @@ function add_multiexperiment() {
         -S "Multi Experiment" \
         -s $member_title \
         --add-csv ${member}.csv \
-        --add-caption "${member_title} case comparison scalability" 
+        --add-caption "${member_title} case comparison scalability." 
 }
 
 #####################################################################################################################
