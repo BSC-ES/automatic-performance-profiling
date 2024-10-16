@@ -148,11 +148,23 @@ function add_Tracing() {
 
         # Modelfactors
         for component in "${components[@]}"; do
-            python3 ${latex_folder}/ReportGenerator.py \
-                -O ${report_full_path}.pkl\
-                -S "${component^^} Model Factors" \
-                --add-img modelfactors/$component \
-                -T ${cfg}/latex/text/ModelFactors.txt
+            for modelfactors_img in modelfactors/$component/*.png; do
+                local modelfactors_caption=$(basename $modelfactors_img)
+                modelfactors_caption=${modelfactors_caption//-matplot\.png}
+                modelfactors_caption=${modelfactors_caption//-/ }
+                if [[ $modelfactors_caption == "modelfactors"* ]]; then
+                    modelfactors_caption="${component^} $modelfactors_caption"
+                else 
+                    modelfactors_caption="${component^} modelfactors $modelfactors_caption"
+                fi
+                echo $modelfactors_caption
+                python3 ${latex_folder}/ReportGenerator.py \
+                    -O ${report_full_path}.pkl\
+                    -S "${component^^} Model Factors" \
+                    --add-img ${modelfactors_img} \
+                    --add-caption "${modelfactors_caption}." \
+                    -T ${cfg}/latex/text/ModelFactors.txt
+            done
         done
 
         # Paramedir
@@ -193,14 +205,10 @@ function add_Tracing() {
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "${component^^} Functions detailed report" \
-                --add-csv cases_info.csv \
-                --add-caption "Cases processors configuration."
-            python3 ${latex_folder}/ReportGenerator.py \
-                -O ${report_full_path}.pkl \
-                -S "${component^^} Functions detailed report" \
                 -s "Most expensive function summary" \
                 --add-csv ${component}_most_expensive_function_summary.csv \
                 --add-caption "Most time-consuming functions for ${component^^}."
+
             for scatter_plot in ${papi_counters_plots}; do
                 local img_file=${component}-${scatter_plot}.png
                 local papi_caption=${img_file//.png}
@@ -212,10 +220,8 @@ function add_Tracing() {
                     -s "PAPI counters plots" \
                     --add-img ${img_file} \
                     --add-caption "${papi_caption}"
-            done
-        done
-
-        for component in "${components[@]}"; do
+	    done
+	
             functions=$(find function_csv/* | grep ${component})
             for func in ${functions}; do
                 file_name=${func##function_csv/}
@@ -229,13 +235,13 @@ function add_Tracing() {
                     --add-caption "$func_name scalability." --silent
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report." \
+                    -S "${component^^} Functions detailed report" \
                     -s "${func_name}" \
                     --add-csv "tracking/MPI/${file_name}" \
                     --add-caption "$func_name MPI scalability." -p --silent
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report." \
+                    -S "${component^^} Functions detailed report" \
                     -s "${func_name}" \
                     --add-csv "tracking/counters/${file_name}" \
                     --add-caption "$func_name counters scalability." -p --silent 
@@ -366,5 +372,10 @@ python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-auth
 
 # Create the tex file
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path} --dump-to-file
-# Compile the report
-pdflatex ${report_name}.tex && pdflatex ${report_name}.tex
+
+if ! which pdflatex; then 
+    echo pdflatex cmd not available, you can find the tex file ${report_full_path}.tex;
+else
+    # Compile the report
+    pdflatex ${report_name}.tex && pdflatex ${report_name}.tex
+fi
