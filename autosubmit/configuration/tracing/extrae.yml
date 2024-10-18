@@ -1,0 +1,32 @@
+# This file contains the configuration for Extrae used during the tracing runs.
+# The variables are used to create a valid extra.xml from the cfg/trace/extrae.xml.tmpl template.
+EXTRAE:
+  HOME: /usr/local/apps/extrae/4.0.6/HPCX/2.9
+  TRACING_LIB: libmpitracef.so
+  TRACE_NAME: "%MODEL.NAME%.prv"
+
+  MPI: 
+    ENABLED: yes
+    COUNTERS:
+      ENABLED: yes
+  
+  CALLERS:
+    ENABLED: no
+    MPI:
+      ENABLED: no
+      LEVELS: 1-3
+    SAMPLING:
+      ENABLED: no
+      LEVELS: 1-5
+
+  USER_FUNCTIONS: 
+    ENABLED: yes
+    # Default file is ./extrae_functions_for_xml.txt that is created by extrae.sh template
+    LIST: ./extrae_functions_for_xml.txt
+  
+  PAPI_COUNTERS:
+    ENABLED: yes
+    LIST: "PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_L1_DCM,PAPI_L2_DCM,PAPI_L3_TCM,PAPI_BR_INS,PAPI_BR_MSP,RESOURCE_STALLS"
+  
+  OPENMP:
+    ENABLED: no

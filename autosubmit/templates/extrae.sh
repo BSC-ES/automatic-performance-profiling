@@ -23,6 +23,45 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 platform=%DEFAULT.HPCARCH%
 
 #####################################################################################################################
+# Brief: Creates the extrae configuration file using the AS variables
+# Parameters:
+#   $1 - Directory where to store the extrae.xml
+# Global:
+#   - Paths: cfg
+#####################################################################################################################
+function configure_extrae()
+{
+    local run_directory=$1
+    local extrae_xml=${run_directory}/extrae.xml
+    cp ${cfg}/trace/extrae.xml.tmpl ${extrae_xml}
+
+    local sed_extrae_home=%EXTRAE.HOME%
+    sed_extrae_home=${sed_extrae_home//\//\\\/}
+    local sed_user_functions_list=%EXTRAE.USER_FUNCTIONS.LIST%
+    sed_user_functions_list=${sed_user_functions_list//\//\\\/}
+
+    sed -i "s/HOME/${sed_extrae_home}/"                                     ${extrae_xml}
+    sed -i "s/TRACE_NAME/%EXTRAE.TRACE_NAME%/"                              ${extrae_xml}
+
+    sed -i "s/CALLERS_ENABLED/%EXTRAE.CALLERS.ENABLED%/"                    ${extrae_xml}
+    sed -i "s/CALLERS_MPI_ENABLED/%EXTRAE.CALLERS.MPI.ENABLED%/"            ${extrae_xml}
+    sed -i "s/CALLERS_MPI_LEVELS/%EXTRAE.CALLERS.MPI.LEVELS%/"              ${extrae_xml}
+    sed -i "s/CALLERS_SAMPLING_ENABLED/%EXTRAE.CALLERS.SAMPLING.ENABLED%/"  ${extrae_xml}
+    sed -i "s/CALLERS_SAMPLING_LEVELS/%EXTRAE.CALLERS.SAMPLING.LEVELS%/"    ${extrae_xml}
+
+    sed -i "s/MPI_ENABLED/%EXTRAE.MPI.ENABLED%/"                            ${extrae_xml}
+    sed -i "s/MPI_COUNTERS_ENABLED/%EXTRAE.MPI.COUNTERS.ENABLED%/"          ${extrae_xml}
+
+    sed -i "s/OPENMP_ENABLED/%EXTRAE.OPENMP.ENABLED%/"                      ${extrae_xml}
+
+    sed -i "s/USER_FUNCTIONS_ENABLED/%EXTRAE.USER_FUNCTIONS.ENABLED%/"      ${extrae_xml}
+    sed -i "s/USER_FUNCTIONS_LIST/${sed_user_functions_list}/"              ${extrae_xml}
+
+    sed -i "s/PAPI_COUNTERS_ENABLED/%EXTRAE.PAPI_COUNTERS.ENABLED%/"        ${extrae_xml}
+    sed -i "s/PAPI_COUNTERS_LIST/%EXTRAE.PAPI_COUNTERS.LIST%/"              ${extrae_xml}
+}
+
+#####################################################################################################################
 # Brief: Creates the extrae launch script trace.sh in the provided directory
 # Parameters:
 #   $1 - Directory where to store the trace.sh
@@ -31,18 +70,19 @@ function create_trace_sh()
 {
     local run_directory=$1
     local trace=${run_directory}/trace.sh
+    local extrae_lib="%EXTRAE.TRACING_LIB%"
     cat << EOF > $trace
 #!/bin/bash
 
-if [ "\$EXTRAE_DIR" = "" ]; then
-    EXTRAE_DIR=\$EXTRAE_HOME
+if [ "\$EXTRAE_HOME" = "" ]; then
+    EXTRAE_HOME=\$EXTRAE_DIR
 fi
 
 export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
-source \$EXTRAE_DIR/etc/extrae.sh
+source \$EXTRAE_HOME/etc/extrae.sh
 
-export LD_PRELOAD=\${EXTRAE_DIR}/lib/libmpitracecf.so
-export LD_LIBRARY_PATH=\${EXTRAE_DIR}/lib/:\$LD_LIBRARY_PATH
+export LD_PRELOAD=\${EXTRAE_HOME}/lib/${extrae_lib}
+export LD_LIBRARY_PATH=\${EXTRAE_HOME}/lib/:\$LD_LIBRARY_PATH
 
 \$*
 EOF
@@ -109,7 +149,9 @@ function trace_nemo()
 {
     local run_dir=${run_root}/${test_name}/trace_nemo_${numproc}
     mkdir -p ${run_dir}
-    cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
+
+    configure_extrae ${run_dir}
+
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
     cd ${run_dir} || exit
@@ -140,7 +182,6 @@ function trace_nemo()
 
     ### trace.target
     # Run extrae
-    export EXTRAE_DIR=$EXTRAE_HOME
     create_trace_sh $run_dir
 
     # Copy function.txt
@@ -219,7 +260,9 @@ function trace_ecearth4()
     mkdir -p ${run_dir}
     # Remove all run folder content just in case it was already created
     rm -rf ${run_dir:?}/*
-    cp ${cfg}/trace/model/${model}/extrae.xml ${run_dir}
+
+    configure_extrae ${run_dir}
+
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
     cd ${compilation}/${arch_name}-trace/scripts/runtime || exit
@@ -274,11 +317,6 @@ function trace_ecearth4()
     cd ${run_dir} || exit
 
     actual_nemo_procs=$(grep "exceeds the maximum number of ocean subdomains" log/001/ocean.output | grep -oE "[0-9]+" || echo ${nemo_procs})
-
-    # Rename output trace
-    mv xios_server.exe.prv ${model}.prv
-    mv xios_server.exe.pcf ${model}.pcf
-    mv xios_server.exe.row ${model}.row
 
     components=("xios" "nemo" "rnf" "oifs")
     processors=($xios_procs $nemo_procs 1 $oifs_procs)
