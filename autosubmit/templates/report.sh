@@ -47,6 +47,14 @@ function add_HardwareBenchmarks() {
             --add-caption "${osu_caption}" \
             -T ${cfg}/latex/text/OSU.txt
     done
+
+    python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Hardware Benchmarks" \
+            -s "STREAM Benchmark" \
+            --add-img ${hardware_benchmarks_root}/STREAM_RUN/${model}.png \
+            --add-caption "STREAM benchmark" \
+            -T ${cfg}/latex/text/STREAM.txt
 }
 
 #####################################################################################################################
