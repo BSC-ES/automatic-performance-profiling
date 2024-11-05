@@ -330,12 +330,12 @@ def tracking(experiment_data, folder, threshold=0.01):
 
             if mpi_profile:
                 MPI_log += mpi_profile
-                MPI_log.save("%s/%s-%s.csv" % (MPI_folder, component, function))
+                MPI_log.save("%s/%s_%s.csv" % (MPI_folder, component, function))
                 full_log += mpi_profile
             
             if counters:
                 counters_log += counters
-                counters_log.save("%s/%s-%s.csv" % (counters_folder, component, function))
+                counters_log.save("%s/%s_%s.csv" % (counters_folder, component, function))
                 full_log += counters_log
 
     # full_log.print()

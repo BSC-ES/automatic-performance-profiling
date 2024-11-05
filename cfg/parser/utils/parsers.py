@@ -75,6 +75,13 @@ def merge_dictionaries(dict_one, dict_two):
     :param dict_two:
     :return: new_dict
     """
+
+    if dict_one is None:
+        return dict_two
+
+    if dict_two is None:
+        return dict_one
+
     new_dict = dict_one.copy()
     for key in dict_two.keys():
         try:
@@ -312,7 +319,6 @@ class TimingInformation:
         return most_expensive_function_summary(self, out_file_name)
 
     def scatter_plots(self, x_axis="L3", y_axis="IPC", length_summary=10):
-        import warnings
         import re
         # Function plot L3 cache misses vs IPC
         import matplotlib.pyplot as plt
@@ -345,7 +351,7 @@ class TimingInformation:
                     function_info[component][f_name]['y'] += y_data
 
         # Create the plot
-        for component in  function_info:
+        for component in function_info:
             output_name = component + "-" + x_axis + "-" + y_axis + ".png"
             
             fig, ax = plt.subplots()
@@ -462,7 +468,7 @@ class TimingInformation:
     # This function renames the cases after getting all the info about them to have shorter names in the report
     # it is not done before because is easier to merge the same cases if they have the same id
     def rename_cases(self):
-        for i in range(0, len(self.cases)): 
+        for i, case in enumerate(self.cases): 
             new_case_name = "Case %i" % i      
             self.cases_translation[new_case_name] = self.cases[i]     
             if self.cases[i] == self.base_case:
@@ -495,10 +501,8 @@ class TimingInformation:
                     lucia_dict[id]["Components"][component] = row[1:].to_dict()
                     lucia_dict[id]["Components"][component]["SYPD"] = lucia_dict[id]["Components"][component]["sypd"]
 
-        if self.data is None:
-            self.data = lucia_dict
-        else:
-            self.data = merge_dictionaries(self.data, lucia_dict)
+
+        self.data = merge_dictionaries(self.data, lucia_dict)
                 
         if self.cases is None:
             self.cases = list(sorted(self.data, key=lambda f: self.data[f]["nproc"]))
@@ -530,10 +534,7 @@ class TimingInformation:
         functions = list(functions)
         timing_info_dict[id]["functions"] = functions
 
-        if self.data is None:
-            self.data = timing_info_dict
-        else:
-            self.data = merge_dictionaries(self.data, timing_info_dict)
+        self.data = merge_dictionaries(self.data, timing_info_dict)
 
         if self.cases is None:
             self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
@@ -548,11 +549,8 @@ class TimingInformation:
         if not files:
             raise AssertionError("Empty list of files")
 
-        if self.data is None:
-            self.data = parse_paramedir_files(files)
-        else:
-            paramedir_info = parse_paramedir_files(files)
-            self.data = merge_dictionaries(self.data, paramedir_info)
+        paramedir_info = parse_paramedir_files(files)
+        self.data = merge_dictionaries(self.data, paramedir_info)
 
         if self.cases is None:
             self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
@@ -573,21 +571,17 @@ class TimingInformation:
             self.components_cases = {}   
             for component in self.components:
                 self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["Components"][component]["nproc"])
-        pass
 
     def load_dimemas(self, files):
         if not files:
             raise AssertionError("Empty list of files")
-        if self.data is None:
-            self.data = parse_dimemas_files(files)
-        else:
-            dimemas_info = parse_dimemas_files(files)
-            self.data = merge_dictionaries(self.data, dimemas_info)
+
+        dimemas_info = parse_dimemas_files(files)
+        self.data = merge_dictionaries(self.data, dimemas_info)
+
         if self.cases is None:
             self.cases = list(sorted(self.data.keys()))
             self.base_case = min(self.cases)
-
-        pass
 
     def fix_function_names(self, function_dict):
         for core in function_dict:
