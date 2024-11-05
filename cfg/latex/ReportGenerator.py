@@ -99,6 +99,12 @@ class LatexText:
         # self.clearpage()
         if subsection.text is not None:
             self.add_text(subsection.text)
+        
+    def add_subsubsection2tex(self, subsubsection):
+        self.add_text("\subsubsection{" + subsubsection.subsubsection_title.replace("_", "\_") + "}")
+
+        if subsubsection.text is not None:
+            self.add_text(subsubsection.text)
 
     def add_image2tex(self, image, absolute_path):
         try:
@@ -151,7 +157,7 @@ class Section:
         self.csv_files = []
         self.text = None
 
-    def add_image(self, file_path, subsection_name=None, caption=None):
+    def add_image(self, file_path, subsection_name=None, subsubsection_name=None, caption=None):
         images = get_files_from_path(file_path, ".png")
         for img in images:
             if caption is not None:
@@ -166,7 +172,7 @@ class Section:
                     else:
                         pass
 
-            img_obj = ImgFile(img, self.section_name, subsection_name, caption)
+            img_obj = ImgFile(img, self.section_name, subsection_name, subsubsection_name, caption)
             # Avoid adding item more than once ... useful in case of make target's failure
             for s_img in self.images:
                 if img_obj.path == s_img.path:
@@ -176,7 +182,7 @@ class Section:
             img_obj.store()
             self.images.append(img_obj)
 
-    def add_csv(self, file_path, subsection_name=None, csv_convert=False, csv_purge=False, silent_mode=False, rotate=False, caption=None):
+    def add_csv(self, file_path, subsection_name=None, subsubsection_name=None, csv_convert=False, csv_purge=False, silent_mode=False, rotate=False, caption=None):
         try:
             csv_files = get_files_from_path(file_path, ".csv")
         except AssertionError:
@@ -190,6 +196,7 @@ class Section:
             csv_obj = CsvFile(csv_file,
                               self.section_name,
                               subsection_name,
+                              subsubsection_name,
                               csv_purge,
                               csv_convert,
                               caption,
@@ -202,8 +209,8 @@ class Section:
             self.csv_files.append(csv_obj)
 
     # Some text, produced by some python script in csv format will be added to the report
-    def add_text_as_csv(self, csv_format_text, subsection_name=None, computed_quantity=None):
-        csv_obj = CsvFile(self.subsection_title, _section=self.section_name, _subsection=subsection_name,
+    def add_text_as_csv(self, csv_format_text, subsection_name=None, subsubsection_name=None, computed_quantity=None):
+        csv_obj = CsvFile(self.subsection_title, _section_name=self.section_name, _subsection_name=subsection_name, _subsubsection_name=subsubsection_name,
                           _caption=computed_quantity)
         # Save the data in the csv_obj
         csv_obj.store(csv_format_text)
@@ -229,29 +236,58 @@ class Section:
         with open(section_text, 'r') as section_text_file:
             self.text = section_text_file.read()
 
-
 class Subsection(Section):
     def __init__(self, _section_title, _subsect_title):
         super(Subsection, self).__init__(_section_title)
         self.subsection_title = _subsect_title
         self.subsection_name = self.subsection_title.lower().replace(" ", "_")
+        self.subsubsections = []
         self.subsection_number = 0
 
     # Overwrites method adding images subsection info
-    def add_image(self, file_path, caption=None):
-        super(Subsection, self).add_image(file_path, subsection_name=self.subsection_name, caption=caption, )
+    def add_image(self, file_path, subsubsection_name=None, caption=None):
+        super(Subsection, self).add_image(file_path, self.subsection_name, subsubsection_name, caption)
 
     # Overwrites method adding csv subsection info
-    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, caption):
-        super(Subsection, self).add_csv(file_path, self.subsection_name, csv_convert, csv_purge, silent_mode, rotate, caption)
+    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, subsubsection_name=None, caption=None):
+        super(Subsection, self).add_csv(file_path, self.subsection_name, subsubsection_name, csv_convert, csv_purge, silent_mode, rotate, caption)
+
+    # Overwrites method adding csv subsection info
+    def add_text_as_csv(self, csv_format_text, computed_quantity, subsubsection_name=None):
+        super(Subsection, self).add_text_as_csv(csv_format_text, self.subsection_name, subsubsection_name, computed_quantity)
+    
+    def add_subsubsection(self, subsubsection_title):
+        subsubsection = Subsubsection(self.section_title, self.subsection_title, subsubsection_title)
+        self.subsubsections.append(subsubsection)
+    
+    def get_subsubsection(self, subsubsection_title):
+        for subsubsection in self.subsubsections:
+            if subsubsection_title == subsubsection.subsubsection_title:
+                return subsubsection
+        return None
+
+class Subsubsection(Subsection):
+    def __init__(self, _section_title, _subsect_title, _subsubsect_title):
+        super(Subsubsection, self).__init__(_section_title, _subsect_title)
+        self.subsubsection_title = _subsubsect_title
+        print(self.subsubsection_title)
+        self.subsubsection_name = self.subsection_title.lower().replace(" ", "_")
+        self.subsubsection_number = 0
+
+    # Overwrites method adding images subsection info
+    def add_image(self, file_path, caption=None):
+        super(Subsubsection, self).add_image(file_path, self.subsubsection_name, caption)
+
+    # Overwrites method adding csv subsection info
+    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, caption=None):
+        super(Subsubsection, self).add_csv(file_path, csv_convert, csv_purge, silent_mode, rotate, self.subsubsection_name,  caption)
 
     # Overwrites method adding csv subsection info
     def add_text_as_csv(self, csv_format_text, computed_quantity):
-        super(Subsection, self).add_text_as_csv(csv_format_text, self.subsection_name, computed_quantity)
-
+        super(Subsubsection, self).add_text_as_csv(csv_format_text, computed_quantity, self.subsubsection_name)
 
 class ImgFile:
-    def __init__(self, _path, _section, _subsection=None, _caption=None):
+    def __init__(self, _path, _section, _subsection=None, _subsubsection=None, _caption=None):
         self.path = _path
         self.store_path = None
         self.name = self.path.split("/")[-1]
@@ -261,6 +297,7 @@ class ImgFile:
         self.pic = None
         self.section = _section
         self.subsection = _subsection
+        self.subsubsection = _subsubsection
 
         if self.caption is not None:
             # Check if newcommands has been used, and convert to camelcase
@@ -287,6 +324,8 @@ class ImgFile:
         self.store_path = "image/" + self.section
         if self.subsection is not None:
             self.store_path = self.store_path + "/" + self.subsection
+            if self.subsubsection is not None:
+                self.store_path = self.store_path + "/" + self.subsubsection
 
     # Dumps the image to  the location specified in path
     def dump2disk(self, absolute_path):
@@ -295,7 +334,7 @@ class ImgFile:
 
 
 class CsvFile:
-    def __init__(self, _path, _section_name, _subsection_name, _purge=False, _convert=False, _caption=None, _rotate=False):
+    def __init__(self, _path, _section_name, _subsection_name=None, _subsubsection_name=None, _purge=False, _convert=False, _caption=None, _rotate=False):
         self.path = _path
         self.store_path = None
         self.name = self.path.split("/")[-1]
@@ -304,6 +343,7 @@ class CsvFile:
         self.csv_data = None
         self.section = _section_name
         self.subsection = _subsection_name
+        self.subsubsection = _subsubsection_name
         self.rotate = _rotate
         self.store(csv_convert=_convert, csv_purge=_purge)
 
@@ -346,6 +386,8 @@ class CsvFile:
         self.store_path = "csv/" + self.section
         if self.subsection is not None:
             self.store_path = self.store_path + "/" + self.subsection
+            if self.subsubsection is not None:
+                self.store_path = self.store_path + "/" + self.subsubsection
 
     def purge_csv_data(self):
         n_col = len(self.csv_data[0])
@@ -504,19 +546,26 @@ class Report:
 
         for section in self.sections:
             self.text.add_section2tex(section)
-            for image in section.images:
-                self.text.add_image2tex(image, self.absolute_path)
             for n, csv_file in enumerate(section.csv_files):
                 if not n % 4 and not n == 0:
                     self.text.clearpage()
                 self.text.add_csv2tex(csv_file, self.absolute_path)
+            for image in section.images:
+                self.text.add_image2tex(image, self.absolute_path)
 
             for subsection in section.subsections:
                 self.text.add_subsection2tex(subsection)
-                for image in subsection.images:
-                    self.text.add_image2tex(image, self.absolute_path)
                 for csv_file in subsection.csv_files:
                     self.text.add_csv2tex(csv_file, self.absolute_path)
+                for image in subsection.images:
+                    self.text.add_image2tex(image, self.absolute_path)
+                
+                for subsubsection in subsection.subsubsections:
+                    self.text.add_subsubsection2tex(subsubsection)
+                    for csv_file in subsubsection.csv_files:
+                        self.text.add_csv2tex(csv_file, self.absolute_path)
+                    for image in subsubsection.images:
+                        self.text.add_image2tex(image, self.absolute_path)
 
         self.__end_doc()
 
@@ -551,7 +600,7 @@ class Report:
             key, val = p.split("=")
             self.newcommand[key.strip()] = val.strip()
 
-    def get_context(self, section_title, section_number=0, subsection_title=None):
+    def get_context(self, section_title, section_number=0, subsection_title=None, subsubsection_title=None):
         section = self.get_section(section_title)
         # Check if section exists
         if section is not None:
@@ -560,13 +609,26 @@ class Report:
                 # Check if subsection exists
                 subsection = section.get_subsection(subsection_title)
                 if subsection is not None:
+                    if subsubsection_title is not None:
+                        subsubsection = subsection.get_subsubsection(subsubsection_title)
+                        if subsubsection is not None:
+                            return subsubsection
+                        else:
+                            subsection.add_subsubsection(subsubsection_title)
+                            try:
+                                # Return subsection handler
+                                return self.get_context(section_title, section_number, subsection_title, subsubsection_title)
+                            except RecursionError:
+                                raise RecursionError("In searching for subsection %s of section %s", subsection_title,
+                                                    section_title)
+
                     return subsection
                 # If it doesn't, create one
                 else:
                     section.add_subsection(subsection_title)
                     try:
                         # Return subsection handler
-                        return self.get_context(section_title, section_number, subsection_title)
+                        return self.get_context(section_title, section_number, subsection_title, subsubsection_title)
                     except RecursionError:
                         raise RecursionError("In searching for subsection %s of section %s", subsection_title,
                                              section_title)
@@ -627,6 +689,9 @@ def get_command_line_arguments():
     parser.add_argument("-s", "--subsection-title",
                         type=str, default=None,
                         help="title of the subsection that will be added if doesn't exist")
+    parser.add_argument("-ss", "--subsubsection-title",
+                        type=str, default=None,
+                        help="title of the subsubsection that will be added if doesn't exist")
     parser.add_argument("-i", "--add-img",
                         default=None, nargs='+',
                         help="path to an image or to an image folder which will be added to the section")
@@ -683,6 +748,7 @@ if __name__ == "__main__":
     section_title = args.section_title
     section_number = args.section_number
     subsection_title = args.subsection_title
+    subsubsection_title = args.subsubsection_title
     image = args.add_img
     caption = args.add_caption
     csv_file = args.add_csv
@@ -713,7 +779,7 @@ if __name__ == "__main__":
         # Some content has to be added to pkl object
         if section_title is not None:
             # Get the context
-            context = report.get_context(section_title, section_number, subsection_title)
+            context = report.get_context(section_title, section_number, subsection_title, subsubsection_title)
             # Append images
             if image is not None:
                 context.add_image(image, caption=caption)
