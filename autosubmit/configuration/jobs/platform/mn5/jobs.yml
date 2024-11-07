@@ -35,3 +35,14 @@ JOBS:
     PLATFORM: mn5-login
   report:
     PLATFORM: mn5-login
+  trace:
+    FILE: autosubmit/templates/extrae.sh
+    FOR:
+      TEST_NAME: "%TRACING.TEST_NAMES%"
+      NAME: "%TRACING.NAMES%"
+      PROCESSORS: "%TRACING.PROCESSORS%"
+      OIFS_PROCS: "%TRACING.OIFS_PROCS%"
+      NEMO_PROCS: "%TRACING.NEMO_PROCS%"
+      XIOS_PROCS: "%TRACING.XIOS_PROCS%"
+      THREADS: "%TRACING.THREADS%"
+    CUSTOM_DIRECTIVES: "[ '#SBATCH -C perfparanoid' ]"
