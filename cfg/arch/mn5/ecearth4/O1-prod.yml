@@ -22,7 +22,7 @@
     - netcdf/2023-06-14-openmpi
     - libaec/1.1.3
     - eccodes/2.34.1-ompi
-    - ucx/1.16.0
+    - ucx/1.17.0
     - miniconda/24.1.2
 
 - base.getenv:
@@ -49,7 +49,7 @@
       cpus_per_node: 112
 
     experiment:
-      ini_dir: /gpfs/projects/bsc32/models/ecearth/v4.0.0/inidata
+      ini_dir: /gpfs/projects/bsc32/models/ecearth/v4.0.0-updated/inidata
 
     build:
       lang:
