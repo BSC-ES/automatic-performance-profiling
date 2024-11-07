@@ -1,8 +1,8 @@
 JOBS:
   OSU_RUN:
     FOR:
-      NAME: "%HW_BENCHMARKS.OSU_NAMES%"
-      PROCESSORS: "%HW_BENCHMARKS.OSU_PROCESSORS%"
+      NAME: "%HW_BENCHMARKS.OSU.NAMES%"
+      PROCESSORS: "%HW_BENCHMARKS.OSU.PROCESSORS%"
     FILE: autosubmit/templates/osu_run.sh
     DEPENDENCIES:
       PREPARE_TESTS:
@@ -17,8 +17,8 @@ JOBS:
     NOTIFY_ON: FAILED
   STREAM:
     FOR:
-      NAME: "%HW_BENCHMARKS.STREAM_NAMES%"
-      PROCESSORS: "%HW_BENCHMARKS.STREAM_PROCESSORS%"
+      NAME: "%HW_BENCHMARKS.STREAM.NAMES%"
+      PROCESSORS: "%HW_BENCHMARKS.STREAM.PROCESSORS%"
     FILE: autosubmit/templates/stream.sh
     DEPENDENCIES:
       PREPARE_TESTS:
@@ -36,8 +36,8 @@ JOBS:
     DEPENDENCIES:
       STREAM:
         FOR:
-          NAME: "%HW_BENCHMARKS.STREAM_NAMES%"
-          PROCESSORS: "%HW_BENCHMARKS.STREAM_PROCESSORS%"
+          NAME: "%HW_BENCHMARKS.STREAM.NAMES%"
+          PROCESSORS: "%HW_BENCHMARKS.STREAM.PROCESSORS%"
         MEMBERS_FROM:
           StrongScaling, CompilationEfficiency, WeakScaling, Tracing:
             DATES_TO: None
@@ -45,8 +45,8 @@ JOBS:
             CHUNKS_TO: None
       OSU_RUN:
         FOR:
-          NAME: "%HW_BENCHMARKS.OSU_NAMES%"
-          PROCESSORS: "%HW_BENCHMARKS.OSU_PROCESSORS%"
+          NAME: "%HW_BENCHMARKS.OSU.NAMES%"
+          PROCESSORS: "%HW_BENCHMARKS.OSU.PROCESSORS%"
         MEMBERS_FROM:
           StrongScaling, CompilationEfficiency, WeakScaling, Tracing:
             DATES_TO: None

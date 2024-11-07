@@ -14,7 +14,7 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
-papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
+
 components="%MODEL.COMPONENTS%"
 ppn=%PROCESSORS_PER_NODE%
 
@@ -33,25 +33,33 @@ esac
 # Set the member variables and the extra reporter params for Tracing
 case "$current_member" in
     "StrongScaling")
-        test_name="strong_scaling"
+        member="strong_scaling"
         tests="%STRONGSCALING.TEST_NAMES%"
     ;;
     "Tracing")
-        test_name="tracing"
+        uf_enabled="%TRACING.USER_FUNCTIONS.ENABLED%"
+        uf_enabled=${uf_enabled,,}
+        pc_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
+        pc_enabled="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.ENABLED%"
+        pc_enabled=${pc_enabled,,}
+
+        reporter_params=""
+        ${uf_enabled} && reporter_params+=" -f function_csv"
+        ${uf_enabled} && reporter_params+=" --functions-file functions_summary.txt"
+        ${uf_enabled} && reporter_params+=" --most_expensive_function_summary most_expensive_function_summary.csv"
+        ${uf_enabled} && reporter_params+=" --tracking-folder tracking"
+        ${uf_enabled} && ${pc_enabled} && reporter_params+=" --scatter-plots ${pc_plots// /:}"
+
+        member="tracing"
         tests="%TRACING.TEST_NAMES%"
-        reporter_params="-f function_csv \
-        --functions-file functions_summary.txt \
-        --most_expensive_function_summary most_expensive_function_summary.csv \
-        --tracking-folder tracking \
-        --scatter-plots $(echo $papi_counters_plots | sed 's/ /:/g')"
         input_files="paramedir/*pm"
     ;;
     "CompilationEfficiency")
-        test_name="compilation_efficiency"
+        member="compilation_efficiency"
         tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
     ;;
     "WeakScaling")
-        test_name="weakscaling"
+        member="weakscaling"
         tests="%WEAKSCALING.TEST_NAMES%"
     ;;
 esac
@@ -69,8 +77,8 @@ set -u
 
 for test in $tests
 do
-    test_name_=$test_name/$test
-    cd $run_root/$test_name_ || exit
+    test_folder=${run_root}/${member}/${test}
+    cd ${test_folder} || exit
     
     tmp_reporter_params="${reporter_params} -j ${test}.json"
     # Generate scaling report only if not Tracing
@@ -88,7 +96,6 @@ do
             source ${project}/configurations/model/${model}/resolutions.sh 
             echo tile_size=\'${resolutions[$test]}\'
         fi
-        echo number_of_processes=\'$(ls | grep -E trace_ | sed 's/.*trace_//')\'
     } > param.cfg
     
     python3 ${cfg}/parser/collector.py \

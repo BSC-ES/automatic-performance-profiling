@@ -56,8 +56,10 @@ function clone_ecearth4()
     cp ${project}/configurations/model/ecearth4/trace-run.sh.j2 scripts/runtime/templates/launch/
 
     cd ${dest_dir} || exit
-    if echo ${members} | grep "StrongScaling" && [ ! -d lucia-alternative ]; then
-    	git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
+    if echo ${members} | grep -w "StrongScaling" && [ ! -d lucia-alternative ]; then
+        coupling_enabled=%STRONG_SCALING.COUPLING.ENABLED%
+        coupling_enabled=${coupling_enabled,,}
+    	${coupling_enabled} && git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
     fi
 }
 
@@ -117,11 +119,19 @@ fi
 # If hardware benchmarks are run, clone OSU and STREAM
 if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
     cd ${compilation} || exit
-    wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
-    tar -xvf osu-micro-benchmarks-5.6.3.tar.gz
-    rm osu-micro-benchmarks-5.6.3.tar.gz
 
-    if [ ! -d STREAM ]; then
+    osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
+    osu_enabled=${osu_enabled,,}
+    stream_enabled=%HW_BENCHMARKS.OSU.ENABLED%
+    stream_enabled=${stream_enabled,,}
+
+    if ${osu_enabled}; then
+        wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
+        tar -xvf osu-micro-benchmarks-5.6.3.tar.gz
+        rm osu-micro-benchmarks-5.6.3.tar.gz
+    fi
+
+    if ${stream_enabled} && [ ! -d STREAM ]; then
         git clone https://github.com/jeffhammond/STREAM.git STREAM
     fi
 fi

@@ -79,30 +79,6 @@ function compile_nemo()
 }
 
 #####################################################################################################################
-# Brief: Load the enviroment to run SE in MN5 
-# Param: 
-#   - $1: SE version 
-#####################################################################################################################
-function se_env_mn5()
-{
-    module purge
-    module load miniconda/24.1.2
-    source /apps/GPP/MINICONDA/24.1.2/etc/profile.d/conda.sh
-    conda activate /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-${1}
-}
-
-#####################################################################################################################
-# Brief: Load the enviroment to run SE in HPC2020 
-# Param: 
-#   - $1: SE version 
-#####################################################################################################################
-function se_env_hpc2020()
-{
-    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
-    micromamba activate ece4env-${1}
-}
-
-#####################################################################################################################
 # Brief: Compiles all arch YML configurations for ECEARTH 4 stated in the ARCH_NAMES AS variable
 # Global:
 #   - Paths: compilation, project, cfg
@@ -111,10 +87,11 @@ function se_env_hpc2020()
 #####################################################################################################################
 function compile_ecearth4()
 {
+    . ${cfg}/utils/${model}/se.sh
+
     model_sources=${compilation}/${model}_${branch}
 
     set +u
-    se_env_${current_arch,,} trunk
 
     # Fix for autosubmit logs
     sed -i "s/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'\n    ignore_not_found: true/" ${model_sources}/scripts/runtime/scriptlib/main.yml
@@ -125,16 +102,25 @@ function compile_ecearth4()
 
     # Compile all arch stated in AS
     for arch_name in ${arch_names}; do
+        se_env_${current_arch,,} trunk
+
         # Compile production
         if ${compile_prod}; then
+            coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
+            coupling_enabled=${coupling_enabled,,}
             arch_name_prod=${arch_name}-prod
             arch_file=${cfg}/arch/${platform}/${model}/${arch_name_prod}.yml
             prod_dir=${compilation}/${arch_name_prod}
+
             mkdir -p ${prod_dir}
             rsync -av --exclude='*.svn*' ${model_sources}/ ${prod_dir}
-            sed -i "s/nlogprt.*/nlogprt: \"1 0 1\"/" ${prod_dir}/scripts/runtime/templates/oasis/namcouple.yml
+
+            # Turn on lucia if enabled
+            ${coupling_enabled} && sed -i "s/nlogprt.*/nlogprt: \"1 0 1\"/" ${prod_dir}/scripts/runtime/templates/oasis/namcouple.yml
+            
             cd ${prod_dir}/scripts/build || exit
             cp ${arch_file} ../platforms
+
             se user-settings.yml ../platforms/${arch_name_prod}.yml compile-all.yml
         fi
 
@@ -143,8 +129,10 @@ function compile_ecearth4()
             arch_name_trace=${arch_name}-trace
             arch_file=${cfg}/arch/${platform}/${model}/${arch_name_trace}.yml
             trace_dir=${compilation}/${arch_name_trace}
+        
             mkdir -p ${trace_dir}
             rsync -av --exclude='*.svn*' ${model_sources}/ ${trace_dir}
+
             # Apply magiccut sentinel patch
             cd ${trace_dir}/sources/oifs-43r3v2 || exit
             git apply ${cfg}/trace/model/${model}/sentinel.diff
@@ -153,6 +141,8 @@ function compile_ecearth4()
             cp ${arch_file} ../platforms
             se user-settings.yml ../platforms/${arch_name_trace}.yml compile-all.yml
         fi
+
+        conda deactivate
     done
 }
 

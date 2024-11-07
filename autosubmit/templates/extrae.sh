@@ -17,7 +17,7 @@ branch=%MODEL.BRANCH_LIST%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 test="%CURRENT_TEST_NAME%"
 trace_steps="%TRACING.TRACE_STEPS%"
-output="%MODEL.OUTPUT%"
+output="%TRACING.OUTPUT%"
 papi_counters="%TRACING.PAPI_COUNTERS%"
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 platform=%DEFAULT.HPCARCH%
@@ -71,18 +71,15 @@ function create_trace_sh()
     local run_directory=$1
     local trace=${run_directory}/trace.sh
     local extrae_lib="%EXTRAE.TRACING_LIB%"
+    local extrae_home="%EXTRAE.HOME%"
     cat << EOF > $trace
 #!/bin/bash
 
-if [ "\$EXTRAE_HOME" = "" ]; then
-    EXTRAE_HOME=\$EXTRAE_DIR
-fi
-
 export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
-source \$EXTRAE_HOME/etc/extrae.sh
+source ${extrae_home}/etc/extrae.sh
 
-export LD_PRELOAD=\${EXTRAE_HOME}/lib/${extrae_lib}
-export LD_LIBRARY_PATH=\${EXTRAE_HOME}/lib/:\$LD_LIBRARY_PATH
+export LD_PRELOAD=${extrae_home}/lib/${extrae_lib}
+export LD_LIBRARY_PATH=${extrae_home}/lib/:\$LD_LIBRARY_PATH
 
 \$*
 EOF
@@ -213,30 +210,6 @@ function trace_nemo()
 }
 
 #####################################################################################################################
-# Brief: Load the enviroment to run SE in MN5 
-# Param: 
-#   - $1: SE version 
-#####################################################################################################################
-function se_env_mn5()
-{
-    module purge
-    module load miniconda/24.1.2
-    source /apps/GPP/MINICONDA/24.1.2/etc/profile.d/conda.sh
-    conda activate /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-${1}
-}
-
-#####################################################################################################################
-# Brief: Load the enviroment to run SE in HPC2020 
-# Param: 
-#   - $1: SE version 
-#####################################################################################################################
-function se_env_hpc2020()
-{
-    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
-    micromamba activate ece4env-${1}
-}
-
-#####################################################################################################################
 # Brief: Traces ECE4 execution using Extrae
 # Global:
 #   - Paths: cfg, run_root, compilation, project
@@ -244,6 +217,8 @@ function se_env_hpc2020()
 #####################################################################################################################
 function trace_ecearth4()
 {
+    . ${cfg}/utils/${model}/se.sh
+
     local model_sources=${compilation}/${model}_${branch}
     local oifs_procs=%CURRENT_OIFS_PROCS%
     local nemo_procs=%CURRENT_NEMO_PROCS%
@@ -312,6 +287,7 @@ function trace_ecearth4()
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-trace.yml scriptlib/main.yml
 
     # Reload modules to exit from SE
+    module purge
     source ${env_sources}
 
     cd ${run_dir} || exit

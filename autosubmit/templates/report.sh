@@ -12,14 +12,11 @@ env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 latex_folder=${cfg}/latex/
-report_folder=%REPORT.FOLDER%
-report_conffile=%REPORT.CONFIG%
-report_name=%REPORT.NAME%
-report_full_path=${report_folder}/%REPORT.NAME%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 members="%EXPERIMENT.MEMBERS%"
 components="%MODEL.COMPONENTS%"
 configuration_name=%STRONGSCALING.TEST_CONFIG%
+root_dir=%CURRENT_ROOTDIR%
 
 components=${components//[\[,\]]/}
 components=($(for v in $components; do echo "$v"; done | sort | uniq | xargs))
@@ -33,28 +30,36 @@ components=($(for v in $components; do echo "$v"; done | sort | uniq | xargs))
 #####################################################################################################################
 function add_HardwareBenchmarks() {
     local hardware_benchmarks_root=$run_root/hardware_benchmarks
+    local osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
+    osu_enabled=${osu_enabled,,}
+    local stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
+    stream_enabled=${stream_enabled,,}
 
-    for osu_img in ${hardware_benchmarks_root}/OSU_RUN/IMAGE/*.png; do
-        local osu_caption=${osu_img//-/ }
-        osu_caption=${osu_caption//.png}
-        osu_caption=${osu_caption//*\//}
-        osu_caption="${osu_caption} OSU test."
+    if ${osu_enabled}; then
+        for osu_img in ${hardware_benchmarks_root}/OSU_RUN/IMAGE/*.png; do
+            local osu_caption=${osu_img//-/ }
+            osu_caption=${osu_caption//.png}
+            osu_caption=${osu_caption//*\//}
+            osu_caption="${osu_caption} OSU test."
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Hardware Benchmarks" \
+                -s "OSU Benchmark" \
+                --add-img ${osu_img} \
+                --add-caption "${osu_caption}" \
+                -T ${cfg}/latex/text/OSU.txt
+        done
+    fi
+
+    if ${stream_enabled}; then
         python3 ${latex_folder}/ReportGenerator.py \
-            -O ${report_full_path}.pkl \
-            -S "Hardware Benchmarks" \
-            -s "OSU Benchmark" \
-            --add-img ${osu_img} \
-            --add-caption "${osu_caption}" \
-            -T ${cfg}/latex/text/OSU.txt
-    done
-
-    python3 ${latex_folder}/ReportGenerator.py \
-            -O ${report_full_path}.pkl \
-            -S "Hardware Benchmarks" \
-            -s "STREAM Benchmark" \
-            --add-img ${hardware_benchmarks_root}/STREAM_RUN/${model}.png \
-            --add-caption "STREAM benchmark" \
-            -T ${cfg}/latex/text/STREAM.txt
+                -O ${report_full_path}.pkl \
+                -S "Hardware Benchmarks" \
+                -s "STREAM Benchmark" \
+                --add-img ${hardware_benchmarks_root}/STREAM_RUN/${model}.png \
+                --add-caption "STREAM benchmark" \
+                -T ${cfg}/latex/text/STREAM.txt
+    fi
 }
 
 #####################################################################################################################
@@ -76,7 +81,23 @@ function add_StrongScaling() {
 
         cd ${test_root} || exit
 
-        # Scalability
+        # Create and add test configuration info
+        {   
+            echo "Configuration,Value";
+            echo "Resolution, %STRONGSCALING.RESOLUTION%";
+            [ ${model} = "ecearth4" ] && echo "NEMO resolution,%STRONGSCALING.NEMO_RESOLUTION%";
+            [ ${model} = "ecearth4" ] && echo "OIFS resolution,%STRONGSCALING.OIFS_RESOLUTION%";
+            echo "START DATE,%STRONGSCALING.START_DATE%";
+            echo "END DATE,%STRONGSCALING.END_DATE%";
+            echo "ARCH NAME,%STRONGSCALING.ARCH_NAME%";
+        } > test_info.csv
+    
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Scalability" \
+            --add-caption "Scalability test configuration." \
+            --add-csv test_info.csv
+
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Scalability" \
@@ -84,7 +105,7 @@ function add_StrongScaling() {
             --add-caption "Cases processors configuration" \
             -T ${cfg}/latex/text/Scalability.txt
 
-        # Add general model results only if there is more than one component
+        # Add full model scaling only if there is more than one component
         if [ ${#components[@]} -gt 1 ]; then
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
@@ -101,33 +122,202 @@ function add_StrongScaling() {
         for component in "${components[@]}"; do
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
-                -S "${component^^} Scalability" \
+                -S "Scalability" \
+                -s "${component^^} Scalability" \
                 --add-img ${component}_${test}_scaling.png \
                 --add-caption "Scalability plot for ${component^^}."
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
-                -S "${component^^} Scalability" \
+                -S "Scalability" \
+                -s "${component^^} Scalability" \
                 --add-caption "Scalability table for ${component^^}." \
                 --add-csv ${component}_${test}_scaling.csv
         done
 
         # Coupling info (ECE4 only)
-        if [ -d coupling ]; then
+        coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
+        coupling_enabled=${coupling_enabled,,}
+        if ${coupling_enabled} && [ ${model} = "ecearth4" ]; then
             for case in coupling/*; do
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
-                    -S "Coupling" \
-                    -s "$(basename ${case})" \
+                    -S "Scalability" \
+                    -s "Coupling" \
+                    -ss "$(basename ${case})" \
                     --add-csv ${case}/summary.csv \
                     --add-caption "Lucia results summary."
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
-                    -S "Coupling" \
-                    -s "$(basename ${case})" \
+                    -S "Scalability" \
+                    -s "Coupling" \
+                    -ss "$(basename ${case})" \
                     --add-img ${case}/stacked_events.png \
                     --add-caption "Components' coupling stacked events."
             done
         fi
+    done
+}
+
+function add_user_functions() {
+    # Add whole model info only if it has more than 2 components
+    if [ ${#components[@]} -gt 1 ]; then
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "Functions detailed report" \
+            -T ${cfg}/latex/text/Function.txt
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "Functions detailed report" \
+            -ss "Most expensive function summary" \
+            --add-csv most_expensive_function_summary.csv \
+            --add-caption "Most time-consuming functions for the whole model."
+    fi
+
+    for component in "${components[@]}"; do
+        # Add component most time consuming functions table
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "${component^^} Functions detailed report" \
+            -ss "Most expensive function summary" \
+            --add-csv ${component}_most_expensive_function_summary.csv \
+            --add-caption "Most time-consuming functions for ${component^^}."
+
+        # Add papi counters plots plots
+        local papi_counters_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
+        for papi_counter_plot in ${papi_counters_plots}; do
+            local img_file=${component}-${papi_counter_plot}.png
+            local papi_caption=${img_file//.png}
+            papi_caption=${papi_caption#*-}
+            papi_caption="${papi_caption//-/ vs } counters plot for ${component}."
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Tracing" \
+                -s "${component^^} Functions detailed report" \
+                -ss "PAPI counters plots" \
+                --add-img ${img_file} \
+                --add-caption "${papi_caption}"
+        done
+
+        # Add user functions time/PAPI/MPI scalability
+        functions=$(find ${test_root}/function_csv/* | grep ${component})
+        for func in ${functions}; do
+            file_name=${func##*function_csv/}
+            file_name=${file_name##tracking/MPI/}
+            func_name=${file_name%.csv}
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Tracing" \
+                -s "${component^^} Functions detailed report" \
+                -ss "${func_name}" \
+                --add-csv "function_csv/${file_name}" \
+                --add-caption "$func_name scalability." --silent
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Tracing" \
+                -s "${component^^} Functions detailed report" \
+                -ss "${func_name}" \
+                --add-csv "tracking/MPI/${file_name}" \
+                --add-caption "$func_name MPI scalability." -p --silent
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Tracing" \
+                -s "${component^^} Functions detailed report" \
+                -ss "${func_name}" \
+                --add-csv "tracking/counters/${file_name}" \
+                --add-caption "$func_name counters scalability." -p --silent 
+        done
+    done
+}
+
+function add_paraver() {
+    local case_comparison_cfgs="%TRACING.PARAVER.COMPARE_CFGS%"
+    local paraver_cfgs="%TRACING.PARAVER.CFGS%"
+    for component in "${components[@]}"; do
+        # Create and add case comparison Paraver views
+        for case_comparison_cfg in ${case_comparison_cfgs}; do
+            local img_caption="${case_comparison_cfg} for the fastest timestep of the cases (top to bottom): "
+            local case_comparison_imgs=""
+            for case in paraver_images/*; do 
+                img_caption+="$(basename $case) "
+                case_comparison_img="$case/${case_comparison_cfg}@${component}.best_cut.png"
+                ! [ -f $case_comparison_img ] && echo $case_comparison_img was not generated, skipping... && continue
+                case_comparison_imgs+="$case_comparison_img "
+            done
+            local img_name=${component}_${case_comparison_cfg}.png
+            convert $case_comparison_imgs -append $img_name
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Tracing" \
+                -s "${component^^} Paraver" \
+                -ss "Case comparison" \
+                --add-img $img_name \
+                --add-caption "$img_caption."
+        done
+        
+        # Add other Paraver views
+        for case in ${test_root}/paraver_images/*; do                    
+            for paraver_cfg in $paraver_cfgs; do
+                echo $case_comparison_cfgs | grep -w $paraver_cfg &> /dev/null && continue
+                local paraver_image="$case/$paraver_cfg@${component}.best_cut.png"
+                ! [ -f $paraver_image ] && echo $paraver_image was not generated, skipping... && continue
+
+                local paraver_caption=${paraver_image##*/}
+                paraver_caption="${paraver_caption//@*} configuration for the fastest timestep in ${component^^} trace"
+                python3 ${latex_folder}/ReportGenerator.py \
+                    -O ${report_full_path}.pkl \
+                    -S "Tracing" \
+                    -s "${component^^} Paraver" \
+                    -ss "$(basename ${case})" \
+                    --add-img ${paraver_image} \
+                    --add-caption "${paraver_caption}."
+            done
+        done
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "${component^^} Paraver" \
+            -T ${cfg}/latex/text/ParaverViews.txt
+    done
+}
+
+function add_modelfactors() {
+    for component in "${components[@]}"; do
+        for modelfactors_img in modelfactors/$component/*.png; do
+            local modelfactors_caption=$(basename $modelfactors_img)
+            modelfactors_caption=${modelfactors_caption//-matplot\.png}
+            modelfactors_caption=${modelfactors_caption//-/ }
+            if [[ $modelfactors_caption == "modelfactors"* ]]; then
+                modelfactors_caption="${component^} $modelfactors_caption"
+            else 
+                modelfactors_caption="${component^} modelfactors $modelfactors_caption"
+            fi
+
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl\
+                -S "Tracing" \
+                -s "${component^^} Model Factors" \
+                --add-img ${modelfactors_img} \
+                --add-caption "${modelfactors_caption}." \
+                -T ${cfg}/latex/text/ModelFactors.txt
+        done
+    done
+}
+
+function add_mpi() {
+    for trace_folder in ${test_root}/trace_*; do
+        local trace_id=${trace_folder//*trace_}
+        for component in "${components[@]}"; do
+            python3 ${latex_folder}/ReportGenerator.py \
+                -O ${report_full_path}.pkl \
+                -S "Tracing" \
+                -s "${component^^} MPI Call Profile" \
+                --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv \
+                --add-caption "${trace_id} case MPI Call profile." \
+                --csv-convert -p -r
+        done
     done
 }
 
@@ -140,13 +330,18 @@ function add_StrongScaling() {
 #####################################################################################################################
 function add_Tracing() {
     local member="tracing"
-    local papi_counters_plots="%TRACING.PAPI_COUNTERS_PLOTS%"
     local tests="%TRACING.TEST_NAMES%"
-    local case_comparison_cfgs="%TRACING.PV_CASE_COMPARISSON_CFGS%"
     tests=${tests//[\[,\]]/}
     tests=$(for v in $tests; do echo "$v"; done | sort | uniq | xargs)
 
-    # dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
+    local paraver_enabled="%TRACING.PARAVER.ENABLED%"
+    paraver_enabled=${paraver_enabled,,}
+    local uf_enabled="%TRACING.USER_FUNCTIONS.ENABLED%"
+    uf_enabled=${uf_enabled,,}
+    local modelfactors_enabled="%TRACING.MODELFACTORS.ENABLED%"
+    modelfactors_enabled=${modelfactors_enabled,,}
+    local mpi_enabled="%TRACING.MPI.ENABLED%"
+    mpi_enabled=${mpi_enabled,,}
 
     for test in $tests; do
         test_name=${member}/$(basename $test)
@@ -154,146 +349,37 @@ function add_Tracing() {
 
         cd ${test_root} || exit
 
-        # Modelfactors
-        for component in "${components[@]}"; do
-            for modelfactors_img in modelfactors/$component/*.png; do
-                local modelfactors_caption=$(basename $modelfactors_img)
-                modelfactors_caption=${modelfactors_caption//-matplot\.png}
-                modelfactors_caption=${modelfactors_caption//-/ }
-                if [[ $modelfactors_caption == "modelfactors"* ]]; then
-                    modelfactors_caption="${component^} $modelfactors_caption"
-                else 
-                    modelfactors_caption="${component^} modelfactors $modelfactors_caption"
-                fi
-                echo $modelfactors_caption
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl\
-                    -S "${component^^} Model Factors" \
-                    --add-img ${modelfactors_img} \
-                    --add-caption "${modelfactors_caption}." \
-                    -T ${cfg}/latex/text/ModelFactors.txt
-            done
-        done
+        # Create and add test configuration
+        {   
+            echo "Configuration,Value";
+            echo "Resolution, %TRACING.RESOLUTION%";
+            [ ${model} = "ecearth4" ] && echo "NEMO resolution,%TRACING.NEMO_RESOLUTION%";
+            [ ${model} = "ecearth4" ] && echo "OIFS resolution,%TRACING.OIFS_RESOLUTION%";
+            echo "START DATE,%TRACING.START_DATE%";
+            echo "END DATE,%TRACING.END_DATE%"; 
+            echo "ARCH NAME,%TRACING.ARCH_NAME%"; 
+        } > test_info.csv
+    
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            --add-caption "Test configuration." \
+            --add-csv test_info.csv
 
-        # Paramedir
-        for trace_folder in trace_*; do
-            trace_id=$(echo $trace_folder | sed 's/trace_//')
-            for component in "${components[@]}"; do
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl \
-                    -S "${component^^} MPI Call Profile" \
-                    --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv \
-                    --add-caption "${trace_id} case MPI Call profile." \
-                    --csv-convert -p -r
-            done
-        done
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "Functions detailed report" \
+            --add-csv cases_info.csv \
+            --add-caption "Cases processors configuration."  
 
-        # Function detail
+        ${modelfactors_enabled} && add_modelfactors
 
-        # Add general model results only if there is more than one component
-        if [ ${#components[@]} -gt 1 ]; then
-            python3 ${latex_folder}/ReportGenerator.py \
-                -O ${report_full_path}.pkl \
-                -S "Functions detailed report" \
-                --add-csv cases_info.csv \
-                --add-caption "Cases processors configuration."  
-            python3 ${latex_folder}/ReportGenerator.py \
-                -O ${report_full_path}.pkl \
-                -S "Functions detailed report" \
-                -T ${cfg}/latex/text/Function.txt
-            python3 ${latex_folder}/ReportGenerator.py \
-                -O ${report_full_path}.pkl \
-                -S "Functions detailed report" \
-                -s "Most expensive function summary" \
-                --add-csv most_expensive_function_summary.csv \
-                --add-caption "Most time-consuming functions for the whole model."
-        fi
+        ${mpi_enabled} && add_mpi
 
-        for component in "${components[@]}"; do
-            python3 ${latex_folder}/ReportGenerator.py \
-                -O ${report_full_path}.pkl \
-                -S "${component^^} Functions detailed report" \
-                -s "Most expensive function summary" \
-                --add-csv ${component}_most_expensive_function_summary.csv \
-                --add-caption "Most time-consuming functions for ${component^^}."
+        ${uf_enabled} && add_user_functions
 
-            for scatter_plot in ${papi_counters_plots}; do
-                local img_file=${component}-${scatter_plot}.png
-                local papi_caption=${img_file//.png}
-                papi_caption=${papi_caption#*-}
-                papi_caption="${papi_caption//-/ vs } counters plot for ${component}."
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report" \
-                    -s "PAPI counters plots" \
-                    --add-img ${img_file} \
-                    --add-caption "${papi_caption}"
-	    done
-	
-            functions=$(find function_csv/* | grep ${component})
-            for func in ${functions}; do
-                file_name=${func##function_csv/}
-                file_name=${file_name##tracking/MPI/}
-                func_name=${file_name%.csv}
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report" \
-                    -s "${func_name}" \
-                    --add-csv "function_csv/${file_name}" \
-                    --add-caption "$func_name scalability." --silent
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report" \
-                    -s "${func_name}" \
-                    --add-csv "tracking/MPI/${file_name}" \
-                    --add-caption "$func_name MPI scalability." -p --silent
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl \
-                    -S "${component^^} Functions detailed report" \
-                    -s "${func_name}" \
-                    --add-csv "tracking/counters/${file_name}" \
-                    --add-caption "$func_name counters scalability." -p --silent 
-            done
-        done
-
-        # Paraver
-        if [ -d paraver_images ]; then
-            for component in "${components[@]}"; do
-                for case_comparison_cfg in ${case_comparison_cfgs}; do
-                    local img_caption="${case_comparison_cfg} for the fastest timestep of the cases (top to bottom): "
-                    local case_comparison_imgs=""
-                    for case in paraver_images/*; do 
-                        img_caption+="$(basename $case) "
-                        case_comparison_imgs+="$case/${case_comparison_cfg}@${component}.best_cut.png "
-                    done
-                    local img_name=${component}_${case_comparison_cfg}.png
-                    convert $case_comparison_imgs -append $img_name
-                    python3 ${latex_folder}/ReportGenerator.py \
-                        -O ${report_full_path}.pkl \
-                        -S "${component^^} Paraver" \
-                        -s "Case comparison" \
-                        --add-img $img_name \
-                        --add-caption "$img_caption."
-                done
-                
-                for case in paraver_images/*; do                    
-                    for paraver_image in $(find $case | grep -E ".*@${component}.*png" | grep -v ${case_comparison_cfg}); do
-                        local paraver_caption=${paraver_image##*/}
-                        paraver_caption="${paraver_caption//@*} configuration for the fastest timestep in ${component^^} trace"
-                        python3 ${latex_folder}/ReportGenerator.py \
-                            -O ${report_full_path}.pkl \
-                            -S "${component^^} Paraver" \
-                            -s "$(basename ${case})" \
-                            --add-img ${paraver_image} \
-                            --add-caption "${paraver_caption}."
-                    done
-                done
-                python3 ${latex_folder}/ReportGenerator.py \
-                    -O ${report_full_path}.pkl \
-                    -S "${component^^} Paraver" \
-                    -T ${cfg}/latex/text/ParaverViews.txt
-            done
-        fi
+        ${paraver_enabled} && add_paraver
     done
 }
 
@@ -313,9 +399,25 @@ function add_multiexperiment() {
         --json-files $run_root/$member/*/*.json \
         ${flag} \
         --file-out ${member}.csv
-    
+
     member_title=${member//_/ }
-    member_title=${member^^}
+    member_title=${member^}
+
+    test_folders=($run_root/$member/*)
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s $member_title \
+        --add-csv ${run_root}/${member}/test_info.csv \
+        --add-caption "${member_title} test configuration."
+ 
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s $member_title \
+        --add-csv ${test_folders[0]}/cases_info.csv \
+        --add-caption "${member_title} cases info." 
+
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
@@ -332,6 +434,16 @@ function add_multiexperiment() {
 function add_CompilationEfficiency() {
     local member="compilation_efficiency"
     local flag=-s
+
+    {   
+        echo "Configuration,Value";
+        echo "Resolution, %COMPILATION_EFFICIENCY.RESOLUTION%";
+        [ ${model} = "ecearth4" ] && echo "NEMO resolution,%COMPILATION_EFFICIENCY.NEMO_RESOLUTION%";
+        [ ${model} = "ecearth4" ] && echo "OIFS resolution,%COMPILATION_EFFICIENCY.OIFS_RESOLUTION%";
+        echo "START DATE,%COMPILATION_EFFICIENCY.START_DATE%";
+        echo "END DATE,%COMPILATION_EFFICIENCY.END_DATE%"; 
+    } > ${run_root}/${member}/test_info.csv
+
     add_multiexperiment $member $flag
 }
 
@@ -343,6 +455,17 @@ function add_CompilationEfficiency() {
 function add_WeakScaling() {
     local member="weakscaling"
     local flag=-w
+
+    {   
+        echo "Configuration,Value";
+        echo "Resolution, %WEAKSCALING.RESOLUTION%";
+        [ ${model} = "ecearth4" ] && echo "NEMO resolution,%WEAKSCALING.NEMO_RESOLUTION%";
+        [ ${model} = "ecearth4" ] && echo "OIFS resolution,%WEAKSCALING.OIFS_RESOLUTION%";
+        echo "START DATE,%WEAKSCALING.START_DATE%";
+        echo "END DATE,%WEAKSCALING.END_DATE%";
+        echo "ARCH NAME,%WEAKSCALING.ARCH_NAME%";
+    } > ${run_root}/${member}/test_info.csv
+
     add_multiexperiment $member $flag
 }
 
@@ -355,6 +478,8 @@ set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
 
+report_folder=${root_dir}/report/
+report_full_path=${report_folder}/report
 rm -rf ${report_folder}
 mkdir -p ${report_folder}
 
@@ -370,10 +495,11 @@ for current_member in ${members}; do
     add_${current_member}
 done
 
-cd ${report_folder}
-source ${report_conffile}
+cd ${report_folder} || exit
 echo model=${model^^} > param.cfg
 echo configuration_name=${configuration_name} >> param.cfg
+title="%REPORT.TITLE%"
+authors="%REPORT.AUTHORS%"
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --add-newcommand param.cfg
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-title "${title}"
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-authors "${authors}"
@@ -381,9 +507,9 @@ python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-auth
 # Create the tex file
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path} --dump-to-file
 
-if ! which pdflatex; then 
+if ! command -v pdflatex &> /dev/null; then 
     echo pdflatex cmd not available, you can find the tex file ${report_full_path}.tex;
 else
     # Compile the report
-    pdflatex ${report_name}.tex && pdflatex ${report_name}.tex
+    pdflatex report.tex && pdflatex report.tex
 fi

@@ -20,7 +20,6 @@ tests=${tests//[\[,\]]/}
 tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
 components=${components//[\[,\]]/}
 components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
-paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
 
 source ${env_sources}
 
@@ -87,56 +86,69 @@ function create_paraver_legend()
     rm -f *_legend.png
 }
 
+run_paraver()
+{
+    export analysis_tools=${cfg}/trace_analysis
+    local paraver_configurations_path=${analysis_tools}/paraver_configurations
+    local compare_cfgs="%TRACING.PARAVER.COMPARE_CFGS%"
+    local paraver_cfgs="%TRACING.PARAVER.CFGS%"
+
+    for test in ${tests}; do
+        test_folder=${run_root}/${member}/${test}
+
+        declare -A components_slowest_ts
+        for component in $components; do components_slowest_ts[$component]=0; done
+        for trace_folder in ${test_folder}/trace_*; do
+            for components in $components; do 
+                max_time=${components_slowest_ts[$component]}
+                cur_time=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
+                components_slowest_ts[$component]=$(( cur_time  > max_time ? cur_time : max_time )); 
+            done
+        done
+
+        for trace_folder in ${test_folder}/trace_*; do
+            trace_folder_basename=$(basename ${trace_folder})
+            trace_id=$(echo ${trace_folder_basename} | sed 's/trace_//')
+            components_names=($(echo ${trace_folder_basename} | sed -E 's/(trace|[0-9])//g' | sed -E 's/_/ /g'))
+            components_procs=($(echo ${trace_folder_basename} | sed -E 's/(trace|[a-z])//g' | sed -E 's/_/ /g'))
+
+            img_folder=${test_folder}/paraver_images/${trace_id}
+            mkdir -p ${img_folder}
+            cd ${img_folder} || exit
+
+            for component in ${components}; do
+                create_threads_to_ignore
+
+                trace=${trace_folder}/${component}.best_cut.prv
+
+                slowest_ts=${components_slowest_ts[$component]}
+                cur_ts=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
+
+                for paraver_cfg in ${paraver_cfgs}; do
+                    og_paraver_cfg_path=${paraver_configurations_path}/${paraver_cfg}.cfg
+                    paraver_cfg_path=${img_folder}/${paraver_cfg}.cfg
+                    if echo $paraver_cfg | grep -w $compare_cfgs &> /dev/null; then
+                        # Set time to the slowest timestep of the different tests
+                        ts_ratio=$(echo $slowest_ts / $cur_ts | bc -l)
+                        sed "s/window_end_time_relative.*/window_end_time_relative ${ts_ratio}/" ${og_paraver_cfg_path} > ${paraver_cfg_path}
+                    fi
+                    # Remove other-component tasks from the paraver view
+                    sed "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${og_paraver_cfg_path} > ${paraver_cfg_path}
+
+                    if wxparaver -i ${trace} ${paraver_cfg_path} &> /dev/null; then
+                        create_paraver_legend ${paraver_cfg_path} ${trace}
+                    fi
+                done
+            done
+        done
+    done
+}
+
 ###################
 # Start script
 ###################
 
-export analysis_tools=${cfg}/trace_analysis
-paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
+paraver_enabled="%TRACING.PARAVER.ENABLED%"
+paraver_enabled=${paraver_enabled,,}
 
-for test in ${tests}; do
-    test_folder=${run_root}/${member}/${test}
-
-    declare -A components_slowest_ts
-    for component in $components; do components_slowest_ts[$component]=0; done
-    for trace_folder in ${test_folder}/trace_*; do
-        for components in $components; do 
-            max_time=${components_slowest_ts[$component]}
-            cur_time=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
-            components_slowest_ts[$component]=$(( cur_time  > max_time ? cur_time : max_time )); 
-        done
-    done
-    for trace_folder in ${test_folder}/trace_*; do
-        trace_folder_basename=$(basename ${trace_folder})
-        trace_id=$(echo ${trace_folder_basename} | sed 's/trace_//')
-        components_names=($(echo ${trace_folder_basename} | sed -E 's/(trace|[0-9])//g' | sed -E 's/_/ /g'))
-        components_procs=($(echo ${trace_folder_basename} | sed -E 's/(trace|[a-z])//g' | sed -E 's/_/ /g'))
-
-        img_folder=${test_folder}/paraver_images/${trace_id}
-        mkdir -p ${img_folder}
-
-        for component in ${components}; do
-            create_threads_to_ignore
-
-            cp ${paraver_configurations} ${img_folder}
-
-            slowest_ts=${components_slowest_ts[$component]}
-            cur_ts=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
-            for paraver_cfg in ${img_folder}/*.cfg; do
-                if [ "$(basename $paraver_cfg)" = "MPI_call.cfg" ]; then
-                    sed -i "s/window_end_time_relative.*/window_end_time_relative $(echo $slowest_ts / $cur_ts | bc -l)/" ${paraver_cfg}
-                fi
-                sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg}
-            done
-
-            trace=${trace_folder}/${component}.best_cut.prv
-            mod_paraver_configurations=$(find ${img_folder} | grep cfg)
-            cd ${img_folder} || exit
-            for paraver_cfg in ${mod_paraver_configurations}; do
-                if wxparaver -i ${trace} ${paraver_cfg} &> /dev/null; then
-                    create_paraver_legend ${paraver_cfg} ${trace}
-                fi
-            done
-        done
-    done
-done
+${paraver_enabled} && run_paraver

@@ -186,33 +186,40 @@ function functions_dir_ecearth4()
     echo Functions dir not used in ece4 yet
 }
 
+run_functions_dir() {
+    test_name="tracing"
+    arch_name=%TRACING.ARCH_NAME%
+    model_resolution=%TRACING.MODEL_RESOLUTION%
+
+    tests="%TRACING.TEST_NAMES%"
+    tests=${tests//[\[,\]]/}
+    tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
+
+    model_sources=${model}_${branch}
+
+    for test in $tests
+    do
+        if [ "${current_member}" = "CompilationEfficiency" ]; then
+            arch_name=${test}
+        fi
+        test_name_=${test_name}/${test}
+        run_dir=$run_root/$test_name_/functions_dir
+
+        mkdir -p ${run_dir}
+        rm -rf ${run_dir:?}/*
+        
+        cp -r $project/cfg/generate_func_list/*                 ${run_dir}/
+        cp -r $project/cfg/generate_func_list/model/${model}/*  ${run_dir}
+
+        functions_dir_${model}
+    done
+}
+
 ###################
 # Start script
 ###################
 
-test_name="tracing"
-arch_name=%TRACING.ARCH_NAME%
-model_resolution=%TRACING.MODEL_RESOLUTION%
+fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+fd_enabled=${fd_enabled,,}
 
-tests="%TRACING.TEST_NAMES%"
-tests=${tests//[\[,\]]/}
-tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
-
-model_sources=${model}_${branch}
-
-for test in $tests
-do
-    if [ "${current_member}" = "CompilationEfficiency" ]; then
-	    arch_name=${test}
-    fi
-    test_name_=${test_name}/${test}
-    run_dir=$run_root/$test_name_/functions_dir
-
-    mkdir -p ${run_dir}
-    rm -rf ${run_dir:?}/*
-    
-    cp -r $project/cfg/generate_func_list/* ${run_dir}/
-    cp -r $project/cfg/generate_func_list/model/${model}/* ${run_dir}
-
-    functions_dir_${model}
-done
+${fd_enabled} && run_functions_dir

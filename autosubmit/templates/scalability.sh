@@ -27,14 +27,26 @@ platform="%DEFAULT.HPCARCH%"
 #####################################################################################################################
 function run_nemo()
 {
+    case "$current_member" in
+        "CompilationEfficiency")
+            local output="%COMPILATION_EFFICIENCY.OUTPUT%"
+            local test_steps="%COMPILATION_EFFICIENCY.TEST_STEPS%" 
+            ;;
+        "StrongScaling")
+            local output="%STRONGSCALING.OUTPUT%"
+            local test_steps="%STRONGSCALING.TEST_STEPS%" 
+            ;;
+        "WeakScaling")
+            local output="%WEAKSCALING.OUTPUT%"
+            local test_steps="%WEAKSCALING.TEST_STEPS%" 
+            ;;
+    esac
     run_dir=${run_root}/${test_name}/scalability_nemo_${number_of_cores}
     mkdir -p ${run_dir}
 
     source ${env_sources}
 
     model_sources=${model}_${branch}
-    output="%MODEL.OUTPUT%"
-    test_steps="%MODEL.TEST_STEPS%"
     configuration_folder=tests
     
     # Link inidata
@@ -77,29 +89,6 @@ function run_nemo()
     python3 ${project}/cfg/parser/utils/model/nemo/convert_timing_files.py -i ${number_of_cores}_test.timing -o ${number_of_cores}_test.timing
 }
 
-#####################################################################################################################
-# Brief: Load the enviroment to run SE in MN5 
-# Param: 
-#   - $1: SE version 
-#####################################################################################################################
-function se_env_mn5()
-{
-    module purge
-    module load miniconda/24.1.2
-    source /apps/GPP/MINICONDA/24.1.2/etc/profile.d/conda.sh
-    conda activate /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-${1}
-}
-
-#####################################################################################################################
-# Brief: Load the enviroment to run SE in HPC2020 
-# Param: 
-#   - $1: SE version 
-#####################################################################################################################
-function se_env_hpc2020()
-{
-    . /hpcperm/c3gm/repository/libs/micromamba/etc/profile.d/micromamba.sh
-    micromamba activate ece4env-${1}
-}
 
 #####################################################################################################################
 # Brief: Updates the SE config file with the AS config and runs EC-Earth 4
@@ -109,6 +98,29 @@ function se_env_hpc2020()
 #####################################################################################################################
 function run_ecearth4()
 {
+    case "$current_member" in
+        "CompilationEfficiency")
+            local start_date="%COMPILATION_EFFICIENCY.START_DATE%"
+            local end_date="%COMPILATION_EFFICIENCY.END_DATE%"
+            local freq="%COMPILATION_EFFICIENCY.FREQ%"
+            local interval="%COMPILATION_EFFICIENCY.INTERVAL%"
+            ;;
+        "StrongScaling")
+            local start_date="%STRONGSCALING.START_DATE%"
+            local end_date="%STRONGSCALING.END_DATE%"
+            local freq="%STRONGSCALING.FREQ%"
+            local interval="%STRONGSCALING.INTERVAL%"
+            ;;
+        "WeakScaling")
+            local start_date="%WEAKSCALING.START_DATE%"
+            local end_date"=%WEAKSCALING.END_DATE%"
+            local freq="%WEAKSCALING.FREQ%"
+            local interval="%WEAKSCALING.INTERVAL%"
+            ;;
+    esac
+
+    . ${project}/cfg/utils/${model}/se.sh
+
     local model_sources=${compilation}/${model}_${branch}
     local oifs_procs=%CURRENT_OIFS_PROCS%
     local nemo_procs=%CURRENT_NEMO_PROCS%
@@ -137,11 +149,6 @@ function run_ecearth4()
     local sed_src_dir=$(echo ${src_dir} | sed 's_/_\\/_g')
     local ecearth_root=${compilation}/${arch_name}-prod
     local sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
-
-    local start_date=%MODEL.START_DATE%
-    local end_date=%MODEL.END_DATE%
-    local freq=%MODEL.FREQ%
-    local interval=%MODEL.INTERVAL%
 
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
@@ -173,20 +180,25 @@ function run_ecearth4()
     se_env_${platform,,} trunk
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-prod.yml scriptlib/main.yml
 
+    module purge
     source ${env_sources}
     # Temporary issue regarding xarray module in mn5
     if [ "${platform,,}" = "mn5" ]; then
         source /gpfs/home/bsc/bsc032333/.venv/bin/activate
     fi
 
-    cd ${run_dir} || exit
-    python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 30
+    local coupling_enabled="%STRONG_SCALING.COUPLING.ENABLED%"
+    coupling_enabled=${coupling_enabled,,}
+    if ${coupling_enabled}; then
+        cd ${run_dir} || exit
+        python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 30
 
-    run_id=$(echo $(basename $run_dir) | sed 's/scalability_//')
-    coupling_dir=${test_dir}/coupling/${run_id}
-    mkdir -p ${coupling_dir}
-    cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
-    cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
+        run_id=${run_dir//*scalability_}
+        coupling_dir=${test_dir}/coupling/${run_id}
+        mkdir -p ${coupling_dir}
+        cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
+        cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
+    fi
 }
 
 ###################
@@ -198,13 +210,13 @@ case "$current_member" in
         member="compilation_efficiency"
         test_name=${member}/${test}
         arch_name=${test}
-        model_resolution=%COMPILATION_EFFICIENCY.MODEL_RESOLUTION%
+        model_resolution=%COMPILATION_EFFICIENCY.RESOLUTION%
         ;;
     "StrongScaling")
         member="strong_scaling"
         test_name=${member}/${test}
         arch_name=%STRONGSCALING.ARCH_NAME%
-        model_resolution=%STRONGSCALING.MODEL_RESOLUTION%
+        model_resolution=%STRONGSCALING.RESOLUTION%
         ;;
     "WeakScaling")
         member="weakscaling"
