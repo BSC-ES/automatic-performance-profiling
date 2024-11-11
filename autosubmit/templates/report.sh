@@ -89,6 +89,7 @@ function add_StrongScaling() {
             [ ${model} = "ecearth4" ] && echo "OIFS resolution,%STRONGSCALING.OIFS_RESOLUTION%";
             echo "START DATE,%STRONGSCALING.START_DATE%";
             echo "END DATE,%STRONGSCALING.END_DATE%";
+            echo "TIMESTEPS,%STRONGSCALING.TEST_STEPS%";
             echo "ARCH NAME,%STRONGSCALING.ARCH_NAME%";
         } > test_info.csv
     
@@ -357,6 +358,7 @@ function add_Tracing() {
             [ ${model} = "ecearth4" ] && echo "OIFS resolution,%TRACING.OIFS_RESOLUTION%";
             echo "START DATE,%TRACING.START_DATE%";
             echo "END DATE,%TRACING.END_DATE%"; 
+            echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
             echo "ARCH NAME,%TRACING.ARCH_NAME%"; 
         } > test_info.csv
     
@@ -381,6 +383,8 @@ function add_Tracing() {
 
         ${paraver_enabled} && add_paraver
     done
+
+    return 0
 }
 
 #####################################################################################################################
@@ -442,6 +446,7 @@ function add_CompilationEfficiency() {
         [ ${model} = "ecearth4" ] && echo "OIFS resolution,%COMPILATION_EFFICIENCY.OIFS_RESOLUTION%";
         echo "START DATE,%COMPILATION_EFFICIENCY.START_DATE%";
         echo "END DATE,%COMPILATION_EFFICIENCY.END_DATE%"; 
+        echo "TIMESTEPS,%COMPILATION_EFFICIENCY.TEST_STEPS%";
     } > ${run_root}/${member}/test_info.csv
 
     add_multiexperiment $member $flag
@@ -458,11 +463,11 @@ function add_WeakScaling() {
 
     {   
         echo "Configuration,Value";
-        echo "Resolution, %WEAKSCALING.RESOLUTION%";
         [ ${model} = "ecearth4" ] && echo "NEMO resolution,%WEAKSCALING.NEMO_RESOLUTION%";
         [ ${model} = "ecearth4" ] && echo "OIFS resolution,%WEAKSCALING.OIFS_RESOLUTION%";
         echo "START DATE,%WEAKSCALING.START_DATE%";
         echo "END DATE,%WEAKSCALING.END_DATE%";
+        echo "TIMESTEPS,%WEAKSCALING.TEST_STEPS%";
         echo "ARCH NAME,%WEAKSCALING.ARCH_NAME%";
     } > ${run_root}/${member}/test_info.csv
 

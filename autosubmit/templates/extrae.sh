@@ -311,6 +311,6 @@ source ${env_sources}
 member="tracing"
 test_name=${member}/${test}
 arch_name=%TRACING.ARCH_NAME%
-model_resolution=%TRACING.MODEL_RESOLUTION%       
+model_resolution=%TRACING.RESOLUTION%       
 
 trace_${model}

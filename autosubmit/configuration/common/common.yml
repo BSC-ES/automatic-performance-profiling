@@ -14,12 +14,12 @@ HW_BENCHMARKS:
   OSU:
     ENABLED: true
     TESTS: "pt2pt/osu_multi_lat pt2pt/osu_mbw_mr collective/osu_allgather"
-    NAMES: [64]
-    PROCESSORS: [64]
+    NAMES:      [112, 224, 336]
+    PROCESSORS: [112, 224, 336]
   STREAM:
     ENABLED: true
-    NAMES: [1, 2, 4, 8, 16, 32, 48, 64]
-    PROCESSORS: [1, 2, 4, 8, 16, 32, 48, 64]
+    NAMES:      [1, 2, 4, 8, 16, 32, 64, 92, 112]
+    PROCESSORS: [1, 2, 4, 8, 16, 32, 64, 92, 112]
 
 # TRACING COMMON OPTIONS
 TRACING:

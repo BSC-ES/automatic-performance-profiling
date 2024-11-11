@@ -1,5 +1,5 @@
-
-# MODEL CONFIMODEL:
+# MODEL CONFIG
+MODEL:
   NAME: nemo
   COMPONENTS: [nemo]
   ORIGIN: https://forge.nemo-ocean.eu/nemo/nemo.git
@@ -21,10 +21,10 @@ TRACING:
   USER_FUNCTIONS_THREADS: 4
   TRACE_N_FUNCTIONS: 40
 
-  TEST_NAMES: [BENCH, BENCH, BENCH]
-  NAMES: [trace_1, trace_2, trace_3]
-  PROCESSORS: [112, 224, 336]
-  THREADS: [4, 4, 4]
+  TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
+  NAMES:      [trace_1, trace_2, trace_3]
+  PROCESSORS: [112,     224,     336    ]
+  THREADS:    [4,       4,       4      ]
   RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3
@@ -38,39 +38,39 @@ TRACING:
 # STRONG SCALING CONFIG
 STRONGSCALING:
   STRONGSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling'
-  TEST_NAMES: [BENCH, BENCH, BENCH]
-  NAMES: [bench_1, bench_2, bench_3]
-  PROCESSORS: [112, 224, 336]
-  THREADS: [1, 1, 1]
+  TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
+  NAMES:      [bench_1, bench_2, bench_3]
+  PROCESSORS: [112,     224,     336    ]
+  THREADS:    [1,       1,       1      ]
   RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3
   OUTPUT: false
-  TEST_STEPS: 32
+  TEST_STEPS: 960
 
 # WEAKSCALING CONFIG
 WEAKSCALING:
   WEAKSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling'
-  BASE_PROCS: 112
+  BASE_PROCS: 56
   BASE_RESOLUTION: orca1
-  NAMES: [orca1, orca12, orca025]
-  TEST_NAMES: [orca1, orca12, orca025]
-  PROCESSORS: [1, 1, 1]
-  THREADS: [1, 1, 1]
+  NAMES:      [orca1,  orca025]
+  TEST_NAMES: [orca1, orca025]
+  PROCESSORS: [1,     1      ]
+  THREADS:    [1,     1      ]
   TEST_CONFIG: BENCH
   ARCH_NAME: O3
   OUTPUT: false
-  TEST_STEPS: 32
+  TEST_STEPS: 960
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
   COMPILATION_EFFICIENCY_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency'
   # For compilation efficiency the arch name is taken from the test name
-  TEST_NAMES: [O1, O1, O3, O3]
-  NAMES: [O1_112, O1_224, O3_112, O3_224]
-  PROCESSORS: [112, 224, 112, 224]
-  THREADS: [1, 1, 1, 1]
+  TEST_NAMES: [O1,     O1,     O3,     O3    ]
+  NAMES:      [O1_112, O1_224, O3_112, O3_224]
+  PROCESSORS: [112,    224,    112,    224   ]
+  THREADS:    [1,      1,      1,      1     ]
   RESOLUTION: orca1
   TEST_CONFIG: BENCH
   OUTPUT: false
-  TEST_STEPS: 32
+  TEST_STEPS: 960

@@ -154,13 +154,22 @@ function compile_ecearth4()
 #####################################################################################################################
 function compile_hw()
 {
-    cd ${compilation}/STREAM
-    gcc -fopenmp -D_OPENMP stream.c -o stream
+    local osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
+    local osu_enabled=${osu_enabled,,}
+    local stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
+    local stream_enabled=${stream_enabled,,}
 
-    cd ${compilation}/osu-micro-benchmarks-5.6.3
-    ./configure CC=$(which mpicxx) CXX=$(which mpicc) --prefix=$(pwd)
-    make install
-    make
+    if ${stream_enabled}; then
+        cd ${compilation}/STREAM
+        gcc -fopenmp -D_OPENMP stream.c -o stream
+    fi
+
+    if ${osu_enabled}; then
+        cd ${compilation}/osu-micro-benchmarks-5.6.3
+        ./configure CC=$(which mpicxx) CXX=$(which mpicc) --prefix=$(pwd)
+        make install
+        make
+    fi
 }
 
 ###################

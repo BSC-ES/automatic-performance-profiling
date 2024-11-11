@@ -189,7 +189,7 @@ function functions_dir_ecearth4()
 run_functions_dir() {
     test_name="tracing"
     arch_name=%TRACING.ARCH_NAME%
-    model_resolution=%TRACING.MODEL_RESOLUTION%
+    model_resolution=%TRACING.RESOLUTION%
 
     tests="%TRACING.TEST_NAMES%"
     tests=${tests//[\[,\]]/}

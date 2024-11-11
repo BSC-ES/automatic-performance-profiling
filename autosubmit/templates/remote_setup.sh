@@ -57,7 +57,7 @@ function clone_ecearth4()
 
     cd ${dest_dir} || exit
     if echo ${members} | grep -w "StrongScaling" && [ ! -d lucia-alternative ]; then
-        coupling_enabled=%STRONG_SCALING.COUPLING.ENABLED%
+        coupling_enabled=%STRONGSCALING.COUPLING.ENABLED%
         coupling_enabled=${coupling_enabled,,}
     	${coupling_enabled} && git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
     fi
@@ -122,7 +122,7 @@ if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
 
     osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
     osu_enabled=${osu_enabled,,}
-    stream_enabled=%HW_BENCHMARKS.OSU.ENABLED%
+    stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
     stream_enabled=${stream_enabled,,}
 
     if ${osu_enabled}; then

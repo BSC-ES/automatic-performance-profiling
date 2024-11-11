@@ -15,7 +15,7 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 
 osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
 osu_enabled=${osu_enabled,,}
-stream_enabled=%HW_BENCHMARKS.OSU.ENABLED%
+stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
 stream_enabled=${stream_enabled,,}
 
 source $env_sources

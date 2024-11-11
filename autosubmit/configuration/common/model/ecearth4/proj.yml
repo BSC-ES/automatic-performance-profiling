@@ -29,21 +29,18 @@ TRACING:
   USER_FUNCTIONS_THREADS: 4
   TRACE_N_FUNCTIONS: 40
 
-  TEST_NAMES: [BENCH, BENCH]
-  NAMES: [trace_1, trace_2]
-  PROCESSORS: [128, 256]
-  OIFS_PROCS: [63, 127]
-  NEMO_PROCS: [63, 127]
-  XIOS_PROCS: [1, 1]
-  THREADS: [1, 1]
+  TEST_NAMES: [BENCH,   BENCH  ]
+  NAMES:      [trace_1, trace_2]
+  PROCESSORS: [112,     224    ]
+  OIFS_PROCS: [55,      111    ]
+  NEMO_PROCS: [55,      111    ]
+  XIOS_PROCS: [1,       1      ]
+  THREADS:    [1,       1      ]
   USE_OMP_THREDS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3-intel
-  PAPI_COUNTERS: "PAPI_TOT_INS PAPI_TOT_CYC PAPI_L3_TCM PAPI_L1_DCM PAPI_L2_DCM"
-  PAPI_COUNTERS_PLOTS: "PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC"
 
-  PV_CASE_COMPARISSON_CFGS: "MPI_call"
 
 # STRONG SCALING CONFIG
 STRONGSCALING:
@@ -59,13 +56,13 @@ STRONGSCALING:
   TEST_STEPS: 32
   OUTPUT: FALSE
 
-  TEST_NAMES: [BENCH, BENCH]
-  NAMES: [bench_1, bench_2]
-  PROCESSORS: [112, 224]
-  OIFS_PROCS: [55, 111]
-  NEMO_PROCS: [55, 111]
-  XIOS_PROCS: [1, 1]
-  THREADS: [1, 1]
+  TEST_NAMES: [BENCH,   BENCH  ]
+  NAMES:      [bench_1, bench_2]
+  PROCESSORS: [112,     224    ]
+  OIFS_PROCS: [55,      111    ]
+  NEMO_PROCS: [55,      111    ]
+  XIOS_PROCS: [1,       1      ]
+  THREADS:    [1,       1      ]
   USE_OMP_THREDS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
@@ -91,12 +88,12 @@ WEAKSCALING:
   BASE_PROCS: 128
   BASE_RESOLUTION: orca025
   TEST_NAMES: [orca025]
-  NAMES: [orca025]
-  PROCESSORS: [112]
-  OIFS_PROCS: [55]
-  NEMO_PROCS: [55]
-  XIOS_PROCS: [1]
-  THREADS: [1]
+  NAMES:      [orca025]
+  PROCESSORS: [112    ]
+  OIFS_PROCS: [55     ]
+  NEMO_PROCS: [55     ]
+  XIOS_PROCS: [1      ]
+  THREADS:    [1      ]
   TEST_CONFIG: BENCH
   ARCH_NAME: O3
 
@@ -115,12 +112,12 @@ COMPILATION_EFFICIENCY:
   OUTPUT: FALSE
 
   # For compilation efficiency the arch name is taken from the test name
-  TEST_NAMES: [O3, O3, O3-intel, O3-intel]
-  NAMES:      [O3_112, O3_224, O3_intel_112, O3_intel_224]
-  PROCESSORS: [112, 224, 112, 224]
-  OIFS_PROCS: [55,  111, 55,  111]
-  NEMO_PROCS: [55,  111, 55,  111]
-  XIOS_PROCS: [1,   1,   1,   1]
-  THREADS:    [1,   1,   1,   1]
+  TEST_NAMES: [O3,     O3,     O3,     O3-intel,     O3-intel,     O3-intel    ]
+  NAMES:      [O3_112, O3_224, O3_336, O3_intel_112, O3_intel_224, O3_intel_336]
+  PROCESSORS: [112,    224,    336,    112,          224,          336         ]
+  OIFS_PROCS: [55,     111,    167,    55,           111,          167         ]
+  NEMO_PROCS: [55,     111,    167,    55,           111,          167         ]
+  XIOS_PROCS: [1,      1,      1,      1,            1,            1           ]
+  THREADS:    [1,      1,      1,      1,            1,            1           ]
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH

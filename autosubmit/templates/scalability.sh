@@ -187,7 +187,7 @@ function run_ecearth4()
         source /gpfs/home/bsc/bsc032333/.venv/bin/activate
     fi
 
-    local coupling_enabled="%STRONG_SCALING.COUPLING.ENABLED%"
+    local coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
     coupling_enabled=${coupling_enabled,,}
     if ${coupling_enabled}; then
         cd ${run_dir} || exit
