@@ -182,7 +182,13 @@ function trace_nemo()
     create_trace_sh $run_dir
 
     # Copy function.txt
-    cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/extrae_functions.txt
+    fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+    fd_enabled=${fd_enabled,,}
+    if ${fd_enabled}; then
+        cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
+    else
+        cp $cfg/trace/model/nemo/extrae_functions.txt ${run_dir}/
+    fi
 
     # Generate function list for xml
     ./generate_function_list.sh ./nemo extrae_functions.txt
@@ -279,7 +285,13 @@ function trace_ecearth4()
     sed -i "s/RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=DAILY;UNTIL=19900102;INTERVAL=1/" ${config_file}
 
     # Copy user functions list
-    cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}
+    fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+    fd_enabled=${fd_enabled,,}
+    if ${fd_enabled}; then
+        cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
+    else
+        cp $cfg/trace/model/ecearth4/extrae_functions.txt ${run_dir}/
+    fi
 
     # Activate the SE enviroment and run
     set +u
@@ -311,6 +323,6 @@ source ${env_sources}
 member="tracing"
 test_name=${member}/${test}
 arch_name=%TRACING.ARCH_NAME%
-model_resolution=%TRACING.RESOLUTION%       
+model_resolution=%TRACING.RESOLUTION%      
 
 trace_${model}
