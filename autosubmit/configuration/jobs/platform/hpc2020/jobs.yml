@@ -16,6 +16,9 @@ JOBS:
     QUEUE: ef
     EC_QUEUE: ecs
   REMOTE_COMPILATION:
+    FOR: 
+      NAME: "%MODEL.ARCH_NAMES%"
+      TEST_NAME: "%MODEL.ARCH_NAMES%"
     PROCESSORS: 1
     THREADS: 128
   dimemas_traces:

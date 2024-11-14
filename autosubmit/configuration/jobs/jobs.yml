@@ -25,12 +25,42 @@ JOBS:
   REMOTE_COMPILATION:
     FILE: autosubmit/templates/compilation.sh
     DEPENDENCIES: REMOTE_INIDATA
+    FOR: 
+      NAME: "%MODEL.ARCH_NAMES%"
+      TEST_NAME: "%MODEL.ARCH_NAMES%"
+    WALLCLOCK: 02:00
+    NOTIFY_ON: FAILED
+  HW_COMPILATION:
+    FILE: autosubmit/templates/compilation.sh
+    DEPENDENCIES: 
+      REMOTE_INIDATA:
+        MEMBERS_FROM:
+          Tracing, WeakScaling, CompilationEfficiency, StrongScaling:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
+    RUNNING: member
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
   # Mainly generates the folder structure of the runs
   PREPARE_TESTS:
     FILE: autosubmit/templates/tests.sh
-    DEPENDENCIES: REMOTE_COMPILATION
+    DEPENDENCIES:
+      REMOTE_COMPILATION:
+        FOR:
+          NAME: "%MODEL.ARCH_NAMES%"
+          TEST_NAME: "%MODEL.ARCH_NAMES%"
+        MEMBERS_FROM:
+          HardwareBenchmarks:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
+      HW_COMPILATION:
+        MEMBERS_FROM:
+          Tracing, WeakScaling, CompilationEfficiency, StrongScaling:
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+            DATES_TO: None
     RUNNING: member
     WALLCLOCK: 00:30
     CHECK: "true"
