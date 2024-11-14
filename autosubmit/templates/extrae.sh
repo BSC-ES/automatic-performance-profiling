@@ -8,7 +8,10 @@
 # AS variables
 ###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 numproc=%NUMPROC%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%

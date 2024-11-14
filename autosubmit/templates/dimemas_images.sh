@@ -8,7 +8,8 @@ function run_dimemas_images() {
     cfg=%COMMON_PATH_LOCATIONS.CFG%
     run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
     analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
-    platform=%COMMON.PLATFORM%
+    platform=%DEFAULT.HPCARCH%
+    platform=${platform,,}
     tests="%TRACING.TEST_NAMES%"
 
     member_root="${run_root}/tracing"

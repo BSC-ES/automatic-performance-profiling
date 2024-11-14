@@ -8,7 +8,10 @@
 # AS variables
 ###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
@@ -69,7 +72,8 @@ function run_nemo()
         sed -i "s/^.*file_definition.*$$//g" ${run_dir}/context_nemo.xml ; \
     fi
 
-    cd ${run_dir}
+    cd ${run_dir} || exit
+    # If weakscaling is run, compute the processors corresponding to the current resolution
     if [ ${current_member} = "WeakScaling" ]; then
         source ${project}/configurations/model/${model}/resolutions.sh 
         local base_procs=%WEAKSCALING.BASE_PROCS%

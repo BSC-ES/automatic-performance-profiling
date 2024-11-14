@@ -7,7 +7,10 @@
 function run_modelfactors() {
     run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
     tests="%TRACING.TEST_NAMES%"
-    env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+    cfg=%COMMON_PATH_LOCATIONS.CFG%
+    platform=%DEFAULT.HPCARCH%
+    platform=${platform,,}
+    env_sources=${cfg}/env/${platform}/environment.env
     components="%MODEL.COMPONENTS%"
 
     source ${env_sources}

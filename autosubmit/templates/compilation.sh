@@ -10,7 +10,10 @@ set -xv
 ###################
 compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 ntasks=%THREADS%

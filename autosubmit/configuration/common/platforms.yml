@@ -44,7 +44,7 @@ PLATFORMS:
     HOST: glogin4.bsc.es
     PROJECT: bsc32
     USER: bsc032333
-    QUEUE: gp_debug
+    QUEUE: gp_bsces
     SCRATCH_DIR: /gpfs/scratch
     ADD_PROJECT_TO_HOST: false
     MAX_WALLCLOCK: 02:00

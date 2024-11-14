@@ -9,7 +9,10 @@
 ###################
 function run_osu() {
     compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
-    env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+    cfg=%COMMON_PATH_LOCATIONS.CFG%
+    platform=%DEFAULT.HPCARCH%
+    platform=${platform,,}
+    env_sources=${cfg}/env/${platform}/environment.env
     run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
     n_cores=%NUMPROC%
     osu_tests=(%HW_BENCHMARKS.OSU_TESTS%)

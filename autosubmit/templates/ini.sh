@@ -8,7 +8,10 @@ set -xuve
 ###################
 # AS variables
 ###################
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%

@@ -9,7 +9,7 @@ MODEL:
   # There has to be two arch files for each arch name in cfg/arch/PLATFORM/MODEL/
   # - For ecearth4: O0-prod.yml and O0-trace.yml
   # - For nemo: arch-O0-prod.fcm and arch-O0-trace.fcm
-  ARCH_NAMES: [O3, O3-intel]
+  ARCH_NAMES: [O3, O1]
 
 # TRACE CONFIG
 TRACING:
@@ -19,9 +19,9 @@ TRACING:
   INTERVAL: 1
   TIMESTEP_ZERO: FALSE
   TRACE_STEPS: 32
-  RESOLUTION: "TCO95L91+"
+  RESOLUTION: "TCO95L91+eORCA1L75"
   OIFS_RESOLUTION: "TCO95L91"
-  NEMO_RESOLUTION: 
+  NEMO_RESOLUTION: "eORCA1L75"
   OUTPUT: FALSE
 
   # CONFIG FOR USER FUNCTIONS SAMPLING
@@ -39,7 +39,7 @@ TRACING:
   USE_OMP_THREDS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
-  ARCH_NAME: O3-intel
+  ARCH_NAME: O3
 
 
 # STRONG SCALING CONFIG
@@ -69,7 +69,7 @@ STRONGSCALING:
   ARCH_NAME: O3
 
   COUPLING: 
-    ENABLED: false
+    ENABLED: true
 
 # WEAKSCALING CONFIG
 WEAKSCALING:
@@ -112,12 +112,12 @@ COMPILATION_EFFICIENCY:
   OUTPUT: FALSE
 
   # For compilation efficiency the arch name is taken from the test name
-  TEST_NAMES: [O3,     O3,     O3,     O3-intel,     O3-intel,     O3-intel    ]
-  NAMES:      [O3_112, O3_224, O3_336, O3_intel_112, O3_intel_224, O3_intel_336]
-  PROCESSORS: [112,    224,    336,    112,          224,          336         ]
-  OIFS_PROCS: [55,     111,    167,    55,           111,          167         ]
-  NEMO_PROCS: [55,     111,    167,    55,           111,          167         ]
-  XIOS_PROCS: [1,      1,      1,      1,            1,            1           ]
-  THREADS:    [1,      1,      1,      1,            1,            1           ]
+  TEST_NAMES: [O3,     O3,     O3,     O1,     O1,     O1    ]
+  NAMES:      [O3_112, O3_224, O3_336, O1_112, O1_224, O1_336]
+  PROCESSORS: [112,    224,    336,    112,    224,    336   ]
+  OIFS_PROCS: [55,     111,    167,    55,     111,    167   ]
+  NEMO_PROCS: [55,     111,    167,    55,     111,    167   ]
+  XIOS_PROCS: [1,      1,      1,      1,      1,      1     ]
+  THREADS:    [1,      1,      1,      1,      1,      1     ]
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH

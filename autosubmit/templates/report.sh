@@ -8,7 +8,10 @@
 # AS variables
 ###################
 model=%MODEL.NAME%
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 latex_folder=${cfg}/latex/

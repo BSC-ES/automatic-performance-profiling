@@ -7,8 +7,12 @@
 function run_dimemas() {
     run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
     analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
-    platform=%COMMON.PLATFORM%
-    env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+    platform=%DEFAULT.HPCARCH%
+    platform=${platform,,}
+    cfg=%COMMON_PATH_LOCATIONS.CFG%
+    platform=%DEFAULT.HPCARCH%
+    platform=${platform,,}
+    env_sources=${cfg}/env/${platform}/environment.env
     components="%MODEL.COMPONENTS%"
     tests="%TRACING.TEST_NAMES%"
 

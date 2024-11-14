@@ -12,7 +12,10 @@ magiccut=%CURRENT_ROOTDIR%/magiccut/magicCut
 timestep_zero=%TRACING.TIMESTEP_ZERO%
 trace_steps=%TRACING.TRACE_STEPS%
 components="%MODEL.COMPONENTS%"
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
 tests="%TRACING.TEST_NAMES%"
 
 member="tracing"

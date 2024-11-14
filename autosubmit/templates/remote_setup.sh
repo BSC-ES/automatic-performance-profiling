@@ -13,10 +13,12 @@ inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-platform=%COMMON.PLATFORM%
 root_dir=%CURRENT_ROOTDIR%
 members="%EXPERIMENT.MEMBERS%"
-env_sources=%PARAMETERS_ENV_CONFIG.ENV_SOURCES%
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
 model_origin="%MODEL.ORIGIN%"
 refresh_git=%COMMON.REFRESH_GIT_REPO%
 
@@ -61,6 +63,8 @@ function clone_ecearth4()
         coupling_enabled=${coupling_enabled,,}
     	${coupling_enabled} && git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
     fi
+
+    return 0
 }
 
 ###################
