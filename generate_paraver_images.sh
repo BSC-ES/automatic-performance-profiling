@@ -201,18 +201,20 @@ for test in ${root_dir}/run/tracing/*; do
             cur_ts=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
             for paraver_cfg in ${img_folder}/*.cfg; do
                 # Change time axis when creating a Paraver image to compare
-                if [ "$(echo "$compare_cfgs" | grep ${paraver_cfg//\.cfg/})" != "" ]; then
+                paraver_cfg_bn=$(basename ${paraver_cfg})
+                paraver_cfg_bn=${paraver_cfg_bn//\.cfg}
+                if echo "$compare_cfgs" | grep ${paraver_cfg_bn}; then
                     sed -i "s/window_end_time_relative.*/window_end_time_relative $(echo $slowest_ts / $cur_ts | bc -l)/" ${paraver_cfg}
                 fi
                 sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg}
             done
 
             trace=${trace_folder}/${component}.best_cut.prv
-            mod_paraver_configurations=$(find ${img_folder} | grep cfg)
+            mod_paraver_configurations=(${img_folder}/*.cfg)
             
             # cd to the image folder to generate the images there
             cd ${img_folder} || exit
-            for paraver_cfg in ${mod_paraver_configurations}; do
+            for paraver_cfg in "${mod_paraver_configurations[@]}"; do
 		        $debug && echo "[DEBUG] Generating $(basename ${paraver_cfg}) for ${trace}"
                 image_filename=${img_folder}/$(basename ${paraver_cfg//\.cfg/})@$component.best_cut.png
                 if ! $overwrite && [ -f $image_filename ]; then
