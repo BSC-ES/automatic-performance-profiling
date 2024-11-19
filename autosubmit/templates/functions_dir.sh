@@ -96,7 +96,7 @@ EOF
 
 function functions_dir_ecearth4() 
 {
-#     cd ${compilation}/${arch_name}-trace/runtime/se
+#     cd ${compilation}/${arch_name}/runtime/se
 
 #     trace=${run_dir}/trace.sh
 #     cat << EOF > $trace
@@ -118,7 +118,7 @@ function functions_dir_ecearth4()
 
 #     # Change / to \/ for sed to work
 #     sed_run_dir=$(echo $run_dir | sed 's_/_\\/_g')
-#     ecearth_root=${compilation}/${arch_name}-trace
+#     ecearth_root=${compilation}/${arch_name}
 #     sed_ecearth_root=$(echo $ecearth_root | sed 's_/_\\/_g')
 
 #     oifs_procs=%TRACING.USER_FUNCTIONS_OIFS_PROCS%
@@ -148,7 +148,7 @@ function functions_dir_ecearth4()
 #     set +u
 #     module load conda
 #     conda activate /hpcperm/c3et/conda/ece4
-#     se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}-trace.yml ${config_file} scriptlib/main.yml   
+#     se --nocolor --loglevel debug ../../sources/se/platforms/${arch_name}.yml ${config_file} scriptlib/main.yml   
 
 #     # Reload modules to exit from SE
 #     source ${env_sources}

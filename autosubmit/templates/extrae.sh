@@ -229,11 +229,11 @@ function trace_ecearth4()
     . ${cfg}/utils/${model}/se.sh
 
     local model_sources=${compilation}/${model}_${branch}
-    local oifs_procs=%CURRENT_OIFS_PROCS%
-    local nemo_procs=%CURRENT_NEMO_PROCS%
-    local xios_procs=%CURRENT_XIOS_PROCS%
-    local oifs_resolution=%TRACING.OIFS_RESOLUTION%
-    local nemo_resolution=%TRACING.NEMO_RESOLUTION%
+    local oifs_procs="%CURRENT_OIFS_PROCS%"
+    local nemo_procs="%CURRENT_NEMO_PROCS%"
+    local xios_procs="%CURRENT_XIOS_PROCS%"
+    local oifs_resolution="%TRACING.OIFS_RESOLUTION%"
+    local nemo_resolution="%TRACING.NEMO_RESOLUTION%"
     local use_omp_threads="%USE_OMP_THREDS%"
     local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
@@ -242,7 +242,7 @@ function trace_ecearth4()
 
     local run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
     local run_dir=${run_root}/${test_name}/trace_${run_id}
-    local src_dir=${compilation}/${arch_name}-prod/sources/
+    local src_dir=${compilation}/${arch_name}/sources/
     mkdir -p ${run_dir}
     # Remove all run folder content just in case it was already created
     rm -rf ${run_dir:?}/*
@@ -251,7 +251,7 @@ function trace_ecearth4()
 
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
 
-    cd ${compilation}/${arch_name}-trace/scripts/runtime || exit
+    cd ${compilation}/${arch_name}/scripts/runtime || exit
 
     create_trace_sh ${run_dir}
 
@@ -260,14 +260,14 @@ function trace_ecearth4()
     cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
     local sed_run_dir=${run_dir//\//\\\/}
-    local sed_src_dir=$(echo ${src_dir} | sed 's_/_\\/_g')
-    local ecearth_root=${compilation}/${arch_name}-trace
+    local sed_src_dir=${src_dir//\//\\\/}
+    local ecearth_root=${compilation}/${arch_name}
     local sed_ecearth_root=${ecearth_root//\//\\\/}
 
-    local start_date=%TRACING.START_DATE%
-    local end_date=%TRACING.END_DATE%
-    local freq=%TRACING.FREQ%
-    local interval=%TRACING.INTERVAL%
+    local start_date="%TRACING.START_DATE%"
+    local end_date="%TRACING.END_DATE%"
+    local freq="%TRACING.FREQ%"
+    local interval="%TRACING.INTERVAL%"
 
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
@@ -303,7 +303,7 @@ function trace_ecearth4()
     # Activate the SE enviroment and run
     set +u
     se_env_${platform,,} trunk
-    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-trace.yml scriptlib/main.yml
+    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
 
     # Reload modules to exit from SE
     module purge

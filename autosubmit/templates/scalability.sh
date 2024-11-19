@@ -132,9 +132,9 @@ function run_ecearth4()
     . ${project}/cfg/utils/${model}/se.sh
 
     local model_sources=${compilation}/${model}_${branch}
-    local oifs_procs=%CURRENT_OIFS_PROCS%
-    local nemo_procs=%CURRENT_NEMO_PROCS%
-    local xios_procs=%CURRENT_XIOS_PROCS%
+    local oifs_procs="%CURRENT_OIFS_PROCS%"
+    local nemo_procs="%CURRENT_NEMO_PROCS%"
+    local xios_procs="%CURRENT_XIOS_PROCS%"
     local use_omp_threads="%USE_OMP_THREDS%"
     local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
@@ -144,21 +144,21 @@ function run_ecearth4()
     local test_dir=${run_root}/${test_name}
     local run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
     local run_dir=${test_dir}/scalability_${run_id}
-    local src_dir=${compilation}/${arch_name}-prod/sources/
+    local src_dir=${compilation}/${arch_name}/sources/
 
     # Remove all run folder content just in case
     rm -rf ${run_dir}/*
 
-    cd ${compilation}/${arch_name}-prod/scripts/runtime
+    cd ${compilation}/${arch_name}/scripts/runtime
 
     # Update all variable according to AS config
     local config_file=config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
-    local sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
-    local sed_src_dir=$(echo ${src_dir} | sed 's_/_\\/_g')
-    local ecearth_root=${compilation}/${arch_name}-prod
-    local sed_ecearth_root=$(echo ${ecearth_root} | sed 's_/_\\/_g')
+    local sed_run_dir=${run_dir//\//\\\/}
+    local sed_src_dir=${src_dir//\//\\\/}
+    local ecearth_root=${compilation}/${arch_name}
+    local sed_ecearth_root=${ecearth_root//\//\\\/}
 
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
@@ -190,7 +190,7 @@ function run_ecearth4()
     # Activate the SE enviroment and run
     set +u
     se_env_${platform,,} trunk
-    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}-prod.yml scriptlib/main.yml
+    se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
 
     module purge
     source ${env_sources}

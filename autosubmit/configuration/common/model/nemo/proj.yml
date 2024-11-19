@@ -9,7 +9,7 @@ MODEL:
   # There has to be two arch files for each arch name in cfg/arch/PLATFORM/MODEL/
   # - For ecearth4: O0-prod.yml and O0-trace.yml
   # - For nemo: arch-O0-prod.fcm and arch-O0-trace.fcm
-  ARCH_NAMES: [O1, O3]
+  ARCH_NAMES: [O1_prod, O3_prod, O3_trace]
 
 # TRACE CONFIG
 TRACING:
@@ -27,7 +27,7 @@ TRACING:
   THREADS:    [4,       4,       4      ]
   RESOLUTION: orca1
   TEST_CONFIG: BENCH
-  ARCH_NAME: O3
+  ARCH_NAME: O3_trace
   OUTPUT: false
 
   PAPI_COUNTERS: "PAPI_TOT_INS PAPI_TOT_CYC PAPI_L3_TCM PAPI_L1_DCM PAPI_L2_DCM"
@@ -44,7 +44,7 @@ STRONGSCALING:
   THREADS:    [1,       1,       1      ]
   RESOLUTION: orca1
   TEST_CONFIG: BENCH
-  ARCH_NAME: O3
+  ARCH_NAME: O3_prod
   OUTPUT: false
   TEST_STEPS: 960
 
@@ -58,7 +58,7 @@ WEAKSCALING:
   PROCESSORS: [1,     1      ]
   THREADS:    [1,     1      ]
   TEST_CONFIG: BENCH
-  ARCH_NAME: O3
+  ARCH_NAME: O3_prod
   OUTPUT: false
   TEST_STEPS: 960
 
@@ -66,10 +66,10 @@ WEAKSCALING:
 COMPILATION_EFFICIENCY:
   COMPILATION_EFFICIENCY_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency'
   # For compilation efficiency the arch name is taken from the test name
-  TEST_NAMES: [O1,     O1,     O3,     O3    ]
-  NAMES:      [O1_112, O1_224, O3_112, O3_224]
-  PROCESSORS: [112,    224,    112,    224   ]
-  THREADS:    [1,      1,      1,      1     ]
+  TEST_NAMES: [O1_prod, O1_prod, O3_prod, O3_prod]
+  NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
+  PROCESSORS: [112,     224,     112,     224    ]
+  THREADS:    [1,       1,       1,       1      ]
   RESOLUTION: orca1
   TEST_CONFIG: BENCH
   OUTPUT: false
