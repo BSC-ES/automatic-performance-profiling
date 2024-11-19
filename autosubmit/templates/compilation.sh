@@ -86,25 +86,23 @@ function compile_ecearth4()
 
     se_env_${current_arch,,} trunk
 
-    # Compile production
-    coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
-    coupling_enabled=${coupling_enabled,,}
-
     arch_file=${cfg}/arch/${platform}/${model}/${arch_name}.yml
     arch_dir=${compilation}/${arch_name}
 
     mkdir -p ${arch_dir}
     rsync -av --exclude='*.svn*' ${model_sources}/ ${arch_dir}
 
-    # Turn on lucia if enabled
-    [ ${current_member} = "StrongScaling" ] && ${coupling_enabled} && sed -i "s/nlogprt.*/nlogprt: \"1 0 1\"/" ${arch_dir}/scripts/runtime/templates/oasis/namcouple.yml
+    # Enable lucia logs
+    sed -i "s/nlogprt.*/nlogprt: \"1 0 1\"/" ${arch_dir}/scripts/runtime/templates/oasis/namcouple.yml
 
-    # Apply magiccut sentinel patch
-    [ ${current_member} = "Tracing" ] && cd ${trace_dir}/sources/oifs-43r3v2 && git apply ${cfg}/trace/model/${model}/sentinel.diff
+    # Add magiccut sentinel function
+    cd ${arch_dir}/sources/oifs-43r3v2 || exit
+    git apply ${cfg}/trace/model/${model}/sentinel.diff
     
     cd ${arch_dir}/scripts/build || exit
     cp ${arch_file} ../platforms
 
+    # Compile using SE
     se user-settings.yml ../platforms/${arch_name}.yml compile-all.yml
 }
 
@@ -145,8 +143,6 @@ source $env_sources
 
 compile_model=true
 echo "${members[@]}" | grep -qwE "CompilationEfficiency|WeakScaling|StrongScaling|Tracing" || compile_model=false
-${compile_model} && compile_${model}
+if ${compile_model}; then compile_${model}; fi
 
-[ ${current_member} = "HardwareBenchmarks" ] && compile_hw
-
-return 0
+if [ ${current_member} = "HardwareBenchmarks" ]; then compile_hw; fi
