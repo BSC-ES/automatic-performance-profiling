@@ -108,18 +108,24 @@ function run_ecearth4()
             local end_date="%COMPILATION_EFFICIENCY.END_DATE%"
             local freq="%COMPILATION_EFFICIENCY.FREQ%"
             local interval="%COMPILATION_EFFICIENCY.INTERVAL%"
+            local oifs_resolution="%COMPILATION_EFFICIENCY.OIFS_RESOLUTION%"
+            local nemo_resolution="%COMPILATION_EFFICIENCY.NEMO_RESOLUTION%"
             ;;
         "StrongScaling")
             local start_date="%STRONGSCALING.START_DATE%"
             local end_date="%STRONGSCALING.END_DATE%"
             local freq="%STRONGSCALING.FREQ%"
             local interval="%STRONGSCALING.INTERVAL%"
+            local oifs_resolution="%STRONGSCALING.OIFS_RESOLUTION%"
+            local nemo_resolution="%STRONGSCALING.NEMO_RESOLUTION%"
             ;;
         "WeakScaling")
             local start_date="%WEAKSCALING.START_DATE%"
             local end_date"=%WEAKSCALING.END_DATE%"
             local freq="%WEAKSCALING.FREQ%"
             local interval="%WEAKSCALING.INTERVAL%"
+            local oifs_resolution="%WEAKSCALING.OIFS_RESOLUTION%"
+            local nemo_resolution="%WEAKSCALING.NEMO_RESOLUTION%"
             ;;
     esac
 
@@ -147,7 +153,7 @@ function run_ecearth4()
 
     # Update all variable according to AS config
     local config_file=config-${test}-${run_id}.yml
-    cp ${project}/configurations/model/${model}/config.yml ${config_file}
+    cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
     local sed_run_dir=$(echo ${run_dir} | sed 's_/_\\/_g')
     local sed_src_dir=$(echo ${src_dir} | sed 's_/_\\/_g')
@@ -168,6 +174,8 @@ function run_ecearth4()
     sed -i "s/START_DATE/${start_date}/"             ${config_file}
     sed -i "s/END_DATE/${end_date}/"                 ${config_file}
     sed -i "s/INTERVAL_VAL/${interval}/"             ${config_file}
+    sed -i "s/OIFS_RESOLUTION/${oifs_resolution}/"   ${config_file}
+    sed -i "s/NEMO_RESOLUTION/${nemo_resolution}/"   ${config_file}
 
     if [ "$current_member" = "WeakScaling" ]; then
         local queue=%HPCQUEUE%

@@ -232,6 +232,8 @@ function trace_ecearth4()
     local oifs_procs=%CURRENT_OIFS_PROCS%
     local nemo_procs=%CURRENT_NEMO_PROCS%
     local xios_procs=%CURRENT_XIOS_PROCS%
+    local oifs_resolution=%TRACING.OIFS_RESOLUTION%
+    local nemo_resolution=%TRACING.NEMO_RESOLUTION%
     local use_omp_threads="%USE_OMP_THREDS%"
     local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
@@ -255,7 +257,7 @@ function trace_ecearth4()
 
     # Update all variable according to AS config
     local config_file=trace-${test}-${run_id}.yml
-    cp ${project}/configurations/model/${model}/config.yml ${config_file}
+    cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
     local sed_run_dir=${run_dir//\//\\\/}
     local sed_src_dir=$(echo ${src_dir} | sed 's_/_\\/_g')
@@ -281,6 +283,8 @@ function trace_ecearth4()
     sed -i "s/START_DATE/${start_date}/"             ${config_file}
     sed -i "s/END_DATE/${end_date}/"                 ${config_file}
     sed -i "s/INTERVAL_VAL/${interval}/"             ${config_file}
+    sed -i "s/OIFS_RESOLUTION/${oifs_resolution}/"   ${config_file}
+    sed -i "s/NEMO_RESOLUTION/${nemo_resolution}/"   ${config_file}
 
     # Change launch script
     sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
