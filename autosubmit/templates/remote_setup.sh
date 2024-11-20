@@ -55,7 +55,7 @@ function clone_ecearth4()
     # Update config for AS to worl with SE
     sed -i "/- base.move:/a \ \ \ \ ignore_not_found: true" scripts/runtime/scriptlib/main.yml
     # Add trace launch script
-    cp ${project}/configurations/model/ecearth4/trace-run.sh.j2 scripts/runtime/templates/launch/
+    cp ${cfg}/trace/model/ecearth4/trace-run.sh.j2 scripts/runtime/templates/launch/
 
     cd ${dest_dir} || exit
     if echo ${members} | grep -w "StrongScaling" && [ ! -d lucia-alternative ]; then
