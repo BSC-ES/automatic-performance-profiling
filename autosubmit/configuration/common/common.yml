@@ -47,7 +47,7 @@ TRACING:
     # If sampling is disabled the cfg/trace/model/MODEL/extrae_functions.txt function list
     # will be used
     SAMPLING:
-      ENABLED: true
+      ENABLED: false
 
   MODELFACTORS:
     ENABLED: true
