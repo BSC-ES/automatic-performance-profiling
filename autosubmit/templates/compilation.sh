@@ -71,6 +71,7 @@ function compile_nemo()
 #####################################################################################################################
 function compile_ecearth4()
 {
+    # shellcheck source=proj/auto-performance-profiling/cfg/utils/ecearth4/se.sh
     . ${cfg}/utils/${model}/se.sh
 
     model_sources=${compilation}/${model}_${branch}
@@ -143,6 +144,6 @@ source $env_sources
 
 compile_model=true
 echo "${members[@]}" | grep -qwE "CompilationEfficiency|WeakScaling|StrongScaling|Tracing" || compile_model=false
-if ${compile_model}; then compile_${model}; fi
 
-if [ ${current_member} = "HardwareBenchmarks" ]; then compile_hw; fi
+if [ ${current_member} = "HardwareBenchmarks" ]; then compile_hw; 
+elif ${compile_model}; then compile_${model}; fi

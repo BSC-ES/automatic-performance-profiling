@@ -30,20 +30,9 @@ platform="%DEFAULT.HPCARCH%"
 #####################################################################################################################
 function run_nemo()
 {
-    case "$current_member" in
-        "CompilationEfficiency")
-            local output="%COMPILATION_EFFICIENCY.OUTPUT%"
-            local test_steps="%COMPILATION_EFFICIENCY.TEST_STEPS%" 
-            ;;
-        "StrongScaling")
-            local output="%STRONGSCALING.OUTPUT%"
-            local test_steps="%STRONGSCALING.TEST_STEPS%" 
-            ;;
-        "WeakScaling")
-            local output="%WEAKSCALING.OUTPUT%"
-            local test_steps="%WEAKSCALING.TEST_STEPS%" 
-            ;;
-    esac
+    local output="%EXPERIMENT.OUTPUT%"
+    local test_steps="%EXPERIMENT.TEST_STEPS%" 
+
     run_dir=${run_root}/${test_name}/scalability_nemo_${number_of_cores}
     mkdir -p ${run_dir}
 
@@ -102,32 +91,12 @@ function run_nemo()
 #####################################################################################################################
 function run_ecearth4()
 {
-    case "$current_member" in
-        "CompilationEfficiency")
-            local start_date="%COMPILATION_EFFICIENCY.START_DATE%"
-            local end_date="%COMPILATION_EFFICIENCY.END_DATE%"
-            local freq="%COMPILATION_EFFICIENCY.FREQ%"
-            local interval="%COMPILATION_EFFICIENCY.INTERVAL%"
-            local oifs_resolution="%COMPILATION_EFFICIENCY.OIFS_RESOLUTION%"
-            local nemo_resolution="%COMPILATION_EFFICIENCY.NEMO_RESOLUTION%"
-            ;;
-        "StrongScaling")
-            local start_date="%STRONGSCALING.START_DATE%"
-            local end_date="%STRONGSCALING.END_DATE%"
-            local freq="%STRONGSCALING.FREQ%"
-            local interval="%STRONGSCALING.INTERVAL%"
-            local oifs_resolution="%STRONGSCALING.OIFS_RESOLUTION%"
-            local nemo_resolution="%STRONGSCALING.NEMO_RESOLUTION%"
-            ;;
-        "WeakScaling")
-            local start_date="%WEAKSCALING.START_DATE%"
-            local end_date"=%WEAKSCALING.END_DATE%"
-            local freq="%WEAKSCALING.FREQ%"
-            local interval="%WEAKSCALING.INTERVAL%"
-            local oifs_resolution="%WEAKSCALING.OIFS_RESOLUTION%"
-            local nemo_resolution="%WEAKSCALING.NEMO_RESOLUTION%"
-            ;;
-    esac
+    local oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
+    local nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
+    local start_date="%EXPERIMENT.START_DATE%"
+    local end_date="%EXPERIMENT.END_DATE%"
+    local freq="%EXPERIMENT.FREQ%"
+    local interval="%EXPERIMENT.INTERVAL%"
 
     . ${project}/cfg/utils/${model}/se.sh
 
@@ -222,21 +191,20 @@ case "$current_member" in
         member="compilation_efficiency"
         test_name=${member}/${test}
         arch_name=${test}
-        model_resolution=%COMPILATION_EFFICIENCY.RESOLUTION%
         ;;
     "StrongScaling")
         member="strong_scaling"
         test_name=${member}/${test}
         arch_name=%STRONGSCALING.ARCH_NAME%
-        model_resolution=%STRONGSCALING.RESOLUTION%
         ;;
     "WeakScaling")
         member="weakscaling"
         test_name=${member}/${test}
         arch_name=%WEAKSCALING.ARCH_NAME%
-        model_resolution=${test}
         ;;
 esac
+
+model_resolution=%EXPERIMENT.RESOLUTION%
 
 run_${model}
 

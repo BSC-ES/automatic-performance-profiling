@@ -6,10 +6,16 @@ MODEL:
   BRANCH_LIST: 4.2.1
 
   # Arch files prefixes to compile
-  # There has to be two arch files for each arch name in cfg/arch/PLATFORM/MODEL/
-  # - For ecearth4: O0-prod.yml and O0-trace.yml
-  # - For nemo: arch-O0-prod.fcm and arch-O0-trace.fcm
+  # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
+  # - For ecearth4: ARCH_NAME.yml
+  # - For nemo: arch-ARCH_NAME.fcm
   ARCH_NAMES: [O1_prod, O3_prod, O3_trace]
+
+# EXPERIMENT CONFIG
+EXPERIMENT:
+  RESOLUTION: orca1
+  TEST_STEPS: 960
+  OUTPUT: false
 
 # TRACE CONFIG
 TRACING:
@@ -25,10 +31,8 @@ TRACING:
   NAMES:      [trace_1, trace_2, trace_3]
   PROCESSORS: [112,     224,     336    ]
   THREADS:    [4,       4,       4      ]
-  RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_trace
-  OUTPUT: false
 
   PAPI_COUNTERS: "PAPI_TOT_INS PAPI_TOT_CYC PAPI_L3_TCM PAPI_L1_DCM PAPI_L2_DCM"
   PAPI_COUNTERS_PLOTS: "PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC"
@@ -42,11 +46,8 @@ STRONGSCALING:
   NAMES:      [bench_1, bench_2, bench_3]
   PROCESSORS: [112,     224,     336    ]
   THREADS:    [1,       1,       1      ]
-  RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_prod
-  OUTPUT: false
-  TEST_STEPS: 960
 
 # WEAKSCALING CONFIG
 WEAKSCALING:
@@ -59,8 +60,6 @@ WEAKSCALING:
   THREADS:    [1,     1      ]
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_prod
-  OUTPUT: false
-  TEST_STEPS: 960
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
@@ -70,7 +69,4 @@ COMPILATION_EFFICIENCY:
   NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
   PROCESSORS: [112,     224,     112,     224    ]
   THREADS:    [1,       1,       1,       1      ]
-  RESOLUTION: orca1
   TEST_CONFIG: BENCH
-  OUTPUT: false
-  TEST_STEPS: 960

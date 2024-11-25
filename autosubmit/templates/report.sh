@@ -87,12 +87,6 @@ function add_StrongScaling() {
         # Create and add test configuration info
         {   
             echo "Configuration,Value";
-            echo "Resolution, %STRONGSCALING.RESOLUTION%";
-            [ ${model} = "ecearth4" ] && echo "NEMO resolution,%STRONGSCALING.NEMO_RESOLUTION%";
-            [ ${model} = "ecearth4" ] && echo "OIFS resolution,%STRONGSCALING.OIFS_RESOLUTION%";
-            echo "START DATE,%STRONGSCALING.START_DATE%";
-            echo "END DATE,%STRONGSCALING.END_DATE%";
-            echo "TIMESTEPS,%STRONGSCALING.TEST_STEPS%";
             echo "ARCH NAME,%STRONGSCALING.ARCH_NAME%";
         } > test_info.csv
     
@@ -356,9 +350,6 @@ function add_Tracing() {
         # Create and add test configuration
         {   
             echo "Configuration,Value";
-            echo "Resolution, %TRACING.RESOLUTION%";
-            [ ${model} = "ecearth4" ] && echo "NEMO resolution,%TRACING.NEMO_RESOLUTION%";
-            [ ${model} = "ecearth4" ] && echo "OIFS resolution,%TRACING.OIFS_RESOLUTION%";
             echo "START DATE,%TRACING.START_DATE%";
             echo "END DATE,%TRACING.END_DATE%"; 
             echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
@@ -410,14 +401,16 @@ function add_multiexperiment() {
     member_title=${member//_/ }
     member_title=${member^}
 
+    if [ -f ${run_root}/${member}/test_info.csv ]; then
+        python3 ${cfg}/latex/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Multi Experiment" \
+            -s $member_title \
+            --add-csv ${run_root}/${member}/test_info.csv \
+            --add-caption "${member_title} test configuration."
+    fi
+
     test_folders=($run_root/$member/*)
-    python3 ${cfg}/latex/ReportGenerator.py \
-        -O ${report_full_path}.pkl \
-        -S "Multi Experiment" \
-        -s $member_title \
-        --add-csv ${run_root}/${member}/test_info.csv \
-        --add-caption "${member_title} test configuration."
- 
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
@@ -442,16 +435,6 @@ function add_CompilationEfficiency() {
     local member="compilation_efficiency"
     local flag=-s
 
-    {   
-        echo "Configuration,Value";
-        echo "Resolution, %COMPILATION_EFFICIENCY.RESOLUTION%";
-        [ ${model} = "ecearth4" ] && echo "NEMO resolution,%COMPILATION_EFFICIENCY.NEMO_RESOLUTION%";
-        [ ${model} = "ecearth4" ] && echo "OIFS resolution,%COMPILATION_EFFICIENCY.OIFS_RESOLUTION%";
-        echo "START DATE,%COMPILATION_EFFICIENCY.START_DATE%";
-        echo "END DATE,%COMPILATION_EFFICIENCY.END_DATE%"; 
-        echo "TIMESTEPS,%COMPILATION_EFFICIENCY.TEST_STEPS%";
-    } > ${run_root}/${member}/test_info.csv
-
     add_multiexperiment $member $flag
 }
 
@@ -466,11 +449,6 @@ function add_WeakScaling() {
 
     {   
         echo "Configuration,Value";
-        [ ${model} = "ecearth4" ] && echo "NEMO resolution,%WEAKSCALING.NEMO_RESOLUTION%";
-        [ ${model} = "ecearth4" ] && echo "OIFS resolution,%WEAKSCALING.OIFS_RESOLUTION%";
-        echo "START DATE,%WEAKSCALING.START_DATE%";
-        echo "END DATE,%WEAKSCALING.END_DATE%";
-        echo "TIMESTEPS,%WEAKSCALING.TEST_STEPS%";
         echo "ARCH NAME,%WEAKSCALING.ARCH_NAME%";
     } > ${run_root}/${member}/test_info.csv
 
@@ -497,6 +475,24 @@ python3 ${cfg}/latex/ReportGenerator.py \
     --section-title "Introduction" \
     --section-number 1 \
     -T ${cfg}/latex/Introduction.txt
+
+# Create and add test configuration info
+{   
+    echo "Configuration,Value";
+    echo "Resolution, %EXPERIMENT.RESOLUTION%";
+    [ ${model} = "ecearth4" ] && echo "NEMO resolution,%EXPERIMENT.NEMO_RESOLUTION%";
+    [ ${model} = "ecearth4" ] && echo "OIFS resolution,%EXPERIMENT.OIFS_RESOLUTION%";
+    [ ${model} = "ecearth4" ] && echo "START DATE,%EXPERIMENT.START_DATE%";
+    [ ${model} = "ecearth4" ] && echo "END DATE,%EXPERIMENT.END_DATE%";
+    echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
+    echo "OUTPUT,%EXPERIMENT.OUTPUT%";
+} > test_info.csv
+
+python3 ${latex_folder}/ReportGenerator.py \
+    -O ${report_full_path}.pkl \
+    -S "Experiment configuration" \
+    --add-caption "Experiment configuration" \
+    --add-csv test_info.csv
 
 # Add all members
 for current_member in ${members}; do

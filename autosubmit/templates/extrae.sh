@@ -232,8 +232,8 @@ function trace_ecearth4()
     local oifs_procs="%CURRENT_OIFS_PROCS%"
     local nemo_procs="%CURRENT_NEMO_PROCS%"
     local xios_procs="%CURRENT_XIOS_PROCS%"
-    local oifs_resolution="%TRACING.OIFS_RESOLUTION%"
-    local nemo_resolution="%TRACING.NEMO_RESOLUTION%"
+    local oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
+    local nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
     local use_omp_threads="%USE_OMP_THREDS%"
     local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
@@ -330,6 +330,6 @@ source ${env_sources}
 member="tracing"
 test_name=${member}/${test}
 arch_name=%TRACING.ARCH_NAME%
-model_resolution=%TRACING.RESOLUTION%      
+model_resolution=%EXPERIMENT.RESOLUTION%      
 
 trace_${model}
