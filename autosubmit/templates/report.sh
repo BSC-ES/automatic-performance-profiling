@@ -486,6 +486,7 @@ python3 ${cfg}/latex/ReportGenerator.py \
     [ ${model} = "ecearth4" ] && echo "END DATE,%EXPERIMENT.END_DATE%";
     echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
     echo "OUTPUT,%EXPERIMENT.OUTPUT%";
+    echo "PLATFORM,%DEFAULT.HPCARCH%";
 } > test_info.csv
 
 python3 ${latex_folder}/ReportGenerator.py \
