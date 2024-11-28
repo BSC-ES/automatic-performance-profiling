@@ -24,7 +24,8 @@ HW_BENCHMARKS:
 # TRACING COMMON OPTIONS
 TRACING:
   PARAVER:
-    ENABLED: true
+    # Enables Paraver views in the report
+    ENABLED: false
 
     # Paraver cfg, for all PV views see cfg/trace_analysis/paraver_configurations
     CFGS: MPI_call p2p_size
@@ -41,6 +42,8 @@ TRACING:
   USER_FUNCTIONS:
     ENABLED: true
     PAPI_COUNTERS:
+      # Space separated list where the elements are PC_id_1-PC_id_2,
+      # you can get the ids from the papi_avail command
       PLOTS: PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC
       ENABLED: true
     
@@ -49,9 +52,11 @@ TRACING:
     SAMPLING:
       ENABLED: false
 
+  # Enable/Disable Modelfactors images in the report
   MODELFACTORS:
     ENABLED: true
 
+  # Enable/Disable MPI profiling results in the report
   MPI:
     ENABLED: true
 
