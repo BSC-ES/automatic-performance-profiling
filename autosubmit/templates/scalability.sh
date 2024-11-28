@@ -47,7 +47,7 @@ function run_nemo()
     rsync -rv --exclude=.nc ${inidata} ${run_dir}
 
     # Copy everything from reference run_root
-    cp --remove-destination ${compilation}/${model_sources}/${configuration_folder}/${arch_name}_prod/EXP00/* ${run_dir}
+    cp --remove-destination ${compilation}/${model_sources}/${configuration_folder}/${arch_name}/EXP00/* ${run_dir}
     cp ${run_dir}/namelist_cfg_${model_resolution}_like ${run_dir}/namelist_cfg
 
     # Change namelist parameters

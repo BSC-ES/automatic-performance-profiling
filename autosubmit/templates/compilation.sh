@@ -49,14 +49,14 @@ function compile_nemo()
     mkdir -p ${bin_folder}
 
     arch_file=${cfg}/arch/${platform}/${model}/arch-${arch_name}.fcm
-    target_exe=${model}_trace.exe
+    target_exe=${model}.exe
     fcm=${model_sources}/arch/arch-${arch_name}.fcm
     cp ${arch_file} ${model_sources}/arch/
     sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB.*/%XIOS_LIB            -L$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/lib -lxios/g" ${fcm}
     sed -i "0,/%XIOS_INC/ s/%XIOS_INC.*/%XIOS_INC            -I$(echo ${exp_root} | sed 's_/_\\/_g')\/xios\/inc/g" ${fcm}
-    compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name} -n ${arch_name}_trace -a BENCH -j ${ntasks})
+    compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name} -n ${arch_name} -a BENCH -j ${ntasks})
     eval ${compilation_command}
-    cp ${model_sources}/${configuration_folder}/${arch_name}_trace/EXP00/nemo ${bin_folder}/${target_exe}
+    cp ${model_sources}/${configuration_folder}/${arch_name}/EXP00/nemo ${bin_folder}/${target_exe}
 
     # Copy xios binary
     cp ${exp_root}/xios/bin/xios_server.exe ${bin_folder}/xios_server.exe
