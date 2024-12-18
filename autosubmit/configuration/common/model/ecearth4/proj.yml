@@ -75,15 +75,21 @@ STRONGSCALING:
 WEAKSCALING:
   WEAKSCALING_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling"
 
-  BASE_PROCS: 128
-  BASE_RESOLUTION: orca025
-  TEST_NAMES: [orca025]
-  NAMES:      [orca025]
-  PROCESSORS: [112    ]
-  OIFS_PROCS: [55     ]
-  NEMO_PROCS: [55     ]
-  XIOS_PROCS: [1      ]
-  THREADS:    [1      ]
+  # Base case configuration, meaning the resolution and processors configuration
+  NEMO_BASE_PROCS: 111
+  OIFS_BASE_PROCS: 111
+  NEMO_BASE_RESOLUTION: eORCA1L75
+  OIFS_BASE_RESOLUTION: TL159L91
+
+  # Processors must be set to 1, since processors count is computed during runtime
+  # based on the base processors and resolution
+  TEST_NAMES:      [ws_1,      ws_2,      ws_3,      ws_4     ]
+  NAMES:           [ws_1,      ws_2,      ws_3,      ws_4     ]
+  PROCESSORS:      [1,         1,         1,         1        ]
+  XIOS_PROCS:      [1,         1,         1,         1        ]
+  OIFS_RESOLUTION: [TL159L91,  TCO95L91,  TL255L91,  TL511L91 ]
+  NEMO_RESOLUTION: [eORCA1L75, eORCA1L75, eORCA1L75, eORCA1L75]
+
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_impi_prod
 

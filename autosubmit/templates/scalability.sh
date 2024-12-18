@@ -21,6 +21,9 @@ branch=%MODEL.BRANCH_LIST%
 number_of_cores=%NUMPROC%
 test="%CURRENT_TEST_NAME%"
 platform="%DEFAULT.HPCARCH%"
+components="%MODEL.COMPONENTS%"
+components=${components//[\[,\]]/}
+components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 
 #####################################################################################################################
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
@@ -33,7 +36,8 @@ function run_nemo()
     local output="%EXPERIMENT.OUTPUT%"
     local test_steps="%EXPERIMENT.TEST_STEPS%" 
 
-    run_dir=${run_root}/${test_name}/scalability_nemo_${number_of_cores}
+    run_id=nemo_${number_of_cores}
+    run_dir=${run_root}/${test_name}/scalability_${run_id}
     mkdir -p ${run_dir}
 
     source ${env_sources}
@@ -62,13 +66,14 @@ function run_nemo()
     fi
 
     cd ${run_dir} || exit
-    # If weakscaling is run, compute the processors corresponding to the current resolution
+    # If it is Weak Scaling that is being run compute the current procs based on the
+    # base procs and resolution
     if [ ${current_member} = "WeakScaling" ]; then
-        source ${project}/configurations/model/${model}/resolutions.sh 
+        . ${project}/configurations/model/${model}/resolutions.sh 
         local base_procs=%WEAKSCALING.BASE_PROCS%
         local base_resolution=%WEAKSCALING.BASE_RESOLUTION%
-        local base_tile_size=${resolutions[$base_resolution]}
-        local curr_tile_size=${resolutions[$model_resolution]}
+        local base_tile_size=${nemo_resolutions[$base_resolution]}
+        local curr_tile_size=${nemo_resolutions[$model_resolution]}
         number_of_cores=$((base_procs*curr_tile_size/base_tile_size))
         local queue=%HPCQUEUE%
         local proj=%CURRENT_PROJ%
@@ -78,8 +83,7 @@ function run_nemo()
     fi
 
     # Rename timing output
-    mv timing.output ${number_of_cores}_test.timing
-    python3 ${project}/cfg/parser/utils/model/nemo/convert_timing_files.py -i ${number_of_cores}_test.timing -o ${number_of_cores}_test.timing
+    cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
 }
 
 
@@ -101,13 +105,35 @@ function run_ecearth4()
     . ${project}/cfg/utils/${model}/se.sh
 
     local model_sources=${compilation}/${model}_${branch}
-    local oifs_procs="%CURRENT_OIFS_PROCS%"
-    local nemo_procs="%CURRENT_NEMO_PROCS%"
+
     local xios_procs="%CURRENT_XIOS_PROCS%"
     local use_omp_threads="%USE_OMP_THREDS%"
     local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
         oifs_omp_threads=%CURRENT_THREADS%
+    fi
+
+    # If it is Weak Scaling that is being run compute the current procs based on the
+    # base procs and resolution
+    if [ ${current_member} = "WeakScaling" ]; then
+        . ${project}/configurations/model/nemo/resolutions.sh 
+        local current_nemo_resolution=%CURRENT_NEMO_RESOLUTION%
+        local nemo_base_procs=%WEAKSCALING.NEMO_BASE_PROCS%
+        local nemo_base_resolution=%WEAKSCALING.NEMO_BASE_RESOLUTION%
+        local base_tile_size=${nemo_resolutions[${nemo_base_resolution^^}]}
+        local curr_tile_size=${nemo_resolutions[${current_nemo_resolution^^}]}
+        local nemo_procs=$((nemo_base_procs*curr_tile_size/base_tile_size))
+
+        . ${project}/configurations/model/oifs/resolutions.sh 
+        local current_oifs_resolution=%CURRENT_OIFS_RESOLUTION%
+        local oifs_base_procs=%WEAKSCALING.OIFS_BASE_PROCS%
+        local oifs_base_resolution=%WEAKSCALING.OIFS_BASE_RESOLUTION%
+        local base_tile_size=${oifs_resolutions[${oifs_base_resolution^^}]}
+        local curr_tile_size=${oifs_resolutions[${current_oifs_resolution^^}]}
+        local oifs_procs=$((oifs_base_procs*curr_tile_size/base_tile_size))
+    else 
+        local oifs_procs="%CURRENT_OIFS_PROCS%"
+        local nemo_procs="%CURRENT_NEMO_PROCS%"
     fi
 
     local test_dir=${run_root}/${test_name}
@@ -149,8 +175,8 @@ function run_ecearth4()
     if [ "$current_member" = "WeakScaling" ]; then
         local queue=%HPCQUEUE%
         local proj=%CURRENT_PROJ%
-        sed -i "s/QUEUE/${queue}/"                      ${config_file}
-        sed -i "s/ACCOUNT/${proj}/"                     ${config_file}
+        sed -i "s/QUEUE/${queue}/"                   ${config_file}
+        sed -i "s/ACCOUNT/${proj}/"                  ${config_file}
     fi
 
     # Disable DR HOOK as it may cause issues
@@ -180,6 +206,16 @@ function run_ecearth4()
         cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
         cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
     fi
+
+    cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat
+    cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
+
+    echo "component,procs,resolution" > ${run_dir}/test_info.csv
+    for component in $components; do
+        component_procs="${component}_procs"
+        component_resolution="${component}_resolution"
+        echo "${component},${!component_procs},${!component_resolution}" >> ${run_dir}/test_info.csv
+    done
 }
 
 ###################

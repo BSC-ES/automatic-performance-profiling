@@ -54,6 +54,8 @@ function clone_ecearth4()
 
     # Update config for AS to worl with SE
     sed -i "/- base.move:/a \ \ \ \ ignore_not_found: true" scripts/runtime/scriptlib/main.yml
+    # Activate timing output log for NEMO
+    sed -i 's/ln_timing   = .false./ln_timing   = .true./'  scripts/runtime/templates/nemo/nemo-oce.namelist.j2
     # Add trace launch script
     cp ${cfg}/trace/model/ecearth4/trace-run.sh.j2 scripts/runtime/templates/launch/
 

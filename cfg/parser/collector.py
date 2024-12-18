@@ -28,6 +28,7 @@ if __name__ == "__main__":
     paramedir_files = []
     dimemas_files = []
     lucia_files = []
+    ifs_files = []
 
     # Get arguments from command line
     args = get_command_line_arguments()
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     for folder in args.input_files:
         files = get_files_from_path(folder)
         for f in files:
-            if f.count("timing.pkl"):
+            if f.count("timing.output"):
                 timing_files.append(f)
             elif f.count(".pm"):
                 paramedir_files.append(f)
@@ -43,6 +44,8 @@ if __name__ == "__main__":
                 dimemas_files.append(f)
             elif f.count("table.csv"):
                 lucia_files.append(f)
+            elif f.count("ifs.stat"):
+                ifs_files.append(f)
             else:
                 continue
 
@@ -62,7 +65,8 @@ if __name__ == "__main__":
         dimemas_files=dimemas_files,
         param_file=param_file,
         lucia_files=lucia_files,
-        components=components
+        components=components,
+        ifs_files=ifs_files
     )
     # Save json file
     experiment_results.save_json(output_file)

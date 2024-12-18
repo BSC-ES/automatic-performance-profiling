@@ -25,10 +25,10 @@ ppn=%PROCESSORS_PER_NODE%
 reporter_params=""
 case  "${model}" in
     "nemo")
-        input_files="scalability_*/*.timing.pkl"
+        input_files="scalability_*/*-timing.output"
     ;;
     "ecearth4")
-        input_files="scalability_*/lucia_lite_results/table.csv"
+        input_files="scalability_*/lucia_lite_results/table.csv scalability_*/*-ifs.stat scalability_*/*-timing.output"
         reporter_params="--coupling-folder coupling"
     ;;
 esac
@@ -95,10 +95,6 @@ do
     {
         echo processes_per_node=${ppn} 
         echo configuration_name=${test}
-        if [ "${current_member}" = "WeakScaling" ]; then
-            source ${project}/configurations/model/${model}/resolutions.sh 
-            echo tile_size=\'${resolutions[$test]}\'
-        fi
     } > param.cfg
     
     python3 ${cfg}/parser/collector.py \

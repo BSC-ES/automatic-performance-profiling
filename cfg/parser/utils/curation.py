@@ -667,23 +667,43 @@ def multiexperiment_comparison(experiments, field1):
     return log
 
 
-def weakscaling_compute(experiments):
-    # Get used configurations
+def generate_weakscaling_data(experiments: list, component: str = "") -> Log:
+    log = Log()
+
+    field = "ts_per_second"
+    if component == "":
+        number_of_processes = [experiment[experiment.base_case]["nproc"] for experiment in experiments]
+        field_data = [[exp.data[core][field] for core in exp.data] for exp in experiments]
+    else:
+        number_of_processes = [experiment[experiment.base_case]["Components"][component]["nproc"] for experiment in experiments]
+        field_data = [[exp.data[core]["Components"][component][field] for core in exp.data] for exp in experiments]
+
+
     configurations = [exp.param_file["configuration_name"][0] for exp in experiments]
     # Get tail sizes for configurations
-    tile_size = [exp.param_file["tile_size"][0] for exp in experiments]
     # Get number of cores
-    number_of_processes = [experiment[experiment.base_case]["nproc"] for experiment in experiments]
+
     # Get average duration of the timesteps with this config
-    sypd = [[exp.data[core]["SYPD"] for core in exp.data] for exp in experiments]
     log = Log()
-    log.add("Config:, Tile Size, Ncores, SYPD")
+    log.add(f"Config, Ncores, {field}")
     for index_conf, conf in enumerate(configurations):
-        for test_sypd in sypd[index_conf]:
-            log.add(conf + "," + tile_size[index_conf] + ",%i" % number_of_processes[index_conf] +
-                    ", %5.2f " % test_sypd)
+        for test_field in field_data[index_conf]:
+            log.add(conf + ",%i" % number_of_processes[index_conf] +
+                    ", %5.2f " % test_field)  
+
     return log
 
+def weakscaling_compute(experiments: list, file_out: str) -> None:
+    import os
+    model_ws_data = generate_weakscaling_data(experiments)
+    model_ws_data.save(file_out)
+
+    components = experiments[0].components
+    for component in components:
+        dn = os.path.dirname(file_out)
+        fn = component + "_" + os.path.basename(file_out)
+        component_ws_data = generate_weakscaling_data(experiments, component)
+        component_ws_data.save(os.path.join(dn, fn))
 
 def find_common_cases_and_functions(experiments):
     # Find cases that are common in all the experiments

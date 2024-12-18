@@ -88,7 +88,7 @@ def merge_dictionaries(dict_one, dict_two):
             if isinstance(new_dict[key], dict):
                 new_dict[key] = merge_dictionaries(new_dict[key], dict_two[key])
             else:
-                new_dict[key] = [new_dict[key], dict_two[key]]
+                new_dict[key] = new_dict[key]
         except KeyError:
             new_dict[key] = dict_two[key]
     return new_dict
@@ -136,9 +136,60 @@ def parse_paramedir_files(files):
             text = f.read()
             histograms = split_3d_histogram(text)
             for function_name, histogram in histograms.items():
+                if "std::" in function_name:
+                    continue
                 dictionary_section[function_name] = process_category_histogram(histogram)
     return results
 
+def parse_timing_file(timing_fn: str):
+    data = {"FunctionInfo": {}, "TimeStepTime": 0, "number_ts": 0, "ts_per_second": 0, "SYPD": 0}
+    step_length_ptrn = "timing step *([0-9]+) *: *(.*)"
+    functions_ptrn = "([0-9a-zA-Z_]+) +" + "([0-9\.E\+\-]+) +" * 7 + "([0-9\.E\+\-]+)"
+    total_time_ptrn = "Total *time : +([0-9\.E\+]+) +\(SYPD: +([0-9\.E\+]+) +\) on +MPI +rank +: +([0-9\.E\+]+)"
+
+    with open(timing_fn, "r", encoding="utf8") as timing_f:
+        steps_length = []
+        sypds = []
+        number_ts = 1
+        nproc = 0
+
+        for line in timing_f:
+            step_length_match = re.search(step_length_ptrn, line)
+            functions_match = re.search(functions_ptrn, line)
+            total_time_match = re.search(total_time_ptrn, line)
+
+            if step_length_match:
+                number_ts = int(step_length_match.group(1))
+                steps_length.append(float(step_length_match.group(2)))
+            elif functions_match:
+                function_name = functions_match.groups()[0]
+                values = [float(v) for v in functions_match.groups()[1:]]
+                data["FunctionInfo"][function_name] = values[1]
+            elif total_time_match:
+                total_time, sypd, nproc = total_time_match.groups()
+                sypds.append(float(sypd))
+
+        data["TimeStepTime"] = np.average(steps_length)
+        data["number_ts"] = number_ts
+        data["ts_per_second"] = 1 / data["TimeStepTime"]
+        data["SYPD"] = np.average(sypds)
+        data["nproc"] = int(nproc)
+
+    return data
+
+def parse_ifs_file(file):
+    data = {"ts_per_second": 0}
+    with open(file, encoding="utf8") as f:
+        total_time = 0
+        total_ts = 1
+        for line in f:
+            cols = [s for s in line.split(" ") if s]
+            ts_time = float(cols[6])
+            total_time += ts_time
+            total_ts = int(cols[3])
+        data["ts_per_second"] = total_time / total_ts
+
+    return data
 
 def parse_dimemas_files(files):
     """
@@ -204,7 +255,7 @@ class TimingInformation:
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, timing_files=None, lucia_files=None, paramedir_files=None, dimemas_files=None,
+    def __init__(self, timing_files=None, lucia_files=None, paramedir_files=None, dimemas_files=None, ifs_files=None,
                  processes_per_node=48, json_file=None, param_file=None, components=None):
         # Init class variables
         self.experiment_name = None
@@ -231,12 +282,14 @@ class TimingInformation:
             self.function_info_src = "timing"
         else:
             self.function_info_src = "paramedir"
+        if lucia_files:
+            self.load_lucia(lucia_files)
         if paramedir_files:
             self.load_paramedir(paramedir_files)
         if dimemas_files:
             self.load_dimemas(dimemas_files)
-        if lucia_files:
-            self.load_lucia(lucia_files)
+        if ifs_files:
+            self.load_ifs(ifs_files)
 
     def __getitem__(self, item):
         return self.data[item]
@@ -351,37 +404,37 @@ class TimingInformation:
                     function_info[component][f_name]['y'] += y_data
 
         # Create the plot
-        for component in function_info:
-            output_name = component + "-" + x_axis + "-" + y_axis + ".png"
-            
+        for component_name, component_function_info in function_info.items():
+            output_name = component_name + "-" + x_axis + "-" + y_axis + ".png"
+
             fig, ax = plt.subplots()
             case_str = ""
-            for i, case in enumerate(self.components_cases[component]):
+            for i, case in enumerate(self.components_cases[component_name]):
                 if i != 0:
                     case_str += " - "
                 case_str += case
-            ax.set_title("%s vs %s per 1000 instructions in %s\n%s" % (x_axis, y_axis, component, case_str))
+            ax.set_title(f"{x_axis} vs {y_axis} per 1000 instructions in {component_name}\n{case_str}")
             ax.set_xlabel(x_axis)
             ax.set_ylabel(y_axis)
-            for i, f_name in enumerate(function_info[component]):
+            for i, f_name in enumerate(component_function_info):
                 if f_name[0] == "_":
                     # Remove leading underscores that python does not know how to render
                     legend_name = re.sub('^_+', "", f_name)
                 else:
                     legend_name = f_name
-                x = function_info[component][f_name]['x']
-                y = function_info[component][f_name]['y']
+                x = component_function_info[f_name]['x']
+                y = component_function_info[f_name]['y']
                 u = np.diff(x) 
                 v = np.diff(y) 
                 pos_x = x[:-1]
                 pos_y = y[:-1]
 
-                c = np.full(len(x), i / len(function_info[component]))
+                c = np.full(len(x), i / len(component_function_info))
                 ax.quiver(pos_x, pos_y, u, v, angles="xy", pivot="tail", headlength = 2, headaxislength = 2, scale_units = "xy", scale = 1, color = plt.cm.tab20(c))
                 ax.scatter(x, y, marker="o", label=legend_name, c = plt.cm.tab20(c), edgecolors = "black")
-            
-            if len(function_info[component]) == 0:
-                ax.text(0.5, 0.5, "%s vs %s not available" % (x_axis, y_axis), ha="center", va="center")
+
+            if len(component_function_info) == 0:
+                ax.text(0.5, 0.5, f"{x_axis} vs {y_axis} not available", ha="center", va="center")
 
             ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             fig.savefig(output_name,  bbox_inches='tight')
@@ -462,7 +515,7 @@ class TimingInformation:
                 self.param_file = json_data["param_file"]
             except KeyError:
                 pass
-        
+
         self.rename_cases()
 
     # This function renames the cases after getting all the info about them to have shorter names in the report
@@ -493,7 +546,7 @@ class TimingInformation:
                     component = "nemo"
                 elif component == "OpenIFS":
                     component = "oifs"
-        
+
                 if component == "Coupled":
                     lucia_dict[id] |= row[1:].to_dict()
                     lucia_dict[id]["SYPD"] = lucia_dict[id]["sypd"]
@@ -503,47 +556,44 @@ class TimingInformation:
 
 
         self.data = merge_dictionaries(self.data, lucia_dict)
-                
+
         if self.cases is None:
             self.cases = list(sorted(self.data, key=lambda f: self.data[f]["nproc"]))
             self.base_case = min(self.cases)
 
         if self.components_cases is None:
-            self.components_cases = {}   
+            self.components_cases = {}
             for component in self.components:
                 self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["Components"][component]["nproc"])
 
     def load_timings(self, timing_files):
         import pickle
         import copy
-        timing_info_dict = {}
-        # Merge the dictionary into single one
-        functions = set()
-        for file in timing_files:
-            timing_info = pickle.load(open(file, "rb"))
-            timing_info_dict[[*timing_info][0]] = timing_info[[*timing_info][0]]
-            pattern = "(scalability)_([0-9a-zA-Z_]+)/(.*timing.pkl)"
-            _, id, _ = re.match(pattern, file).groups()
-            nproc = [*timing_info][0]
-            timing_info_dict[id] = timing_info_dict.pop(nproc)
-            timing_info_dict[id]["nproc"] = nproc
-            timing_info_dict[id]["Components"] = {}
-            timing_info_dict[id]["Components"]["nemo"] = copy.deepcopy(timing_info_dict[id])
-            test_function_names = set(timing_info_dict[id]["Components"]["nemo"]["FunctionInfo"].keys())
-            functions.intersection_update(test_function_names)
-        functions = list(functions)
-        timing_info_dict[id]["functions"] = functions
 
-        self.data = merge_dictionaries(self.data, timing_info_dict)
+        # component-run_id-timing.output
+        pattern = "([a-z]+)-([0-9a-zA-Z_]+)-timing.output"
+        timing_dict = {}
+        for timing_fn in timing_files:
+            component, id = parse_filename(timing_fn, pattern)
+            address = (id, "Components")
+            dictionary_section = dictionary_pointer(timing_dict, address)
+            dictionary_section[component] = parse_timing_file(timing_fn)
+            if "ts_per_second" in timing_dict[id]:
+                timing_dict[id]["ts_per_second"] = min(dictionary_section[component]["ts_per_second"], timing_dict[id]["ts_per_second"])
+            else:
+                timing_dict[id]["ts_per_second"] = dictionary_section[component]["ts_per_second"]
 
-        if self.cases is None:
-            self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
-            self.base_case = min(self.cases)
-            
-        if self.components_cases is None:
-            self.components_cases = {}   
-            for component in self.components:
-                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["nproc"])
+        self.data = merge_dictionaries(self.data, timing_dict)
+
+        if len(self.components) == 1:
+            if self.cases is None:
+                self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
+                self.base_case = min(self.cases)
+
+            if self.components_cases is None:
+                self.components_cases = {}   
+                for component in self.components:
+                    self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["nproc"])
 
     def load_paramedir(self, files):
         if not files:
@@ -571,6 +621,23 @@ class TimingInformation:
             self.components_cases = {}   
             for component in self.components:
                 self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["Components"][component]["nproc"])
+
+    def load_ifs(self, files):
+        if not files:
+            raise AssertionError("Empty list of files")
+        pattern = "([a-z]+)-([0-9a-zA-Z_]+)-ifs.stat"
+        ifs_dict = {}
+        for file in files:
+            component, id = parse_filename(file, pattern)
+            address = (id, "Components")
+            dictionary_section = dictionary_pointer(ifs_dict, address)
+            dictionary_section[component] = parse_ifs_file(file)
+            if "ts_per_second" in ifs_dict[id]:
+                ifs_dict[id]["ts_per_second"] = min(dictionary_section[component]["ts_per_second"], self.data[id]["ts_per_second"])
+            else:
+                ifs_dict[id]["ts_per_second"] = dictionary_section[component]["ts_per_second"]
+        
+        self.data = merge_dictionaries(self.data, ifs_dict)
 
     def load_dimemas(self, files):
         if not files:

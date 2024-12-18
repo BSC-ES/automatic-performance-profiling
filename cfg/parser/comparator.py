@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     if SYPD:
         # Example how to get comparison of SYPD
-        multiexperiment_comparison(experiment_data, field1="SYPD").print(file_out)
+        multiexperiment_comparison(experiment_data, field1="ts_per_second").print(file_out)
 
     # if function_info:
     #     # Example on how to compare elapsed time by function
@@ -59,4 +59,4 @@ if __name__ == "__main__":
     #
     # Prints weak scaling info
     if weak_scaling:
-        weakscaling_compute(experiment_data).print(file_out)
+        weakscaling_compute(experiment_data, file_out)
