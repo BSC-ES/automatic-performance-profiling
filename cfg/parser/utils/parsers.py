@@ -334,23 +334,20 @@ class TimingInformation:
 
     def load_test_info(self, test_info_files):
         import csv
-        tests_dict = {}
         for test_info_fn in test_info_files:
-            print(test_info_fn)
-            pattern = "([0-9a-zA-Z_]+)-(test_info.csv)"
+            test_dict = {}
+            pattern = "([0-9a-zA-Z_]+)-([a-z_]+).csv"
             run_id, _ = parse_filename(test_info_fn, pattern)
-            print(run_id)
-            tests_dict[run_id] = {"components": {}}
+
+            test_dict[run_id] = {"components": {}}
             with open(test_info_fn, mode='r') as test_info_f:
                 reader = csv.DictReader(test_info_f)
                 for dict_line in reader:
                     component_name = dict_line["component"]
                     dict_line.pop("component")
-
-                    tests_dict[run_id]["components"][component_name] = {}
-                    tests_dict[run_id]["components"][component_name] = dict_line
-        print(tests_dict)
-        self.data = merge_dictionaries(self.data, tests_dict)
+                    test_dict[run_id]["components"][component_name] = {}
+                    test_dict[run_id]["components"][component_name] = dict_line
+            self.data = merge_dictionaries(self.data, test_dict)
 
     def load_param(self, param_file):
         from os.path import isfile

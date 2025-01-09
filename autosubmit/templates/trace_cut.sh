@@ -39,6 +39,11 @@ do
     for trace_folder in ${run_root}/${test_name}/trace_*
     do
         cd ${trace_folder} || exit
+
+        trace_id=${trace_folder//*trace_}
+        test_info_fn=${trace_id}-ts_test_info.csv
+        echo "component,ts_length" > ${test_info_fn}
+
         for component in $components; do
             curr_mc_steps=${magiccut_steps}
             if [ "${timestep_zero^^}" != "TRUE" ] && [ "${component}" = "oifs" ]; then
@@ -47,6 +52,8 @@ do
             # Run magiccut and save component's fastest step
             ${magiccut} $component.prv $curr_mc_steps | tee ${component}_magiccut.log
             grep "Worst / best" ${component}_magiccut.log | awk -F ' ' '{print $8}' > ${component}_fastest_ts.txt
+            
+            echo "${component},$(cat ${component}_fastest_ts.txt)" >> ${test_info_fn}
         done
     done
 done

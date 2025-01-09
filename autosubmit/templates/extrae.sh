@@ -321,11 +321,12 @@ function trace_ecearth4()
 
     cut_trace trace_components processors "${model}.prv"
 
+    test_info_fn=${run_dir}/${run_id}-test_info.csv
+    echo "component,nproc,resolution" > ${test_info_fn}
     for component in $components; do
         component_procs="${component}_procs"
         component_resolution="${component}_resolution"
-        component_ts_length=$(cat ${component}_fastest_ts.txt)
-        echo "${component},${!component_procs},${!component_resolution},${component_ts_length}" >> ${run_dir}/${run_id}-test_info.csv
+        echo "${component},${!component_procs},${!component_resolution}" >> ${test_info_fn}
     done
 
     rm -rf set-* ./*.nc

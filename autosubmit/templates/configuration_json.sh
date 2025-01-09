@@ -56,7 +56,7 @@ case "$current_member" in
 
         member="tracing"
         tests="%TRACING.TEST_NAMES%"
-        input_files="paramedir/*pm"
+        input_files="trace_*/*test_info.csv paramedir/*pm"
     ;;
     "CompilationEfficiency")
         member="compilation_efficiency"

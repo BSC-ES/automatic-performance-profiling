@@ -79,10 +79,10 @@ def function_curated_summary(experiment_data, filename):
             
             base_case = experiment_data.components_cases[component][0]
             base_result = fun_results[k][base_case]["elapsed_time"]
-            base_nproc = fun_results[k][base_case]["nproc"]
+            base_nproc = int(fun_results[k][base_case]["nproc"])
             for case in experiment_data.components_cases[component]:
-                case_nproc = fun_results[k][case]["nproc"]
-                case_speed = fun_results[k][case]["elapsed_time"]
+                case_nproc = int(fun_results[k][case]["nproc"])
+                case_speed = float(fun_results[k][case]["elapsed_time"])
                 resource_increase = case_nproc / base_nproc
                 resources += " %.2f" % case_nproc
                 # Avoid dividing by zero
@@ -174,8 +174,12 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
         components = experiment_data.components
 
     for case_idx, case in enumerate(experiment_data.cases):
+        ts_length = 0
+        for component in components:
+            ts_length = max(float(experiment_data.data[case]["components"][component]["ts_length"]) / pow(10, 6), ts_length)
+
         header.append("function_name")
-        header.append(case + " (s)")
+        header.append(case + " (percentage)")
         n_function = 0
 
         functions_elapsed_time = {}
@@ -187,7 +191,7 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
             if n_function < length_summary + 1:
                 function_names[case_idx].append(function_name)
                 TIME_data[n_function].append(function_name)
-                TIME_data[n_function].append(str(elapsed_time))
+                TIME_data[n_function].append(str(elapsed_time / ts_length * 100))
                 n_function += 1
             else:
                 break
@@ -232,11 +236,11 @@ def function_info_csv(experiment_data, csv_folder):
             efficiency = []
 
             base_case = next(iter(fun_results[k]))
-            base_case_nprocs = fun_results[k][base_case]["nproc"]
+            base_case_nprocs = int(fun_results[k][base_case]["nproc"])
             base_result = fun_results[k][base_case]["elapsed_time"]
             # Fill list with formatted data
             for case in fun_results[k].keys():
-                nproc = fun_results[k][case]["nproc"]
+                nproc = int(fun_results[k][case]["nproc"])
                 resource_increase = nproc / base_case_nprocs
                 resources.append("%i" % nproc)
                 # Avoid division by zero
