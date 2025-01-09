@@ -135,15 +135,19 @@ class LatexText:
         makedirs(absolute_path + csv_file.store_path, exist_ok=True)
         csv_file.dump2disk(absolute_path)
         self.new_line()
+        if csv_file.rotate:
+            self.add_text("\\begin{landscape}")
         self.add_text("\\begin{table}[H]")
         self.add_text("\centering")
         self.add_text("\caption{" + csv_file.caption + "}")
-        if csv_file.rotate:
-            self.add_text("\\rotatebox{90}{")
+        if csv_file.fit_margins:
+            self.add_text("\\resizebox{1.5\\textwidth}{!}{")
         self.add_text("\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}")
-        if csv_file.rotate:
+        if csv_file.fit_margins:
             self.add_text("}")
         self.add_text("\end{table}")
+        if csv_file.rotate:
+            self.add_text("\end{landscape}")
         self.new_line()
 
 
@@ -182,7 +186,7 @@ class Section:
             img_obj.store()
             self.images.append(img_obj)
 
-    def add_csv(self, file_path, subsection_name=None, subsubsection_name=None, csv_convert=False, csv_purge=False, silent_mode=False, rotate=False, caption=None):
+    def add_csv(self, file_path, subsection_name=None, subsubsection_name=None, csv_convert=False, csv_purge=False, silent_mode=False, rotate=False, caption=None, fit_margins=False):
         try:
             csv_files = get_files_from_path(file_path, ".csv")
         except AssertionError:
@@ -200,7 +204,8 @@ class Section:
                               csv_purge,
                               csv_convert,
                               caption,
-                              _rotate=rotate)
+                              _rotate=rotate,
+                              _fit_margins=fit_margins)
             # Avoid adding item more than once ... useful in case of make target's failure
             for s_csv in self.csv_files:
                 if csv_obj.path == s_csv.path:
@@ -249,8 +254,8 @@ class Subsection(Section):
         super(Subsection, self).add_image(file_path, self.subsection_name, subsubsection_name, caption)
 
     # Overwrites method adding csv subsection info
-    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, subsubsection_name=None, caption=None):
-        super(Subsection, self).add_csv(file_path, self.subsection_name, subsubsection_name, csv_convert, csv_purge, silent_mode, rotate, caption)
+    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, subsubsection_name=None, caption=None, fit_margins=False):
+        super(Subsection, self).add_csv(file_path, self.subsection_name, subsubsection_name, csv_convert, csv_purge, silent_mode, rotate, caption, fit_margins)
 
     # Overwrites method adding csv subsection info
     def add_text_as_csv(self, csv_format_text, computed_quantity, subsubsection_name=None):
@@ -279,8 +284,8 @@ class Subsubsection(Subsection):
         super(Subsubsection, self).add_image(file_path, self.subsubsection_name, caption)
 
     # Overwrites method adding csv subsection info
-    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, caption=None):
-        super(Subsubsection, self).add_csv(file_path, csv_convert, csv_purge, silent_mode, rotate, self.subsubsection_name,  caption)
+    def add_csv(self, file_path, csv_convert, csv_purge, silent_mode, rotate, caption=None, fit_margins=False):
+        super(Subsubsection, self).add_csv(file_path, csv_convert, csv_purge, silent_mode, rotate, self.subsubsection_name,  caption, fit_margins)
 
     # Overwrites method adding csv subsection info
     def add_text_as_csv(self, csv_format_text, computed_quantity):
@@ -334,7 +339,7 @@ class ImgFile:
 
 
 class CsvFile:
-    def __init__(self, _path, _section_name, _subsection_name=None, _subsubsection_name=None, _purge=False, _convert=False, _caption=None, _rotate=False):
+    def __init__(self, _path, _section_name, _subsection_name=None, _subsubsection_name=None, _purge=False, _convert=False, _caption=None, _rotate=False, _fit_margins=False):
         self.path = _path
         self.store_path = None
         self.name = self.path.split("/")[-1]
@@ -345,6 +350,7 @@ class CsvFile:
         self.subsection = _subsection_name
         self.subsubsection = _subsubsection_name
         self.rotate = _rotate
+        self.fit_margins = _fit_margins
         self.store(csv_convert=_convert, csv_purge=_purge)
 
     def purge_csv_data(self):
@@ -418,7 +424,7 @@ class CsvFile:
         with open(absolute_path + self.store_path + "/" + self.name, 'wt') as f_output:
             csv_output = csv.writer(f_output)
             for data_row in self.csv_data:
-                data_row = [dr.replace("_", "") for dr in data_row]
+                data_row = [dr.replace("_", "-") for dr in data_row]
                 csv_output.writerow(data_row)
 
 
@@ -442,7 +448,8 @@ class Report:
                         "\\usepackage{booktabs}\n" \
                         "\\usepackage{hyperref}\n" \
                         "\\usepackage{float}\n" \
-                        "\input{" + self.newcommand_file + "}\n" \
+                        "\\usepackage{pdflscape}\n" \
+                        "\\input{" + self.newcommand_file + "}\n" \
                                                            "\\title{TITLE} \n " \
                                                            "\\author{AUTHORS} \n  \date{\\today} \n" \
                                                            "\makeatletter \n" \
@@ -701,6 +708,7 @@ def get_command_line_arguments():
     parser.add_argument("-c", "--add-csv", default=None,
                         help="path to a csv or a folder of csv that will be added to the section")
     parser.add_argument("-r", "--rotate-csv", action="store_true", default=False)
+    parser.add_argument("-f", "--fit-margins", action="store_true", default=False)
     parser.add_argument("--csv-convert",
                         default=False, action="store_true",
                         help="If the file is a paraver file and need conversion to csv")
@@ -753,6 +761,7 @@ if __name__ == "__main__":
     caption = args.add_caption
     csv_file = args.add_csv
     rotate_csv = args.rotate_csv
+    fit_margins = args.fit_margins
     csv_convert = args.csv_convert
     csv_purge = args.csv_purge
     dump_to_file = args.dump_to_file
@@ -785,7 +794,7 @@ if __name__ == "__main__":
                 context.add_image(image, caption=caption)
             # Append csv table
             if csv_file is not None:
-                context.add_csv(csv_file, csv_convert=csv_convert, csv_purge=csv_purge, silent_mode=silent_mode, rotate=rotate_csv, caption=caption)
+                context.add_csv(csv_file, csv_convert=csv_convert, csv_purge=csv_purge, silent_mode=silent_mode, rotate=rotate_csv, caption=caption, fit_margins=fit_margins)
             # Add text to section
             if text_file is not None:
                 context.add_text(text_file)

@@ -84,10 +84,12 @@ function add_StrongScaling() {
 
         cd ${test_root} || exit
 
+        local arch_name=%STRONGSCALING.ARCH_NAME%
+        arch_name=${arch_name//_/-}
         # Create and add test configuration info
         {   
             echo "Configuration,Value";
-            echo "ARCH NAME,%STRONGSCALING.ARCH_NAME%";
+            echo "ARCH NAME,${arch_name}";
         } > test_info.csv
     
         python3 ${latex_folder}/ReportGenerator.py \
@@ -314,7 +316,7 @@ function add_mpi() {
                 -s "${component^^} MPI Call Profile" \
                 --add-csv ${test_root}/paramedir/${component}-${trace_id}-MPIcallprofile.csv \
                 --add-caption "${trace_id} case MPI Call profile." \
-                --csv-convert -p -r
+                --csv-convert -p -r -f
         done
     done
 }
@@ -347,13 +349,15 @@ function add_Tracing() {
 
         cd ${test_root} || exit
 
+        local arch_name=%TRACING.ARCH_NAME%
+        arch_name=${arch_name//_/-}
         # Create and add test configuration
         {   
             echo "Configuration,Value";
             echo "START DATE,%TRACING.START_DATE%";
             echo "END DATE,%TRACING.END_DATE%"; 
             echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
-            echo "ARCH NAME,%TRACING.ARCH_NAME%"; 
+            echo "ARCH NAME,${arch_name}"; 
         } > test_info.csv
     
         python3 ${latex_folder}/ReportGenerator.py \
@@ -396,7 +400,7 @@ function add_multiexperiment() {
     python3 ${cfg}/parser/comparator.py \
         --json-files $run_root/$member/*/*.json \
         ${flag} \
-        --file-out ${member}.csv
+        --file-out ${run_root}/${member}/${member}.csv
 
     member_title=${member//_/ }
     member_title=${member^}
@@ -410,7 +414,7 @@ function add_multiexperiment() {
             --add-caption "${member_title} test configuration."
     fi
 
-    test_folders=($run_root/$member/*)
+    test_folders=($run_root/$member/*/)
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
@@ -422,7 +426,7 @@ function add_multiexperiment() {
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
         -s $member_title \
-        --add-csv ${member}.csv \
+        --add-csv ${run_root}/${member}/${member}.csv \
         --add-caption "${member_title} case comparison scalability." 
 }
 
@@ -447,12 +451,24 @@ function add_WeakScaling() {
     local member="weakscaling"
     local flag=-w
 
+    local arch_name=%STRONGSCALING.ARCH_NAME%
+    arch_name=${arch_name//_/-}
     {   
         echo "Configuration,Value";
-        echo "ARCH NAME,%WEAKSCALING.ARCH_NAME%";
+        echo "ARCH NAME,${arch_name}";
     } > ${run_root}/${member}/test_info.csv
 
     add_multiexperiment $member $flag
+
+    for component in ${components[@]}; do
+        python3 ${cfg}/latex/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Multi Experiment" \
+            -s $member_title \
+            -ss "${component^^} ${member_title}" \
+            --add-csv ${run_root}/${member}/${component}_${member}.csv \
+            --add-caption "${component^^} ${member_title} case comparison scalability." 
+    done
 }
 
 ###################
