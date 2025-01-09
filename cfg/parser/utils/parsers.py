@@ -115,7 +115,7 @@ def parse_paramedir_files(files):
         i = 0
         while i < len(split_id):
             address = (id,
-                       "Components",
+                       "components",
                        split_id[i])
             component_section = dictionary_pointer(results, address)
             component_section["nproc"] = int(split_id[i + 1])
@@ -125,7 +125,7 @@ def parse_paramedir_files(files):
         # Initialize dictionary in case it does not exists
         # Retrieve the section to store the data
         address = (id,
-                   "Components",
+                   "components",
                    component,
                    "Counters",
                    information_type,
@@ -142,7 +142,7 @@ def parse_paramedir_files(files):
     return results
 
 def parse_timing_file(timing_fn: str):
-    data = {"FunctionInfo": {}, "TimeStepTime": 0, "number_ts": 0, "ts_per_second": 0, "SYPD": 0}
+    data = {"function_info": {}, "time_step_time": 0, "number_ts": 0, "ts_per_second": 0, "SYPD": 0}
     step_length_ptrn = "timing step *([0-9]+) *: *(.*)"
     functions_ptrn = "([0-9a-zA-Z_]+) +" + "([0-9\.E\+\-]+) +" * 7 + "([0-9\.E\+\-]+)"
     total_time_ptrn = "Total *time : +([0-9\.E\+]+) +\(SYPD: +([0-9\.E\+]+) +\) on +MPI +rank +: +([0-9\.E\+]+)"
@@ -153,25 +153,25 @@ def parse_timing_file(timing_fn: str):
         number_ts = 1
         nproc = 0
 
-        for line in timing_f:
+        for i, line in enumerate(timing_f):
             step_length_match = re.search(step_length_ptrn, line)
             functions_match = re.search(functions_ptrn, line)
             total_time_match = re.search(total_time_ptrn, line)
 
-            if step_length_match:
+            if step_length_match and i != 0:
                 number_ts = int(step_length_match.group(1))
                 steps_length.append(float(step_length_match.group(2)))
             elif functions_match:
                 function_name = functions_match.groups()[0]
                 values = [float(v) for v in functions_match.groups()[1:]]
-                data["FunctionInfo"][function_name] = values[1]
+                data["function_info"][function_name] = values[1]
             elif total_time_match:
                 total_time, sypd, nproc = total_time_match.groups()
                 sypds.append(float(sypd))
 
-        data["TimeStepTime"] = np.average(steps_length)
+        data["time_step_time"] = np.average(steps_length)
         data["number_ts"] = number_ts
-        data["ts_per_second"] = 1 / data["TimeStepTime"]
+        data["ts_per_second"] = 1 / data["time_step_time"]
         data["SYPD"] = np.average(sypds)
         data["nproc"] = int(nproc)
 
@@ -235,7 +235,7 @@ class TimingInformation:
     |   |---'sypd'
     |   |---'total_time'
     |
-    |---'FunctionInfo'
+    |---'function_info'
     |   |--- function_name (the name of the function)
     |       |--- 'CPU Time(%)'
     |       |--- 'CPU Time(s)'
@@ -251,11 +251,11 @@ class TimingInformation:
     |       |--- 'CPU Time(s)'
     |       |--- 'Elapsed Time(s)'
     |       |--- 'Ratio CPU / Elapsed'
-    |---'TimeStepTime'
+    |---'time_step_time'
     |   |--- (average, standard deviation) # (a tuple with the actual values)
     """
 
-    def __init__(self, timing_files=None, lucia_files=None, paramedir_files=None, dimemas_files=None, ifs_files=None,
+    def __init__(self, timing_files=None, lucia_files=None, paramedir_files=None, dimemas_files=None, ifs_files=None, test_info_files=None,
                  processes_per_node=48, json_file=None, param_file=None, components=None):
         # Init class variables
         self.experiment_name = None
@@ -284,6 +284,8 @@ class TimingInformation:
             self.function_info_src = "paramedir"
         if lucia_files:
             self.load_lucia(lucia_files)
+        if test_info_files:
+            self.load_test_info(test_info_files)
         if paramedir_files:
             self.load_paramedir(paramedir_files)
         if dimemas_files:
@@ -298,7 +300,7 @@ class TimingInformation:
         functions = []
         for case in self.cases:
             for component in self.components:
-                functions.append(list(self.data[case]["Components"][component]["Counters"]["Time"].keys()))
+                functions.append(list(self.data[case]["components"][component]["Counters"]["Time"].keys()))
         functions = sum(functions, [])
         return list(set(functions))
 
@@ -319,16 +321,36 @@ class TimingInformation:
             for function in self.functions:
                 ret_val[function] = {}
                 for case in cases:
-                    nproc = self[case]["Components"][component_name]["nproc"]
+                    nproc = self[case]["components"][component_name]["nproc"]
                     ret_val[function][case] = {"nproc": nproc, "elapsed_time": 0}
                     try:
                         # Store results in dictionary if present
-                        ret_val[function][case]["elapsed_time"] = self[case]["Components"][component_name]["FunctionInfo"][function]
+                        ret_val[function][case]["elapsed_time"] = self[case]["components"][component_name]["function_info"][function]
                     except KeyError:
                         # Remove the entry and pass to the next function
                         del ret_val[function]
                         break
         return ret_val
+
+    def load_test_info(self, test_info_files):
+        import csv
+        tests_dict = {}
+        for test_info_fn in test_info_files:
+            print(test_info_fn)
+            pattern = "([0-9a-zA-Z_]+)-(test_info.csv)"
+            run_id, _ = parse_filename(test_info_fn, pattern)
+            print(run_id)
+            tests_dict[run_id] = {"components": {}}
+            with open(test_info_fn, mode='r') as test_info_f:
+                reader = csv.DictReader(test_info_f)
+                for dict_line in reader:
+                    component_name = dict_line["component"]
+                    dict_line.pop("component")
+
+                    tests_dict[run_id]["components"][component_name] = {}
+                    tests_dict[run_id]["components"][component_name] = dict_line
+        print(tests_dict)
+        self.data = merge_dictionaries(self.data, tests_dict)
 
     def load_param(self, param_file):
         from os.path import isfile
@@ -391,8 +413,8 @@ class TimingInformation:
                 for case in self.components_cases[component]:
                     try:
                         # Function name's are taken from timings, so it is possible they are not present in the trace
-                        x_data = self.data[case]["Components"][component]['Counters'][x_axis][f_name]['Average']
-                        y_data = self.data[case]["Components"][component]['Counters'][y_axis][f_name]['Average']
+                        x_data = self.data[case]["components"][component]['Counters'][x_axis][f_name]['Average']
+                        y_data = self.data[case]["components"][component]['Counters'][y_axis][f_name]['Average']
                     except KeyError:
                         # If the function was not tracked delete dictionary entry and skip to next function
                         del function_info[component][f_name]
@@ -539,7 +561,7 @@ class TimingInformation:
             pattern = "(scalability)_([0-9a-zA-Z_]+)/(lucia_lite_results/*)"
             _, id, _ = re.match(pattern, lucia_file).groups()
             lucia_df = pd.read_csv(lucia_file)
-            lucia_dict[id] = {"Components" : {}}
+            lucia_dict[id] = {"components" : {}}
             for _, row in lucia_df.iterrows():
                 component = row["component_name"]
                 if component == "oceanx":
@@ -551,8 +573,8 @@ class TimingInformation:
                     lucia_dict[id] |= row[1:].to_dict()
                     lucia_dict[id]["SYPD"] = lucia_dict[id]["sypd"]
                 else:   
-                    lucia_dict[id]["Components"][component] = row[1:].to_dict()
-                    lucia_dict[id]["Components"][component]["SYPD"] = lucia_dict[id]["Components"][component]["sypd"]
+                    lucia_dict[id]["components"][component] = row[1:].to_dict()
+                    lucia_dict[id]["components"][component]["SYPD"] = lucia_dict[id]["components"][component]["sypd"]
 
 
         self.data = merge_dictionaries(self.data, lucia_dict)
@@ -564,7 +586,7 @@ class TimingInformation:
         if self.components_cases is None:
             self.components_cases = {}
             for component in self.components:
-                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["Components"][component]["nproc"])
+                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["components"][component]["nproc"])
 
     def load_timings(self, timing_files):
         import pickle
@@ -575,7 +597,7 @@ class TimingInformation:
         timing_dict = {}
         for timing_fn in timing_files:
             component, id = parse_filename(timing_fn, pattern)
-            address = (id, "Components")
+            address = (id, "components")
             dictionary_section = dictionary_pointer(timing_dict, address)
             dictionary_section[component] = parse_timing_file(timing_fn)
             if "ts_per_second" in timing_dict[id]:
@@ -612,15 +634,15 @@ class TimingInformation:
             for case in self.cases:
                 for component in self.components:
                     component_function_info = {}
-                    component_dict = dictionary_pointer(self.data, (case, "Components", component))
+                    component_dict = dictionary_pointer(self.data, (case, "components", component))
                     for function_name in component_dict["Counters"]["Time"]:
                         component_function_info[function_name] = component_dict["Counters"]["Time"][function_name]["Average"][0]
-                    component_dict["FunctionInfo"] = component_function_info
+                    component_dict["function_info"] = component_function_info
 
         if self.components_cases is None:
             self.components_cases = {}   
             for component in self.components:
-                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["Components"][component]["nproc"])
+                self.components_cases[component] = sorted(self.data, key=lambda f: self.data[f]["components"][component]["nproc"])
 
     def load_ifs(self, files):
         if not files:
@@ -629,7 +651,7 @@ class TimingInformation:
         ifs_dict = {}
         for file in files:
             component, id = parse_filename(file, pattern)
-            address = (id, "Components")
+            address = (id, "components")
             dictionary_section = dictionary_pointer(ifs_dict, address)
             dictionary_section[component] = parse_ifs_file(file)
             if "ts_per_second" in ifs_dict[id]:
@@ -652,7 +674,7 @@ class TimingInformation:
 
     def fix_function_names(self, function_dict):
         for core in function_dict:
-            function_info = function_dict[core]['FunctionInfo']
+            function_info = function_dict[core]['function_info']
             # We can not cycle directly on key, because dictionary will change size, raising an exception
             list_of_function_names = [*function_info]
             for function_name in list_of_function_names:

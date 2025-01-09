@@ -148,7 +148,7 @@ def coupling_info(experiment_data, coupling_folder):
         i = 1
         
         for component in experiment_data.components:
-            component_dict = go_to_dictionary_address(experiment_data.data, (case, "Components", component))
+            component_dict = go_to_dictionary_address(experiment_data.data, (case, "components", component))
             case_data[i, 0] = component
             for j in range(1, columns):
                 case_data[i, j] = str(component_dict[case_data[0, j]])
@@ -180,7 +180,7 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
 
         functions_elapsed_time = {}
         for component in components:
-            functions_elapsed_time.update(go_to_dictionary_address(experiment_data.data, (case, "Components", component, "FunctionInfo")))
+            functions_elapsed_time.update(go_to_dictionary_address(experiment_data.data, (case, "components", component, "function_info")))
 
         sorted_functions = list(sorted(functions_elapsed_time.items(), key=lambda f : f[1], reverse=True))
         for function_name, elapsed_time in sorted_functions:
@@ -275,7 +275,7 @@ def tracking_function_info(experiment_data):
             log_text += "%s" % function
             for case in cases:
                 address = (case,
-                           "FunctionInfo",
+                           "function_info",
                            function,
                            info_type,
                            )
@@ -295,7 +295,7 @@ def function_information_from_paramedir_outputs(experiment_data, component):
     :return: total_time, sorted dictionary with the time for each function
     """
     base_case = experiment_data.base_case
-    address = (base_case, "Components", component)
+    address = (base_case, "components", component)
     component_dictionary = go_to_dictionary_address(experiment_data, address)
     functions_time = {}
     total_time = 0
@@ -345,7 +345,7 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
     base_case = experiment_data.base_case
     address = (
         base_case,
-        "Components",
+        "components",
         component,
         "Counters",
         "MPIcallprofile",
@@ -394,7 +394,7 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
         log_txt = "%s" % case
         address = (
             case,
-            "Components",
+            "components",
             component,
             "Counters",
             "MPIcallprofile",
@@ -414,7 +414,7 @@ def tracking_counters_per_function(experiment_data, function, component):
     log = Log()
     base_case = experiment_data.base_case
     cases = experiment_data.cases
-    address = (base_case, "Components", "nemo", "Counters")
+    address = (base_case, "components", "nemo", "Counters")
     counters_dictionary = go_to_dictionary_address(experiment_data, address)
     available_counters = list(counters_dictionary.keys())
     available_counters = ["Instructions", "Cycles", "IPC", "Time"]
@@ -430,7 +430,7 @@ def tracking_counters_per_function(experiment_data, function, component):
         log_text = "%s" % case
         for counter in available_counters:
             address = (case,
-                       "Components",
+                       "components",
                        component,
                        "Counters",
                        counter,
@@ -460,7 +460,7 @@ def generate_sypd_summary_data(experiment_data, component=""):
     else:
         cases = experiment_data.components_cases[component]
         base_case = cases[0]
-        address = (base_case, "Components", component)
+        address = (base_case, "components", component)
         base_case_data = go_to_dictionary_address(experiment_data.data, address)
     
     base_case_procs = base_case_data["nproc"]
@@ -471,7 +471,7 @@ def generate_sypd_summary_data(experiment_data, component=""):
         if component == "":
             case_data = experiment_data.data[case]
         else:
-            address = (case, "Components", component)
+            address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
         speed = case_data["SYPD"]
         speedup = speed / base_case_speed
@@ -510,15 +510,15 @@ def generate_sypd_plot_data(experiment_data, component=""):
         cases = experiment_data.cases
     else:
         base_case = experiment_data.components_cases[component][0]
-        base_case_speed = experiment_data.data[base_case]["Components"][component]["SYPD"]
-        base_case_procs = experiment_data.data[base_case]["Components"][component]["nproc"]
+        base_case_speed = experiment_data.data[base_case]["components"][component]["SYPD"]
+        base_case_procs = experiment_data.data[base_case]["components"][component]["nproc"]
         cases = experiment_data.components_cases[component]
     
     for case in cases:
         if component == "":
             case_data = experiment_data.data[case]
         else:
-            address = (case, "Components", component)
+            address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
         speed = case_data["SYPD"]
         speedup = speed / base_case_speed
@@ -551,13 +551,17 @@ def cases_component_data(experiment_data):
     
     header = "Case"
     for component in experiment_data.components:
-        header += ",%s (nproc)" % component
+        header += f",{component} nproc"
+        header += f",{component} resolution"
     log.add(header)
     
     for case in experiment_data.cases:
         row = case
         for component in experiment_data.components:
-            row += ",%i" % experiment_data[case]["Components"][component]["nproc"]
+            row += f',{experiment_data[case]["components"][component]["nproc"]}'
+            row += f','
+            if "resolution" in experiment_data[case]["components"][component]:
+                row += '{experiment_data[case]["components"][component]["resolution"]}'
         log.add(row)
     
     log.save("cases_info.csv")
@@ -590,8 +594,8 @@ def experiment_comparison(experiment1, experiment2):
             "                     %4i processes  speed :  %5.1f|%5.1f SYPD   SpeedUp:   %4.1fx |%4.1fx   Efficiency: %4.2f|%4.2f  -> %.2f ratio." %
             (case, exp1_speed, exp2_speed, exp1_speedup, exp2_speedup, exp1_efficiency, exp2_efficiency, ratio))
     # Time-step length
-    exp1_base_length = experiment1[base_case]["TimeStepTime"]
-    exp2_base_length = experiment2[base_case]["TimeStepTime"]
+    exp1_base_length = experiment1[base_case]["time_step_time"]
+    exp2_base_length = experiment2[base_case]["time_step_time"]
     log.add("_" * 30)
     log.add("Base time-step length(s) with %4i processes:    %4.2f | %4.2f" %
             (base_case, exp1_base_length, exp2_base_length))
@@ -599,8 +603,8 @@ def experiment_comparison(experiment1, experiment2):
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_length = experiment1[case]["TimeStepTime"]
-        exp2_length = experiment2[case]["TimeStepTime"]
+        exp1_length = experiment1[case]["time_step_time"]
+        exp2_length = experiment2[case]["time_step_time"]
         log.add("                              %4i processes:    %4.2f | %4.2f" % (case, exp1_length, exp2_length))
     return log
 
@@ -674,9 +678,11 @@ def generate_weakscaling_data(experiments: list, component: str = "") -> Log:
     if component == "":
         number_of_processes = [experiment[experiment.base_case]["nproc"] for experiment in experiments]
         field_data = [[exp.data[core][field] for core in exp.data] for exp in experiments]
+        resolution = [["-" for _ in exp.data] for exp in experiments]
     else:
-        number_of_processes = [experiment[experiment.base_case]["Components"][component]["nproc"] for experiment in experiments]
-        field_data = [[exp.data[core]["Components"][component][field] for core in exp.data] for exp in experiments]
+        number_of_processes = [experiment[experiment.base_case]["components"][component]["nproc"] for experiment in experiments]
+        field_data = [[exp.data[core]["components"][component][field] for core in exp.data] for exp in experiments]
+        resolution = [[exp.data[core]["components"][component]["resolution"] for core in exp.data] for exp in experiments]
 
 
     configurations = [exp.param_file["configuration_name"][0] for exp in experiments]
@@ -685,11 +691,10 @@ def generate_weakscaling_data(experiments: list, component: str = "") -> Log:
 
     # Get average duration of the timesteps with this config
     log = Log()
-    log.add(f"Config, Ncores, {field}")
+    log.add(f"Config, Ncores, resolution, {field}")
     for index_conf, conf in enumerate(configurations):
-        for test_field in field_data[index_conf]:
-            log.add(conf + ",%i" % number_of_processes[index_conf] +
-                    ", %5.2f " % test_field)  
+        for field_idx, test_field in enumerate(field_data[index_conf]):
+            log.add(f"{conf}, {number_of_processes[index_conf]}, {resolution[index_conf][field_idx]}, {test_field}")  
 
     return log
 
@@ -714,9 +719,9 @@ def find_common_cases_and_functions(experiments):
     base_case = min(common_cases)
 
     # Search common functions
-    common_functions = set(experiments[0][base_case]["FunctionInfo"].keys())
+    common_functions = set(experiments[0][base_case]["function_info"].keys())
     for experiment in experiments[1:]:
-        common_functions.intersection_update(experiment[base_case]["FunctionInfo"].keys())
+        common_functions.intersection_update(experiment[base_case]["function_info"].keys())
     common_functions = list(common_functions)
 
     return common_cases, common_functions
@@ -727,7 +732,7 @@ def extract_data_from_experiments(experiments):
     data = []
     for experiment in experiments:
         for case in experiment.cases:
-            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case]["TimeStepTime"])
+            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case]["time_step_time"])
             data.append(to_append)
     return data
 
@@ -836,7 +841,7 @@ def fit_functions_to_model(experiments, function_name=None):
 
 def get_functions_data(experiments, function_name=None):
     from math import ceil
-    fun_key = "FunctionInfo"
+    fun_key = "function_info"
     data = []
     for experiment in experiments:
         base_case = experiment.base_case
@@ -862,7 +867,7 @@ def oversimplified_memory_model(experiments):
     print("Overall model:")
     print("MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" % (100. * mb / tt, 100. * cb / tt, 100. * error / tt))
     print("Top10 Functions:")
-    functions = list(experiments[0].data[experiments[0].base_case]["FunctionInfo"].labels())
+    functions = list(experiments[0].data[experiments[0].base_case]["function_info"].labels())
     functions = functions[:10]
     for function in functions:
         error, parameters = fit_functions_to_model(experiments, function_name=function)

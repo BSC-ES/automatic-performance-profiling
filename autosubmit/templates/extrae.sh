@@ -24,6 +24,9 @@ output="%TRACING.OUTPUT%"
 papi_counters="%TRACING.PAPI_COUNTERS%"
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 platform=%DEFAULT.HPCARCH%
+components="%MODEL.COMPONENTS%"
+components=${components//[\[,\]]/}
+components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 
 #####################################################################################################################
 # Brief: Creates the extrae configuration file using the AS variables
@@ -313,10 +316,17 @@ function trace_ecearth4()
 
     actual_nemo_procs=$(grep "exceeds the maximum number of ocean subdomains" log/001/ocean.output | grep -oE "[0-9]+" || echo ${nemo_procs})
 
-    components=("xios" "nemo" "rnf" "oifs")
+    trace_components=("xios" "nemo" "rnf" "oifs")
     processors=($xios_procs $nemo_procs 1 $oifs_procs)
 
-    cut_trace components processors "${model}.prv"
+    cut_trace trace_components processors "${model}.prv"
+
+    for component in $components; do
+        component_procs="${component}_procs"
+        component_resolution="${component}_resolution"
+        component_ts_length=$(cat ${component}_fastest_ts.txt)
+        echo "${component},${!component_procs},${!component_resolution},${component_ts_length}" >> ${run_dir}/${run_id}-test_info.csv
+    done
 
     rm -rf set-* ./*.nc
 }

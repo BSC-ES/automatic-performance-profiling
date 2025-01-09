@@ -23,12 +23,13 @@ ppn=%PROCESSORS_PER_NODE%
 
 # Set the input files depending on the model
 reporter_params=""
+input_files="scalability_*/*-test_info.csv "
 case  "${model}" in
     "nemo")
-        input_files="scalability_*/*-timing.output"
+        input_files+="scalability_*/*-timing.output"
     ;;
     "ecearth4")
-        input_files="scalability_*/lucia_lite_results/table.csv scalability_*/*-ifs.stat scalability_*/*-timing.output"
+        input_files+="scalability_*/lucia_lite_results/table.csv scalability_*/*-ifs.stat scalability_*/*-timing.output"
         reporter_params="--coupling-folder coupling"
     ;;
 esac
