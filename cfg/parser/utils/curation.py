@@ -179,7 +179,7 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
             ts_length = max(float(experiment_data.data[case]["components"][component]["ts_length"]) / pow(10, 6), ts_length)
 
         header.append("function_name")
-        header.append(case + " (percentage)")
+        header.append(case + " (percent)")
         n_function = 0
 
         functions_elapsed_time = {}
@@ -191,7 +191,8 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
             if n_function < length_summary + 1:
                 function_names[case_idx].append(function_name)
                 TIME_data[n_function].append(function_name)
-                TIME_data[n_function].append(str(elapsed_time / ts_length * 100))
+                uf_percentage = elapsed_time / ts_length * 100
+                TIME_data[n_function].append(f"{uf_percentage:.2f}")
                 n_function += 1
             else:
                 break
@@ -562,10 +563,12 @@ def cases_component_data(experiment_data):
     for case in experiment_data.cases:
         row = case
         for component in experiment_data.components:
-            row += f',{experiment_data[case]["components"][component]["nproc"]}'
-            row += f','
+            component_nproc = experiment_data[case]["components"][component]["nproc"]
+            row += f",{component_nproc}"
+            row += ","
             if "resolution" in experiment_data[case]["components"][component]:
-                row += '{experiment_data[case]["components"][component]["resolution"]}'
+                component_resolution = experiment_data[case]["components"][component]["resolution"]
+                row += f"{component_resolution}"
         log.add(row)
     
     log.save("cases_info.csv")

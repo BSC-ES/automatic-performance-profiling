@@ -12,28 +12,6 @@ import re
 
 from cfg.latex.csv_formatter import converter
 
-
-def report_load(report_name):
-    if not report_name.count(".pkl"):
-        report_name = report_name + ".pkl"
-    try:
-        pkl_obj = pickle.load(open(report_name, "rb"))
-        # Update the path, in case the file has been moved
-        pkl_obj.obj_name = report_name
-        # Update the name, in case the file has been renamed
-        pkl_obj.name = report_name.split("/")[-1].replace(".pkl", "")
-        try:
-            isinstance(pkl_obj, Report)
-        except AssertionError:
-            raise AssertionError("The loaded object has not been created with this version of the geneator. \n"
-                                 " Please delete it and run again.")
-
-    except IOError:
-        print("No info, a new report will be created")
-        pkl_obj = Report(report_name)
-    return pkl_obj
-
-
 def get_files_from_path(file_path, extension=None):
     # Manage input parameter passed with the nargs='+' option set
     if isinstance(file_path, list):
@@ -141,7 +119,11 @@ class LatexText:
         self.add_text("\centering")
         self.add_text("\caption{" + csv_file.caption + "}")
         if csv_file.fit_margins:
-            self.add_text("\\resizebox{1.5\\textwidth}{!}{")
+            if csv_file.rotate:
+                factor = 1.5
+            else:
+                factor = 1
+            self.add_text(f"\\resizebox{{{factor}\\textwidth}}{{!}}{{")
         self.add_text("\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}")
         if csv_file.fit_margins:
             self.add_text("}")
@@ -673,6 +655,25 @@ class Report:
                 for ss_csv in ss.csv_files:
                     print("      --csv:", ss_csv.path)
 
+def report_load(report_name) -> Report:
+    if not report_name.count(".pkl"):
+        report_name = report_name + ".pkl"
+    try:
+        pkl_obj = pickle.load(open(report_name, "rb"))
+        # Update the path, in case the file has been moved
+        pkl_obj.obj_name = report_name
+        # Update the name, in case the file has been renamed
+        pkl_obj.name = report_name.split("/")[-1].replace(".pkl", "")
+        try:
+            isinstance(pkl_obj, Report)
+        except AssertionError:
+            raise AssertionError("The loaded object has not been created with this version of the geneator. \n"
+                                 " Please delete it and run again.")
+
+    except IOError:
+        print("No info, a new report will be created")
+        pkl_obj = Report(report_name)
+    return pkl_obj
 
 def get_command_line_arguments():
     """

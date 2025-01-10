@@ -172,7 +172,7 @@ function add_user_functions() {
             -s "Functions detailed report" \
             -ss "Most expensive function summary" \
             --add-csv most_expensive_function_summary.csv \
-            --add-caption "Most time-consuming functions for the whole model."
+            --add-caption "Most time-consuming functions for the whole model." -f
     fi
 
     for component in "${components[@]}"; do
@@ -183,7 +183,7 @@ function add_user_functions() {
             -s "${component^^} Functions detailed report" \
             -ss "Most expensive function summary" \
             --add-csv ${component}_most_expensive_function_summary.csv \
-            --add-caption "Most time-consuming functions for ${component^^}."
+            --add-caption "Most time-consuming functions for ${component^^}." -f
 
         # Add papi counters plots plots
         local papi_counters_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
