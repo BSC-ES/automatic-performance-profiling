@@ -521,9 +521,11 @@ echo model=${model^^} > param.cfg
 echo configuration_name=${configuration_name} >> param.cfg
 title="%REPORT.TITLE%"
 authors="%REPORT.AUTHORS%"
+logo_path="%REPORT.LOGO_PATH%"
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --add-newcommand param.cfg
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-title "${title}"
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-authors "${authors}"
+python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --logo-path "${logo_path}"
 
 # Create the tex file
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path} --dump-to-file

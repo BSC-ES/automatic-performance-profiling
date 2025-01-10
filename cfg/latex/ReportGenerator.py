@@ -440,7 +440,6 @@ class Report:
         self.authors = ""
         self.newcommand = {}
         self.newcommand_file = "newcommand_file.tex"
-        self.bsc_logo_url = 'https://urbandatalab.pt/images/partners/bsc.png'
         self.preamble = "\documentclass[11pt,a4paper,oldfontcommands]{article} \n" \
                         "\maxdeadcycles=2000 \n" \
                         "\\usepackage{graphicx} \n" \
@@ -463,6 +462,10 @@ class Report:
                                                            "\makeatother \n"
 
         self.text = None
+        self.logo_path = None
+
+    def set_logo_path(self, logo_path: str):
+        self.logo_path = logo_path
 
     def add_title(self, title):
         self.title = title
@@ -488,13 +491,15 @@ class Report:
             self.preamble = self.preamble.replace("AUTHORS", self.authors)
 
     def __set_logo(self):
-        abs_logo_path = self.image_folder + "/BSC_Logo.png"
-        rel_logo_path = "image/BSC_Logo.png"
+        if self.logo_path is None:
+            return
+
+        import shutil
+        rel_logo_path = "image/logo.png"
+        abs_logo_path = self.image_folder + "/logo.png"
+
+        shutil.copy(self.logo_path, abs_logo_path)
         self.preamble = self.preamble.replace("LOGO", rel_logo_path)
-        with urllib.request.urlopen(self.bsc_logo_url) as img:
-            img_logo = io.BytesIO(img.read())
-            im = Image.open(img_logo)
-            im.save(abs_logo_path)
 
     def __begin_doc(self):
         self.image_folder = self.absolute_path + "/image"
@@ -728,6 +733,9 @@ def get_command_line_arguments():
     parser.add_argument("--add-newcommand",
                         type=PathType(exists=True, type="file"), default=None,
                         help="File which contains variable definitions that can be used in Fig. or Tab captions")
+    parser.add_argument("-l", "--logo-path",
+                        type=PathType(exists=True, type="file"), default=None,
+                        help="Path to the title page logo")
     args = parser.parse_args()
 
     if args.add_csv is not None and args.section_title is None:
@@ -769,6 +777,7 @@ if __name__ == "__main__":
     inspect_pkl_obj = args.inspect
     silent_mode = args.silent
     newcommand_file = args.add_newcommand
+    logo_path = args.logo_path
 
     # Load a report if exist, create a new one in case it doesn't
     report = report_load(report_obj)
@@ -784,6 +793,9 @@ if __name__ == "__main__":
 
         if newcommand_file is not None:
             report.add_newcommand(newcommand_file)
+
+        if logo_path is not None:
+            report.set_logo_path(logo_path)
 
         # Some content has to be added to pkl object
         if section_title is not None:
