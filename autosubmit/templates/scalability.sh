@@ -122,8 +122,8 @@ function run_ecearth4()
         local nemo_base_procs=%WEAKSCALING.NEMO_BASE_PROCS%
         local nemo_base_resolution=%WEAKSCALING.NEMO_BASE_RESOLUTION%
         local base_tile_size=${nemo_resolutions[${nemo_base_resolution^^}]}
-        local curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
-        local nemo_procs=$((nemo_base_procs*curr_tile_size/base_tile_size))
+        local nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
+        local nemo_procs=$((nemo_base_procs*nemo_curr_tile_size/base_tile_size))
 
         . ${project}/configurations/model/oifs/resolutions.sh 
         # Overwrite resolution var with the current test resolution
@@ -131,8 +131,8 @@ function run_ecearth4()
         local oifs_base_procs=%WEAKSCALING.OIFS_BASE_PROCS%
         local oifs_base_resolution=%WEAKSCALING.OIFS_BASE_RESOLUTION%
         local base_tile_size=${oifs_resolutions[${oifs_base_resolution^^}]}
-        local curr_tile_size=${oifs_resolutions[${oifs_resolution^^}]}
-        local oifs_procs=$((oifs_base_procs*curr_tile_size/base_tile_size))
+        local oifs_curr_tile_size=${oifs_resolutions[${oifs_resolution^^}]}
+        local oifs_procs=$((oifs_base_procs*oifs_curr_tile_size/base_tile_size))
     else 
         local oifs_procs="%CURRENT_OIFS_PROCS%"
         local nemo_procs="%CURRENT_NEMO_PROCS%"
@@ -161,11 +161,12 @@ function run_ecearth4()
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
-    sed -i "s/OIFS_PROCS/${oifs_procs}/"             ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
-    sed -i "s/OIFS_PPN/${oifs_procs}/"               ${config_file}
-    sed -i "s/NEMO_PROCS/${nemo_procs}/"             ${config_file}
-    sed -i "s/NEMO_PPN/${nemo_procs}/"               ${config_file}
+    for component in ${components}; do
+        component_procs=${component}_procs
+        sed -i "s/${component^^}_PPN/${!component_procs}/"   ${config_file}
+        sed -i "s/${component^^}_PROCS/${!component_procs}/" ${config_file}
+    done 
     sed -i "s/XIOS_PROCS/${xios_procs}/"             ${config_file}
     sed -i "s/XIOS_PPN/${xios_procs}/"               ${config_file}
     sed -i "s/FREQUENCY/${freq}/"                    ${config_file}
@@ -201,7 +202,12 @@ function run_ecearth4()
     coupling_enabled=${coupling_enabled,,}
     if ${coupling_enabled}; then
         cd ${run_dir} || exit
-        python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 30
+        lucia_ts=$(cat time.step)
+        lucia_ts=$((lucia_ts-1))
+
+        while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} && [ $lucia_ts -gt 0 ]; do
+            lucia_ts=$((lucia_ts-1))
+        done
 
         run_id=${run_dir//*scalability_}
         coupling_dir=${test_dir}/coupling/${run_id}
@@ -213,12 +219,20 @@ function run_ecearth4()
     cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat
     cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
 
+    # Create test info csv for the JSON
     test_info_fn=${run_dir}/${run_id}-test_info.csv
-    echo "component,nproc,resolution" > ${test_info_fn}
+    header="component,nproc,resolution"
+    if [ "$current_member" = "WeakScaling" ]; then header+=",grid_points"; fi
+    echo ${header} > ${test_info_fn}
     for component in $components; do
         component_procs="${component}_procs"
         component_resolution="${component}_resolution"
-        echo "${component},${!component_procs},${!component_resolution}" >> ${test_info_fn}
+        row="${component},${!component_procs},${!component_resolution}"
+        if [ "$current_member" = "WeakScaling" ]; then 
+            component_grid_points="${component}_curr_tile_size"
+            row+=",${!component_grid_points}"
+        fi
+        echo ${row} >> ${test_info_fn}
     done
 }
 

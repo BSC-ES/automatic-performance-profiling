@@ -686,10 +686,12 @@ def generate_weakscaling_data(experiments: list, component: str = "") -> Log:
         number_of_processes = [experiment[experiment.base_case]["nproc"] for experiment in experiments]
         field_data = [[exp.data[core][field] for core in exp.data] for exp in experiments]
         resolution = [["-" for _ in exp.data] for exp in experiments]
+        grid_points = [["-" for _ in exp.data] for exp in experiments]
     else:
         number_of_processes = [experiment[experiment.base_case]["components"][component]["nproc"] for experiment in experiments]
         field_data = [[exp.data[core]["components"][component][field] for core in exp.data] for exp in experiments]
         resolution = [[exp.data[core]["components"][component]["resolution"] for core in exp.data] for exp in experiments]
+        grid_points = [[exp.data[core]["components"][component]["grid_points"] for core in exp.data] for exp in experiments]
 
 
     configurations = [exp.param_file["configuration_name"][0] for exp in experiments]
@@ -698,10 +700,11 @@ def generate_weakscaling_data(experiments: list, component: str = "") -> Log:
 
     # Get average duration of the timesteps with this config
     log = Log()
-    log.add(f"Config, Ncores, resolution, {field}")
+    field_header = field.title()
+    log.add(f"Config, Ncores, Resolution, {field_header}, Gridpoints")
     for index_conf, conf in enumerate(configurations):
         for field_idx, test_field in enumerate(field_data[index_conf]):
-            log.add(f"{conf}, {number_of_processes[index_conf]}, {resolution[index_conf][field_idx]}, {test_field}")  
+            log.add(f"{conf}, {number_of_processes[index_conf]}, {resolution[index_conf][field_idx]}, {test_field}, {grid_points[index_conf][field_idx]}")  
 
     return log
 
