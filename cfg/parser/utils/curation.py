@@ -678,33 +678,34 @@ def multiexperiment_comparison(experiments, field1):
     return log
 
 
-def generate_weakscaling_data(experiments: list, component: str = "") -> Log:
+def generate_weakscaling_data(experiments: list, component_to_report: str = "") -> Log:
     log = Log()
 
-    field = "ts_per_second"
-    if component == "":
-        number_of_processes = [experiment[experiment.base_case]["nproc"] for experiment in experiments]
-        field_data = [[exp.data[core][field] for core in exp.data] for exp in experiments]
-        resolution = [["-" for _ in exp.data] for exp in experiments]
-        grid_points = [["-" for _ in exp.data] for exp in experiments]
-    else:
-        number_of_processes = [experiment[experiment.base_case]["components"][component]["nproc"] for experiment in experiments]
-        field_data = [[exp.data[core]["components"][component][field] for core in exp.data] for exp in experiments]
-        resolution = [[exp.data[core]["components"][component]["resolution"] for core in exp.data] for exp in experiments]
-        grid_points = [[exp.data[core]["components"][component]["grid_points"] for core in exp.data] for exp in experiments]
+    header = "Config, Ncores, Resolution, Ts per second, Gridpoints"
+    log.add(header)
 
+    for exp_idx, experiment in enumerate(experiments):
+        for case_dict in experiment.data.values():
+            if component_to_report == "":
+                case_metrics = case_dict
+                grid_points = ""
+                resolution = ""
+                for c_idx, component in enumerate(experiment.components):
+                    if c_idx != 0:
+                        resolution += "+"
+                        grid_points += "+"
+                    resolution += case_metrics["components"][component]["resolution"]
+                    grid_points += case_metrics["components"][component]["grid_points"]
+            else:
+                case_metrics = go_to_dictionary_address(case_dict, ("components", component_to_report))
+                grid_points = case_metrics["grid_points"]
+                resolution = case_metrics["resolution"]
 
-    configurations = [exp.param_file["configuration_name"][0] for exp in experiments]
-    # Get tail sizes for configurations
-    # Get number of cores
+            conf = f"WS_{exp_idx}"
+            nproc = case_metrics["nproc"]
+            ts_per_second = float(case_metrics["ts_per_second"])
 
-    # Get average duration of the timesteps with this config
-    log = Log()
-    field_header = field.title()
-    log.add(f"Config, Ncores, Resolution, {field_header}, Gridpoints")
-    for index_conf, conf in enumerate(configurations):
-        for field_idx, test_field in enumerate(field_data[index_conf]):
-            log.add(f"{conf}, {number_of_processes[index_conf]}, {resolution[index_conf][field_idx]}, {test_field}, {grid_points[index_conf][field_idx]}")  
+            log.add(f"{conf}, {nproc}, {resolution}, {ts_per_second:.2f}, {grid_points}")
 
     return log
 
