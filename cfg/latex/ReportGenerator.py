@@ -49,89 +49,140 @@ def get_files_from_path(file_path, extension=None):
             else:
                 raise AssertionError("File %s does not exist", file_path)
 
+class CsvFile:
+    def __init__(self, _path, _section_name: str, _subsection_name=None, _subsubsection_name=None, _purge=False, _convert=False, _caption=None, _rotate=False, _fit_margins=False):
+        self.path = _path
+        self.store_path = None
+        self.name = self.path.split("/")[-1]
+        self.label = "tab:" + self.name.replace(".csv", "")
+        self.caption = self.label.replace("_", "\\_").replace("tab:", "") if _caption is None else _caption
+        self.csv_data = None
+        self.section = _section_name
+        self.subsection = _subsection_name
+        self.subsubsection = _subsubsection_name
+        self.rotate = _rotate
+        self.fit_margins = _fit_margins
+        self.store(csv_convert=_convert, csv_purge=_purge)
 
-class LatexText:
-    def __init__(self):
-        self.text = ""
+    def purge_csv_data(self):
+        n_col = len(self.csv_data[0])
+        n_row = len(self.csv_data[1:])
 
-    def add_text(self, txt):
-        self.text = self.text + txt
-        self.new_line()
+        # Reverse otherwise removing data will end in an out of range error
+        for col in reversed(range(n_col)):
+            try:
+                col_val = [int(data[col]) for data in self.csv_data[1:]]
+                check_list = [0] * n_row
+            except ValueError:
+                try:
+                    col_val = [float(data[col]) for data in self.csv_data[1:]]
+                    check_list = [0.0] * n_row
+                except ValueError:
+                    continue
+            if col_val == check_list:
+                # Now we want to remove entries also from the header
+                for row in range(n_row + 1):
+                    self.csv_data[row].remove(self.csv_data[row][col])
 
-    def new_line(self):
-        self.text = self.text + "\n"
-
-    def clearpage(self):
-        self.add_text("\clearpage")
-
-    def add_section2tex(self, section):
-        self.clearpage()
-        self.add_text("\section{" + section.section_title.replace("_", "\_") + "}")
-        # self.clearpage()
-        if section.text is not None:
-            self.add_text(section.text)
-
-    def add_subsection2tex(self, subsection):
-        # self.clearpage()
-        self.add_text("\subsection{" + subsection.subsection_title.replace("_", "\_") + "}")
-        # self.clearpage()
-        if subsection.text is not None:
-            self.add_text(subsection.text)
-        
-    def add_subsubsection2tex(self, subsubsection):
-        self.add_text("\subsubsection{" + subsubsection.subsubsection_title.replace("_", "\_") + "}")
-
-        if subsubsection.text is not None:
-            self.add_text(subsubsection.text)
-
-    def add_image2tex(self, image, absolute_path):
-        try:
-            isinstance(image, ImgFile)
-        except AssertionError:
-            raise AssertionError("Error with %s: is this an image?", image)
-        # Update path
-        image.store_path = image.store_path
-        # Create img dir if it doesn't exist
-        makedirs(absolute_path + image.store_path, exist_ok=True)
-        image.dump2disk(absolute_path)
-        self.new_line()
-        self.add_text("\\begin{figure}[H]")
-        self.add_text("\includegraphics[width=\linewidth]{" + image.store_path + "/" + image.name + "}")
-        self.add_text("\caption{" + image.caption + "}")
-        self.add_text("\label{" + image.label + "}")
-        self.add_text("\end{figure}")
-        self.new_line()
-
-    def add_csv2tex(self, csv_file, absolute_path):
-        try:
-            isinstance(csv_file, CsvFile)
-        except AssertionError:
-            raise AssertionError("Error with %s: is this an csv?", csv_file)
-        # Update path
-        csv_file.store_path = csv_file.store_path
-        # Create img dir if it doesn't exist
-        makedirs(absolute_path + csv_file.store_path, exist_ok=True)
-        csv_file.dump2disk(absolute_path)
-        self.new_line()
-        if csv_file.rotate:
-            self.add_text("\\begin{landscape}")
-        self.add_text("\\begin{table}[H]")
-        self.add_text("\centering")
-        self.add_text("\caption{" + csv_file.caption + "}")
-        if csv_file.fit_margins:
-            if csv_file.rotate:
-                factor = 1.5
+    def store(self, text=None, csv_convert=False, csv_purge=False):
+        if text is None:
+            if csv_convert:
+                self.csv_data = converter(self.path, summary=True)
             else:
-                factor = 1
-            self.add_text(f"\\resizebox{{{factor}\\textwidth}}{{!}}{{")
-        self.add_text("\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}")
-        if csv_file.fit_margins:
-            self.add_text("}")
-        self.add_text("\end{table}")
-        if csv_file.rotate:
-            self.add_text("\end{landscape}")
-        self.new_line()
+                with open(self.path, newline='') as csv_file:
+                    self.csv_data = list(csv.reader(csv_file))
+                    # Remove rows if they're empty
+                    self.csv_data = [d for d in self.csv_data if d != []]
+            # If specified, remove empty columns from csv file
+            if csv_purge:
+                self.purge_csv_data()
+        else:
+            self.csv_data = text
 
+        # Path where the file data will be dumped
+        self.store_path = "csv/" + self.section
+        if self.subsection is not None:
+            self.store_path = self.store_path + "/" + self.subsection
+            if self.subsubsection is not None:
+                self.store_path = self.store_path + "/" + self.subsubsection
+
+    def purge_csv_data(self):
+        n_col = len(self.csv_data[0])
+        n_row = len(self.csv_data[1:])
+
+        # Reverse otherwise removing data will end in an out of range error
+        for col in reversed(range(n_col)):
+            try:
+                col_val = [int(data[col]) for data in self.csv_data[1:]]
+                check_list = [0] * n_row
+            except ValueError:
+                try:
+                    col_val = [float(data[col]) for data in self.csv_data[1:]]
+                    check_list = [0.0] * n_row
+                except ValueError:
+                    continue
+            if col_val == check_list:
+                # Now we want to remove entries also from the header
+                for row in range(n_row + 1):
+                    self.csv_data[row].remove(self.csv_data[row][col])
+
+    # Writes csv data to file
+    def dump2disk(self, absolute_path):
+        if exists(absolute_path + self.store_path + "/" + self.name):
+            import hashlib
+            hash_name = hashlib.sha256(self.path.encode("utf8")).hexdigest()
+            self.name = hash_name + "_" + self.name
+        with open(absolute_path + self.store_path + "/" + self.name, 'wt') as f_output:
+            csv_output = csv.writer(f_output)
+            for data_row in self.csv_data:
+                data_row = [dr.replace("_", "-") for dr in data_row]
+                csv_output.writerow(data_row)
+
+class ImgFile:
+    def __init__(self, _path, _section, _subsection=None, _subsubsection=None, _caption=None):
+        self.path = _path
+        self.store_path = None
+        self.name = self.path.split("/")[-1]
+        self.extension = self.name.split(".")[-1]
+        self.label = "fig:" + self.name.replace(self.extension, "")
+        self.caption = _caption
+        self.pic = None
+        self.section = _section
+        self.subsection = _subsection
+        self.subsubsection = _subsubsection
+
+        if self.caption is not None:
+            # Check if newcommands has been used, and convert to camelcase
+            if self.caption.count("${"):
+                pattern="\${([A-zA-z_]+)}"
+                for word in self.caption.split():
+                    try:
+                        newcommand = re.search(pattern, word).group(1)
+                        newcommand = "".join([nc.capitalize() for nc in newcommand.split("_")])
+                        newcommand = "\\" + newcommand
+                        self.caption = self.caption.replace(word, newcommand)
+                    except AttributeError:
+                        continue
+        else:
+            self.caption = self.name
+        self.caption = self.caption.replace("_", "-")
+
+    # Stores the image in an obj
+    def store(self):
+        with open(self.path, "rb") as img:
+            self.pic = io.BytesIO(img.read())
+
+        # Path where the img will be saved
+        self.store_path = "image/" + self.section
+        if self.subsection is not None:
+            self.store_path = self.store_path + "/" + self.subsection
+            if self.subsubsection is not None:
+                self.store_path = self.store_path + "/" + self.subsubsection
+
+    # Dumps the image to  the location specified in path
+    def dump2disk(self, absolute_path):
+        im = Image.open(self.pic)
+        im.save(absolute_path + self.store_path + "/" + self.name)
 
 class Section:
     def __init__(self, _title):
@@ -223,6 +274,7 @@ class Section:
         with open(section_text, 'r') as section_text_file:
             self.text = section_text_file.read()
 
+
 class Subsection(Section):
     def __init__(self, _section_title, _subsect_title):
         super(Subsection, self).__init__(_section_title)
@@ -253,10 +305,11 @@ class Subsection(Section):
                 return subsubsection
         return None
 
+
 class Subsubsection(Subsection):
-    def __init__(self, _section_title, _subsect_title, _subsubsect_title):
+    def __init__(self, _section_title: str, _subsect_title: str, _subsubsect_title: str):
         super(Subsubsection, self).__init__(_section_title, _subsect_title)
-        self.subsubsection_title = _subsubsect_title
+        self.subsubsection_title: str = _subsubsect_title
         print(self.subsubsection_title)
         self.subsubsection_name = self.subsection_title.lower().replace(" ", "_")
         self.subsubsection_number = 0
@@ -273,145 +326,95 @@ class Subsubsection(Subsection):
     def add_text_as_csv(self, csv_format_text, computed_quantity):
         super(Subsubsection, self).add_text_as_csv(csv_format_text, computed_quantity, self.subsubsection_name)
 
-class ImgFile:
-    def __init__(self, _path, _section, _subsection=None, _subsubsection=None, _caption=None):
-        self.path = _path
-        self.store_path = None
-        self.name = self.path.split("/")[-1]
-        self.extension = self.name.split(".")[-1]
-        self.label = "fig:" + self.name.replace(self.extension, "")
-        self.caption = _caption
-        self.pic = None
-        self.section = _section
-        self.subsection = _subsection
-        self.subsubsection = _subsubsection
 
-        if self.caption is not None:
-            # Check if newcommands has been used, and convert to camelcase
-            if self.caption.count("${"):
-                pattern="\${([A-zA-z_]+)}"
-                for word in self.caption.split():
-                    try:
-                        newcommand = re.search(pattern, word).group(1)
-                        newcommand = "".join([nc.capitalize() for nc in newcommand.split("_")])
-                        newcommand = "\\" + newcommand
-                        self.caption = self.caption.replace(word, newcommand)
-                    except AttributeError:
-                        continue
-        else:
-            self.caption = self.name
-        self.caption = self.caption.replace("_", "-")
+class LatexText:
+    def __init__(self):
+        self.text = ""
+        self.in_landscape = False
 
-    # Stores the image in an obj
-    def store(self):
-        with open(self.path, "rb") as img:
-            self.pic = io.BytesIO(img.read())
+    def add_text(self, txt):
+        self.text = self.text + txt
+        self.new_line()
 
-        # Path where the img will be saved
-        self.store_path = "image/" + self.section
-        if self.subsection is not None:
-            self.store_path = self.store_path + "/" + self.subsection
-            if self.subsubsection is not None:
-                self.store_path = self.store_path + "/" + self.subsubsection
+    def new_line(self):
+        self.text = self.text + "\n"
 
-    # Dumps the image to  the location specified in path
-    def dump2disk(self, absolute_path):
-        im = Image.open(self.pic)
-        im.save(absolute_path + self.store_path + "/" + self.name)
+    def clearpage(self):
+        self.add_text("\clearpage")
 
+    def add_section2tex(self, section: Section):
+        self.clearpage()
+        self.add_text("\section{" + section.section_title.replace("_", "\_") + "}")
+        # self.clearpage()
+        if section.text is not None:
+            self.add_text(section.text)
 
-class CsvFile:
-    def __init__(self, _path, _section_name, _subsection_name=None, _subsubsection_name=None, _purge=False, _convert=False, _caption=None, _rotate=False, _fit_margins=False):
-        self.path = _path
-        self.store_path = None
-        self.name = self.path.split("/")[-1]
-        self.label = "tab:" + self.name.replace(".csv", "")
-        self.caption = self.label.replace("_", "\\_").replace("tab:", "") if _caption is None else _caption
-        self.csv_data = None
-        self.section = _section_name
-        self.subsection = _subsection_name
-        self.subsubsection = _subsubsection_name
-        self.rotate = _rotate
-        self.fit_margins = _fit_margins
-        self.store(csv_convert=_convert, csv_purge=_purge)
+    def add_subsection2tex(self, subsection: Subsection):
+        # self.clearpage()
+        self.add_text("\subsection{" + subsection.subsection_title.replace("_", "\_") + "}")
+        # self.clearpage()
+        if subsection.text is not None:
+            self.add_text(subsection.text)
+        
+    def add_subsubsection2tex(self, subsubsection: Subsubsection):
+        self.add_text("\subsubsection{" + subsubsection.subsubsection_title.replace("_", "\_") + "}")
 
-    def purge_csv_data(self):
-        n_col = len(self.csv_data[0])
-        n_row = len(self.csv_data[1:])
+        if subsubsection.text is not None:
+            self.add_text(subsubsection.text)
 
-        # Reverse otherwise removing data will end in an out of range error
-        for col in reversed(range(n_col)):
-            try:
-                col_val = [int(data[col]) for data in self.csv_data[1:]]
-                check_list = [0] * n_row
-            except ValueError:
-                try:
-                    col_val = [float(data[col]) for data in self.csv_data[1:]]
-                    check_list = [0.0] * n_row
-                except ValueError:
-                    continue
-            if col_val == check_list:
-                # Now we want to remove entries also from the header
-                for row in range(n_row + 1):
-                    self.csv_data[row].remove(self.csv_data[row][col])
+    def add_image2tex(self, image: ImgFile, absolute_path: str) -> None:
+        # Update path
+        image.store_path = image.store_path
+        # Create img dir if it doesn't exist
+        makedirs(absolute_path + image.store_path, exist_ok=True)
+        image.dump2disk(absolute_path)
+        self.new_line()
+        self.add_text("\\begin{figure}[H]")
+        self.add_text("\includegraphics[width=\linewidth]{" + image.store_path + "/" + image.name + "}")
+        self.add_text("\caption{" + image.caption + "}")
+        self.add_text("\label{" + image.label + "}")
+        self.add_text("\end{figure}")
+        self.new_line()
 
-    def store(self, text=None, csv_convert=False, csv_purge=False):
-        if text is None:
-            if csv_convert:
-                self.csv_data = converter(self.path, summary=True)
+    def add_csv2tex(self, csv_file: CsvFile, absolute_path: str) -> None:
+        # Update path
+        csv_file.store_path = csv_file.store_path
+        # Create img dir if it doesn't exist
+        makedirs(absolute_path + csv_file.store_path, exist_ok=True)
+        csv_file.dump2disk(absolute_path)
+
+        self.new_line()
+        if csv_file.rotate and not self.in_landscape:
+            self.add_text("\\begin{landscape}")
+            self.in_landscape = True
+
+        if not csv_file.rotate and self.in_landscape:
+            self.add_text("\\end{landscape}")
+            self.in_landscape = False
+
+        self.add_text("\\begin{table}[H]")
+        self.add_text("\\centering")
+        self.add_text("\\caption{" + csv_file.caption + "}")
+        if csv_file.fit_margins:
+            if csv_file.rotate:
+                factor = 1.5
             else:
-                with open(self.path, newline='') as csv_file:
-                    self.csv_data = list(csv.reader(csv_file))
-                    # Remove rows if they're empty
-                    self.csv_data = [d for d in self.csv_data if d != []]
-            # If specified, remove empty columns from csv file
-            if csv_purge:
-                self.purge_csv_data()
-        else:
-            self.csv_data = text
+                factor = 1
+            self.add_text(f"\\resizebox{{{factor}\\textwidth}}{{!}}{{")
+        self.add_text("\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}")
+        if csv_file.fit_margins:
+            self.add_text("}")
+        self.add_text("\end{table}")
+        self.new_line()
 
-        # Path where the file data will be dumped
-        self.store_path = "csv/" + self.section
-        if self.subsection is not None:
-            self.store_path = self.store_path + "/" + self.subsection
-            if self.subsubsection is not None:
-                self.store_path = self.store_path + "/" + self.subsubsection
-
-    def purge_csv_data(self):
-        n_col = len(self.csv_data[0])
-        n_row = len(self.csv_data[1:])
-
-        # Reverse otherwise removing data will end in an out of range error
-        for col in reversed(range(n_col)):
-            try:
-                col_val = [int(data[col]) for data in self.csv_data[1:]]
-                check_list = [0] * n_row
-            except ValueError:
-                try:
-                    col_val = [float(data[col]) for data in self.csv_data[1:]]
-                    check_list = [0.0] * n_row
-                except ValueError:
-                    continue
-            if col_val == check_list:
-                # Now we want to remove entries also from the header
-                for row in range(n_row + 1):
-                    self.csv_data[row].remove(self.csv_data[row][col])
-
-    # Writes csv data to file
-    def dump2disk(self, absolute_path):
-        if exists(absolute_path + self.store_path + "/" + self.name):
-            import hashlib
-            hash_name = hashlib.sha256(self.path.encode("utf8")).hexdigest()
-            self.name = hash_name + "_" + self.name
-        with open(absolute_path + self.store_path + "/" + self.name, 'wt') as f_output:
-            csv_output = csv.writer(f_output)
-            for data_row in self.csv_data:
-                data_row = [dr.replace("_", "-") for dr in data_row]
-                csv_output.writerow(data_row)
+    def end_landscape(self):
+        if self.in_landscape:
+            self.add_text("\end{landscape}")
+            self.in_landscape = False
 
 
 class Report:
-    def __init__(self, _name):
+    def __init__(self, _name: str):
         # Name that will be used for the latex doc, without path
         self.name = _name.replace(".pkl", "").split("/")[-1]
         self.absolute_path = None
@@ -449,10 +452,10 @@ class Report:
     def set_logo_path(self, logo_path: str):
         self.logo_path = logo_path
 
-    def add_title(self, title):
+    def add_title(self, title: str):
         self.title = title
 
-    def add_authors(self, authors):
+    def add_authors(self, authors: str):
         self.authors = authors
 
     def __set_absolute_path(self):
@@ -511,10 +514,6 @@ class Report:
         self.text = report_text
 
     def __end_doc(self):
-        try:
-            isinstance(self.text, LatexText)
-        except AssertionError:
-            raise AssertionError("something went wrong trying to close the report")
         self.text.add_text("\end{document}")
 
     def __create_newcommand_file(self):
@@ -544,6 +543,8 @@ class Report:
                 if not n % 4 and not n == 0:
                     self.text.clearpage()
                 self.text.add_csv2tex(csv_file, self.absolute_path)
+            self.text.end_landscape()
+
             for image in section.images:
                 self.text.add_image2tex(image, self.absolute_path)
 
@@ -551,6 +552,8 @@ class Report:
                 self.text.add_subsection2tex(subsection)
                 for csv_file in subsection.csv_files:
                     self.text.add_csv2tex(csv_file, self.absolute_path)
+                self.text.end_landscape()
+
                 for image in subsection.images:
                     self.text.add_image2tex(image, self.absolute_path)
                 
@@ -570,14 +573,14 @@ class Report:
         report_file.close()
         return file_name
 
-    def get_section(self, section_title):
+    def get_section(self, section_title: str):
         if self.sections is not None:
             for section in self.sections:
                 if section_title == section.section_title:
                     return section
         return None
 
-    def add_section(self, new_section_title, new_section_number=0):
+    def add_section(self, new_section_title: str, new_section_number=0):
         # Creates a new obj Section
         new_section = Section(new_section_title)
         # Number the new section
@@ -586,7 +589,7 @@ class Report:
         # Increment the number of total sections
         self.total_section_number = self.total_section_number + 1
 
-    def add_newcommand(self, newcommand_file):
+    def add_newcommand(self, newcommand_file: str):
         f = open(newcommand_file, "r")
         params = [l.replace("\n", "") for l in f if l.count("#") == 0 and l != "\n"]
 
@@ -594,7 +597,7 @@ class Report:
             key, val = p.split("=")
             self.newcommand[key.strip()] = val.strip()
 
-    def get_context(self, section_title, section_number=0, subsection_title=None, subsubsection_title=None):
+    def get_context(self, section_title: str, section_number=0, subsection_title=None, subsubsection_title=None):
         section = self.get_section(section_title)
         # Check if section exists
         if section is not None:
@@ -655,7 +658,7 @@ class Report:
                 for ss_csv in ss.csv_files:
                     print("      --csv:", ss_csv.path)
 
-def report_load(report_name) -> Report:
+def report_load(report_name: str) -> Report:
     if not report_name.count(".pkl"):
         report_name = report_name + ".pkl"
     try:
