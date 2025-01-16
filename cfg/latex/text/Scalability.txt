@@ -1,1 +1,7 @@
-This section contains an overview of the model behaviour in a strong scaling experiment, showing the amount of simulation years that can be produced in a day given a certain amount of resources, having a fixed configuration.
+The Strong Scaling member consists on running a set of tests with an increasing number of processors on the same experiment configuration. This member is evaluated by the speed of the model (SYPD). 
+
+In the best case scenario we except that the speed of the model increases proportionally to the added number of resources with respect to the base case (the base case being the case with a lower number of resources). This perfect case can be seen in the scalability plots with the dashed line.
+
+The efficiency metric tells us how close the current case speed is to the perfect case, where 1 means that it scales linear, lower than 1, worse than expected and bigger that 1 better than expected, and is computed by current-case-speed * current-case- base-case-speed.
+
+The speedup metric just reports how much faster the current case is with respect to the base case.

@@ -386,51 +386,6 @@ function add_Tracing() {
 }
 
 #####################################################################################################################
-# Brief: Adds multi experiments comparisson to the report
-# Global:
-#   - Paths: cfg, run_root, report_full_path
-#   - Other: None
-# Param: 
-#   $1 - member
-#   $2 - flag to use in the multiexperiment
-#####################################################################################################################
-function add_multiexperiment() {
-    local member=$1
-    local flag=$2
-    python3 ${cfg}/parser/comparator.py \
-        --json-files $run_root/$member/*/*.json \
-        ${flag} \
-        --file-out ${run_root}/${member}/${member}.csv
-
-    member_title=${member//_/ }
-    member_title=${member^}
-
-    if [ -f ${run_root}/${member}/test_info.csv ]; then
-        python3 ${cfg}/latex/ReportGenerator.py \
-            -O ${report_full_path}.pkl \
-            -S "Multi Experiment" \
-            -s $member_title \
-            --add-csv ${run_root}/${member}/test_info.csv \
-            --add-caption "${member_title} test configuration."
-    fi
-
-    test_folders=($run_root/$member/*/)
-    python3 ${cfg}/latex/ReportGenerator.py \
-        -O ${report_full_path}.pkl \
-        -S "Multi Experiment" \
-        -s $member_title \
-        --add-csv ${test_folders[0]}/cases_info.csv \
-        --add-caption "${member_title} cases info." 
-
-    python3 ${cfg}/latex/ReportGenerator.py \
-        -O ${report_full_path}.pkl \
-        -S "Multi Experiment" \
-        -s $member_title \
-        --add-csv ${run_root}/${member}/${member}.csv \
-        --add-caption "${member_title} case comparison scalability." 
-}
-
-#####################################################################################################################
 # Brief: Adds compilation efficiency experiments comparisson to the report
 # Global: None
 # Param: None
@@ -439,7 +394,32 @@ function add_CompilationEfficiency() {
     local member="compilation_efficiency"
     local flag=-s
 
-    add_multiexperiment $member $flag
+    # Generate tests comparisson csv
+    python3 ${cfg}/parser/comparator.py \
+        --json-files $run_root/$member/*/*.json \
+        ${flag} \
+        --file-out ${run_root}/${member}/${member}.csv
+
+    member_title=${member//_/ }
+    member_title=${member^}
+
+    # Add cases info table
+    test_folders=($run_root/$member/*/)
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s $member_title \
+        --add-csv ${test_folders[0]}/cases_info.csv \
+        --add-caption "${member_title} cases info." 
+
+    # Add model's case comparisson table and section's text
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s $member_title \
+        --add-csv ${run_root}/${member}/${member}.csv \
+        --add-caption "${member_title} case comparison scalability." \
+        -T ${cfg}/latex/text/${current_member}.txt
 }
 
 #####################################################################################################################
@@ -451,6 +431,25 @@ function add_WeakScaling() {
     local member="weakscaling"
     local flag=-w
 
+    # Generate tests comparisson csv
+    python3 ${cfg}/parser/comparator.py \
+        --json-files $run_root/$member/*/*.json \
+        ${flag} \
+        --file-out ${run_root}/${member}/${member}.csv
+
+    member_title=${member//_/ }
+    member_title=${member^}
+
+    # Add model's case comparisson table and section's text
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s $member_title \
+        --add-csv ${run_root}/${member}/${member}.csv \
+        --add-caption "${member_title} case comparison scalability." \
+        -T ${cfg}/latex/text/${current_member}.txt
+
+    # Add member's arch info
     local arch_name=%STRONGSCALING.ARCH_NAME%
     arch_name=${arch_name//_/-}
     {   
@@ -458,16 +457,22 @@ function add_WeakScaling() {
         echo "ARCH NAME,${arch_name}";
     } > ${run_root}/${member}/test_info.csv
 
-    add_multiexperiment $member $flag
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s $member_title \
+        --add-csv ${run_root}/${member}/test_info.csv \
+        --add-caption "${member_title} test configuration."
 
-    for component in ${components[@]}; do
+    # Add models case comparisson table
+    for component in "${components[@]}"; do
         python3 ${cfg}/latex/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Multi Experiment" \
             -s $member_title \
             -ss "${component^^} ${member_title}" \
             --add-csv ${run_root}/${member}/${component}_${member}.csv \
-            --add-caption "${component^^} ${member_title} case comparison scalability." 
+            --add-caption "${component^^} ${member_title} case comparison scalability."
     done
 }
 
@@ -509,7 +514,8 @@ python3 ${latex_folder}/ReportGenerator.py \
     -O ${report_full_path}.pkl \
     -S "Experiment configuration" \
     --add-caption "Experiment configuration" \
-    --add-csv test_info.csv
+    --add-csv test_info.csv \
+    -T ${cfg}/latex/text/ExperimentConfiguration.txt
 
 # Add all members
 for current_member in ${members}; do

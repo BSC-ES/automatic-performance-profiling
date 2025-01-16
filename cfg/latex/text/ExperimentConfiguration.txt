@@ -1,0 +1,1 @@
+The experiment configuration is the same for all members except for WeakScaling's resolution, which is defined for each test.

@@ -1,0 +1,3 @@
+The method used to evaluate compilation efficiency consists of running the same test across multiple binaries that have been compiled with different compiler flags. This approach provides insights into how different compilation flags/libraries/compilers influence the performance, memory usage, and runtime behavior of the climate model.
+
+The compilation efficiency is evaluated with the speed of the model (SYPD). There is no expected results since the flags/libraries/compiler are set by the user.
