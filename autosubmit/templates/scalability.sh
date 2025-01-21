@@ -24,6 +24,26 @@ components="%MODEL.COMPONENTS%"
 components=${components//[\[,\]]/}
 components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 
+
+function report_test_cfg()
+{
+    test_info_fn=${run_dir}/${run_id}-test_info.csv
+    header="component,nproc,resolution"
+    if [ "$current_member" = "WeakScaling" ]; then header+=",grid_points"; fi
+    echo ${header} > ${test_info_fn}
+    for component in $components; do
+        component_procs="${component}_procs"
+        component_resolution="${component}_resolution"
+        row="${component},${!component_procs},${!component_resolution}"
+        if [ "$current_member" = "WeakScaling" ]; then 
+            component_grid_points="${component}_curr_tile_size"
+            row+=",${!component_grid_points}"
+        fi
+        echo ${row} >> ${test_info_fn}
+    done
+}
+
+
 #####################################################################################################################
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
 # Global:
@@ -91,20 +111,7 @@ function run_nemo()
     cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
 
     # Create test info csv for the JSON
-    test_info_fn=${run_dir}/${run_id}-test_info.csv
-    header="component,nproc,resolution"
-    if [ "$current_member" = "WeakScaling" ]; then header+=",grid_points"; fi
-    echo ${header} > ${test_info_fn}
-    for component in $components; do
-        component_procs="${component}_procs"
-        component_resolution="${component}_resolution"
-        row="${component},${!component_procs},${!component_resolution}"
-        if [ "$current_member" = "WeakScaling" ]; then 
-            component_grid_points="${component}_curr_tile_size"
-            row+=",${!component_grid_points}"
-        fi
-        echo ${row} >> ${test_info_fn}
-    done
+    report_test_cfg
 }
 
 
@@ -241,20 +248,7 @@ function run_ecearth4()
     cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
 
     # Create test info csv for the JSON
-    test_info_fn=${run_dir}/${run_id}-test_info.csv
-    header="component,nproc,resolution"
-    if [ "$current_member" = "WeakScaling" ]; then header+=",grid_points"; fi
-    echo ${header} > ${test_info_fn}
-    for component in $components; do
-        component_procs="${component}_procs"
-        component_resolution="${component}_resolution"
-        row="${component},${!component_procs},${!component_resolution}"
-        if [ "$current_member" = "WeakScaling" ]; then 
-            component_grid_points="${component}_curr_tile_size"
-            row+=",${!component_grid_points}"
-        fi
-        echo ${row} >> ${test_info_fn}
-    done
+    report_test_cfg
 }
 
 ###################
