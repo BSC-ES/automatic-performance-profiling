@@ -557,7 +557,6 @@ def cases_component_data(experiment_data):
     header = "Case"
     for component in experiment_data.components:
         header += f",{component} nproc"
-        header += f",{component} resolution"
     log.add(header)
     
     for case in experiment_data.cases:
@@ -565,10 +564,6 @@ def cases_component_data(experiment_data):
         for component in experiment_data.components:
             component_nproc = experiment_data[case]["components"][component]["nproc"]
             row += f",{component_nproc}"
-            row += ","
-            if "resolution" in experiment_data[case]["components"][component]:
-                component_resolution = experiment_data[case]["components"][component]["resolution"]
-                row += f"{component_resolution}"
         log.add(row)
     
     log.save("cases_info.csv")
