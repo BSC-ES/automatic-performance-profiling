@@ -304,8 +304,8 @@ def function_information_from_paramedir_outputs(experiment_data, component):
     component_dictionary = go_to_dictionary_address(experiment_data, address)
     functions_time = {}
     total_time = 0
-    for function_name in component_dictionary["Counters"]["Time"]:
-        function_time = component_dictionary["Counters"]["Time"][function_name]["Average"][0]
+    for function_name in component_dictionary["counters"]["Time"]:
+        function_time = component_dictionary["counters"]["Time"][function_name]["Average"][0]
         functions_time |= {function_name : function_time}
         total_time += function_time
 
@@ -352,7 +352,7 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
         base_case,
         "components",
         component,
-        "Counters",
+        "counters",
         "MPIcallprofile",
     )
     mpi_dictionary = go_to_dictionary_address(experiment_data, address)
@@ -401,7 +401,7 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
             case,
             "components",
             component,
-            "Counters",
+            "counters",
             "MPIcallprofile",
             function,
             "Average",
@@ -419,7 +419,7 @@ def tracking_counters_per_function(experiment_data, function, component):
     log = Log()
     base_case = experiment_data.base_case
     cases = experiment_data.cases
-    address = (base_case, "components", "nemo", "Counters")
+    address = (base_case, "components", "nemo", "counters")
     counters_dictionary = go_to_dictionary_address(experiment_data, address)
     available_counters = list(counters_dictionary.keys())
     available_counters = ["Instructions", "Cycles", "IPC", "Time"]
@@ -437,7 +437,7 @@ def tracking_counters_per_function(experiment_data, function, component):
             address = (case,
                        "components",
                        component,
-                       "Counters",
+                       "counters",
                        counter,
                        function,
                        "Average"
@@ -469,7 +469,7 @@ def generate_sypd_summary_data(experiment_data, component=""):
         base_case_data = go_to_dictionary_address(experiment_data.data, address)
     
     base_case_procs = base_case_data["nproc"]
-    base_case_speed = base_case_data["SYPD"]
+    base_case_speed = base_case_data["sypd"]
 
     log.add("Case, Processes, SYPD, SpeedUp, Efficiency")
     for case in cases:
@@ -478,7 +478,7 @@ def generate_sypd_summary_data(experiment_data, component=""):
         else:
             address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
-        speed = case_data["SYPD"]
+        speed = case_data["sypd"]
         speedup = speed / base_case_speed
         case_procs = case_data["nproc"]
         resource_increase = case_procs / base_case_procs
@@ -510,12 +510,12 @@ def generate_sypd_plot_data(experiment_data, component=""):
     
     if component == "":
         base_case = experiment_data.base_case
-        base_case_speed = experiment_data.data[base_case]["SYPD"]
+        base_case_speed = experiment_data.data[base_case]["sypd"]
         base_case_procs = experiment_data.data[base_case]["nproc"]
         cases = experiment_data.cases
     else:
         base_case = experiment_data.components_cases[component][0]
-        base_case_speed = experiment_data.data[base_case]["components"][component]["SYPD"]
+        base_case_speed = experiment_data.data[base_case]["components"][component]["sypd"]
         base_case_procs = experiment_data.data[base_case]["components"][component]["nproc"]
         cases = experiment_data.components_cases[component]
     
@@ -525,7 +525,7 @@ def generate_sypd_plot_data(experiment_data, component=""):
         else:
             address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
-        speed = case_data["SYPD"]
+        speed = case_data["sypd"]
         speedup = speed / base_case_speed
         case_procs = case_data["nproc"]
         resource_increase = case_procs / base_case_procs
@@ -579,8 +579,8 @@ def experiment_comparison(experiment1, experiment2):
     log = Log()
 
     # Simulated Years per Day
-    exp1_base_case_speed = experiment1[base_case]["SYPD"]
-    exp2_base_case_speed = experiment2[base_case]["SYPD"]
+    exp1_base_case_speed = experiment1[base_case]["sypd"]
+    exp2_base_case_speed = experiment2[base_case]["sypd"]
     ratio = exp2_base_case_speed / exp1_base_case_speed
     log.add(
         "Base case experiment %4i processes  speed :  %5.1f|%5.1f SYPD                                                    -> %.2f ratio.  " %
@@ -589,10 +589,10 @@ def experiment_comparison(experiment1, experiment2):
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_speed = experiment1[case]["SYPD"]
+        exp1_speed = experiment1[case]["sypd"]
         exp1_speedup = exp1_speed / exp1_base_case_speed
         exp1_efficiency = exp1_speedup / resource_increase
-        exp2_speed = experiment2[case]["SYPD"]
+        exp2_speed = experiment2[case]["sypd"]
         exp2_speedup = exp2_speed / exp2_base_case_speed
         exp2_efficiency = exp2_speedup / resource_increase
         ratio = exp2_speed / exp1_speed

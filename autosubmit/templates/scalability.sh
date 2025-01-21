@@ -18,7 +18,6 @@ inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 branch=%MODEL.BRANCH_LIST%
-number_of_cores=%NUMPROC%
 test="%CURRENT_TEST_NAME%"
 platform="%DEFAULT.HPCARCH%"
 components="%MODEL.COMPONENTS%"
@@ -29,14 +28,20 @@ components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
 # Global:
 #   - Paths: inidata, binaries, compilation, run_dir
-#   - Other: test_name, number_of_cores
+#   - Other: test_name, nemo_procs
 #####################################################################################################################
 function run_nemo()
 {
+    if [ ${current_member} = "WeakScaling" ]; then
+        local nemo_resolution="%CURRENT_RESOLUTION%"
+    else
+        local nemo_resolution="%EXPERIMENT.RESOLUTION%"
+    fi
+    local nemo_procs=%NUMPROC%
     local output="%EXPERIMENT.OUTPUT%"
     local test_steps="%EXPERIMENT.TEST_STEPS%" 
 
-    run_id=nemo_${number_of_cores}
+    run_id=nemo_${nemo_procs}
     run_dir=${run_root}/${test_name}/scalability_${run_id}
     mkdir -p ${run_dir}
 
@@ -52,7 +57,7 @@ function run_nemo()
 
     # Copy everything from reference run_root
     cp --remove-destination ${compilation}/${model_sources}/${configuration_folder}/${arch_name}/EXP00/* ${run_dir}
-    cp ${run_dir}/namelist_cfg_${model_resolution}_like ${run_dir}/namelist_cfg
+    cp ${run_dir}/namelist_cfg_${nemo_resolution}_like ${run_dir}/namelist_cfg
 
     # Change namelist parameters
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg nn_itend    ${test_steps}
@@ -70,20 +75,36 @@ function run_nemo()
     # base procs and resolution
     if [ ${current_member} = "WeakScaling" ]; then
         . ${project}/configurations/model/${model}/resolutions.sh 
-        local base_procs=%WEAKSCALING.BASE_PROCS%
-        local base_resolution=%WEAKSCALING.BASE_RESOLUTION%
-        local base_tile_size=${nemo_resolutions[$base_resolution]}
-        local curr_tile_size=${nemo_resolutions[$model_resolution]}
-        number_of_cores=$((base_procs*curr_tile_size/base_tile_size))
-        local queue=%HPCQUEUE%
-        local proj=%CURRENT_PROJ%
-        time srun -A ${proj} -q ${queue} -n $number_of_cores ./nemo
+        local base_procs="%WEAKSCALING.BASE_PROCS%"
+        local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
+        local base_tile_size=${nemo_resolutions[${base_resolution^^}]}
+        local nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
+        nemo_procs=$((base_procs*nemo_curr_tile_size/base_tile_size))
+        local queue="%HPCQUEUE%"
+        local proj="%CURRENT_PROJ%"
+        time srun -A ${proj} -q ${queue} -n $nemo_procs ./nemo
     else
-        time srun -n $number_of_cores ./nemo
+        time srun -n $nemo_procs ./nemo
     fi
 
     # Rename timing output
     cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
+
+    # Create test info csv for the JSON
+    test_info_fn=${run_dir}/${run_id}-test_info.csv
+    header="component,nproc,resolution"
+    if [ "$current_member" = "WeakScaling" ]; then header+=",grid_points"; fi
+    echo ${header} > ${test_info_fn}
+    for component in $components; do
+        component_procs="${component}_procs"
+        component_resolution="${component}_resolution"
+        row="${component},${!component_procs},${!component_resolution}"
+        if [ "$current_member" = "WeakScaling" ]; then 
+            component_grid_points="${component}_curr_tile_size"
+            row+=",${!component_grid_points}"
+        fi
+        echo ${row} >> ${test_info_fn}
+    done
 }
 
 
@@ -257,8 +278,6 @@ case "$current_member" in
         arch_name=%WEAKSCALING.ARCH_NAME%
         ;;
 esac
-
-model_resolution=%EXPERIMENT.RESOLUTION%
 
 run_${model}
 

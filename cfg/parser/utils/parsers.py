@@ -127,7 +127,7 @@ def parse_paramedir_files(files):
         address = (id,
                    "components",
                    component,
-                   "Counters",
+                   "counters",
                    information_type,
                    )
         dictionary_section = dictionary_pointer(results, address)
@@ -172,7 +172,7 @@ def parse_timing_file(timing_fn: str):
         data["time_step_time"] = np.average(steps_length)
         data["number_ts"] = number_ts
         data["ts_per_second"] = 1 / data["time_step_time"]
-        data["SYPD"] = np.average(sypds)
+        data["sypd"] = np.average(sypds)
         data["nproc"] = int(nproc)
 
     return data
@@ -270,12 +270,13 @@ class TimingInformation:
         self.components_cases = None
         self.cases_translation = {}
 
-        if not timing_files and not lucia_files and not paramedir_files and not json_file and not dimemas_files:
+        print(timing_files)
+
+        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files):
             raise AssertionError("No files provided")
 
         # Update values with the provided files
         if json_file:
-            import json
             self.load_json(json_file)
         if timing_files:
             self.load_timings(timing_files)
@@ -300,7 +301,7 @@ class TimingInformation:
         functions = []
         for case in self.cases:
             for component in self.components:
-                functions.append(list(self.data[case]["components"][component]["Counters"]["Time"].keys()))
+                functions.append(list(self.data[case]["components"][component]["counters"]["Time"].keys()))
         functions = sum(functions, [])
         return list(set(functions))
 
@@ -410,8 +411,8 @@ class TimingInformation:
                 for case in self.components_cases[component]:
                     try:
                         # Function name's are taken from timings, so it is possible they are not present in the trace
-                        x_data = self.data[case]["components"][component]['Counters'][x_axis][f_name]['Average']
-                        y_data = self.data[case]["components"][component]['Counters'][y_axis][f_name]['Average']
+                        x_data = self.data[case]["components"][component]["counters"][x_axis][f_name]['Average']
+                        y_data = self.data[case]["components"][component]["counters"][y_axis][f_name]['Average']
                     except KeyError:
                         # If the function was not tracked delete dictionary entry and skip to next function
                         del function_info[component][f_name]
@@ -605,6 +606,10 @@ class TimingInformation:
         self.data = merge_dictionaries(self.data, timing_dict)
 
         if len(self.components) == 1:
+            for case in self.data:
+                print(self.data[case])
+                self.data[case] = merge_dictionaries(self.data[case], list(self.data[case]["components"].values())[0])
+            
             if self.cases is None:
                 self.cases = list(sorted(self.data.keys(), key=lambda f : self.data[f]["nproc"]))
                 self.base_case = min(self.cases)
@@ -632,8 +637,8 @@ class TimingInformation:
                 for component in self.components:
                     component_function_info = {}
                     component_dict = dictionary_pointer(self.data, (case, "components", component))
-                    for function_name in component_dict["Counters"]["Time"]:
-                        component_function_info[function_name] = component_dict["Counters"]["Time"][function_name]["Average"][0]
+                    for function_name in component_dict["counters"]["Time"]:
+                        component_function_info[function_name] = component_dict["counters"]["Time"][function_name]["Average"][0]
                     component_dict["function_info"] = component_function_info
 
         if self.components_cases is None:
