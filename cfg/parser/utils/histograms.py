@@ -95,9 +95,11 @@ def process_category_histogram(histogram):
             to_return[label] = [float(_x) for _x in split_line[1:]]
 
     # We'll filter out all the unnamed values
-    indices_to_keep = [index for index, value in enumerate(categories) if value.count("value_") == 0]
+    indices_to_keep = [index for index, value in enumerate(
+        categories) if value.count("value_") == 0]
     for key in to_return.keys():
-        to_return[key] = [ v for index, v in enumerate(to_return[key]) if index in indices_to_keep]
+        to_return[key] = [v for index, v in enumerate(
+            to_return[key]) if index in indices_to_keep]
     return to_return
 
 
@@ -211,13 +213,14 @@ if __name__ == "__main__":
             function_data[key]["times"][label] = function_time
 
     # Sort by average
-    function_data = {k: v for k, v in sorted(function_data.items(), key=lambda item: item[1]["times"]["Average"])}
+    function_data = {k: v for k, v in sorted(
+        function_data.items(), key=lambda item: item[1]["times"]["Average"])}
 
     # Compute totals
     totals = {}
     for label in paramedir_labels:
-        totals[label] = sum([function_data[function]["times"][label] for function in function_data.keys()])
-
+        totals[label] = sum([function_data[function]["times"][label]
+                            for function in function_data.keys()])
 
     cases = (
         48,
@@ -260,7 +263,8 @@ if __name__ == "__main__":
         if len(xs) != 3:
             continue
         for i in range(len(xs) - 1):
-            plt.arrow(xs[i], ys[i], xs[i + 1] - xs[i], ys[i + 1] - ys[i], alpha=.25, width=.001)
+            plt.arrow(xs[i], ys[i], xs[i + 1] - xs[i],
+                      ys[i + 1] - ys[i], alpha=.25, width=.001)
         plt.scatter(xs, ys, alpha=.5)
         counter += 1
         if counter >= number_of_functions_to_print:

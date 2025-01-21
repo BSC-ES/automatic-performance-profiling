@@ -1,10 +1,6 @@
 from cfg.parser.utils.curation import multiexperiment_comparison, \
-    find_common_cases_and_functions, \
     weakscaling_compute
 from cfg.parser.utils.parsers import TimingInformation
-from glob import glob
-from os.path import isfile, isdir, abspath, exists
-from os import listdir
 
 
 def parse_args():
@@ -34,7 +30,6 @@ if __name__ == "__main__":
     args = parse_args()
     json_file_list = args.json_files
 
-
     weak_scaling = args.weak_scaling
     SYPD = args.sypd
     function_info = args.function_info
@@ -45,7 +40,8 @@ if __name__ == "__main__":
 
     if SYPD:
         # Example how to get comparison of SYPD
-        multiexperiment_comparison(experiment_data, field1="ts_per_second").print(file_out)
+        multiexperiment_comparison(
+            experiment_data, field1="ts_per_second").print(file_out)
 
     # if function_info:
     #     # Example on how to compare elapsed time by function

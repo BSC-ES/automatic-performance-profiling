@@ -68,13 +68,15 @@ if __name__ == "__main__":
     if functions_file is not None:
         experiment_results.function_summary(functions_file)
     if most_expensive_function_summary is not None:
-        experiment_results.most_expensive_function_summary(out_file_name=most_expensive_function_summary)
+        experiment_results.most_expensive_function_summary(
+            out_file_name=most_expensive_function_summary)
 
     if scatter_plots:
         scatter_plots = scatter_plots.split(":")
         for scatter_plot in scatter_plots:
             x_axis, y_axis = scatter_plot.split("-")
-            experiment_results.scatter_plots(x_axis=x_axis, y_axis=y_axis, length_summary=20)
+            experiment_results.scatter_plots(
+                x_axis=x_axis, y_axis=y_axis, length_summary=20)
 
     if dimemas_file is not None:
         experiment_results.dimemas_summary().save(dimemas_file)
@@ -82,5 +84,5 @@ if __name__ == "__main__":
         experiment_results.tracking(tracking_folder)
     if coupling_folder is not None:
         experiment_results.coupling_info(coupling_folder)
-    
+
     experiment_results.cases_component_data()

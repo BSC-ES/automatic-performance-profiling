@@ -54,7 +54,8 @@ def go_to_dictionary_address(dictionary, address):
         try:
             return d[section]
         except KeyError:
-            raise AssertionError("Provided address does not exists in this dictionary:\n%s" % str(address))
+            raise AssertionError(
+                f"Provided address does not exists in this dictionary:\{address}")
 
     for step in address:
         dictionary = go_to_section(dictionary, step)
@@ -70,13 +71,13 @@ def function_curated_summary(experiment_data, filename):
     log = Log()
     # Get the dictionary of function
 
-    for component in experiment_data.components: 
-        fun_results = experiment_data.get_function_info(component) 
+    for component in experiment_data.components:
+        fun_results = experiment_data.get_function_info(component)
         for k, v in fun_results.items():
             resources = ""
             speedup = ""
             efficiency = ""
-            
+
             base_case = experiment_data.components_cases[component][0]
             base_result = fun_results[k][base_case]["elapsed_time"]
             base_nproc = int(fun_results[k][base_case]["nproc"])
@@ -87,8 +88,9 @@ def function_curated_summary(experiment_data, filename):
                 resources += " %.2f" % case_nproc
                 # Avoid dividing by zero
                 speedup += " %.2f" % (base_result / (case_speed + 1e-10))
-                efficiency += " %.2f" % ((base_result / (case_speed + 1e-10)) / resource_increase)
-            
+                efficiency += " %.2f" % ((base_result /
+                                         (case_speed + 1e-10)) / resource_increase)
+
             log.add("%20s\tResources : %s" % (k, resources))
             log.add("%20s\tSpeed-up  : %s" % ("", speedup))
             log.add("%20s\tEfficiency: %s" % ("", efficiency))
@@ -108,15 +110,16 @@ def dimemas_curated_summary(experiment_data):
     cases = experiment_data.cases
     base_case = experiment_data.base_case
     dimemas_experiments = list(experiment_data[base_case]["Dimemas"])
-    information_types = list(experiment_data[base_case]["Dimemas"][dimemas_experiments[0]].keys())
+    information_types = list(
+        experiment_data[base_case]["Dimemas"][dimemas_experiments[0]].keys())
     information_types = ["Wallclock"]
     log_text = "Cores"
     for de in dimemas_experiments:
-        log_text += ",%s" % de
+        log_text += f",{de}"
     log_text += "\n"
 
     for case in cases:
-        log_text += "%i" % case
+        log_text += f"{case}"
         for exp in dimemas_experiments:
             for it in information_types:
                 address = (case,
@@ -127,13 +130,15 @@ def dimemas_curated_summary(experiment_data):
                            "Maximum",
                            )
 
-                section = go_to_dictionary_address(experiment_data.data, address)
+                section = go_to_dictionary_address(
+                    experiment_data.data, address)
                 wallclock_time = section[0] / 10. ** 6
-                log_text += ", %.2f" % wallclock_time
+                log_text += f", {wallclock_time:.2f}"
         log_text += "\n"
     log.add(log_text)
 
     return log
+
 
 def coupling_info(experiment_data, coupling_folder):
     import numpy as np
@@ -144,39 +149,45 @@ def coupling_info(experiment_data, coupling_folder):
         # components + model + header
         rows = len(experiment_data.components) + 2
         case_data = np.empty((rows, columns), "U25")
-        case_data[0, :] = np.array(["component", "nproc", "chsy", "cpl_cost", "waiting_time", "interpo_time"], dtype=str)
+        case_data[0, :] = np.array(
+            ["component", "nproc", "chsy", "cpl_cost", "waiting_time", "interpo_time"], dtype=str)
         i = 1
-        
+
         for component in experiment_data.components:
-            component_dict = go_to_dictionary_address(experiment_data.data, (case, "components", component))
+            component_dict = go_to_dictionary_address(
+                experiment_data.data, (case, "components", component))
             case_data[i, 0] = component
             for j in range(1, columns):
                 case_data[i, j] = str(component_dict[case_data[0, j]])
             i += 1
-        
+
         case_dict = experiment_data.data[case]
         case_data[i, 0] = "coupled"
         for j in range(1, columns):
             case_data[i, j] = str(case_dict[case_data[0, j]])
-        
-        case_folder = os.path.join(coupling_folder, experiment_data.cases_translation[case])
-        os.makedirs(case_folder, exist_ok=True)
-        np.savetxt(os.path.join(case_folder, "summary.csv"), case_data, delimiter=',', fmt="%s")
 
-def generate_most_expensive_function_summary_data(experiment_data, out_file_name, length_summary=10, component=""):
+        case_folder = os.path.join(
+            coupling_folder, experiment_data.cases_translation[case])
+        os.makedirs(case_folder, exist_ok=True)
+        np.savetxt(os.path.join(case_folder, "summary.csv"),
+                   case_data, delimiter=',', fmt="%s")
+
+
+def generate_most_expensive_function_summary_data(experiment_data, out_file_name, length_summary=10, component_to_report=""):
     import csv
     from os.path import abspath
     header = []
-    TIME_data = [[] for x in range(length_summary + 1)]
+    time_data = [[] for x in range(length_summary + 1)]
     function_names = [[] for x in range(len(experiment_data.cases))]
-    components = [component]
-    if component == "":
+    components = [component_to_report]
+    if component_to_report == "":
         components = experiment_data.components
 
     for case_idx, case in enumerate(experiment_data.cases):
         ts_length = 0
         for component in components:
-            ts_length = max(float(experiment_data.data[case]["components"][component]["ts_length"]) / pow(10, 6), ts_length)
+            ts_length = max(float(
+                experiment_data.data[case]["components"][component]["ts_length"]) / pow(10, 6), ts_length)
 
         header.append("function_name")
         header.append(case + " (percent)")
@@ -184,31 +195,37 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
 
         functions_elapsed_time = {}
         for component in components:
-            functions_elapsed_time.update(go_to_dictionary_address(experiment_data.data, (case, "components", component, "function_info")))
+            functions_elapsed_time.update(go_to_dictionary_address(
+                experiment_data.data, (case, "components", component, "function_info")))
 
-        sorted_functions = list(sorted(functions_elapsed_time.items(), key=lambda f : f[1], reverse=True))
+        sorted_functions = list(
+            sorted(functions_elapsed_time.items(), key=lambda f: f[1], reverse=True))
         for function_name, elapsed_time in sorted_functions:
             if n_function < length_summary + 1:
                 function_names[case_idx].append(function_name)
-                TIME_data[n_function].append(function_name)
+                time_data[n_function].append(function_name)
                 uf_percentage = elapsed_time / ts_length * 100
-                TIME_data[n_function].append(f"{uf_percentage:.2f}")
+                time_data[n_function].append(f"{uf_percentage:.2f}")
                 n_function += 1
             else:
                 break
 
-    with open(out_file_name, mode='w') as output:
+    with open(out_file_name, mode='w', encoding="utf8") as output:
         out_writer = csv.writer(output, delimiter=',')
         out_writer.writerow(header)
         for func in range(length_summary + 1):
-            out_writer.writerow(TIME_data[func])
+            out_writer.writerow(time_data[func])
         print("Written file in " + abspath(out_file_name))
 
+
 def most_expensive_function_summary(experiment_data, out_file_name, length_summary=10):
-    generate_most_expensive_function_summary_data(experiment_data, out_file_name, length_summary)
-    
+    generate_most_expensive_function_summary_data(
+        experiment_data, out_file_name, length_summary)
+
     for component in experiment_data.components:
-        generate_most_expensive_function_summary_data(experiment_data, component + "_" + out_file_name, length_summary, component)
+        generate_most_expensive_function_summary_data(
+            experiment_data, component + "_" + out_file_name, length_summary, component)
+
 
 def function_info_csv(experiment_data, csv_folder):
     """
@@ -228,8 +245,8 @@ def function_info_csv(experiment_data, csv_folder):
     # Get a dictionary with function info ordered by elapsed Time
     for component in experiment_data.components:
         fun_results = experiment_data.get_function_info(component)
-        
-        for k, v in fun_results.items():
+
+        for k in fun_results:
 
             # List to store data
             resources = []
@@ -243,13 +260,18 @@ def function_info_csv(experiment_data, csv_folder):
             for case in fun_results[k].keys():
                 nproc = int(fun_results[k][case]["nproc"])
                 resource_increase = nproc / base_case_nprocs
-                resources.append("%i" % nproc)
+                resources.append(f"{nproc}")
                 # Avoid division by zero
-                speedup.append("{:.2f}".format(base_result / (fun_results[k][case]["elapsed_time"] + 1e-10)))
-                efficiency.append("{:.2f}".format((base_result / (fun_results[k][case]["elapsed_time"] + 1e-10)) / resource_increase))
+                case_speedup = base_result / \
+                    (fun_results[k][case]["elapsed_time"] + 1e-10)
+                case_efficiency = (
+                    base_result / (fun_results[k][case]["elapsed_time"] + 1e-10)) / resource_increase
+                speedup.append(f"{case_speedup:.2f}")
+                efficiency.append(f"{case_efficiency:.2f}")
 
             # Declare array to be saved in csv
-            header = np.array(['resources (nproc)', 'speedup', 'efficiency'], dtype=str)
+            header = np.array(
+                ['resources (nproc)', 'speedup', 'efficiency'], dtype=str)
 
             data = np.empty((3, len(resources)))
             data[0, :] = resources
@@ -257,8 +279,10 @@ def function_info_csv(experiment_data, csv_folder):
             data[2, :] = efficiency
 
             final_table = np.column_stack((header, data))
-            np.savetxt(csv_folder + '/' + component + '_' + k + '.csv', final_table, delimiter=',', fmt="%s")
+            np.savetxt(csv_folder + '/' + component + '_' + k +
+                       '.csv', final_table, delimiter=',', fmt="%s")
     return log
+
 
 def tracking_function_info(experiment_data):
     log = Log()
@@ -269,15 +293,15 @@ def tracking_function_info(experiment_data):
     info_types = ['Elap. Time(s)']
 
     for info_type in info_types:
-        log_text = "%s" % info_type
+        log_text = f"{info_type}"
         log_text += "," * len(cases) + "\n"
-        log_text += "%s" % "Functions"
+        log_text += "Functions"
         for case in cases:
-            log_text += ",%i" % case
+            log_text += f",{case}"
         log_text += "\n"
 
         for function in functions:
-            log_text += "%s" % function
+            log_text += f"{function}"
             for case in cases:
                 address = (case,
                            "function_info",
@@ -285,7 +309,7 @@ def tracking_function_info(experiment_data):
                            info_type,
                            )
                 section = go_to_dictionary_address(experiment_data, address)
-                log_text += ",%.2f" % section
+                log_text += f",{section:.2f}"
             log_text += "\n"
 
         log.add(log_text)
@@ -306,7 +330,7 @@ def function_information_from_paramedir_outputs(experiment_data, component):
     total_time = 0
     for function_name in component_dictionary["counters"]["Time"]:
         function_time = component_dictionary["counters"]["Time"][function_name]["Average"][0]
-        functions_time |= {function_name : function_time}
+        functions_time |= {function_name: function_time}
         total_time += function_time
 
     return total_time, functions_time
@@ -324,23 +348,27 @@ def tracking(experiment_data, folder, threshold=0.01):
     # Joint log
     full_log = Log()
     for component in experiment_data.components:
-        total_time, functions_time = function_information_from_paramedir_outputs(experiment_data, component)
-        functions = [function for function, time in functions_time.items() if time / total_time >= threshold]
+        total_time, functions_time = function_information_from_paramedir_outputs(
+            experiment_data, component)
+        functions = [function for function, time in functions_time.items(
+        ) if time / total_time >= threshold]
 
         for function in functions:
             MPI_log = Log()
             counters_log = Log()
-            mpi_profile = tracking_mpi_profile_per_function(experiment_data, function, component)            
-            counters = tracking_counters_per_function(experiment_data, function, component)
+            mpi_profile = tracking_mpi_profile_per_function(
+                experiment_data, function, component)
+            counters = tracking_counters_per_function(
+                experiment_data, function, component)
 
             if mpi_profile:
                 MPI_log += mpi_profile
-                MPI_log.save("%s/%s_%s.csv" % (MPI_folder, component, function))
+                MPI_log.save(f"{MPI_folder}/{component}_{function}.csv")
                 full_log += mpi_profile
-            
+
             if counters:
                 counters_log += counters
-                counters_log.save("%s/%s_%s.csv" % (counters_folder, component, function))
+                counters_log.save(f"{counters_folder}/{component}_{function}.csv")
                 full_log += counters_log
 
     # full_log.print()
@@ -358,21 +386,20 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
     mpi_dictionary = go_to_dictionary_address(experiment_data, address)
     mpi_fields = list(mpi_dictionary[function]["names"])
     # All MPI fields that can be found in a NEMO trace (Probably should find a more generic way
-    """
-                    0 Outside_MPI
-                    1 MPI_Recv
-                    2 MPI_Isend
-                    3 MPI_Wait
-                    4 MPI_Bcast
-                    5 MPI_Barrier
-                    6 MPI_Allreduce
-                    7 MPI_Comm_rank
-                    8 MPI_Comm_size
-                    9 MPI_Comm_dup
-                    10 MPI_Init
-                    11 MPI_Finalize
-                    12 MPI_Iallreduce
-    """
+    #                 0 Outside_MPI
+    #                 1 MPI_Recv
+    #                 2 MPI_Isend
+    #                 3 MPI_Wait
+    #                 4 MPI_Bcast
+    #                 5 MPI_Barrier
+    #                 6 MPI_Allreduce
+    #                 7 MPI_Comm_rank
+    #                 8 MPI_Comm_size
+    #                 9 MPI_Comm_dup
+    #                 10 MPI_Init
+    #                 11 MPI_Finalize
+    #                 12 MPI_Iallreduce
+
     mpi_fields_to_keep = (
         "Outside_MPI",
         "MPI_Recv",
@@ -384,7 +411,8 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
         "MPI_Iallreduce",
     )
 
-    mpi_indices_to_keep = [index for index, value in enumerate(mpi_fields) if value in mpi_fields_to_keep]
+    mpi_indices_to_keep = [index for index, value in enumerate(
+        mpi_fields) if value in mpi_fields_to_keep]
     cases = experiment_data.cases
 
     log = Log()
@@ -393,10 +421,10 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
     for index, field in enumerate(mpi_fields):
         if index not in mpi_indices_to_keep:
             continue
-        log_txt += ",%s" % field
+        log_txt += f",{field}"
     log.add(log_txt)
     for case in cases:
-        log_txt = "%s" % case
+        log_txt = f"{case}"
         address = (
             case,
             "components",
@@ -410,7 +438,7 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
         for index, field in enumerate(mpi_fields):
             if index not in mpi_indices_to_keep:
                 continue
-            log_txt += ",%.1f" % data[index]            
+            log_txt += f",{data[index]:.2f}"
         log.add(log_txt)
     return log
 
@@ -428,11 +456,11 @@ def tracking_counters_per_function(experiment_data, function, component):
     # Header
     log_text = "Processes"
     for index, counter in enumerate(available_counters):
-        log_text += ",%s" % labels[index]
+        log_text += f",{labels[index]}"
     log.add(log_text)
 
     for case in cases:
-        log_text = "%s" % case
+        log_text = f"{case}"
         for counter in available_counters:
             address = (case,
                        "components",
@@ -444,11 +472,11 @@ def tracking_counters_per_function(experiment_data, function, component):
                        )
             try:
                 section = go_to_dictionary_address(experiment_data, address)
-            except AssertionError as err:
+            except AssertionError:
                 log_text += ","
                 continue
             data = section[0]
-            log_text += ", %.1f" % data
+            log_text += f", {data:.1f}"
 
         log.add(log_text)
 
@@ -466,8 +494,9 @@ def generate_sypd_summary_data(experiment_data, component=""):
         cases = experiment_data.components_cases[component]
         base_case = cases[0]
         address = (base_case, "components", component)
-        base_case_data = go_to_dictionary_address(experiment_data.data, address)
-    
+        base_case_data = go_to_dictionary_address(
+            experiment_data.data, address)
+
     base_case_procs = base_case_data["nproc"]
     base_case_speed = base_case_data["sypd"]
 
@@ -483,13 +512,12 @@ def generate_sypd_summary_data(experiment_data, component=""):
         case_procs = case_data["nproc"]
         resource_increase = case_procs / base_case_procs
         efficiency = speedup / resource_increase
-        log.add("%s, %4i, %.1f, %.1fx, %.2f" %
-                (case, case_procs, speed, speedup, efficiency))
+        log.add(f"{case}, {case_procs}, {speed:.1f}, {speedup:.1f}, {efficiency:.2f}")
 
     return log
 
+
 def simulated_years_per_day_summary(experiment_data, filename):
-    from cfg.parser.utils.plotter import plotter
     """
     Produces a simple log showing the simulated years per day of the different cases contained in the experiment,
     with the speed up and the efficiency respect to the base case.
@@ -500,14 +528,16 @@ def simulated_years_per_day_summary(experiment_data, filename):
     model_sypd_summary.save(filename)
 
     for component in experiment_data.components:
-        component_sypd_summary = generate_sypd_summary_data(experiment_data, component)
+        component_sypd_summary = generate_sypd_summary_data(
+            experiment_data, component)
         component_sypd_summary.save(component + "_" + filename)
+
 
 def generate_sypd_plot_data(experiment_data, component=""):
     x_label = "Number of processes"
     y_label = "Simulated Years Per Day "
     plot_data = {x_label: np.empty(0), y_label: np.empty(0)}
-    
+
     if component == "":
         base_case = experiment_data.base_case
         base_case_speed = experiment_data.data[base_case]["sypd"]
@@ -518,7 +548,7 @@ def generate_sypd_plot_data(experiment_data, component=""):
         base_case_speed = experiment_data.data[base_case]["components"][component]["sypd"]
         base_case_procs = experiment_data.data[base_case]["components"][component]["nproc"]
         cases = experiment_data.components_cases[component]
-    
+
     for case in cases:
         if component == "":
             case_data = experiment_data.data[case]
@@ -537,39 +567,46 @@ def generate_sypd_plot_data(experiment_data, component=""):
 
 
 def simulated_years_per_day_plot(experiment_data, filename):
-    from cfg.parser.utils.plotter import plotter
     """
     Produces a simple log showing the simulated years per day of the different cases contained in the experiment,
     with the speed up and the efficiency respect to the base case.
     :param experiment_data:
     :return:  Log object with a summary of the simulated years per day and few more metrics.
     """
+    from cfg.parser.utils.plotter import plotter
+
     plot_data = generate_sypd_plot_data(experiment_data)
-    plotter(experiment_name=experiment_data.experiment_name, data=plot_data, scatter_labels=experiment_data.cases, filename=filename)
+    plotter(experiment_name=experiment_data.experiment_name, data=plot_data,
+            scatter_labels=experiment_data.cases, filename=filename)
 
     for component in experiment_data.components:
-        component_plot_data = generate_sypd_plot_data(experiment_data, component)
-        plotter(experiment_name=experiment_data.experiment_name, data=component_plot_data,  scatter_labels=experiment_data.components_cases[component], filename=component + "_" + filename)
+        component_plot_data = generate_sypd_plot_data(
+            experiment_data, component)
+        plotter(experiment_name=experiment_data.experiment_name, data=component_plot_data,
+                scatter_labels=experiment_data.components_cases[component], filename=component + "_" + filename)
+
 
 def cases_component_data(experiment_data):
     log = Log()
-    
+
     header = "Case"
     for component in experiment_data.components:
         header += f",{component} nproc"
     log.add(header)
-    
+
     for case in experiment_data.cases:
         row = case
         for component in experiment_data.components:
             component_nproc = experiment_data[case]["components"][component]["nproc"]
             row += f",{component_nproc}"
         log.add(row)
-    
+
     log.save("cases_info.csv")
 
+
 def experiment_comparison(experiment1, experiment2):
-    cases_to_compare = list(sorted([c for c in experiment1.cases if c in experiment2.cases]))
+    cases_to_compare = list(
+        sorted([c for c in experiment1.cases if c in experiment2.cases]))
     base_case = min(cases_to_compare)
     log = Log()
 
@@ -607,16 +644,18 @@ def experiment_comparison(experiment1, experiment2):
         resource_increase = case / base_case
         exp1_length = experiment1[case]["time_step_time"]
         exp2_length = experiment2[case]["time_step_time"]
-        log.add("                              %4i processes:    %4.2f | %4.2f" % (case, exp1_length, exp2_length))
+        log.add("                              %4i processes:    %4.2f | %4.2f" % (
+            case, exp1_length, exp2_length))
     return log
 
 
 def multiexperiment_comparison(experiments, field1):
     # List of process per node used in experiments
-    processes_per_node = [int(exp.processes_per_node.replace("'", "")) for exp in experiments]
+    processes_per_node = [
+        int(exp.processes_per_node.replace("'", "")) for exp in experiments]
 
     # Find cases with common number of node among the experiments
-    
+
     for i, experiment in enumerate(experiments):
         if i == 0:
             common_cases = set(experiment.cases)
@@ -630,7 +669,8 @@ def multiexperiment_comparison(experiments, field1):
     log = Log()
 
     # Simulated Years per Day
-    base_case_speed = [experiment[base_case][field1] for experiment in experiments]
+    base_case_speed = [experiment[base_case][field1]
+                       for experiment in experiments]
 
     # Find index of slowest experiment
     slowest_index = np.argmin(base_case_speed)
@@ -661,7 +701,8 @@ def multiexperiment_comparison(experiments, field1):
         case_nprocs = experiments[0][case]["nproc"]
         resource_increase = case_nprocs / base_case_nprocs
         exp_speeds = [experiment[case][field1] for experiment in experiments]
-        exp_speedups = [exp_speeds[i] / base_case_speed[i] for i in range(len(experiments))]
+        exp_speedups = [exp_speeds[i] / base_case_speed[i]
+                        for i in range(len(experiments))]
         exp_efficiency = [es / resource_increase for es in exp_speedups]
 
         ratios = [es / exp_speeds[slowest_index] for es in exp_speeds]
@@ -692,7 +733,8 @@ def generate_weakscaling_data(experiments: list, component_to_report: str = "") 
                     resolution += case_metrics["components"][component]["resolution"]
                     grid_points += case_metrics["components"][component]["grid_points"]
             else:
-                case_metrics = go_to_dictionary_address(case_dict, ("components", component_to_report))
+                case_metrics = go_to_dictionary_address(
+                    case_dict, ("components", component_to_report))
                 grid_points = case_metrics["grid_points"]
                 resolution = case_metrics["resolution"]
 
@@ -700,9 +742,11 @@ def generate_weakscaling_data(experiments: list, component_to_report: str = "") 
             nproc = case_metrics["nproc"]
             ts_per_second = float(case_metrics["ts_per_second"])
 
-            log.add(f"{conf}, {nproc}, {resolution}, {ts_per_second:.2f}, {grid_points}")
+            log.add(
+                f"{conf}, {nproc}, {resolution}, {ts_per_second:.2f}, {grid_points}")
 
     return log
+
 
 def weakscaling_compute(experiments: list, file_out: str) -> None:
     import os
@@ -716,6 +760,7 @@ def weakscaling_compute(experiments: list, file_out: str) -> None:
         component_ws_data = generate_weakscaling_data(experiments, component)
         component_ws_data.save(os.path.join(dn, fn))
 
+
 def find_common_cases_and_functions(experiments):
     # Find cases that are common in all the experiments
     common_cases = set(experiments[0].cases)
@@ -727,7 +772,8 @@ def find_common_cases_and_functions(experiments):
     # Search common functions
     common_functions = set(experiments[0][base_case]["function_info"].keys())
     for experiment in experiments[1:]:
-        common_functions.intersection_update(experiment[base_case]["function_info"].keys())
+        common_functions.intersection_update(
+            experiment[base_case]["function_info"].keys())
     common_functions = list(common_functions)
 
     return common_cases, common_functions
@@ -738,7 +784,8 @@ def extract_data_from_experiments(experiments):
     data = []
     for experiment in experiments:
         for case in experiment.cases:
-            to_append = (ceil(case / experiment.processes_per_node), case, experiment[case]["time_step_time"])
+            to_append = (ceil(case / experiment.processes_per_node),
+                         case, experiment[case]["time_step_time"])
             data.append(to_append)
     return data
 
@@ -871,12 +918,15 @@ def oversimplified_memory_model(experiments):
     cb = cb / 48.
     tt = mb + cb + nc + cc + r
     print("Overall model:")
-    print("MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" % (100. * mb / tt, 100. * cb / tt, 100. * error / tt))
+    print("MB: %.1f%%\tCB: %.1f%%\tError:%.1f%%" %
+          (100. * mb / tt, 100. * cb / tt, 100. * error / tt))
     print("Top10 Functions:")
-    functions = list(experiments[0].data[experiments[0].base_case]["function_info"].labels())
+    functions = list(
+        experiments[0].data[experiments[0].base_case]["function_info"].labels())
     functions = functions[:10]
     for function in functions:
-        error, parameters = fit_functions_to_model(experiments, function_name=function)
+        error, parameters = fit_functions_to_model(
+            experiments, function_name=function)
         error = np.sqrt(abs(error))
         mb_time, cb_time, internode, intranode, residual = parameters
         cb_time = cb_time / 48

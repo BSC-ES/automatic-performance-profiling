@@ -1,5 +1,6 @@
 from matplotlib.ticker import StrMethodFormatter
 
+
 def plotter(data, experiment_name, scatter_labels=None, filename=None):
     try:
         import matplotlib
@@ -9,14 +10,14 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None):
         import os
     except ModuleNotFoundError:
         return
-    
+
     if filename is None:
         filename = experiment_name + ".png"
-    
+
     # Plot data
     x_label, y_label = data.keys()
     x, y = data[x_label], data[y_label]
-    
+
     plt.plot(x, y, alpha=.25)
     plt.scatter(x, y, alpha=.5)
 
