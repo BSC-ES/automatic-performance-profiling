@@ -539,14 +539,8 @@ def generate_sypd_plot_data(experiment_data, component=""):
     plot_data = {x_label: np.empty(0), y_label: np.empty(0)}
 
     if component == "":
-        base_case = experiment_data.base_case
-        base_case_speed = experiment_data.data[base_case]["sypd"]
-        base_case_procs = experiment_data.data[base_case]["nproc"]
         cases = experiment_data.cases
     else:
-        base_case = experiment_data.components_cases[component][0]
-        base_case_speed = experiment_data.data[base_case]["components"][component]["sypd"]
-        base_case_procs = experiment_data.data[base_case]["components"][component]["nproc"]
         cases = experiment_data.components_cases[component]
 
     for case in cases:
@@ -556,10 +550,7 @@ def generate_sypd_plot_data(experiment_data, component=""):
             address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
         speed = case_data["sypd"]
-        speedup = speed / base_case_speed
         case_procs = case_data["nproc"]
-        resource_increase = case_procs / base_case_procs
-        efficiency = speedup / resource_increase
         plot_data[x_label] = np.append(plot_data[x_label], case_procs)
         plot_data[y_label] = np.append(plot_data[y_label], speed)
 
@@ -717,11 +708,17 @@ def multiexperiment_comparison(experiments, field1):
 def generate_weakscaling_data(experiments: list, component_to_report: str = "") -> Log:
     log = Log()
 
-    header = "Config, Ncores, Resolution, Ts per second, Gridpoints"
+    if component_to_report == "":
+        header = "Config, Resolution, Gridpoints"
+    else:
+        header = "Config, Ncores, Resolution, Ts per second, Gridpoints"
+
     log.add(header)
 
     for exp_idx, experiment in enumerate(experiments):
         for case_dict in experiment.data.values():
+            conf = f"WS_{exp_idx}"
+
             if component_to_report == "":
                 case_metrics = case_dict
                 grid_points = ""
@@ -732,18 +729,18 @@ def generate_weakscaling_data(experiments: list, component_to_report: str = "") 
                         grid_points += "+"
                     resolution += case_metrics["components"][component]["resolution"]
                     grid_points += case_metrics["components"][component]["grid_points"]
+                log.add(
+                    f"{conf}, {resolution}, {grid_points}")
             else:
                 case_metrics = go_to_dictionary_address(
                     case_dict, ("components", component_to_report))
                 grid_points = case_metrics["grid_points"]
                 resolution = case_metrics["resolution"]
+                nproc = case_metrics["nproc"]
+                ts_per_second = float(case_metrics["ts_per_second"])
 
-            conf = f"WS_{exp_idx}"
-            nproc = case_metrics["nproc"]
-            ts_per_second = float(case_metrics["ts_per_second"])
-
-            log.add(
-                f"{conf}, {nproc}, {resolution}, {ts_per_second:.2f}, {grid_points}")
+                log.add(
+                    f"{conf}, {nproc}, {resolution}, {ts_per_second:.2f}, {grid_points}")
 
     return log
 

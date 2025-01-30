@@ -84,20 +84,6 @@ function add_StrongScaling() {
 
         cd ${test_root} || exit
 
-        local arch_name=%STRONGSCALING.ARCH_NAME%
-        arch_name=${arch_name//_/-}
-        # Create and add test configuration info
-        {   
-            echo "Configuration,Value";
-            echo "ARCH NAME,${arch_name}";
-        } > test_info.csv
-    
-        python3 ${latex_folder}/ReportGenerator.py \
-            -O ${report_full_path}.pkl \
-            -S "Scalability" \
-            --add-caption "Scalability test configuration." \
-            --add-csv test_info.csv
-
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Scalability" \
@@ -349,15 +335,12 @@ function add_Tracing() {
 
         cd ${test_root} || exit
 
-        local arch_name=%TRACING.ARCH_NAME%
-        arch_name=${arch_name//_/-}
         # Create and add test configuration
         {   
             echo "Configuration,Value";
             echo "START DATE,%TRACING.START_DATE%";
             echo "END DATE,%TRACING.END_DATE%"; 
             echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
-            echo "ARCH NAME,${arch_name}"; 
         } > test_info.csv
     
         python3 ${latex_folder}/ReportGenerator.py \
@@ -448,21 +431,6 @@ function add_WeakScaling() {
         --add-csv ${run_root}/${member}/${member}.csv \
         --add-caption "${member_title} case comparison scalability." \
         -T ${cfg}/latex/text/${current_member}.txt
-
-    # Add member's arch info
-    local arch_name=%STRONGSCALING.ARCH_NAME%
-    arch_name=${arch_name//_/-}
-    {   
-        echo "Configuration,Value";
-        echo "ARCH NAME,${arch_name}";
-    } > ${run_root}/${member}/test_info.csv
-
-    python3 ${cfg}/latex/ReportGenerator.py \
-        -O ${report_full_path}.pkl \
-        -S "Multi Experiment" \
-        -s $member_title \
-        --add-csv ${run_root}/${member}/test_info.csv \
-        --add-caption "${member_title} test configuration."
 
     # Add models case comparisson table
     for component in "${components[@]}"; do
