@@ -150,7 +150,8 @@ EOF
 #####################################################################################################################
 function trace_nemo()
 {
-    local run_dir=${run_root}/${test_name}/trace_nemo_${numproc}
+    local run_id="%CURRENT_NAME%"
+    local run_dir=${run_root}/${test_name}/trace_${run_id}
     mkdir -p ${run_dir}
 
     configure_extrae ${run_dir}
@@ -243,7 +244,7 @@ function trace_ecearth4()
         oifs_omp_threads=%CURRENT_THREADS%
     fi
 
-    local run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    local run_id="%CURRENT_NAME%"
     local run_dir=${run_root}/${test_name}/trace_${run_id}
     local src_dir=${compilation}/${arch_name}/sources/
     mkdir -p ${run_dir}
@@ -321,13 +322,7 @@ function trace_ecearth4()
 
     cut_trace trace_components processors "${model}.prv"
 
-    test_info_fn=${run_dir}/${run_id}-test_info.csv
-    echo "component,nproc,resolution" > ${test_info_fn}
-    for component in $components; do
-        component_procs="${component}_procs"
-        component_resolution="${component}_resolution"
-        echo "${component},${!component_procs},${!component_resolution}" >> ${test_info_fn}
-    done
+    report_test_cfg
 
     rm -rf set-* ./*.nc
 }

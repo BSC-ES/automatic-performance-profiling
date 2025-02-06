@@ -167,7 +167,7 @@ def coupling_info(experiment_data, coupling_folder):
             case_data[i, j] = str(case_dict[case_data[0, j]])
 
         case_folder = os.path.join(
-            coupling_folder, experiment_data.cases_translation[case])
+            coupling_folder, case)
         os.makedirs(case_folder, exist_ok=True)
         np.savetxt(os.path.join(case_folder, "summary.csv"),
                    case_data, delimiter=',', fmt="%s")
@@ -497,8 +497,8 @@ def generate_sypd_summary_data(experiment_data, component=""):
         base_case_data = go_to_dictionary_address(
             experiment_data.data, address)
 
-    base_case_procs = base_case_data["nproc"]
-    base_case_speed = base_case_data["sypd"]
+    base_case_procs = int(base_case_data["nproc"])
+    base_case_speed = float(base_case_data["sypd"])
 
     log.add("Case, Processes, SYPD, SpeedUp, Efficiency")
     for case in cases:
@@ -507,9 +507,9 @@ def generate_sypd_summary_data(experiment_data, component=""):
         else:
             address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
-        speed = case_data["sypd"]
+        speed = float(case_data["sypd"])
         speedup = speed / base_case_speed
-        case_procs = case_data["nproc"]
+        case_procs = int(case_data["nproc"])
         resource_increase = case_procs / base_case_procs
         efficiency = speedup / resource_increase
         log.add(f"{case}, {case_procs}, {speed:.1f}, {speedup:.1f}, {efficiency:.2f}")
@@ -549,8 +549,8 @@ def generate_sypd_plot_data(experiment_data, component=""):
         else:
             address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
-        speed = case_data["sypd"]
-        case_procs = case_data["nproc"]
+        speed = float(case_data["sypd"])
+        case_procs = int(case_data["nproc"])
         plot_data[x_label] = np.append(plot_data[x_label], case_procs)
         plot_data[y_label] = np.append(plot_data[y_label], speed)
 
@@ -654,7 +654,7 @@ def multiexperiment_comparison(experiments, field1):
             common_cases.intersection_update(experiment.cases)
 
     cases_to_compare = list(common_cases)
-    print(common_cases)
+
     base_case = experiments[0].base_case
     # Initialize results printout
     log = Log()
@@ -685,11 +685,11 @@ def multiexperiment_comparison(experiments, field1):
 
     log.add(log_text)
 
-    base_case_nprocs = experiments[0][base_case]["nproc"]
+    base_case_nprocs = int(experiments[0][base_case]["nproc"])
     for case in cases_to_compare:
         if case == base_case:
             continue
-        case_nprocs = experiments[0][case]["nproc"]
+        case_nprocs = int(experiments[0][case]["nproc"])
         resource_increase = case_nprocs / base_case_nprocs
         exp_speeds = [experiment[case][field1] for experiment in experiments]
         exp_speedups = [exp_speeds[i] / base_case_speed[i]

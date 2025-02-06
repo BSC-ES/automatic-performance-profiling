@@ -17,10 +17,12 @@ platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
 tests="%TRACING.TEST_NAMES%"
+names="%TRACING.NAMES%"
 
 member="tracing"
 tests=${tests//[\[,\]]/}
 tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
+names=(${names//[\[,\]\']/})
 components=${components//[\[,\]]/}
 components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 
@@ -36,12 +38,12 @@ do
     fi
     
     # Iterate over all trace_* folders
-    for trace_folder in ${run_root}/${test_name}/trace_*
+    for name in "${names[@]}"
     do
+        trace_folder=${run_root}/${test_name}/trace_${name}
         cd ${trace_folder} || exit
 
-        trace_id=${trace_folder//*trace_}
-        test_info_fn=${trace_id}-ts_test_info.csv
+        test_info_fn=${name}-ts_test_info.csv
         echo "component,ts_length" > ${test_info_fn}
 
         for component in $components; do

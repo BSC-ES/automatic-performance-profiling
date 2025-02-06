@@ -69,7 +69,7 @@ def parse_dimemas_filename(filename):
     return parse_filename(filename, pattern)
 
 
-def merge_dictionaries(dict_one, dict_two):
+def merge_dictionaries(dict_one, dict_two, path = []):
     """
     Takes two dictionaries and puts the information of both in a new dictionary
     :param dict_one:
@@ -83,18 +83,15 @@ def merge_dictionaries(dict_one, dict_two):
     if dict_two is None:
         return dict_one
 
-    new_dict = dict_one.copy()
-    for key in dict_two.keys():
-        try:
-            if isinstance(new_dict[key], dict):
-                new_dict[key] = merge_dictionaries(
-                    new_dict[key], dict_two[key])
-            else:
-                new_dict[key] = new_dict[key]
-        except KeyError:
-            new_dict[key] = dict_two[key]
-    return new_dict
-
+    for key in dict_two:
+        if key in dict_one:
+            if isinstance(dict_one[key], dict) and isinstance(dict_two[key], dict):
+                merge_dictionaries(dict_one[key], dict_two[key], path + [str(key)])
+            elif dict_one[key] != dict_two[key]:
+                continue
+        else:
+            dict_one[key] = dict_two[key]
+    return dict_one
 
 def distributed_variable(values):
     return {"values": values, "average": np.average(values), "std": np.std(values)}
@@ -280,14 +277,14 @@ class TimingInformation:
         self.components_cases = None
         self.cases_translation = {}
 
-        print(timing_files)
-
         if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files):
             raise AssertionError("No files provided")
 
         # Update values with the provided files
         if json_file:
             self.load_json(json_file)
+        if test_info_files:
+            self.load_test_info(test_info_files)
         if timing_files:
             self.load_timings(timing_files)
             self.function_info_src = "timing"
@@ -295,8 +292,6 @@ class TimingInformation:
             self.function_info_src = "paramedir"
         if lucia_files:
             self.load_lucia(lucia_files)
-        if test_info_files:
-            self.load_test_info(test_info_files)
         if paramedir_files:
             self.load_paramedir(paramedir_files)
         if dimemas_files:
@@ -349,7 +344,7 @@ class TimingInformation:
         import csv
         for test_info_fn in test_info_files:
             test_dict = {}
-            pattern = "([0-9a-zA-Z_]+)-([a-z_]+).csv"
+            pattern = "([0-9a-zA-Z_]+)-([0-9a-zA-Z_]*test_info).csv"
             run_id, _ = parse_filename(test_info_fn, pattern)
 
             test_dict[run_id] = {"components": {}}
@@ -358,9 +353,25 @@ class TimingInformation:
                 for dict_line in reader:
                     component_name = dict_line["component"]
                     dict_line.pop("component")
-                    test_dict[run_id]["components"][component_name] = {}
-                    test_dict[run_id]["components"][component_name] = dict_line
+                    if component_name == "model":
+                        test_dict[run_id].update(dict_line)
+                    else:
+                        if not component_name in test_dict[run_id]["components"]:
+                            test_dict[run_id]["components"][component_name] = {}
+                        test_dict[run_id]["components"][component_name].update(dict_line)
             self.data = merge_dictionaries(self.data, test_dict)
+
+        if self.cases is None:
+            self.cases = list(
+                sorted(self.data.keys(), key=lambda f: self.data[f]["nproc"]))
+            self.base_case = self.cases[0]
+
+        if self.components_cases is None:
+            self.components_cases = {}
+            for component in self.components:
+                self.components_cases[component] = sorted(
+                    self.data, key=lambda f: self.data[f]["components"][component]["nproc"])
+
 
     def load_param(self, param_file):
         from os.path import isfile
@@ -551,8 +562,6 @@ class TimingInformation:
                 self.param_file = json_data["param_file"]
             except KeyError:
                 pass
-
-        self.rename_cases()
 
     # This function renames the cases after getting all the info about them to have shorter names in the report
     # it is not done before because is easier to merge the same cases if they have the same id
