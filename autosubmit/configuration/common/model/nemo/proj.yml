@@ -2,8 +2,9 @@
 MODEL:
   NAME: nemo
   COMPONENTS: [nemo]
+  REPORT_COMPONENTS: [nemo]
   ORIGIN: https://forge.nemo-ocean.eu/nemo/nemo.git
-  BRANCH_LIST: 4.2.1
+  BRANCH: 4.2.1
 
   # Arch files prefixes to compile
   # The arch file has to be located in cfg/arch/PLATFORM/MODEL/

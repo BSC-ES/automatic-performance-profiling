@@ -10,7 +10,7 @@
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 analysis_tools=${cfg}/trace_analysis/
-components="%MODEL.COMPONENTS%"
+components="%MODEL.REPORT_COMPONENTS%"
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}

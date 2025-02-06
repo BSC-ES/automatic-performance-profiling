@@ -18,7 +18,7 @@ model=%MODEL.NAME%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 
-components="%MODEL.COMPONENTS%"
+components="%MODEL.REPORT_COMPONENTS%"
 ppn=%PROCESSORS_PER_NODE%
 
 # Set the input files depending on the model

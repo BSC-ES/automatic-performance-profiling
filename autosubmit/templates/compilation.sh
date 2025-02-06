@@ -17,13 +17,13 @@ env_sources=${cfg}/env/${platform}/environment.env
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 ntasks=%THREADS%
-branch=%MODEL.BRANCH_LIST%
+branch=%MODEL.BRANCH%
 exp_root=%CURRENT_ROOTDIR%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 members="%EXPERIMENT.MEMBERS%"
 current_arch=%HPCARCH%
-arch_name=%CURRENT_TEST_NAME%
+arch_name=%CURRENT_CONFIG_NAME%
 current_member=%MEMBER%
 
 #####################################################################################################################

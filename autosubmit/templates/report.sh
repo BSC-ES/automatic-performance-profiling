@@ -17,7 +17,7 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 latex_folder=${cfg}/latex/
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 members="%EXPERIMENT.MEMBERS%"
-components="%MODEL.COMPONENTS%"
+components="%MODEL.REPORT_COMPONENTS%"
 configuration_name=%STRONGSCALING.TEST_CONFIG%
 root_dir=%CURRENT_ROOTDIR%
 
@@ -293,8 +293,7 @@ function add_modelfactors() {
 }
 
 function add_mpi() {
-    for trace_folder in ${test_root}/trace_*; do
-        local trace_id=${trace_folder//*trace_}
+    for trace_id in "${tracing_names[@]}"; do
         for component in "${components[@]}"; do
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
@@ -317,6 +316,8 @@ function add_mpi() {
 function add_Tracing() {
     local member="tracing"
     local tests="%TRACING.TEST_NAMES%"
+    tracing_names="%TRACING.NAMES%"
+    tracing_names=(${tracing_names//[\[,\]\']/})
     tests=${tests//[\[,\]]/}
     tests=$(for v in $tests; do echo "$v"; done | sort | uniq | xargs)
 

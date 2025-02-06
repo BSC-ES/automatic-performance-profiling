@@ -92,15 +92,11 @@ mkdir -p ${run_folder}
 mkdir -p ${inidata}
 
 # Clone the model source code
-branchs_to_clone=(%MODEL.BRANCH_LIST%)
+branch=%MODEL.BRANCH%
 dest_dir=${compilation}
-for branch in "${branchs_to_clone[@]}";
-do
-    if [[ ! -d ${model}_${branch} ]]
-    then
-        clone_${model}
-    fi
-done
+if [[ ! -d ${model}_${branch} ]]; then
+    clone_${model}
+fi
 
 # Clone XIOS if NEMO is run
 if [ "${model}" = "nemo" ]; then

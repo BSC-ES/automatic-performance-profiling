@@ -18,7 +18,7 @@ numproc=%NUMPROC%
 current_member=%MEMBER%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
-branch=%MODEL.BRANCH_LIST%
+branch=%MODEL.BRANCH%
 n_functions=%TRACING.TRACE_N_FUNCTIONS%
 
 source $env_sources

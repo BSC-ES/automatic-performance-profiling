@@ -11,7 +11,7 @@ function run_modelfactors() {
     platform=%DEFAULT.HPCARCH%
     platform=${platform,,}
     env_sources=${cfg}/env/${platform}/environment.env
-    components="%MODEL.COMPONENTS%"
+    components="%MODEL.REPORT_COMPONENTS%"
 
     source ${env_sources}
 

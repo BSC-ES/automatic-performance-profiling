@@ -1,9 +1,10 @@
 # MODEL CONFIG
 MODEL:
   NAME: ecearth4
-  COMPONENTS: [nemo, oifs]
+  REPORT_COMPONENTS: [nemo, oifs]
+  COMPONENTS: [oifs, xios, nemo, rnfm, oasis]
   ORIGIN: https://git.smhi.se/ec-earth/ecearth4.git
-  BRANCH_LIST: main
+  BRANCH: 6e8aa1734df63817482b18863bae82ae7b8dbf10
 
   # Arch files prefixes to compile
   # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
@@ -39,13 +40,13 @@ TRACING:
   USER_FUNCTIONS_THREADS: 4
   TRACE_N_FUNCTIONS: 40
 
-  TEST_NAMES: [BENCH,   BENCH  ]
-  NAMES:      [trace_1, trace_2]
-  PROCESSORS: [112,     224    ]
-  OIFS_PROCS: [55,      111    ]
-  NEMO_PROCS: [55,      111    ]
-  XIOS_PROCS: [1,       1      ]
-  THREADS:    [1,       1      ]
+  TEST_NAMES: [BENCH,   BENCH  , BENCH  ]
+  NAMES:      [trace_1, trace_2, trace_3]
+  PROCESSORS: [112,     224    , 336    ]
+  OIFS_PROCS: [55,      111    , 167    ]
+  NEMO_PROCS: [55,      111    , 167    ]
+  XIOS_PROCS: [1,       1      , 1      ]
+  THREADS:    [1,       1      , 1      ]
   USE_OMP_THREDS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
@@ -58,9 +59,9 @@ STRONGSCALING:
 
   TEST_NAMES: [BENCH,   BENCH  ]
   NAMES:      [bench_1, bench_2]
-  PROCESSORS: [112,     224    ]
-  OIFS_PROCS: [55,      111    ]
-  NEMO_PROCS: [55,      111    ]
+  PROCESSORS: [336,     672    ]
+  OIFS_PROCS: [167,     335    ]
+  NEMO_PROCS: [167,     335    ]
   XIOS_PROCS: [1,       1      ]
   THREADS:    [1,       1      ]
   USE_OMP_THREDS: false
@@ -77,18 +78,18 @@ WEAKSCALING:
 
   # Base case configuration, meaning the resolution and processors configuration
   NEMO_BASE_PROCS: 111
-  OIFS_BASE_PROCS: 111
+  OIFS_BASE_PROCS: 333
   NEMO_BASE_RESOLUTION: eORCA1L75
   OIFS_BASE_RESOLUTION: TL159L91
 
   # Processors must be set to 1, since processors count is computed during runtime
   # based on the base processors and resolution
-  TEST_NAMES:      [ws_1,      ws_2,      ws_3,      ws_4     ]
-  NAMES:           [ws_1,      ws_2,      ws_3,      ws_4     ]
-  PROCESSORS:      [1,         1,         1,         1        ]
-  XIOS_PROCS:      [1,         1,         1,         1        ]
-  OIFS_RESOLUTION: [TL159L91,  TCO95L91,  TL255L91,  TL511L91 ]
-  NEMO_RESOLUTION: [eORCA1L75, eORCA1L75, eORCA1L75, eORCA1L75]
+  TEST_NAMES:      [ws_1_1,    ws_1_2,    ws_1_3,    ws_1_4   ] #, TL255L91+eORCA1L75, TL511L91+eORCA1L75]
+  NAMES:           [ws_1_1,    ws_1_2,    ws_1_3,    ws_1_4   ] #,      ws_3,      ws_4     ]
+  PROCESSORS:      [1,         1,         1,         1,       ] #,         1,         1        ]
+  XIOS_PROCS:      [1,         1,         1,         1,       ] #,         1,         1        ]
+  OIFS_RESOLUTION: [TL159L91,  TL159L91,  TL159L91,  TL159L91 ] #,  TL255L91,  TL511L91 ]
+  NEMO_RESOLUTION: [eORCA1L75, eORCA1L75, eORCA1L75, eORCA1L75] #, eORCA1L75, eORCA1L75]
 
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_impi_prod
@@ -98,12 +99,12 @@ COMPILATION_EFFICIENCY:
   COMPILATION_EFFICIENCY_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency"
 
   # For compilation efficiency the arch name is taken from the test name
-  TEST_NAMES: [O3_impi_prod, O3_impi_prod, O3_impi_prod, O1_prod, O1_prod, O1_prod    ]
-  NAMES:      [O3_112,       O3_224,       O3_336,       O1_112,  O1_224,  O1_336]
-  PROCESSORS: [112,          224,          336,          112,     224,     336   ]
-  OIFS_PROCS: [55,           111,          167,          55,      111,     167   ]
-  NEMO_PROCS: [55,           111,          167,          55,      111,     167   ]
-  XIOS_PROCS: [1,            1,            1,            1,       1,       1     ]
-  THREADS:    [1,            1,            1,            1,       1,       1     ]
+  TEST_NAMES: [O3_impi_prod, O3_impi_prod, O3_impi_prod]
+  NAMES:      [O3_112,       O3_224,       O3_336,     ]
+  PROCESSORS: [112,          224,          336,        ]
+  OIFS_PROCS: [55,           111,          167,        ]
+  NEMO_PROCS: [55,           111,          167,        ]
+  XIOS_PROCS: [1,            1,            1,          ]
+  THREADS:    [1,            1,            1,          ]
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
