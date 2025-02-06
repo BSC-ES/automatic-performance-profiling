@@ -17,9 +17,13 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
-
-components="%MODEL.REPORT_COMPONENTS%"
 ppn=%PROCESSORS_PER_NODE%
+
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
+# Load array variables
+components=$(bashify_array "%MODEL.REPORT_COMPONENTS%" true)
 
 # Set the input files depending on the model
 reporter_params=""
@@ -68,18 +72,14 @@ case "$current_member" in
     ;;
 esac
 
-tests=${tests//[\[,\]]/}
-tests=$(for v in $tests; do echo "$v";done| uniq| xargs)
-
-components=${components//[\[,\]]/}
-components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
+tests=($(bashify_array "${tests}" true))
 
 source ${env_sources}
 set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
 
-for test in $tests
+for test in "${tests[@]}"
 do
     test_folder=${run_root}/${member}/${test}
     cd ${test_folder} || exit

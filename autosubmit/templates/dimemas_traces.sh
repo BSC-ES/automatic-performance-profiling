@@ -4,20 +4,22 @@
 # Brief: This script runs the model with Extrae in order to trace the PAPI counters, user functions and MPI events
 #####################################################################################################################
 
+run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
+analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+cfg=%COMMON_PATH_LOCATIONS.CFG%
+platform=%DEFAULT.HPCARCH%
+platform=${platform,,}
+env_sources=${cfg}/env/${platform}/environment.env
+
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
+components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
+tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
+
 function run_dimemas() {
-    run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-    analysis_tools=%COMMON_PATH_LOCATIONS.CFG%/trace_analysis/
-    platform=%DEFAULT.HPCARCH%
-    platform=${platform,,}
-    cfg=%COMMON_PATH_LOCATIONS.CFG%
-    platform=%DEFAULT.HPCARCH%
-    platform=${platform,,}
-    env_sources=${cfg}/env/${platform}/environment.env
-    components="%MODEL.REPORT_COMPONENTS%"
-    tests="%TRACING.TEST_NAMES%"
-
-    source ${env_sources}
-
     member="tracing"
     tests=${tests//[\[,\]]/}
     tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
@@ -25,7 +27,7 @@ function run_dimemas() {
     components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
     dimemas_configurations=$(find ${analysis_tools}/dimemas_configurations/platform/${platform}/*)
 
-    for test in $tests
+    for test in "${tests[@]}"
     do
         test_name=${member}/${test}
         
@@ -34,7 +36,7 @@ function run_dimemas() {
         mkdir -p dimemas_traces
         for trace_folder in trace_*
         do
-            for component in ${components}; do
+            for component in "${components[@]}"; do
                 trace=${trace_folder}/${component}.best_cut.prv
                 trace_id=${trace_folder//*trace_/}
                 dim_trace=dimemas_traces/${trace_id}.dim
@@ -63,6 +65,7 @@ function run_dimemas() {
 ###################
 # Start script
 ###################
+. ${env_sources}
 
 dimemas_enabled=%TRACING.DIMEMAS.ENABLED%
 dimemas_enabled=${dimemas_enabled,,}

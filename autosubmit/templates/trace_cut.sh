@@ -11,24 +11,22 @@ run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 magiccut=%CURRENT_ROOTDIR%/magiccut/magicCut
 timestep_zero=%TRACING.TIMESTEP_ZERO%
 trace_steps=%TRACING.TRACE_STEPS%
-components="%MODEL.REPORT_COMPONENTS%"
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
-tests="%TRACING.TEST_NAMES%"
-names="%TRACING.NAMES%"
-
 member="tracing"
-tests=${tests//[\[,\]]/}
-tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
-names=(${names//[\[,\]\']/})
-components=${components//[\[,\]]/}
-components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
+
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
+names=($(bashify_array "%TRACING.NAMES%"))
+tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
+components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 source ${env_sources}
 
-for test in $tests
+for test in "${tests[@]}"
 do
     test_name=$member/$test
     if [ "${timestep_zero}" = "TRUE" ]; then
@@ -46,7 +44,7 @@ do
         test_info_fn=${name}-ts_test_info.csv
         echo "component,ts_length" > ${test_info_fn}
 
-        for component in $components; do
+        for component in "${components[@]}"; do
             curr_mc_steps=${magiccut_steps}
             if [ "${timestep_zero^^}" != "TRUE" ] && [ "${component}" = "oifs" ]; then
                 curr_mc_steps=$((magiccut_steps+1))

@@ -17,12 +17,13 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 latex_folder=${cfg}/latex/
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 members="%EXPERIMENT.MEMBERS%"
-components="%MODEL.REPORT_COMPONENTS%"
 configuration_name=%STRONGSCALING.TEST_CONFIG%
 root_dir=%CURRENT_ROOTDIR%
 
-components=${components//[\[,\]]/}
-components=($(for v in $components; do echo "$v"; done | sort | uniq | xargs))
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
+components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 #####################################################################################################################
 # Brief: Adds STREAM and OSU images to the report

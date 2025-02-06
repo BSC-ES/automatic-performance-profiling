@@ -10,19 +10,20 @@
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 analysis_tools=${cfg}/trace_analysis/
-components="%MODEL.REPORT_COMPONENTS%"
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-tests="%TRACING.TEST_NAMES%"
-
 member="tracing"
-tests=${tests//[\[,\]]/}
-tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
-components=${components//[\[,\]]/}
-components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
+
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
+# Load array variables
+tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
+components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
+
 
 source ${env_sources}
 
@@ -96,13 +97,13 @@ run_paraver()
     local compare_cfgs="%TRACING.PARAVER.COMPARE_CFGS%"
     local paraver_cfgs="%TRACING.PARAVER.CFGS%"
 
-    for test in ${tests}; do
+    for test in "${tests[@]}"; do
         test_folder=${run_root}/${member}/${test}
 
         declare -A components_slowest_ts
-        for component in $components; do components_slowest_ts[$component]=0; done
+        for component in "${components[@]}"; do components_slowest_ts[$component]=0; done
         for trace_folder in ${test_folder}/trace_*; do
-            for components in $components; do 
+            for component in "${components[@]}"; do 
                 max_time=${components_slowest_ts[$component]}
                 cur_time=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
                 components_slowest_ts[$component]=$(( cur_time  > max_time ? cur_time : max_time )); 
@@ -119,7 +120,7 @@ run_paraver()
             mkdir -p ${img_folder}
             cd ${img_folder} || exit
 
-            for component in ${components}; do
+            for component in "${components[@]}"; do
                 create_threads_to_ignore
 
                 trace=${trace_folder}/${component}.best_cut.prv

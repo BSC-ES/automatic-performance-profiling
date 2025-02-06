@@ -24,9 +24,11 @@ output="%TRACING.OUTPUT%"
 papi_counters="%TRACING.PAPI_COUNTERS%"
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 platform=%DEFAULT.HPCARCH%
-components="%MODEL.COMPONENTS%"
-components=${components//[\[,\]]/}
-components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
+
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
+report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 #####################################################################################################################
 # Brief: Creates the extrae configuration file using the AS variables

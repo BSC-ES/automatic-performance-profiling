@@ -20,29 +20,11 @@ model=%MODEL.NAME%
 branch=%MODEL.BRANCH%
 test="%CURRENT_TEST_NAME%"
 platform="%DEFAULT.HPCARCH%"
-components="%MODEL.COMPONENTS%"
-components=${components//[\[,\]]/}
-components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
 
-function report_test_cfg()
-{
-    test_info_fn=${run_dir}/${run_id}-test_info.csv
-    header="component,nproc,resolution"
-    if [ "$current_member" = "WeakScaling" ]; then header+=",grid_points"; fi
-    echo ${header} > ${test_info_fn}
-    for component in $components; do
-        component_procs="${component}_procs"
-        component_resolution="${component}_resolution"
-        row="${component},${!component_procs},${!component_resolution}"
-        if [ "$current_member" = "WeakScaling" ]; then 
-            component_grid_points="${component}_curr_tile_size"
-            row+=",${!component_grid_points}"
-        fi
-        echo ${row} >> ${test_info_fn}
-    done
-}
-
+report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 #####################################################################################################################
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
@@ -91,6 +73,7 @@ function run_nemo()
     fi
 
     cd ${run_dir} || exit
+
     # If it is Weak Scaling that is being run compute the current procs based on the
     # base procs and resolution
     if [ ${current_member} = "WeakScaling" ]; then
@@ -114,17 +97,64 @@ function run_nemo()
     report_test_cfg
 }
 
+#####################################################################################################################
+# Brief: Get all components AS variables to abstract run_ecearth4 function
+# Global:
+#   - Paths: project
+#####################################################################################################################
+function get_vars_ecearth4()
+{
+    # If it is Weak Scaling that is being run compute the current procs based on the
+    # base procs and resolution
+    if [ ${current_member} = "WeakScaling" ]; then
+        . ${project}/configurations/model/nemo/resolutions.sh 
+        # Overwrite resolution var with the current test resolution
+        nemo_resolution=%CURRENT_NEMO_RESOLUTION%
+        nemo_base_procs=%WEAKSCALING.NEMO_BASE_PROCS%
+        nemo_base_resolution=%WEAKSCALING.NEMO_BASE_RESOLUTION%
+        base_tile_size=${nemo_resolutions[${nemo_base_resolution^^}]}
+        nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
+        nemo_procs=$((nemo_base_procs*nemo_curr_tile_size/base_tile_size))
+
+        . ${project}/configurations/model/oifs/resolutions.sh 
+        # Overwrite resolution var with the current test resolution
+        oifs_resolution=%CURRENT_OIFS_RESOLUTION%
+        oifs_base_procs=%WEAKSCALING.OIFS_BASE_PROCS%
+        oifs_base_resolution=%WEAKSCALING.OIFS_BASE_RESOLUTION%
+        base_tile_size=${oifs_resolutions[${oifs_base_resolution^^}]}
+        oifs_curr_tile_size=${oifs_resolutions[${oifs_resolution^^}]}
+        oifs_procs=$((oifs_base_procs*oifs_curr_tile_size/base_tile_size))
+    else 
+        oifs_procs="%CURRENT_OIFS_PROCS%"
+        oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
+
+        nemo_procs="%CURRENT_NEMO_PROCS%"
+        nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
+    fi
+    use_omp_threads="%USE_OMP_THREDS%"
+    oifs_omp_threads=1
+    if [ "${use_omp_threads^^}" == "TRUE" ]; then
+        oifs_omp_threads=%CURRENT_THREADS%
+    fi
+    
+    xios_procs="%CURRENT_XIOS_PROCS%"
+
+    rnfm_procs=1
+}
+
 
 #####################################################################################################################
 # Brief: Updates the SE config file with the AS config and runs EC-Earth 4
 # Global:
-#   - Paths: run_root, compilation
+#   - Paths: run_root, compilation, project
 #   - Other: test_name, model, number_of_cores, test, branch
 #####################################################################################################################
 function run_ecearth4()
 {
-    local oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
-    local nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
+    # Get AS variables
+
+    get_vars_ecearth4
+
     local start_date="%EXPERIMENT.START_DATE%"
     local end_date="%EXPERIMENT.END_DATE%"
     local freq="%EXPERIMENT.FREQ%"
@@ -133,41 +163,8 @@ function run_ecearth4()
     . ${project}/cfg/utils/${model}/se.sh
 
     local model_sources=${compilation}/${model}_${branch}
-
-    local xios_procs="%CURRENT_XIOS_PROCS%"
-    local use_omp_threads="%USE_OMP_THREDS%"
-    local oifs_omp_threads=1
-    if [ "${use_omp_threads^^}" == "TRUE" ]; then
-        oifs_omp_threads=%CURRENT_THREADS%
-    fi
-
-    # If it is Weak Scaling that is being run compute the current procs based on the
-    # base procs and resolution
-    if [ ${current_member} = "WeakScaling" ]; then
-        . ${project}/configurations/model/nemo/resolutions.sh 
-        # Overwrite resolution var with the current test resolution
-        nemo_resolution=%CURRENT_NEMO_RESOLUTION%
-        local nemo_base_procs=%WEAKSCALING.NEMO_BASE_PROCS%
-        local nemo_base_resolution=%WEAKSCALING.NEMO_BASE_RESOLUTION%
-        local base_tile_size=${nemo_resolutions[${nemo_base_resolution^^}]}
-        local nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
-        local nemo_procs=$((nemo_base_procs*nemo_curr_tile_size/base_tile_size))
-
-        . ${project}/configurations/model/oifs/resolutions.sh 
-        # Overwrite resolution var with the current test resolution
-        oifs_resolution=%CURRENT_OIFS_RESOLUTION%
-        local oifs_base_procs=%WEAKSCALING.OIFS_BASE_PROCS%
-        local oifs_base_resolution=%WEAKSCALING.OIFS_BASE_RESOLUTION%
-        local base_tile_size=${oifs_resolutions[${oifs_base_resolution^^}]}
-        local oifs_curr_tile_size=${oifs_resolutions[${oifs_resolution^^}]}
-        local oifs_procs=$((oifs_base_procs*oifs_curr_tile_size/base_tile_size))
-    else 
-        local oifs_procs="%CURRENT_OIFS_PROCS%"
-        local nemo_procs="%CURRENT_NEMO_PROCS%"
-    fi
-
     local test_dir=${run_root}/${test_name}
-    local run_id=xios_${xios_procs}_nemo_${nemo_procs}_rnfm_1_oifs_${oifs_procs}
+    local run_id="%CURRENT_NAME%"
     local run_dir=${test_dir}/scalability_${run_id}
     local src_dir=${compilation}/${arch_name}/sources/
 
@@ -175,9 +172,11 @@ function run_ecearth4()
     mkdir -p ${run_dir}
     rm -rf ${run_dir}/*
 
-    cd ${compilation}/${arch_name}/scripts/runtime
+    cd ${compilation}/${arch_name}/scripts/runtime || exit
 
-    # Update all variable according to AS config
+
+    # Update all configuration according to AS variables
+    
     local config_file=config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
@@ -186,7 +185,9 @@ function run_ecearth4()
     local ecearth_root=${compilation}/${arch_name}
     local sed_ecearth_root=${ecearth_root//\//\\\/}
 
+    sed -i "s/RUN_ID/${run_id}/"                     ${config_file}
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
+    sed -i "s/BASE_FOLDER/${sed_run_dir}/"           ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
@@ -204,9 +205,11 @@ function run_ecearth4()
     sed -i "s/OIFS_RESOLUTION/${oifs_resolution}/"   ${config_file}
     sed -i "s/NEMO_RESOLUTION/${nemo_resolution}/"   ${config_file}
 
+    # Set the queue and project only for weakscaling since it is run intercatively 
+    # and it is not taking the AS platform configuration
     if [ "$current_member" = "WeakScaling" ]; then
-        local queue=%HPCQUEUE%
-        local proj=%CURRENT_PROJ%
+        local queue="%HPCQUEUE%"
+        local proj="%CURRENT_PROJ%"
         sed -i "s/QUEUE/${queue}/"                   ${config_file}
         sed -i "s/ACCOUNT/${proj}/"                  ${config_file}
     fi
@@ -214,10 +217,15 @@ function run_ecearth4()
     # Disable DR HOOK as it may cause issues
     sed -i "s/DR_HOOK=1/DR_HOOK=0/"              templates/launch/run-srun-multiprog.sh.j2
 
+
     # Activate the SE enviroment and run
+
     set +u
     se_env_${platform,,} trunk
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
+
+
+    # Post process model output
 
     module purge
     source ${env_sources}

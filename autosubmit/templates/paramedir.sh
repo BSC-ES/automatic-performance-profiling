@@ -10,11 +10,16 @@
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 analysis_tools=${project}/cfg/trace_analysis/
-components="%MODEL.REPORT_COMPONENTS%"
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
+
+# shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
+components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
+tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
 
 #####################################################################################################################
 # Brief: Create configuration string for paraver to ignore the non component processes
@@ -51,14 +56,9 @@ function generate_threads_to_ignore_str()
 source ${env_sources}
 
 member="tracing"
-tests="%TRACING.TEST_NAMES%"
-tests=${tests//[\[,\]]/}
-tests=$(for v in $tests; do echo "$v";done| sort| uniq| xargs)
-components=${components//[\[,\]]/}
-components=$(for v in $components; do echo "$v";done| sort| uniq| xargs)
 paramedir_configurations=$(find ${analysis_tools}/paramedir_configurations/*)
 
-for test in $tests
+for test in ${tests[@]}
 do
     test_folder=${run_root}/${member}/${test}
     mkdir -p  ${test_folder}/paramedir
@@ -74,7 +74,7 @@ do
         components_procs=($(echo ${basename_trace_folder} | sed -e 's/\(trace_\|[a-zA-Z]\)//g' | sed 's/_/ /g'))
         trace_id=$(echo ${basename_trace_folder} | sed -e 's/trace_//')
 
-        for component in ${components}; do
+        for component in "${components[@]}"; do
             trace=${trace_folder}/${component}.best_cut.prv
 
             generate_threads_to_ignore_str
@@ -88,7 +88,7 @@ do
 
                 sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${mod_cfg}
 
-                ${analysis_tools}/paramedir ${trace} ${mod_cfg} 
+                paramedir ${trace} ${mod_cfg} 
                 # Get the extension
                 cfg_extension=${cfg#*.}
                 # Remove path
