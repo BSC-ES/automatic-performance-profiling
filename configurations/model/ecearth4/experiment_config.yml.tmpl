@@ -1,7 +1,8 @@
 - base.context:
     scratch: "ECEARTH_ROOT"
     experiment:
-      id: a00a
+      id: RUN_ID
+      base_dir: "ECEARTH_ROOT"
       run_dir: "RUN_FOLDER"
       src_dir: "SRC_FOLDER"
 
@@ -9,6 +10,7 @@
         all: !rrule >
           DTSTART:START_DATE
           RRULE:FREQ=FREQUENCY;UNTIL=END_DATE;INTERVAL=INTERVAL_VAL
+        nlegs: 1
 
       nemo:
         start_from:
