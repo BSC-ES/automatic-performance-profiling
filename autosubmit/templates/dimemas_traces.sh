@@ -13,7 +13,7 @@ function run_dimemas() {
     platform=%DEFAULT.HPCARCH%
     platform=${platform,,}
     env_sources=${cfg}/env/${platform}/environment.env
-    components="%MODEL.COMPONENTS%"
+    components="%MODEL.REPORT_COMPONENTS%"
     tests="%TRACING.TEST_NAMES%"
 
     source ${env_sources}

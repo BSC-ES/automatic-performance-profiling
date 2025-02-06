@@ -190,7 +190,7 @@ function run_ecearth4()
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
-    for component in ${components}; do
+    for component in "${report_components[@]}"; do
         component_procs=${component}_procs
         sed -i "s/${component^^}_PPN/${!component_procs}/"   ${config_file}
         sed -i "s/${component^^}_PROCS/${!component_procs}/" ${config_file}
