@@ -165,7 +165,7 @@ class ImgFile:
                         continue
         else:
             self.caption = self.name
-        self.caption = self.caption.replace("_", "-")
+        self.caption = self.caption.replace("_", "\\_")
 
     # Stores the image in an obj
     def store(self):
@@ -344,20 +344,20 @@ class LatexText:
 
     def add_section2tex(self, section: Section):
         self.clearpage()
-        self.add_text("\section{" + section.section_title.replace("_", "\_") + "}")
+        self.add_text("\section{" + section.section_title.replace("_", "\\_") + "}")
         # self.clearpage()
         if section.text is not None:
             self.add_text(section.text)
 
     def add_subsection2tex(self, subsection: Subsection):
         # self.clearpage()
-        self.add_text("\subsection{" + subsection.subsection_title.replace("_", "\_") + "}")
+        self.add_text("\subsection{" + subsection.subsection_title.replace("_", "\\_") + "}")
         # self.clearpage()
         if subsection.text is not None:
             self.add_text(subsection.text)
         
     def add_subsubsection2tex(self, subsubsection: Subsubsection):
-        self.add_text("\subsubsection{" + subsubsection.subsubsection_title.replace("_", "\_") + "}")
+        self.add_text("\subsubsection{" + subsubsection.subsubsection_title.replace("_", "\\_") + "}")
 
         if subsubsection.text is not None:
             self.add_text(subsubsection.text)
