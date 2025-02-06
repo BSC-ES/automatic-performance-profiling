@@ -14,14 +14,16 @@ class Log:
     def __init__(self):
         self.text = ""
 
-    def __add__(self, other):
+    def __add__(self, other, newline = True):
         if isinstance(other, Log):
             other = other.text
-        self.text += other + "\n"
+        self.text += other
+        if newline:
+            self.text += "\n"
         return self
 
-    def add(self, text):
-        self.__add__(text)
+    def add(self, text, newline = True):
+        self.__add__(text, newline)
 
     def print(self, file_out=None):
         if file_out is not None:
@@ -582,7 +584,7 @@ def cases_component_data(experiment_data):
 
     header = "Case"
     for component in experiment_data.components:
-        header += f",{component} nproc"
+        header += f",{component.upper()} nproc"
     log.add(header)
 
     for case in experiment_data.cases:
@@ -709,28 +711,26 @@ def generate_weakscaling_data(experiments: list, component_to_report: str = "") 
     log = Log()
 
     if component_to_report == "":
-        header = "Config, Resolution, Gridpoints"
+        header = "Config"
+        for component in experiments[0].components:
+            header += f", {component.upper()} Res, {component.upper()} Pts"
     else:
         header = "Config, Ncores, Resolution, Ts per second, Gridpoints"
 
     log.add(header)
 
-    for exp_idx, experiment in enumerate(experiments):
-        for case_dict in experiment.data.values():
-            conf = f"WS_{exp_idx}"
+    for experiment in experiments:
+        for case, case_dict in experiment.data.items():
+            conf = f"{case}"
 
             if component_to_report == "":
                 case_metrics = case_dict
-                grid_points = ""
-                resolution = ""
-                for c_idx, component in enumerate(experiment.components):
-                    if c_idx != 0:
-                        resolution += "+"
-                        grid_points += "+"
-                    resolution += case_metrics["components"][component]["resolution"]
-                    grid_points += case_metrics["components"][component]["grid_points"]
-                log.add(
-                    f"{conf}, {resolution}, {grid_points}")
+                log.add(f"{conf}", False)
+                for component in experiments[0].components:
+                    resolution = case_metrics["components"][component]["resolution"]
+                    grid_points = case_metrics["components"][component]["grid_points"]
+                    log.add(f", {resolution}, {grid_points}", False)
+                log.add("")
             else:
                 case_metrics = go_to_dictionary_address(
                     case_dict, ("components", component_to_report))
