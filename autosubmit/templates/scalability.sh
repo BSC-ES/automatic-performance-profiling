@@ -185,7 +185,6 @@ function run_ecearth4()
     local ecearth_root=${compilation}/${arch_name}
     local sed_ecearth_root=${ecearth_root//\//\\\/}
 
-    sed -i "s/RUN_ID/${run_id}/"                     ${config_file}
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/BASE_FOLDER/${sed_run_dir}/"           ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
