@@ -240,7 +240,7 @@ function trace_ecearth4()
     local xios_procs="%CURRENT_XIOS_PROCS%"
     local oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
     local nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
-    local use_omp_threads="%USE_OMP_THREDS%"
+    local use_omp_threads="%USE_OMP_THREADS%"
     local oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
         oifs_omp_threads=%CURRENT_THREADS%

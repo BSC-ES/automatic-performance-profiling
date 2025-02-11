@@ -131,7 +131,7 @@ function get_vars_ecearth4()
         nemo_procs="%CURRENT_NEMO_PROCS%"
         nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
     fi
-    use_omp_threads="%USE_OMP_THREDS%"
+    use_omp_threads="%USE_OMP_THREADS%"
     oifs_omp_threads=1
     if [ "${use_omp_threads^^}" == "TRUE" ]; then
         oifs_omp_threads=%CURRENT_THREADS%

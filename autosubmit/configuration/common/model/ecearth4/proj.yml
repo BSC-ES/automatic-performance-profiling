@@ -47,7 +47,7 @@ TRACING:
   NEMO_PROCS: [55,      111    , 167    ]
   XIOS_PROCS: [1,       1      , 1      ]
   THREADS:    [1,       1      , 1      ]
-  USE_OMP_THREDS: false
+  USE_OMP_THREADS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_impi_trace
@@ -64,7 +64,7 @@ STRONGSCALING:
   NEMO_PROCS: [167,     335    ]
   XIOS_PROCS: [1,       1      ]
   THREADS:    [1,       1      ]
-  USE_OMP_THREDS: false
+  USE_OMP_THREADS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_impi_prod
