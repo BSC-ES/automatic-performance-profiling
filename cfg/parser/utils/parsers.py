@@ -363,14 +363,14 @@ class TimingInformation:
 
         if self.cases is None:
             self.cases = list(
-                sorted(self.data.keys(), key=lambda f: self.data[f]["nproc"]))
+                sorted(self.data.keys(), key=lambda f: int(self.data[f]["nproc"])))
             self.base_case = self.cases[0]
 
         if self.components_cases is None:
             self.components_cases = {}
             for component in self.components:
                 self.components_cases[component] = sorted(
-                    self.data, key=lambda f: self.data[f]["components"][component]["nproc"])
+                    self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
 
 
     def load_param(self, param_file):
@@ -603,14 +603,14 @@ class TimingInformation:
 
         if self.cases is None:
             self.cases = list(
-                sorted(self.data, key=lambda f: self.data[f]["nproc"]))
+                sorted(self.data, key=lambda f: int(self.data[f]["nproc"])))
             self.base_case = self.cases[0]
 
         if self.components_cases is None:
             self.components_cases = {}
             for component in self.components:
                 self.components_cases[component] = sorted(
-                    self.data, key=lambda f: self.data[f]["components"][component]["nproc"])
+                    self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
 
     def load_timings(self, timing_files):
         # component-run_id-timing.output
@@ -637,14 +637,14 @@ class TimingInformation:
 
             if self.cases is None:
                 self.cases = list(
-                    sorted(self.data.keys(), key=lambda f: self.data[f]["nproc"]))
+                    sorted(self.data.keys(), key=lambda f: int(self.data[f]["nproc"])))
                 self.base_case = self.cases[0]
 
             if self.components_cases is None:
                 self.components_cases = {}
                 for component in self.components:
                     self.components_cases[component] = sorted(
-                        self.data, key=lambda f: self.data[f]["nproc"])
+                        self.data, key=lambda f: int(self.data[f]["nproc"]))
 
     def load_paramedir(self, files):
         if not files:
@@ -655,7 +655,7 @@ class TimingInformation:
 
         if self.cases is None:
             self.cases = list(
-                sorted(self.data.keys(), key=lambda f: self.data[f]["nproc"]))
+                sorted(self.data.keys(), key=lambda f: int(self.data[f]["nproc"])))
             self.base_case = self.cases[0]
 
         self.functions = self.find_functions()
@@ -674,7 +674,7 @@ class TimingInformation:
             self.components_cases = {}
             for component in self.components:
                 self.components_cases[component] = sorted(
-                    self.data, key=lambda f: self.data[f]["components"][component]["nproc"])
+                    self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
 
     def load_ifs(self, files):
         if not files:
