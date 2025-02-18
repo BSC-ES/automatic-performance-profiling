@@ -43,16 +43,6 @@ if __name__ == "__main__":
         multiexperiment_comparison(
             experiment_data, field1="ts_per_second").print(file_out)
 
-    # if function_info:
-    #     # Example on how to compare elapsed time by function
-    #     common_cases, common_functions = find_common_cases_and_functions(experiment_data)
-    #     #
-    #     info_type = "FunctionInfo"
-    #     field = 'Elap. Time(s)'
-    #     for function in common_functions:
-    #         multiexperiment_comparison(experiment_data, field1=info_type, field2=function, field3=field).\
-    #             print(computed_quantity=field)
-    #
     # Prints weak scaling info
     if weak_scaling:
         weakscaling_compute(experiment_data, file_out)
