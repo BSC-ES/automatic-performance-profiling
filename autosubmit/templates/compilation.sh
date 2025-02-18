@@ -72,6 +72,8 @@ function compile_nemo()
 #####################################################################################################################
 function compile_ecearth4()
 {
+    inidata=%EXPERIMENT.INIDATA%
+
     # shellcheck source=proj/auto-performance-profiling/cfg/utils/ecearth4/se.sh
     . ${cfg}/utils/${model}/se.sh
 
@@ -102,7 +104,9 @@ function compile_ecearth4()
     git apply ${cfg}/trace/model/${model}/sentinel.diff
     
     cd ${arch_dir}/scripts/build || exit
-    cp ${arch_file} ../platforms
+    cp "${arch_file}" ../platforms
+
+    sed -i "s/INIDATA/${inidata}/" ../plarforms/${arch_name}.yml
 
     # Compile using SE
     se user-settings.yml ../platforms/${arch_name}.yml compile-all.yml
@@ -122,13 +126,13 @@ function compile_hw()
     local stream_enabled=${stream_enabled,,}
 
     if ${stream_enabled}; then
-        cd ${compilation}/STREAM
+        cd ${compilation}/STREAM || exit
         gcc -fopenmp -D_OPENMP stream.c -o stream
     fi
 
     if ${osu_enabled}; then
-        cd ${compilation}/osu-micro-benchmarks-5.6.3
-        ./configure CC=$(which mpicxx) CXX=$(which mpicc) --prefix=$(pwd)
+        cd ${compilation}/osu-micro-benchmarks-5.6.3 || exit
+        ./configure CC="$(which mpicxx)" CXX="$(which mpicc)" --prefix="$(pwd)"
         make install
         make
     fi

@@ -44,7 +44,7 @@
       cpus_per_node: 128
 
     experiment:
-      ini_dir: /hpcperm/c3et/models/ecearth/v4-trunk
+      ini_dir: INIDATA
 
     job:
       slurm:

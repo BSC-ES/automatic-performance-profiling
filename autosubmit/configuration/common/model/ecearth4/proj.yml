@@ -25,6 +25,10 @@ EXPERIMENT:
   TEST_STEPS: 32
   OUTPUT: FALSE
 
+  # Inidata path for mn5:     /gpfs/projects/bsc32/models/ecearth/ece4-trunk/inidata
+  # Inidata path for hpc2020: /hpcperm/c3et/models/ecearth/v4-trunk
+  INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-trunk/inidata
+
 # TRACE CONFIG
 TRACING:
   START_DATE: 19900101

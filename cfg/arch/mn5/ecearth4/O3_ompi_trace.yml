@@ -24,7 +24,7 @@
     - eccodes/2.34.1-ompi
     - ucx/1.17.0
     - miniconda/24.1.2
-    - extrae/4.2.1
+    - extrae/4.2.4
 
 - base.getenv:
     LD_LIBRARY_PATH: LD_LIBRARY_PATH
@@ -50,7 +50,7 @@
       cpus_per_node: 112
 
     experiment:
-      ini_dir: /gpfs/projects/bsc32/models/ecearth/v4.0.0-updated/inidata
+      ini_dir: INIDATA
 
     build:
       lang:

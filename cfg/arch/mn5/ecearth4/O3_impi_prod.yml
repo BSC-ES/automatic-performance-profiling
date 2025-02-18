@@ -51,7 +51,7 @@
       cpus_per_node: 112
 
     experiment:
-      ini_dir: /gpfs/projects/bsc32/models/ecearth/v4.0.0-updated/inidata
+      ini_dir: INIDATA
 
     build:
       lang:
