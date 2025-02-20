@@ -1,0 +1,277 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configure the model &mdash; Automatic Performance Profiling 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Automatic Performance Profiling
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Developers-Guide.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How-to-run-the-workflow.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Automatic Performance Profiling</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Configure the model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Configure-NEMO.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p>In order to configure NEMO and the tests the workflow will run, you have to update the configuration file <code class="docutils literal notranslate"><span class="pre">proj/auto-performance-profiling/autosubmit/configuration/common/model/nemo/proj.yml</span></code> located in your experiment root.</p>
+<nav class="contents" id="table-of-contents" role="doc-toc">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#configure-the-model" id="id5">Configure the model</a></p>
+<ul>
+<li><p><a class="reference internal" href="#experiment-config" id="id6">EXPERIMENT CONFIG</a></p>
+<ul>
+<li><p><a class="reference internal" href="#strongscaling" id="id7">StrongScaling</a></p></li>
+<li><p><a class="reference internal" href="#weakscaling" id="id8">Weakscaling</a></p></li>
+<li><p><a class="reference internal" href="#compilationefficiency" id="id9">CompilationEfficiency</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="configure-the-model">
+<h1><a class="toc-backref" href="#id5" role="doc-backlink">Configure the model</a><a class="headerlink" href="#configure-the-model" title="Link to this heading"></a></h1>
+<p>The main variables to update in this config file are:</p>
+<ul>
+<li><p>ORIGIN: url with the git repository containing NEMO.</p></li>
+<li><p>BRANCH_LIST: tag of the version you want to run.</p></li>
+<li><p>ARCH_NAMES: list of arch files to compile. This arch files must be located in <code class="docutils literal notranslate"><span class="pre">cfg/arch/PLATFORM/MODEL/</span></code> and follow this pattern <code class="docutils literal notranslate"><span class="pre">arch-ARCH_NAME.fcm</span></code>.</p></li>
+<li><p>TEST_STEPS: number of steps to run in the different scalability jobs.</p></li>
+<li><p>OUTPUT: enables or disables the output (TRUE/FALSE).</p></li>
+<li><p>RESOLUTION: resolution of the model.
+<a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>yml
+# MODEL CONFIG
+MODEL:
+NAME: nemo
+COMPONENTS: [nemo]
+ORIGIN: <a class="reference external" href="https://forge.nemo-ocean.eu/nemo/nemo.git">https://forge.nemo-ocean.eu/nemo/nemo.git</a>
+BRANCH_LIST: 4.2.1</p>
+<p># Arch files prefixes to compile
+# The arch file has to be located in cfg/arch/PLATFORM/MODEL/
+# - For ecearth4: ARCH_NAME.yml
+# - For nemo: arch-ARCH_NAME.fcm
+ARCH_NAMES: [O1_prod, O3_prod, O3_trace]</p>
+</li>
+</ul>
+<section id="experiment-config">
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">EXPERIMENT CONFIG</a><a class="headerlink" href="#experiment-config" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>EXPERIMENT:</dt><dd><p>RESOLUTION: orca1
+TEST_STEPS: 960
+OUTPUT: false</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>## Configure the members
+
+The members configuration only has to be present only if they are activated in `proj/auto-performance-profiling/autosubmit/configuration/common/expdef.yml`.
+
+### Tracing
+
+The possible variables to configure for Tracing are:
+- TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by magiccut to cut the timestep trace right.
+- TRACE_STEPS: Number of steps the model should run when tracing it.
+- USER_FUNCTIONS_*: Variables used by the User Functions sampling script.
+
+The next list variables have to be the same length:
+- TEST_NAMES: List of test names to run.
+- NAMES: List of unique names for each test.
+- PROCESSORS: List of processors used by each test.
+- THREADS: List of threads used by each test.
+- MODEL_RESOLUTION: Resolution with the test will run on.
+- ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+- PAPI_COUNTERS: Space separated string with the PAPI counters to trace, same id as returned by the command `papi_avail`.
+
+```yml
+# TRACE CONFIG
+TRACING:
+  TIMESTEP_ZERO: false
+  TRACE_STEPS: 32
+
+  # CONFIG FOR USER FUNCTIONS SAMPLING
+  USER_FUNCTIONS_PROC: 112
+  USER_FUNCTIONS_THREADS: 4
+  TRACE_N_FUNCTIONS: 40
+
+  TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
+  NAMES:      [trace_1, trace_2, trace_3]
+  PROCESSORS: [112,     224,     336    ]
+  THREADS:    [4,       4,       4      ]
+  TEST_CONFIG: BENCH
+  ARCH_NAME: O3_trace
+
+  PAPI_COUNTERS: &quot;PAPI_TOT_INS PAPI_TOT_CYC PAPI_L3_TCM PAPI_L1_DCM PAPI_L2_DCM&quot;
+
+  PV_CASE_COMPARISSON_CFGS: &quot;MPI_Call&quot;
+</pre></div>
+</div>
+<section id="strongscaling">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">StrongScaling</a><a class="headerlink" href="#strongscaling" title="Link to this heading"></a></h3>
+<p>The next list variables have to be the same length:</p>
+<ul>
+<li><p>TEST_NAMES: List of test names to run.</p></li>
+<li><p>NAMES: List of unique names for each test.</p></li>
+<li><p>PROCESSORS: List of processors used by each test.</p></li>
+<li><p>THREADS: List of threads used by each test.</p></li>
+<li><p>MODEL_RESOLUTION: Resolution with the test will run on.</p></li>
+<li><p>ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+.. code-block:: yml</p>
+<blockquote>
+<div><p># STRONG SCALING CONFIG
+STRONGSCALING:
+STRONGSCALING_PARAMETERS_ROOT: ‘%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling’
+TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
+NAMES:      [bench_1, bench_2, bench_3]
+PROCESSORS: [112,     224,     336    ]
+THREADS:    [1,       1,       1      ]
+TEST_CONFIG: BENCH
+ARCH_NAME: O3_prod</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="weakscaling">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Weakscaling</a><a class="headerlink" href="#weakscaling" title="Link to this heading"></a></h3>
+<p>The Weakscaling configuration differs from the rest, since the test names indicate the resolution and the processors are computed in runtime:</p>
+<ul class="simple">
+<li><p>BASE_PROCS: Processors of the base case.</p></li>
+<li><p>BASE_RESOLUTION: Resolution of the base case.</p></li>
+</ul>
+<p>The next list variables have to be the same length:</p>
+<ul>
+<li><p>TEST_NAMES: List of resolutions to run for each test.</p></li>
+<li><p>NAMES: List of unique names for each test.</p></li>
+<li><p>PROCESSORS: List of processors all equal to 1.</p></li>
+<li><p>THREADS: List of threads used by each test.</p></li>
+<li><p>ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+.. code-block:: yml</p>
+<blockquote>
+<div><p># WEAKSCALING CONFIG
+WEAKSCALING:
+WEAKSCALING_PARAMETERS_ROOT: ‘%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling’
+BASE_PROCS: 56
+BASE_RESOLUTION: orca1
+NAMES:      [orca1,  orca025]
+TEST_NAMES: [orca1, orca025]
+PROCESSORS: [1,     1      ]
+THREADS:    [1,     1      ]
+TEST_CONFIG: BENCH
+ARCH_NAME: O3_prod</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="compilationefficiency">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">CompilationEfficiency</a><a class="headerlink" href="#compilationefficiency" title="Link to this heading"></a></h3>
+<p>The configuration of the compilation efficiency follows the same idea as the Weakscaling, the test names define what arch should each test be run with:</p>
+<p>The next list variables have to be the same length:</p>
+<ul class="simple">
+<li><p>TEST_NAMES: List of the arch configs to run for each test, they have to be defined in MODEL.ARCH_NAMES.</p></li>
+<li><p>NAMES: List of unique names for each test.</p></li>
+<li><p>PROCESSORS: List of processors all equal to 1.</p></li>
+<li><p>THREADS: List of threads used by each test.</p></li>
+<li><p>MODEL_RESOLUTION: Resolution with the test will run on.</p></li>
+</ul>
+<div class="highlight-yml notranslate"><div class="highlight"><pre><span></span># COMPILATION EFFICIENCY CONFIG
+COMPILATION_EFFICIENCY:
+  COMPILATION_EFFICIENCY_PARAMETERS_ROOT: &#39;%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency&#39;
+  # For compilation efficiency the arch name is taken from the test name
+  TEST_NAMES: [O1_prod, O1_prod, O3_prod, O3_prod]
+  NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
+  PROCESSORS: [112,     224,     112,     224    ]
+  THREADS:    [1,       1,       1,       1      ]
+  TEST_CONFIG: BENCH
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

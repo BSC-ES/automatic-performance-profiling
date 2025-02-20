@@ -1,0 +1,37 @@
+\contentsline {figure}{\numberline {1}{\ignorespaces MPI\_Allgather\_Latency OSU test.}}{11}{figure.1}%
+\contentsline {figure}{\numberline {2}{\ignorespaces MPI\_Multi\_Latency OSU test.}}{12}{figure.2}%
+\contentsline {figure}{\numberline {3}{\ignorespaces MPI\_Multiple\_Bandwidth\_Message\_Rate OSU test.}}{13}{figure.3}%
+\contentsline {figure}{\numberline {4}{\ignorespaces STREAM benchmark}}{14}{figure.4}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Scalability plot for ECEARTH4.}}{16}{figure.5}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Scalability plot for NEMO.}}{17}{figure.6}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Scalability plot for OIFS.}}{18}{figure.7}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Components' coupling stacked events.}}{19}{figure.8}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Components' coupling stacked events.}}{19}{figure.9}%
+\contentsline {figure}{\numberline {10}{\ignorespaces Components' coupling stacked events.}}{20}{figure.10}%
+\contentsline {figure}{\numberline {11}{\ignorespaces Components' coupling stacked events.}}{21}{figure.11}%
+\contentsline {figure}{\numberline {12}{\ignorespaces Components' coupling stacked events.}}{21}{figure.12}%
+\contentsline {figure}{\numberline {13}{\ignorespaces Components' coupling stacked events.}}{22}{figure.13}%
+\contentsline {figure}{\numberline {14}{\ignorespaces Components' coupling stacked events.}}{23}{figure.14}%
+\contentsline {figure}{\numberline {15}{\ignorespaces Components' coupling stacked events.}}{23}{figure.15}%
+\contentsline {figure}{\numberline {16}{\ignorespaces Nemo modelfactors efficiency.}}{25}{figure.16}%
+\contentsline {figure}{\numberline {17}{\ignorespaces Nemo modelfactors efficiency\_table.}}{26}{figure.17}%
+\contentsline {figure}{\numberline {18}{\ignorespaces Nemo modelfactors comm.}}{27}{figure.18}%
+\contentsline {figure}{\numberline {19}{\ignorespaces Nemo modelfactors.}}{28}{figure.19}%
+\contentsline {figure}{\numberline {20}{\ignorespaces Nemo modelfactors scale.}}{29}{figure.20}%
+\contentsline {figure}{\numberline {21}{\ignorespaces Nemo modelfactors speedup.}}{30}{figure.21}%
+\contentsline {figure}{\numberline {22}{\ignorespaces Oifs modelfactors efficiency.}}{31}{figure.22}%
+\contentsline {figure}{\numberline {23}{\ignorespaces Oifs modelfactors efficiency\_table.}}{32}{figure.23}%
+\contentsline {figure}{\numberline {24}{\ignorespaces Oifs modelfactors comm.}}{33}{figure.24}%
+\contentsline {figure}{\numberline {25}{\ignorespaces Oifs modelfactors.}}{34}{figure.25}%
+\contentsline {figure}{\numberline {26}{\ignorespaces Oifs modelfactors scale.}}{35}{figure.26}%
+\contentsline {figure}{\numberline {27}{\ignorespaces Oifs modelfactors speedup.}}{36}{figure.27}%
+\contentsline {figure}{\numberline {28}{\ignorespaces PAPI\_TOT\_INS vs PAPI\_L1\_DCM counters plot for nemo.}}{40}{figure.28}%
+\contentsline {figure}{\numberline {29}{\ignorespaces PAPI\_TOT\_INS vs PAPI\_L2\_DCM counters plot for nemo.}}{41}{figure.29}%
+\contentsline {figure}{\numberline {30}{\ignorespaces PAPI\_TOT\_INS vs PAPI\_L3\_TCM counters plot for nemo.}}{42}{figure.30}%
+\contentsline {figure}{\numberline {31}{\ignorespaces PAPI\_TOT\_INS vs Time counters plot for nemo.}}{43}{figure.31}%
+\contentsline {figure}{\numberline {32}{\ignorespaces PAPI\_L3\_TCM vs IPC counters plot for nemo.}}{44}{figure.32}%
+\contentsline {figure}{\numberline {33}{\ignorespaces PAPI\_TOT\_INS vs PAPI\_L1\_DCM counters plot for oifs.}}{49}{figure.33}%
+\contentsline {figure}{\numberline {34}{\ignorespaces PAPI\_TOT\_INS vs PAPI\_L2\_DCM counters plot for oifs.}}{50}{figure.34}%
+\contentsline {figure}{\numberline {35}{\ignorespaces PAPI\_TOT\_INS vs PAPI\_L3\_TCM counters plot for oifs.}}{51}{figure.35}%
+\contentsline {figure}{\numberline {36}{\ignorespaces PAPI\_TOT\_INS vs Time counters plot for oifs.}}{52}{figure.36}%
+\contentsline {figure}{\numberline {37}{\ignorespaces PAPI\_L3\_TCM vs IPC counters plot for oifs.}}{53}{figure.37}%

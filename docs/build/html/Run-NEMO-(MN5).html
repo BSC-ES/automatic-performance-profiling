@@ -1,0 +1,146 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; Automatic Performance Profiling 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Automatic Performance Profiling
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Developers-Guide.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How-to-run-the-workflow.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Automatic Performance Profiling</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Run-NEMO-(MN5).rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p>From the hub, load the following module and create a new experiment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>autosubmit/4.1.4-foss-2021b-Python-3.9.6
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>autosubmit<span class="w"> </span>expid<span class="w"> </span>-H<span class="w"> </span>mn5<span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;exp description&quot;</span><span class="w"> </span>-min
+</pre></div>
+</div>
+<p>Then go to the experiment root directory and set the content of the <code class="docutils literal notranslate"><span class="pre">conf/minimal.yml</span></code> file to:</p>
+<p><strong>:warning: REPLACE a000 WITH YOUR EXPERIMENT ID</strong></p>
+<div class="highlight-yml notranslate"><div class="highlight"><pre><span></span>CONFIG:
+  # Current version of Autosubmit.
+  AUTOSUBMIT_VERSION: &quot;4.1.4&quot;
+  # Total number of jobs in the workflow.
+  TOTALJOBS: 20
+  # Maximum number of jobs permitted in the waiting status.
+  MAXWAITINGJOBS: 20
+DEFAULT:
+  # Job experiment ID.
+  EXPID: &quot;a000&quot;
+  # Default HPC platform name.
+  HPCARCH: &quot;mn5&quot;
+  CUSTOM_CONFIG:
+    PRE:
+      - &quot;%PROJDIR%/autosubmit/configuration/common/proj.yml&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/common/&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/jobs/jobs.yml&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/jobs/&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/jobs/model/nemo/&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/jobs/platform/mn5/&quot;
+project:
+  PROJECT_TYPE: git
+  PROJECT_DESTINATION: auto-performance-profiling
+git:
+  PROJECT_ORIGIN: https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git
+  PROJECT_BRANCH: ecearth4
+  PROJECT_COMMIT: &quot;&quot;
+</pre></div>
+</div>
+<p>Then you can create the experiment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>autosubmit<span class="w"> </span>create<span class="w"> </span>EXPID
+</pre></div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

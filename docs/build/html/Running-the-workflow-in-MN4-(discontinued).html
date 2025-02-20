@@ -1,0 +1,179 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creating the experiment &mdash; Automatic Performance Profiling 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Automatic Performance Profiling
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Developers-Guide.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How-to-run-the-workflow.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Automatic Performance Profiling</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Creating the experiment</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Running-the-workflow-in-MN4-(discontinued).rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="creating-the-experiment">
+<h1>Creating the experiment<a class="headerlink" href="#creating-the-experiment" title="Link to this heading"></a></h1>
+<p>Load the autosubmit module (&gt;= <code class="docutils literal notranslate"><span class="pre">4.0.87-foss-2015a-Python-3.7.3</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>autosubmit/4.0.87-foss-2015a-Python-3.7.3
+</pre></div>
+</div>
+<p>To create the experiment run the following command in:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>autosubmit<span class="w"> </span>expid<span class="w"> </span>-min<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;marenostrum4&quot;</span><span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;auto-performance-profiling&quot;</span><span class="w"> </span>-repo<span class="w"> </span><span class="s2">&quot;https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git&quot;</span><span class="w"> </span>-b<span class="w"> </span><span class="s2">&quot;master&quot;</span>
+</pre></div>
+</div>
+<p>Go to the experiment root folder and replace the contents of <code class="docutils literal notranslate"><span class="pre">conf/minimal.yml</span></code> with:</p>
+<p><strong>:warning: REPLACE a00a WITH YOUR EXPERIMENT ID</strong></p>
+<div class="highlight-yml notranslate"><div class="highlight"><pre><span></span>CONFIG:
+  # Current version of Autosubmit.
+  AUTOSUBMIT_VERSION: &quot;4.0.87&quot;
+  # Total number of jobs in the workflow.
+  TOTALJOBS: 20
+  # Maximum number of jobs permitted in the waiting status.
+  MAXWAITINGJOBS: 20
+DEFAULT:
+  # Job experiment ID.
+  EXPID: a00a
+  # Default HPC platform name.
+  HPCARCH: &quot;marenostrum4&quot;
+  CUSTOM_CONFIG:
+    PRE:
+      - &quot;%PROJDIR%/autosubmit/configuration/common/proj.yml&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/common/&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/members/&quot;
+      - &quot;%PROJDIR%/autosubmit/configuration/model/nemo&quot;
+    POST: &quot;~/platforms_credentials.yml&quot;
+project:
+  PROJECT_TYPE: git
+  PROJECT_DESTINATION: auto-performance-profiling
+git:
+  PROJECT_ORIGIN: https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git
+  PROJECT_BRANCH: master
+  PROJECT_COMMIT: &quot;&quot;
+</pre></div>
+</div>
+<p>Create the file <code class="docutils literal notranslate"><span class="pre">~/platforms_credentials.yml</span></code> to define your user id of the HPC platform. Example for Marenostrum 4:</p>
+<p><a href="#id1"><span class="problematic" id="id2">**</span></a>:warning: The platform ids must coincide with the ones in the experiment conf file <code class="docutils literal notranslate"><span class="pre">conf/platforms.yml</span></code>**</p>
+<div class="highlight-yml notranslate"><div class="highlight"><pre><span></span>PLATFORMS:
+  marenostrum0:
+    USER: &quot;bsc32XXX&quot;
+  marenostrum4:
+    USER: &quot;bsc32XXX&quot;
+</pre></div>
+</div>
+<p>Then, create the experiment:</p>
+<p><strong>:warning: Replace EXPID with your experiment id</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>autosubmit<span class="w"> </span>create<span class="w"> </span>EXPID<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+<section id="configuring-the-experiments">
+<h1>Configuring the experiments<a class="headerlink" href="#configuring-the-experiments" title="Link to this heading"></a></h1>
+<p>TODO</p>
+</section>
+<section id="running-the-workflow">
+<h1>Running the workflow<a class="headerlink" href="#running-the-workflow" title="Link to this heading"></a></h1>
+<p><strong>:warning: Replace EXPID with your experiment id</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nohup<span class="w"> </span>autosubmit<span class="w"> </span>run<span class="w"> </span>EXPID<span class="w"> </span><span class="p">&amp;</span>
+</pre></div>
+</div>
+<p>If the run has been successful, the report pdf should be in the experiment root folder.</p>
+</section>
+<section id="known-issues">
+<h1>Known issues<a class="headerlink" href="#known-issues" title="Link to this heading"></a></h1>
+<section id="paraver-and-dimemas-images">
+<h2>Paraver and Dimemas images<a class="headerlink" href="#paraver-and-dimemas-images" title="Link to this heading"></a></h2>
+<p>Because X11 is disabled for sbatch jobs in Marenostrum 4, Autosubmit can not run Paraver, therefore the images can not be generated. See <a class="reference external" href="https://earth.bsc.es/gitlab/es/autosubmit/-/issues/544">X11 issue</a>.</p>
+<p>As a temporary fix, I might add a script you will have to run manually.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

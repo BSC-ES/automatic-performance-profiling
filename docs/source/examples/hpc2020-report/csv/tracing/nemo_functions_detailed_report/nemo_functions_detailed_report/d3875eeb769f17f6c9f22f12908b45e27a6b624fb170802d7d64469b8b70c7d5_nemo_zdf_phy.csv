@@ -1,0 +1,4 @@
+Processes,Instructions,Cycles,IPC,Time(ms)
+trace-1,,, 2.0, 158.9
+trace-2,,, 2.0, 73.0
+trace-3,,, 2.0, 46.2

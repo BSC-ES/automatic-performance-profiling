@@ -1,0 +1,5 @@
+Config, Ncores, Resolution, Ts per second, Gridpoints
+ws-1-1, 111, eORCA1L75, 0.86, 105704
+ws-1-2, 111, eORCA1L75, 0.91, 105704
+ws-1-3, 111, eORCA1L75, 0.74, 105704
+ws-1-4, 111, eORCA1L75, 0.87, 105704

@@ -1,0 +1,12 @@
+function-name,trace-1 (percent),function-name,trace-2 (percent),function-name,trace-3 (percent)
+stp-mlf,44.08,stp-mlf,44.35,ftinv-ctl,38.94
+dia-wri,20.81,dia-wri,21.38,stp-mlf,34.46
+ec-phys-drv,13.47,ftinv-ctl,21.29,dia-wri,16.14
+tra-adv,12.35,ec-phys-drv,14.31,call-sl,13.55
+ftinv-ctl,11.67,call-sl,14.04,ltdir-ctl,12.39
+zdf-phy,9.71,tra-adv,11.71,ec-phys-drv,10.71
+call-sl,8.84,zdf-phy,9.15,tra-adv,9.17
+ice-dyn-adv,5.49,ftdir-ctl,5.79,ftdir-ctl,8.50
+rab-3d,4.60,ice-dyn-adv,5.58,zdf-phy,6.65
+ftdir-ctl,3.91,rab-3d,4.79,ltinv-ctl,5.03
+ldf-slp,2.95,ltdir-ctl,3.47,ice-dyn-adv,4.41

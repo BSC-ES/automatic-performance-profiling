@@ -1,0 +1,544 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The tool &mdash; Automatic Performance Profiling 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Automatic Performance Profiling
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Developers-Guide.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How-to-run-the-workflow.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Automatic Performance Profiling</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">The tool</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Old-home.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-tool">
+<h1>The tool<a class="headerlink" href="#the-tool" title="Link to this heading"></a></h1>
+<p>This tools, has been developed by O. Tintó Prims and S.V. Paronuzzi Ticco, as an attempt to give the user a way to profile codes in a systematic way.
+During the development we tried not to depend too much on the model we were profiling (NEMO), nor on the system we were using (Marenostrum 4 HPC facility).
+In particular we tried not to use any hardcoded path to sources, unless were our own sources (script which can be found and downloaded in this or other gitlab projects).</p>
+</section>
+<section id="the-reason">
+<h1>The reason<a class="headerlink" href="#the-reason" title="Link to this heading"></a></h1>
+<p>Every time we perform small (or big) changes in our code; every time we change the platform on which we run our simulations; every time we change compilation’s flag, we should ask ourselves: which is the impact of these changes on the performance of the model?
+A series of test can answer this question.
+If the way of running these tests were automatized the answer would be quicker.
+The answer would have a smaller probability of containing errors.
+The probability that we want to ask ourselves these questions in first place … would be bigger.</p>
+<section id="tl-dr">
+<h2>TL;DR<a class="headerlink" href="#tl-dr" title="Link to this heading"></a></h2>
+<p>These are the few steps you really need to perform in order to get a report.
+First you ssh into MN4 on login0, then do the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://earth.bsc.es/gitlab/ces/nemo_performance_profile.git
+<span class="nb">cd</span><span class="w"> </span>nemo_performance_profile
+./run_analysis.sh
+</pre></div>
+</div>
+<p>This command will create a folder, <code class="docutils literal notranslate"><span class="pre">run_dir</span></code>, whit tree subfolders in it:</p>
+<ul class="simple">
+<li><p>hardware_benchmarks</p></li>
+<li><p>MultiexperimentRuns which in turns will contain:</p>
+<ul>
+<li><p>compilation_efficiency</p></li>
+<li><p>weakscaling</p></li>
+</ul>
+</li>
+<li><p>strongscaling</p></li>
+</ul>
+<p>In those folders around 16 jobs will be submitted to the queue system, by default on <code class="docutils literal notranslate"><span class="pre">debug</span></code> (where allowed). <strong>You can specify a different queue</strong> for all the jobs running instead:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./run_analysis.sh<span class="w"> </span>bsc_es
+</pre></div>
+</div>
+<p>After running all necessary tests it  will create a report and should directly open it for display. <a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/-/wikis/Last-version-of-the-report">Here</a> an example of how it should look like.</p>
+<p>A couple of things that will make your life simpler running the analysis:</p>
+<ul class="simple">
+<li><p>enable passwordless access to your gitlab account</p></li>
+<li><p>before running the script, open a wxparaver graphic interface, and uncheck
+-&gt; Preferences-&gt;Global-&gt;Behaviour-&gt;”Allow only one running instance”</p></li>
+</ul>
+<p><strong>Now if you want really understand what’s going on, you need to read the long version …</strong></p>
+</section>
+</section>
+<section id="the-theory">
+<h1>The theory<a class="headerlink" href="#the-theory" title="Link to this heading"></a></h1>
+<p>As said you clone the project on a login node with connection, and enter the nemo_performance_profile folder,
+You run the command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">run_analysis</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>this produces a pdf with a series of plots and tables in it. You have your analysis.</p>
+</section>
+<section id="what-really-happens">
+<h1>What really happens<a class="headerlink" href="#what-really-happens" title="Link to this heading"></a></h1>
+<p>You take a look at the run_analysis script, and see that there are many different <code class="docutils literal notranslate"><span class="pre">make</span></code> commands, with a path to a parameter files.
+If you open the Makefile you will see what the targets are actually doing. Suppose you want to run one of these targets, for example you give the command <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">scalability</span></code>. The first thing that happens is that you get an error</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Makefile</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span> <span class="o">***</span> <span class="n">Please</span> <span class="n">load</span> <span class="n">the</span> <span class="n">environment</span> <span class="n">sourcing</span> <span class="n">load_env</span><span class="o">.</span><span class="n">sh</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Stop</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>The error gives you a hint on what went wrong: you haven’t loaded the proper environment through the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">load_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>This is a bash script which loads some modules, and sets some paths, and is the first thing done in the analysis script.
+Let’s take a look at it, line by line:</p>
+<p>The first line loads all the module needed <strong>on the MN4 machine</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">cfg</span><span class="o">/</span><span class="n">env</span><span class="o">/</span><span class="n">MN4</span><span class="o">/</span><span class="n">environment</span><span class="o">.</span><span class="n">env</span>
+</pre></div>
+</div>
+<p>If you need some other modules, create another file, and source the new file instead.
+The second line just makes all the python scripts work</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PYTHONPATH=$PYTHONPATH:$(pwd)
+</pre></div>
+</div>
+<p>Then there are the line that generated the error you got at the beginning</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">ssh_id</span><span class="o">=</span><span class="sb">`</span><span class="nb">echo</span><span class="w"> </span><span class="si">${</span><span class="nv">SSH_CONNECTION</span><span class="si">}</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
+touch<span class="w"> </span>.<span class="si">${</span><span class="nv">ssh_id</span><span class="si">}</span>.env_loaded
+<span class="nb">trap</span><span class="w"> </span><span class="s1">&#39;rm .&#39;</span><span class="si">${</span><span class="nv">ssh_id</span><span class="si">}</span><span class="s1">&#39;.env_loaded&#39;</span><span class="w"> </span>EXIT
+</pre></div>
+</div>
+<p>They create a hidden file, with the ID of your ssh connection.
+The makefile searches  for it, and if not present it fails. Also the file is removed when you exit the ssh connexion.
+So, if you want to close the ssh shell while running the tool, remove the last line, or the corresponding check in the Makefile</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Check environment is loaded</span>
+<span class="c">####################################################</span>
+<span class="nf">$(eval ssh_id </span><span class="o">:</span>= <span class="k">$(</span><span class="nv">shell</span> <span class="nv">echo</span> <span class="k">$</span>{<span class="nv">SSH_CONNECTION</span>} | <span class="nv">awk</span> &#39;{<span class="nv">print</span> <span class="k">$$</span><span class="nv">2</span>}&#39;<span class="k">)</span>)
+<span class="cp">ifeq (&quot;$(wildcard .$(ssh_id).env_loaded )&quot;,&quot;&quot;)</span>
+<span class="w">  </span><span class="k">$(</span>error<span class="w"> </span>Please<span class="w"> </span>load<span class="w"> </span>the<span class="w"> </span>environment<span class="w"> </span>sourcing<span class="w"> </span>load_env.sh<span class="w"> </span>file<span class="k">)</span>
+<span class="cp">endif</span>
+</pre></div>
+</div>
+<p>The last line converts the parameter file to something that can be sourced in a bash script.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">cfg</span><span class="o">/</span><span class="n">target</span><span class="o">/</span><span class="n">ConvertParamFile</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">p</span> <span class="n">param</span><span class="o">.</span><span class="n">cfg</span>  <span class="o">-</span><span class="n">o</span> <span class="n">cfg</span><span class="o">/</span><span class="n">target</span><span class="o">/</span><span class="n">param_bash</span><span class="o">.</span><span class="n">cfg</span>
+</pre></div>
+</div>
+<p>This bring us to …</p>
+<p>If you opened the <code class="docutils literal notranslate"><span class="pre">run_analysis.sh</span></code> script, you saw that we pass a parameter file to the make command. This file is sourced both in the Makefile, and in the scripts for the target.
+So this is the place where to put all the variables the target you specified in the <code class="docutils literal notranslate"><span class="pre">experiment_recipes</span></code> variable.
+Various example can be found in the folder <code class="docutils literal notranslate"><span class="pre">configurations</span></code>. If you write you own param file <strong>I warmly invite you to add it there</strong>, for the future you to know how you got those beautiful results!</p>
+<p>It can contain variables used in the Makefile, that are generic, or variables that are model specific and are used in your custom script.
+Taking a look at the <cite>``param.cfg`</cite> &lt;<a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/snippets/69">https://earth.bsc.es/gitlab/ces/nemo_performance_profile/snippets/69</a>&gt;`_ file you see that the parameter list  can be splitted in two: the model specific parameters and the ones which are not.</p>
+<p>The following are model independent:</p>
+<ul class="simple">
+<li><p>model: used as a name for some output file, and to search for the model specific targets (See later)</p></li>
+<li><p>trace_steps: number of steps for the model when extrae is used.</p></li>
+<li><p>test_steps: number of steps used for scalability test.</p></li>
+<li><p>number_of_processes: list of numbers that contains the N of cores at which the scalability test is run, and the traces are taken</p></li>
+<li><p>processes_per_node: if you want to use full nodes, there is no need to specify this one</p></li>
+<li><p>experiment_recipes: list of targets you want to run with this specific analysis</p></li>
+<li><p>osu_tests: name of the OSU test one wants in the report. <a class="reference external" href="http://mvapich.cse.ohio-state.edu/benchmarks/">Here</a> the available list.</p></li>
+<li><p>main_folder: path <a href="#id2"><span class="problematic" id="id3">**</span></a>inside <code class="docutils literal notranslate"><span class="pre">run_dir</span></code>** where the main folder will be cloned and the experiment target will run</p></li>
+</ul>
+<p>It is clear then, that, for example, the way of enforcing the number of steps on the model has to be hardcoded somewhere.
+Let’s see how to enforce this kind of information</p>
+<p>Let’s see what happens when we run the command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>inidata
+</pre></div>
+</div>
+<p>This is the command that prepares all the data needed for your model to run.
+Of course this can not be general, and depends on the model. Take a look at what the makefile is doing:</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Recipes to prepare inidata</span>
+<span class="nf">inidata</span><span class="o">:</span>
+<span class="c">        # Download data, put it in inidata and remove write permissions to avoid undesired modifications</span>
+<span class="w">        </span>mkdir<span class="w"> </span><span class="nv">$@</span>
+<span class="w">        </span><span class="si">${</span><span class="nv">cfg</span><span class="si">}</span>/target/model/<span class="si">${</span><span class="nv">model</span><span class="si">}</span>/inidata.target
+</pre></div>
+</div>
+<p>First of all, we see that the variable we defined in the param file is used here to determine the path of the script <code class="docutils literal notranslate"><span class="pre">inidata.target</span></code>, which will set up the data.</p>
+<p>This highlights the structure of the makefile: usually a target calls a script, stored in the cfg/target folder which will execute some code to perform a task.
+Inside the <code class="docutils literal notranslate"><span class="pre">target</span></code> folder there is the <code class="docutils literal notranslate"><span class="pre">model</span></code> folder: all the nemo specific scripts are stored there. <strong>If you want to set up scripts for a new model</strong> just create a new folder with your model’s name inside the <code class="docutils literal notranslate"><span class="pre">target</span></code> folder, copy all the scripts and modify the code in order to work with your model.</p>
+<p>Let’s take a look now to a (more) generic target</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Recipes to prepare functions file for tracing</span>
+<span class="nf">functions_dir/extrae_functions.txt</span><span class="o">:</span><span class="w"> </span><span class="n">bin</span>/${<span class="n">model</span>}<span class="n">_trace</span>.<span class="n">exe</span> <span class="n">bin</span>/<span class="n">xios_server</span>.<span class="n">exe</span>
+<span class="w">    </span><span class="si">${</span><span class="nv">MAKE</span><span class="si">}</span><span class="w"> </span><span class="k">$(</span>@D<span class="k">)</span>/.inidata.done
+<span class="w">    </span><span class="si">${</span><span class="nv">cfg</span><span class="si">}</span>/target/model/<span class="si">${</span><span class="nv">model</span><span class="si">}</span>/functions_dir.target<span class="w"> </span><span class="k">$(</span>@D<span class="k">)</span>
+<span class="w">    </span>python<span class="w"> </span>cfg/slurm/SlurmJobCreator.py<span class="w"> </span>--file-name<span class="w"> </span><span class="k">$(</span>@D<span class="k">)</span>/function.slurm<span class="w"> </span><span class="se">\</span>
+<span class="w">                                     </span>--set-time<span class="w">  </span><span class="m">120</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                                     </span>--set-core<span class="w"> </span><span class="k">$(</span>word<span class="w"> </span><span class="m">1</span>,<span class="w"> </span><span class="si">${</span><span class="nv">number_of_processes</span><span class="si">}</span><span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                                     </span>--set-core-per-node<span class="w"> </span><span class="si">${</span><span class="nv">processes_per_node</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                                     </span>--job-name<span class="w"> </span><span class="k">$(</span>@D<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                     </span>--set-queue<span class="w"> </span><span class="k">$(</span>slurm_queue<span class="k">)</span>
+<span class="w">    </span>python<span class="w"> </span>cfg/slurm/SlurmJobCreator.py<span class="w"> </span>--file-name<span class="w"> </span><span class="k">$(</span>@D<span class="k">)</span>/function.slurm<span class="w"> </span><span class="se">\</span>
+<span class="w">                                            </span>--set-workload<span class="w"> </span><span class="si">${</span><span class="nv">cfg</span><span class="si">}</span>/target/functions_dir.target<span class="w"> </span>bin/<span class="si">${</span><span class="nv">model</span><span class="si">}</span>_trace.exe
+
+<span class="w">    </span>sbatch<span class="w"> </span>--wait<span class="w"> </span>--chdir<span class="w"> </span><span class="k">$(</span>@D<span class="k">)</span><span class="w"> </span><span class="k">$(</span>@D<span class="k">)</span>/function.slurm
+</pre></div>
+</div>
+<p>It creates the list of functions we want to profile with extrae. This target is divided into a custom part and a <a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/-/wikis/Generate-the-extrae_functions.txt-in-a-generic-way">part that is model independent</a>.
+Plus we see for the first time the <a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/-/wikis/The-SlurmJobCreator-class">SlurmJobCreator</a> class.
+Both deserve an explication, especially the second one can be of interest: it is used throughout the whole Makefile to create jobs and submit them to the queue system: we can choose the slurm parameters and the things that have to be run in the job.
+For sake of simplicity they are explained on dedicated pages. Here I will just remark that if you run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>target<span class="w"> </span>-slurm_queue<span class="o">=</span>bsc_es
+</pre></div>
+</div>
+<p>All the jobs submitted by this command will be on the <code class="docutils literal notranslate"><span class="pre">bsc_es</span></code> queue, because of the interaction with the SlurmJobCreator (ofc it works with all the valid queue’s name).</p>
+<p>Now that we saw what a target is, and how it can be adapted to a new model, let’s explain more in general which is the workflow, starting from the one we run in the run_analysis.sh: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">experiment</span></code>.</p>
+<p>This target looks inside the param file defined on command line, and runs what it is stored in the <code class="docutils literal notranslate"><span class="pre">experiment_recipes</span></code> variable. It loops through its values and builds all the targets inside the main_directory specified.</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Experiment recipes specified in param.cfg file</span>
+<span class="nf">experiment</span><span class="o">:</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span>recipe<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="si">${</span><span class="nv">experiment_recipes</span><span class="si">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$$</span><span class="o">{</span>recipe<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                                </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-d<span class="w"> </span><span class="si">${</span><span class="nv">main_folder_fullpath</span><span class="si">}</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>.<span class="w"> </span><span class="si">${</span><span class="nv">main_folder_fullpath</span><span class="si">}</span><span class="w"> </span><span class="p">;</span><span class="se">\</span>
+<span class="w">                                </span>cp<span class="w"> </span><span class="si">${</span><span class="nv">parameters_file</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">main_folder_fullpath</span><span class="si">}</span>/param.cfg<span class="w"> </span><span class="p">;</span><span class="se">\</span>
+<span class="w">                                </span><span class="nb">cd</span><span class="w">  </span><span class="si">${</span><span class="nv">main_folder_fullpath</span><span class="si">}</span><span class="w"> </span><span class="p">;</span><span class="se">\</span>
+<span class="w">                                </span><span class="nb">source</span><span class="w"> </span>./load_env.sh<span class="w"> </span><span class="p">;</span><span class="se">\</span>
+<span class="w">                                </span><span class="nb">cd</span><span class="w"> </span>-<span class="w"> </span><span class="p">;</span><span class="se">\</span>
+<span class="w">                                </span><span class="k">$(</span>MAKE<span class="k">)</span><span class="w"> </span>-C<span class="w"> </span>./<span class="si">${</span><span class="nv">main_folder_fullpath</span><span class="si">}</span><span class="w"> </span><span class="nv">parameters_file</span><span class="o">=</span>param.cfg<span class="w"> </span><span class="nv">slurm_queue</span><span class="o">=</span><span class="si">${</span><span class="nv">slurm_queue</span><span class="si">}</span><span class="w"> </span><span class="nv">$$</span><span class="o">{</span>recipe<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="k">done</span>
+</pre></div>
+</div>
+<p>We need to copy the parameter file in the new folder and overwrite the original variable <code class="docutils literal notranslate"><span class="pre">parameter_file</span></code>, because due to the change of directory it points to a non valid path.
+The <code class="docutils literal notranslate"><span class="pre">experiment_recipe</span></code> variable can specify any of the target in the makefile, but usually points to an array of targets, as strongscaling or hardware_benchmarks.
+This in turns will depend on other targets. Let’s explain the most important.</p>
+<p>In the run_analysis.sh script the analysis is divided in 4  part by 4 different parameter files:</p>
+<ul class="simple">
+<li><p>hardware_benchmark</p></li>
+<li><p>strongscaling</p></li>
+<li><p>Multiexperiment</p>
+<ul>
+<li><p>weakscaling</p></li>
+<li><p>compilation efficiency
+They are really array of targets, and if you look into the makefile you will see which are their dependency.</p></li>
+</ul>
+</li>
+</ul>
+<p>The <a class="reference external" href="https://github.com/jeffhammond/STREAM">STREAM</a> benchmark is downloaded and compiled. Then</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="k">for</span><span class="w"> </span>number_of_cores<span class="w"> </span><span class="k">in</span><span class="w">  </span><span class="m">01</span><span class="w"> </span><span class="m">02</span><span class="w"> </span><span class="m">04</span><span class="w"> </span><span class="m">08</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">48</span>
+<span class="k">do</span>
+<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="si">${</span><span class="nv">number_of_cores</span><span class="si">}</span>
+<span class="w">  </span>./stream<span class="w"> </span>&gt;<span class="w"> </span>stream_<span class="si">${</span><span class="nv">number_of_cores</span><span class="si">}</span>.txt
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>With the <a class="reference external" href="http://mvapich.cse.ohio-state.edu/benchmarks/">OSU</a> a list of the test run can be put in the  param file, under the <code class="docutils literal notranslate"><span class="pre">osu_tests</span></code> variable</p>
+<p>With this aim let’s take a look at the <code class="docutils literal notranslate"><span class="pre">strong_scaling</span></code> target: it consists of a series of make command. The hierarchy here is important, since some of the target are not serial (like scalability and trace_cut) and have the same dependency (inidata). They don’t have any explicit or logical interdependence, so if not stated explicitly make would attempt a parallel build, causing a possible race condition when building common target. (ask for info, I know this is confusing).
+For more details about parallel makefiles you can also have look at the <a class="reference external" href="https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html">official documentation</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>############### TARGET FOR PARALLEL MAKE
+strong_scaling:
+        ${MAKE} scalability
+        ${MAKE} trace_cut
+        ${MAKE} modelfactors paraver_images dimemas_experiments
+        ${MAKE} paradim_experiments
+</pre></div>
+</div>
+<p>This targets will, of course depend on an executable of the model, so firs we look at the source target.</p>
+<p>In the NEMO case, we download the sources (nemo_source) from the git mirror and copy arch files where they are due.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>####################################################
+# The sources are prepared
+%_source:
+        ${cfg}/target/model/${model}/$*_source.target ${cfg}
+
+####################################################
+# Recipe to compile different model versions
+# The subscript indicates the version that we are compiling (vanilla, trace)
+bin/${model}_%.exe: ${model}_source
+        mkdir -p $(@D)
+        ${cfg}/target/model/${model}/${model}_exec.target $* $@ $&lt;
+</pre></div>
+</div>
+<p>Of course this script (nemo_exec.target) is maybe the one that most depend on the model you are using.
+Now that we have the sources and the input files (we already explained the <code class="docutils literal notranslate"><span class="pre">inidata</span></code> target) we can use them.</p>
+<p>The scalability target is used to get the scalability curve. It will run as many tests as the number of cores specified in the param.cfg file, and for the number of timesteps you specified in the test_steps variable.</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="nv">SCALABILITY</span><span class="o">=</span><span class="k">$(</span>foreach<span class="w"> </span>var,<span class="w"> </span><span class="k">$(</span>number_of_processes<span class="k">)</span>,<span class="w"> </span>test_<span class="k">$(</span>var<span class="k">)</span>/test.slurm<span class="k">)</span>
+<span class="nf">scalability</span><span class="o">:</span><span class="w">  </span><span class="n">bin</span>/${<span class="n">model</span>}<span class="n">_vanilla</span>.<span class="n">exe</span> <span class="n">bin</span>/<span class="n">xios_server</span>.<span class="n">exe</span> <span class="n">inidata</span>
+<span class="w">        </span>make<span class="w"> </span>-j<span class="si">${</span><span class="nv">cores</span><span class="si">}</span><span class="w"> </span><span class="k">$(</span>SCALABILITY<span class="k">)</span>
+</pre></div>
+</div>
+<p>That’s how we enforce the parallelism inside the target.</p>
+<p>Run the ${model}_trace.exe with Extrae to generate the traces. Again it will produce contemporary as many traces as the N of cores specified for the number of timesteps you specified in the trace_timestep variables.</p>
+<p>Runs all the Paraver configurations stored in <code class="docutils literal notranslate"><span class="pre">${analysis_tools}/paraver_configurations</span></code> folder. It produces the images and does a little postproc to rename them in a readable way and paste the proper legend. Take a look at <a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/-/issues/40">this Issue</a> to know how the function legend is created.</p>
+<p>The traces generated in the previous step  are cut with the <a class="reference external" href="https://earth.bsc.es/gitlab/ces/magiccut">magiCut</a> script: please note that the numpy branch is used here, since the version in the master branch is slow, and when traces are taken on some thousand of cores, fails.
+When the trace is cut, and converted into .dim, dimemas is run with all the configurations stored in <code class="docutils literal notranslate"><span class="pre">${analysis_tools}/dimemas_configurations</span></code>, then the results will be analyzed looking at how the Userfunction view changes, with the different configurations.
+To change view change the line</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check how the function view changes with the different dimemas traces</span>
+<span class="nv">paraver_cfg</span><span class="o">=</span><span class="sb">`</span><span class="w"> </span>readlink<span class="w"> </span>-f<span class="w"> </span>cfg/trace_analysis/cfgs/UserFunctions.cfg<span class="sb">`</span>
+</pre></div>
+</div>
+<p>inside the dimemas_images.target</p>
+<p>The paramedir configurations stored in<code class="docutils literal notranslate"><span class="pre">${analysis_tools}/paramedir_configurations</span></code> are run on the cutted trace: they are histograms which store data for each and every function in the extrae list.</p>
+<p>Once the dimemas traces are generated we use paramedir to get some more info.
+<strong>NB</strong> For the moment this info are not used in the report</p>
+<p>Looking at the run_analysis we see that there are parameters file stored in a folder named MultiExperiment. In this folder are stored configuration files for experiment that need to clone the project more than once.</p>
+<p>Suppose for example that we want to change the default compilation flags, and see what is the impact in the performance. We decide that looking at the SYPD is enough to have a clue on what’s going on.
+We will have to:</p>
+<ul class="simple">
+<li><p>Create <a href="#id4"><span class="problematic" id="id5">**</span></a><em>N</em>** different parameter files, which enforce different compilation flags</p></li>
+<li><p>Having the <code class="docutils literal notranslate"><span class="pre">source</span></code> target to know how to enforce the different compilation flags</p></li>
+<li><p>Specify a different <code class="docutils literal notranslate"><span class="pre">main_folder</span></code> in different parameter file</p></li>
+<li><p>Specify the same target inside all the different parameters files</p>
+<ul>
+<li><p>scalability</p></li>
+<li><p>process_json.slurm</p></li>
+</ul>
+</li>
+<li><p>Have a mean to analyze the data (use the <code class="docutils literal notranslate"><span class="pre">comparator.py</span></code>)</p></li>
+</ul>
+<p>The same will be with a weakscaling, the only difference being that instead of changing the compilation flags, we are changing the size of the domain. So probably we will need to put a parameter in the configuration file that specifies which is the desired domain, and in turn the <code class="docutils literal notranslate"><span class="pre">inidata</span></code> will have to know how to enforce this specification when running the scalability test.</p>
+<p>In the second part of the <code class="docutils literal notranslate"><span class="pre">run_analysis</span></code> script, we give the Makefile commands to produce a report. In order to do so we need to analize the data collected. After we produced the scaling, take the traces, analize it with dimemas and paramedir, we need to process these data, and put them in a format accessible to the user. For this to happen there are two target, one that produces a json, with all the info from the tests, and another one that analizes the json.</p>
+<p>This target can be executed once all the traces and test have finished.</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="err">python</span><span class="w"> </span><span class="err">cfg/parser/collector.py</span><span class="w"> </span><span class="err">--input-files</span><span class="w"> </span><span class="err">test_*/*.timing</span><span class="w"> </span><span class="err">trace_*/*pm</span><span class="w"> </span><span class="err">dimemas_traces/*dm</span><span class="w"> </span><span class="err">\</span>
+<span class="w">                                       </span><span class="err">--output-file</span><span class="w"> </span><span class="err">${configuration_name}</span><span class="w"> </span><span class="err">\</span>
+<span class="w">                                       </span><span class="err">--param-file</span><span class="w"> </span><span class="err">param.cfg</span>
+</pre></div>
+</div>
+<p>It is a python script, which takes as input timing files from the scaling tests, paramedir and dimemas traces, plus the param file, so it knows some variables without the need of giving too much input parameters.
+None of these inputs are mandatory, but at least one should be present for the script to work.
+The script basically issues an objinstance, of class TimingInformation,  defined in the file <code class="docutils literal notranslate"><span class="pre">parser.py</span></code> and with the following structure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TimingInformation</span><span class="p">:</span>
+    <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Class to store the information of one experiment in a nested dictionary</span>
+<span class="s2">    The dictionary stored at .data includes the following information (the values between &#39;&#39; are the actual keys).</span>
+
+<span class="s2">    case (number of processes used)</span>
+<span class="s2">    |---&#39;Communication&#39;:</span>
+<span class="s2">    |   |---&#39;collective_pct&#39;</span>
+<span class="s2">    |   |---&#39;collective_time&#39;</span>
+<span class="s2">    |   |---&#39;computing_time&#39;</span>
+<span class="s2">    |   |---&#39;p2p_pct&#39;</span>
+<span class="s2">    |   |---&#39;p2p_time&#39;</span>
+<span class="s2">    |   |---&#39;sypd&#39;</span>
+<span class="s2">    |   |---&#39;total_time&#39;</span>
+<span class="s2">    |</span>
+<span class="s2">    |---&#39;FunctionInfo&#39;</span>
+<span class="s2">    |   |--- function_name (the name of the function)</span>
+<span class="s2">    |       |--- &#39;CPU Time(%)&#39;</span>
+<span class="s2">    |       |--- &#39;CPU Time(s)&#39;</span>
+<span class="s2">    |       |--- &#39;CPU/Elap&#39;</span>
+<span class="s2">    |       |--- &#39;Elap. Time(%)&#39;</span>
+<span class="s2">    |       |--- &#39;Elap. Time(s)&#39;</span>
+<span class="s2">    |       |--- &#39;Freq&#39;</span>
+<span class="s2">    |       |--- &#39;Max elap(%)&#39;</span>
+<span class="s2">    |       |--- &#39;Min elap(%)&#39;</span>
+<span class="s2">    |</span>
+<span class="s2">    |---&#39;ProcessInfo&#39;</span>
+<span class="s2">    |   |--- process_id (the number of the process 0 or 45 for example)</span>
+<span class="s2">    |       |--- &#39;CPU Time(s)&#39;</span>
+<span class="s2">    |       |--- &#39;Elapsed Time(s)&#39;</span>
+<span class="s2">    |       |--- &#39;Ratio CPU / Elapsed&#39;</span>
+<span class="s2">    |---&#39;TimeStepTime&#39;</span>
+<span class="s2">    |   |--- (average, standard deviation) # (a tuple with the actual values)</span>
+</pre></div>
+</div>
+<p>Depending on the input given, the class will call a series of functions (parse_paramedir_files, parse_dimemas_files, parse_timing_files, load_param) to load and store the info recollected during the runs. Then all the info are saved to a json file, with the name of the configuration.</p>
+<p>The reporter.py is the script that produces the actual images and csv files that eventually appears in the report. It takes as input the json file name and the names for the outputs that will be produced:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">info_report</span><span class="o">.</span><span class="n">done</span><span class="p">:</span> <span class="err">$</span><span class="p">{</span><span class="n">configuration_name</span><span class="p">}</span><span class="o">.</span><span class="n">json</span>
+        <span class="n">python</span> <span class="n">cfg</span><span class="o">/</span><span class="n">parser</span><span class="o">/</span><span class="n">reporter</span><span class="o">.</span><span class="n">py</span> \
+                                    <span class="o">-</span><span class="n">j</span> <span class="err">$</span><span class="p">{</span><span class="n">configuration_name</span><span class="p">}</span><span class="o">.</span><span class="n">json</span> \
+                                    <span class="o">--</span><span class="n">sypd</span><span class="o">-</span><span class="n">plot</span> <span class="err">$</span><span class="p">{</span><span class="n">configuration_name</span><span class="p">}</span><span class="n">_scaling</span><span class="o">.</span><span class="n">png</span> \
+                                    <span class="o">--</span><span class="n">sypd</span><span class="o">-</span><span class="n">file</span> <span class="err">$</span><span class="p">{</span><span class="n">configuration_name</span><span class="p">}</span><span class="n">_scaling</span><span class="o">.</span><span class="n">csv</span> \
+                                    <span class="o">--</span><span class="n">csv</span><span class="o">-</span><span class="n">folder</span> <span class="n">function_csv</span> \
+                                    <span class="o">--</span><span class="n">most_expensive_function_summary</span> <span class="n">most_expensive_function_summary</span><span class="o">.</span><span class="n">csv</span> \
+                                    <span class="o">--</span><span class="n">L3_IPC_scatterplot</span> <span class="n">L3_vs_IPC</span><span class="o">.</span><span class="n">png</span> \
+                                    <span class="o">--</span><span class="n">dimemas</span><span class="o">-</span><span class="n">file</span> <span class="n">dimemas</span><span class="o">.</span><span class="n">csv</span> \
+                                    <span class="o">--</span><span class="n">tracking</span><span class="o">-</span><span class="n">folder</span> <span class="n">tracking</span>
+</pre></div>
+</div>
+<p>Let’s go through to output one by one:</p>
+<ul>
+<li><p>spyd-plot: is the scaling plot</p></li>
+<li><p>spyd-file: reports the numbers used to create the plot</p></li>
+<li><p>csv-folder: inside this folder a csv file per function is created with</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">resources | speedup | efficiency |</div>
+<div class="line">——— | ——- | ———- |</div>
+<div class="line">Original * N<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span>   | speedup<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span>   |       efficiency<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span>    |</div>
+<div class="line">Original * N<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span>   | speedup<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span>   |       efficiency<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span>    |</div>
+</div>
+</div></blockquote>
+</li>
+<li><p>most_expensive_function_summary: the list of the 10 most expensive function for each test run</p></li>
+<li><p>L3_IPC_scatterplot: for the most expensive functions, a plot of L3 total cache misses vs the total useful Instruction per Cycle. The N of cores decreases increasing the cache misses</p>
+<a class="reference external image-reference" href="uploads/5a789b56a776609d46dea079ce380adb/L3_vs_IPC.png"><img alt="L3_vs_IPC" src="uploads/5a789b56a776609d46dea079ce380adb/L3_vs_IPC.png" />
+</a>
+</li>
+<li><p>dimemas-file: csv files</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Cores | Bandwidth | Coupling | Latency | Original |</div>
+<div class="line">—– | ——— | ——– | ——- | ——-  |</div>
+<div class="line">N<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span> | Bdw<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span> | Coupling<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span> | lat<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span> | orig<span class="raw-html-m2r"><sub></span>1<span class="raw-html-m2r"><sub></span>|</div>
+<div class="line">N<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span> | Bdw<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span> | Coupling<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span> | lat<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span> | orig<span class="raw-html-m2r"><sub></span>2<span class="raw-html-m2r"><sub></span>|</div>
+</div>
+</div></blockquote>
+</li>
+<li><p>tracking-folder: the function <code class="docutils literal notranslate"><span class="pre">function_information_from_paramedir_outputs</span></code> (curation.py) is called, and all the info are stored in two separated folder:</p>
+<ul>
+<li><p>MPI: all the MPI function used called inside the function</p>
+<div class="line-block">
+<div class="line">Cores | Outside_MPI | MPI_Recv | MPI_Isend | MPI_Wait | … |</div>
+<div class="line">—– | ———   | ——– | ——- | ——-  | —|</div>
+<div class="line">… | … | … | … | … |</div>
+</div>
+</li>
+<li><p>counters: the counters stored for this function</p>
+<div class="line-block">
+<div class="line">Processes | Instructions | Cycles | IPC | Time(ms) |</div>
+<div class="line">——— | ———— | —— | — | ——– |</div>
+<div class="line">… | … | … | … | … |</div>
+</div>
+</li>
+</ul>
+</li>
+</ul>
+<p>As you understood, the only format suitable for storing the results are pictures and csv. In facts these are the only formats accepted from the ReportGenerator python class.
+For more details check the <a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/-/wikis/The-ReportGenerator">detailed description</a>, here we will just take a look at the  report target</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">report_file</span><span class="o">=</span><span class="nv">$1</span>
+<span class="nv">parameters_conffile</span><span class="o">=</span><span class="nv">$2</span>
+<span class="nv">report_conffile</span><span class="o">=</span><span class="nv">$3</span>
+
+<span class="nb">source</span><span class="w"> </span><span class="si">${</span><span class="nv">report_conffile</span><span class="si">}</span>
+<span class="c1"># Copy the report in the appropriate folder</span>
+<span class="nv">report_name</span><span class="o">=</span><span class="si">${</span><span class="nv">report_file</span><span class="p">%.*</span><span class="si">}</span>
+cp<span class="w"> </span><span class="si">${</span><span class="nv">report_file</span><span class="si">}</span><span class="w"> </span>report/
+<span class="c1">#python ${latex_folder}/ReportGenerator.py -O ${report_file} --section-title &quot;Introduction&quot; --section-number 1 -T Introduction.txt</span>
+python<span class="w"> </span>cfg/latex/ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>report/<span class="si">${</span><span class="nv">report_file</span><span class="si">}</span><span class="w"> </span>--add-newcommand<span class="w"> </span><span class="si">${</span><span class="nv">parameters_conffile</span><span class="si">}</span>
+python<span class="w"> </span>cfg/latex/ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>report/<span class="si">${</span><span class="nv">report_file</span><span class="si">}</span><span class="w"> </span>--report-title<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">title</span><span class="si">}</span><span class="s2">&quot;</span>
+python<span class="w"> </span>cfg/latex/ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>report/<span class="si">${</span><span class="nv">report_file</span><span class="si">}</span><span class="w"> </span>--report-authors<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">authors</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="c1"># Create the tex file</span>
+python<span class="w"> </span>cfg/latex/ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>report/<span class="si">${</span><span class="nv">report_file</span><span class="si">}</span><span class="w"> </span>--dump-to-file
+<span class="c1"># Compile the report</span>
+<span class="nb">cd</span><span class="w"> </span>report<span class="p">;</span><span class="w"> </span>module<span class="w"> </span>load<span class="w"> </span>LATEX/20150523<span class="p">;</span><span class="w"> </span>pdflatex<span class="w"> </span><span class="si">${</span><span class="nv">report_name</span><span class="si">}</span>.tex<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pdflatex<span class="w"> </span><span class="si">${</span><span class="nv">report_name</span><span class="si">}</span>.tex<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>evince<span class="w"> </span><span class="si">${</span><span class="nv">report_name</span><span class="si">}</span>.pdf
+</pre></div>
+</div>
+<p>Trying to be brief takes the folder name, authors  and the title as input, generates the .tex file, and compiles it (twice, since there is the bibliography).
+This brings this documentation to its last chapter</p>
+<section id="notice-to-mariners">
+<h2>Notice to mariners<a class="headerlink" href="#notice-to-mariners" title="Link to this heading"></a></h2>
+<p>This tool has been developed for a specific model on a specific platform (almost entirely from a specific person), with the aim of being general. This of course does not mean that you can use it with a model that is not Nemo without modifying the code. This is a list
+of things that, in my opinion, need to be changed / taken care of before being able to use the tool. (They are not listed in any specific order)</p>
+<section id="recursive-make">
+<h3>Recursive make<a class="headerlink" href="#recursive-make" title="Link to this heading"></a></h3>
+<p>Inside the makefile many of the target call a make command, it should be changed into a $(MAKE) command.It is straightforward but I have not had the time to check if brakes something.</p>
+</section>
+<section id="the-dependency-from-the-timing-files">
+<h3>The dependency from the timing files<a class="headerlink" href="#the-dependency-from-the-timing-files" title="Link to this heading"></a></h3>
+<p>These files are specific of Nemo, nevertheless we use them for producing the JSON file, and in turn we analyze them for producing pictures or statistics.
+The easiest thing would be to remove the analysis of the files in the reporter class, or at least make it optional.
+Another thing you can do is take a look at what info it gives, and check if you can extract the same from your code.</p>
+</section>
+<section id="the-magiccut">
+<h3>The magicCut<a class="headerlink" href="#the-magiccut" title="Link to this heading"></a></h3>
+<p>This tool has been tested just with NEMO, and I don’t know (nor Oriol, the author of the tool, does) how it would behave with other models.
+Is based on the idea of having a timestep structure in the code. The tool will guess which is the first function called, and using this as a marker for the timesteps length, determines the best of them and cuts it using paramedir.
+This implies a lot of conditions:</p>
+<ul class="simple">
+<li><p>your code is supposed to have even steps</p></li>
+<li><p>the function called are more or less always the same</p></li>
+<li><p>… other things that do not occur to me right now.</p></li>
+</ul>
+<p>The only thing here is: try to use it, and when it fails contact me or Oriol if you can’t/don’t have the time to figure out yourself what went wrong. Plus I don’t think this tool has a manual.</p>
+</section>
+<section id="paraver-images-see-issue-41">
+<h3>Paraver images (see <a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/-/issues/41">Issue#41</a>)<a class="headerlink" href="#paraver-images-see-issue-41" title="Link to this heading"></a></h3>
+<p>I have a <a class="reference external" href="https://earth.bsc.es/gitlab/ces/nemo_performance_profile/-/tree/x11">branch</a> where the changes to the paraver files are already implemented. Once support resolves my problem they can be put in the trunk</p>
+</section>
+<section id="the-parameter-file-conversion">
+<h3>The parameter file conversion<a class="headerlink" href="#the-parameter-file-conversion" title="Link to this heading"></a></h3>
+<p>When we source the load_env.sh script the param.cfg file gets converted from a python script. <strong>The converted file is the one sourced from the targets!</strong>. This means that, if you change something in the param file, you should also regenerate the converted one, i.e. source again the load_env.sh bash script.
+I know this is manual and, by its nature, very error prone.</p>
+<p>Since I was often forgetting this, I added the converted files among the files deleted every time a <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code> is issued.
+But if you delete the file and then forget to recreate it, strange errors may appear …
+Long story short: add a check in your targets for this file to exist. I did not, my bad.</p>
+</section>
+<section id="the-folder-in-cfg">
+<h3>The folder in cfg<a class="headerlink" href="#the-folder-in-cfg" title="Link to this heading"></a></h3>
+<p>There is a bit of a mess in the folders ordering: probably the folder <code class="docutils literal notranslate"><span class="pre">trace</span></code>, <code class="docutils literal notranslate"><span class="pre">trace_analysis</span></code>, <code class="docutils literal notranslate"><span class="pre">generate_func_list</span></code> should be merged into a single one, with a better name. You have to take into account that before taking the traces, we need to copy the content of <code class="docutils literal notranslate"><span class="pre">cfg/trace</span></code> folder inside the trace folder. So, <strong>be careful</strong> when merging.</p>
+</section>
+<section id="remove-the-xios-dependency">
+<h3>Remove the XIOS dependency<a class="headerlink" href="#remove-the-xios-dependency" title="Link to this heading"></a></h3>
+<p>Somewhere along the makefile there is an hardcoded dependency to XIOS,like for example in the <code class="docutils literal notranslate"><span class="pre">function_dir</span></code> target: this should be removed.
+Right now we are doing with this dependency a very nasty thing: we put the path to a folder in Oriol’s home, where he has the exec instead of actual compilation instructions. It is dire, I know.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

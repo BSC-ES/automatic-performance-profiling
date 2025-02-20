@@ -1,0 +1,8 @@
+function-name,trace-1 (percent),function-name,trace-2 (percent),function-name,trace-3 (percent)
+stp-mlf,44.08,stp-mlf,44.35,stp-mlf,44.88
+dia-wri,20.81,dia-wri,21.38,dia-wri,21.02
+tra-adv,12.35,tra-adv,11.71,tra-adv,11.94
+zdf-phy,9.71,zdf-phy,9.15,zdf-phy,8.66
+ice-dyn-adv,5.49,ice-dyn-adv,5.58,ice-dyn-adv,5.74
+rab-3d,4.60,rab-3d,4.79,rab-3d,4.80
+ldf-slp,2.95,ldf-slp,3.00,ldf-slp,2.88

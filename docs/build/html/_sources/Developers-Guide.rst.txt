@@ -1,0 +1,649 @@
+
+Developers Guide
+================
+
+Workflow structure
+------------------
+
+The workflow has 5 AS members, each one running a different type of performance analysis:
+
+
+* 
+  **Tracing**\ : Runs the model with Extrae to generate Paraver traces and then gets all the metrics using Paramedir, Paraver and Dimemas.
+
+* 
+  **WeakScaling**\ : Runs the model from a base configuration defined by the user (resolution and processes) and scales the processors automatically according to the resolution defined by the user.
+
+* 
+  **StrongScaling**\ : Runs the model using the same configuration for different processors combinations defined by the user.
+
+* 
+  **CompilationEfficiency**\ : Runs the model with different compiled versions of the model and compares their scalability in the report.
+
+* 
+  **HardwareBenchmarks**\ : Runs OSU and STREAM hardware benchmarks and generates the plots for the report.
+
+This is defined as members as it is really easy to run them or not since AS will add to the workflow the activated members jobs in the workflow, specifically in the ``autosubmit/configuration/exp exdef.yml`` file.
+
+The workflow is also divided horizontally into two parts. The first section being where the experiment is run and the second the section where the results of the run are gathered and added to the final report. The ``report_setup.sh`` is where the workflow is divided.
+
+Simple workflow plot: `a74c_20240807_1305.pdf <uploads/d2b465c69090e378e6e652a7f381d261/a74c_20240807_1305.pdf>`_
+
+Workflow pipeline
+^^^^^^^^^^^^^^^^^
+
+Each of the members follow a similar pipeline:
+
+
+* First, the model/benchmark is compiled. WeakScaling, CompilationEfficiency and StrongScaling can share the same compiled version or not depending on the user's configuration.
+* Then, the tests are run which can be running the model or the benchmarks. Each test corresponds to a different processors configuration provided by the user.
+* After that, there is the post processing. Some members require more processing than others, for example, Tracing needs to run Paramedir, Paraver and Dimemas to extract information from the trace. StrongScaling on the other hand, does not require any post processing since the models already provide the information.
+* Finally, the parsers and the curation Python scripts are run for all of the members. They generate a dictionary with all the metrics and then tables and plots for the report.
+
+
+.. image:: uploads/3673d6753f44774672bb78ae7c931971/Auto-profiling.drawio_2_.svg
+   :target: uploads/3673d6753f44774672bb78ae7c931971/Auto-profiling.drawio_2_.svg
+   :alt: Auto-profiling.drawio_2_.svg
+
+
+You can check what each specific script does in the `Autosubmit scripts <#autosubmit-scripts>`_ section.
+
+Running dirs structure
+^^^^^^^^^^^^^^^^^^^^^^
+
+The different members create folders to run the experiment and store the data in a predifined structure used afterwards by the `Parsers <#parsers>`_.
+
+.. code-block:: bash
+
+   .
+   └── run
+       ├── hardware_benchmarks
+       │   ├── OSU_RUN
+       │   └── STREAM_RUN
+       ├── strong_scaling
+       │   └── TEST
+       │       ├── coupling
+       │       │   ├── c1name_c1procs1_c2name_c2procs1     
+       │       │   └── c1name_c1procs2_c2name_c2procs2
+       │       ├── scalability_c1name_c1procs1_c2name_c2procs1     # Test run dir
+       │       └── scalability_c1name_c1procs2_c2name_c2procs2     # Test run dir
+       ├── tracing
+       │   └── TEST
+       │       ├── dimemas_images
+       │       ├── dimemas_traces
+       │       ├── function_csv
+       │       ├── functions_dir
+       │       ├── modelfactors
+       │       ├── paramedir
+       │       ├── paraver_images
+       │       ├── tracing_c1name_c1procs1_c2name_c2procs1         # Test run dir
+       │       ├── tracing_c1name_c1procs2_c2name_c2procs2         # Test run dir
+       │       └── tracking
+       └── weakscaling
+           └── TEST
+               ├── scalability_c1name_c1procs1_c2name_c2procs1     # Test run dir
+               └── scalability_c1name_c1procs2_c2name_c2procs2     # Test run dir
+
+The running dirs of the different procs combinations follow a naming convetion that allows the parsing scripts to identify each of them. This convention is the following: 
+
+.. code-block::
+
+   tracing_component1-name_component1-nprocs_..._componentN-name_componentN-nprocs
+
+or
+
+.. code-block::
+
+   scalability_component1-name_component1-nprocs_..._componentN-name_componentN-nprocs
+
+depending on which kind of test is run.
+
+Repository structure
+--------------------
+
+The repository contains 3 main folders:
+
+
+* ``autosubmit/``\ : AS configurations and templates(see next section).
+* ``cfg/``\ : Configurations and utilities for the workflow.
+
+  * ``arch/PLATFORM/MODEL``\ : Contains the different arch files for the specified model and platform.
+  * ``benchmarks/``\ : Parsers for OSU and STREAM benchmarks.
+  * ``env/PLATFORM/``\ : Module list needed for the workflow to work in PLATFORM.
+  * ``generate_func_list/``\ : Extrae configuration and scripts to generate a list of user functions using sampling.
+  * ``latex/``\ : Latex configuration and python scripts to generate the final report.
+  * ``parser/``\ : Python scripts to gather data from the different tests and then generate CSVs, plots and images.
+  * ``trace/``\ : Extrae configuration and scripts to generate a Paraver trace of the model.
+  * ``trace_analysis/``\ : Configuration files for the different BSCTOOLS to extract information from the Paraver traces.
+
+* ``configurations/:`` Model configurations.
+
+Autosubmit
+----------
+
+Autosubmit configuration
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+To make the workflow easier to configure for different models and platforms, the workflow takes advantage of AS 4 allowing to define the configuration in different files. The configuration structure is the following:
+
+.. code-block:: bash
+
+   autosubmit/configuration/
+   ├── common
+   │   ├── autosubmit.yml
+   │   ├── common.yml
+   │   ├── expdef.yml
+   │   ├── model
+   │   │   ├── ecearth4
+   │   │   │   └── proj.yml
+   │   │   └── nemo
+   │   │       └── proj.yml
+   │   ├── platforms.yml
+   │   └── version.yml
+   ├── jobs
+   │   ├── jobs-hardwarebenchmarks.yml
+   │   ├── jobs.yml
+   │   ├── model
+   │   │   ├── ecearth4
+   │   │   │   ├── jobs-compilationefficiency.yml
+   │   │   │   ├── jobs-strongscaling.yml
+   │   │   │   ├── jobs-tracing.yml
+   │   │   │   ├── jobs-weakscaling.yml
+   │   │   │   └── jobs.yml
+   │   │   └── nemo
+   │   │       ├── jobs-compilationefficiency.yml
+   │   │       ├── jobs-strongscaling.yml
+   │   │       ├── jobs-tracing.yml
+   │   │       └── jobs-weakscaling.yml
+   │   └── platform
+   │       ├── hpc2020
+   │       │   └── jobs.yml
+   │       ├── MN4
+   │       │   └── jobs.yml
+   │       └── mn5
+   │           └── jobs.yml
+   └── tracing
+       └── extrae.yml
+
+Experiment configuaration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``common/model/MODEL/proj.yml`` contains the configuration of the members (processors combinations, model configuration and members configuration). It is separated in different files because each model has different configuration variables, even though the structure is the same.
+
+Jobs configuration
+~~~~~~~~~~~~~~~~~~
+
+The ``jobs/`` folder contains the definition of the AS jobs, and it is defined:
+
+
+#. ``jobs.yml``\ : General jobs definition shared by all models and platforms.
+#. ``model/MODEL/jobs-*.yml``\ : Specific jobs definition for the model (e.g. for ECE4 the processors for each model have to be specified).
+#. ``platform/PLATFORM/jobs.yml``\ : Specific platform configuration for the platform (some jobs need internet connection or specific number of tasks in a job).
+
+Autosubmit scripts
+^^^^^^^^^^^^^^^^^^
+
+Under ``autosubmit/templates`` you can find the scripts used by the workflow. For more details on them, check the code.
+
+
+* ``clean-sh``\ :
+
+  * **Run**\ : once
+  * **Brief**\ : Cleans all the experiment files in case it was run already.
+
+* ``remote_setup.sh``\ :
+
+  * **Run**\ : once
+  * **Brief**\ : Clones the model sources, this repository, the hardware benchmarks and inidata if needed.
+  * **Dependencies**\ : 
+
+    * ``clean.sh``
+
+  * **Members differences**\ :
+
+    * HardwareBenchmarks: If this member is activated, OSU and STREAM benchmarks are cloned.
+
+* ``remote_compilation.sh``\ :
+
+  * **Run**\ : once
+  * **Dependencies**\ :
+
+    * ``remote_setup.sh``\ : Needs the model sources cloned by this script.
+
+  * **Brief**\ : Compiles the model using the arch files located in ``cfg/arch/PLATFORM/MODEL`` that match the prefix defined by the AS variable ``%MODEL.ARCH_NAMES%``.
+
+* ``prepare_tests.sh``\ :
+
+  * **Run**\ : member
+  * **Brief**\ :
+  * **Dependencies**\ :
+
+    * ``remote_compilation.sh``\ :
+
+* ``scalability.sh``\ :
+
+  * **Run**\ : CompilationEfficiency/StrongScaling/WeakScaling
+  * **Dependencies**\ :
+
+    * ``prepare_tests.sh``\ :
+
+  * **Brief**\ : Runs the model once in a specific procs config to get its performance (SYPD).
+
+    * **ECE4**\ : Gets the SYPD from the Lucia logs.
+    * **NEMO**\ : Gets the SYPD from the timing.log file.
+
+  * **Members differences**\ :
+
+    * **WeakScaling**\ : Uses the ``%WEAKSCALING.TEST_NAME%`` as the resolution to run the test with.
+    * **CompilationEfficiency**\ : Uses the ``%COMPILATION_EFFICIENCY.TEST_NAME%`` as what version of the compiled model to use, has to match with one of the arch prefixes in ``%MODEL.ARCH_NAMES``.
+
+  * **Post**\ : All the necessary log files necessary to get the SYPD are located in the run directory.
+
+* ``extrae.sh``
+
+  * **Run**\ : Tracing
+  * **Dependencies**\ :
+
+    * ``functions_dir.sh``\ : Needs the user generated by this script if the user functions are activated, if not takes the list from ``cfg/trace/model/MODEL/extrae_functions.txt``.
+
+  * **Brief**\ : runs the model once in a specific procs config to get a prv trace of the execution using the Extrae cfg file ``cfg/trace/model/MODEL/extrae.xml``. Then cuts the traces by components using Paramedir.
+  * **Post**\ : The trace of the model is generated (model.prv), also for multicomponent models, the trace is cut into the components (component_id_1.prv, component_id_2.prv...). All are located in the run directory.
+
+* ``trace_cut.sh``\ :
+
+  * **Run**\ : Tracing
+  * **Brief**\ : Cuts the traces to get just a time step using the MagicCut tool.
+  * **Dependencies**\ :
+
+    * ``extrae.sh``\ : Needs the component/model traces in the run directory.
+
+  * **Post**\ : The fastest timestep trace of the model/components is located in the run directory named like (model.best_cut.prv/componentN.best_cut.prv).
+
+* ``paramedir.sh``\ :
+
+  * **Run**\ : Tracing
+  * **Brief**\ : Extract the data from the Paraver traces using Paraver and the cfgs located in ``cfg/trace_analysis/paramedir_configurations``.
+  * **Dependencies**\ :
+
+    * ``trace_cut.sh``\ : Needs the cut traces located in the run directory to run Paramedir on them.
+      **Post**\ : All pm files are located in the paramedir folder inside the test folder. The naming convention for them is ``component-trace_id-metric.pm``.
+
+* ``model_factors.sh``\ :
+
+  * **Run**\ : Tracing
+  * **Brief**\ : Generates the modelfactors images from the cut traces.
+  * **Dependencies**\ :
+
+    * ``trace_cut.sh``\ : Needs the cut traces located in the run directory.
+      **Post**\ : All the Modelfactors images are located in the modelfactors/component_id/ folder inside the test folder.
+      ``component-trace_id-metric.pm``.
+
+* ``configuration_json.sh``
+
+  * **Run**\ : member
+  * **Dependencies**\ :
+
+    * **Tracing**\ :
+
+      * ``paramedir.sh``\ , ``dimemas.sh``\ : If activated gets the performance provided by BSC tools.
+
+    * **Other members**\ :
+
+      * ``report_setup.sh``\ : Just the remote setup, since the SYPD information is already in the runtime folders.
+
+  * **Post**\ : Depending on what flags are used in the ``curation.py`` script and what member is running it, the following files are created:
+
+    * **Tracing**\ :
+
+      * **PAPI counters**\ : Plots named ``component-PAPI_ID-metric.png`` in the test folder.
+      * **Most expensive functions**\ : Table named ``component_most_expensive_function_summary.csv`` in the test folder.
+      * **User Functions time scalability**\ : Folder in the test folder called function_csv/ containing table named ``component_function_id.csv``.
+      * **User Functions MPI/PAPI scalability**\ : Folders in the test folder called tracking/MPI and tracking/counters containing tables named ``component_function_id.csv``.
+
+    * **StrongScaling/CompilationEfficiency/WeakScaling**\ :
+
+      * **Scaling table**\ : Scaling table in the test name called ``component_TEST_NAME_scaling.csv``.
+      * **Scaling table**\ : Scaling plot in the test name called ``component_TEST_NAME_scaling.png``.
+
+* ``paraver.sh``\ :
+
+  * **Run**\ : Tracing
+  * **Brief**\ : Generates Paraver images from the cut traces using the configuration in ``cfg/trace_analysis/paraver_configurations``. Needs X11 to work.
+  * **Dependencies**\ :
+
+    * ``trace_cut.sh``\ : Needs the cut traces located in the run directory.
+      **Post**\ : All the Paraver images are located in the paraver_images/trace_id/ folder inside the test folder. The naming convention for them is ``paraver_cfg@component_id.best_cut.png``.
+
+* ``report.sh``\ :
+
+  * **Run**\ : once
+  * **Dependencies**\ :
+
+    * ``configuration_json.sh``\ : Needs all the CSV and images generated by this script to add them to the report.
+    * **Tracing**\ : This member has extra dependencies:
+
+      * ``paraver.sh``\ : Needs the images generated by this script.
+
+  * **Brief**\ : Gets the data generated by the active members, adds it to the report and generate the pdf.
+  * **Post**\ : The latex report is generated in the report/ folder in the experiment root folder.
+
+Parsers
+-------
+
+Usage
+^^^^^
+
+After all tests are run a JSON dictionary is used to store all the information gathered among all members, this allows to generate all the report resources (graphs, tables...) easier since the information is not redundant and it has a predefined structure. 
+
+This file is generated in the ``configuration_json.sh`` script using ``cfg/parser/collector.py``. An example of how the script is called:
+
+.. code-block:: bash
+
+   python3 cfg/parser/collector.py \
+       --input-files "paramedir.pm lucia_lite_results/table.csv MPI.pm " \
+       --output-file TEST \
+       --param-file param.cfg \
+       --components "component1-name component2-name"
+
+The script takes as parameters:
+
+
+* ``--input-files``\ : Space separated list of files. The script identifies its content by their extension, then a specific function is called to parse them. All file types are optional, but limit what resources can be generated by the curation script.
+
+  * The supported file types are: 
+
+    * Paramedir files (\ ``.pm``\ ): Necessary to generate functions report, PAPI counters, MPI... (Everything related to Extrae traces).
+    * Dimemas files (\ ``.dm``\ ): Necessary to generate functions report, MPI... (Everything related to Dimemas traces).
+    * Lucia lite table (\ ``table.csv``\ ): Necessary to generate scalability plots/tables for ECE4.
+    * NEMO timing (\ ``timing.pkl``\ ): Necessary to generate scalability plots/tables and function info for NEMO.
+
+* ``--output-file``\ : Name of the output JSON.
+* ``--param-file``\ : File containing variables in Bash format, used to add extra information to the dictionary like processors per node.
+* ``--componnets``\ : Space separated list of components of the model.
+
+Development
+^^^^^^^^^^^
+
+The parser section is implemented in two files:
+
+
+* ``cfg/parser/collector.py``\ : Checks what input files are passed as an input and creates a TimingInformation object defined in ``cfg/parser/utils/parsers.py``.
+* ``cfg/parser/utils/parsers.py``\ : Contains the definition of the TimingInformation class variables and functions. 
+
+  * Variables: The class variables have the same structure as the output JSON.
+  * Functions: Parsers for each specific file type.
+
+So if a different type of data were to be added, the collector script should recognise it and then the parsers script should contain a function to parse it and add it to the dictionary.
+
+The JSON is divided by cases where each case contains the performance metrics of the whole model and the data for each of the components:
+
+.. code-block:: json
+
+   "TEST_NAME":
+   {
+       // Case dictionary
+       "case_1":
+       {
+           "components":
+           {
+               "FunctionInfo":
+               {
+                   "function_1": time
+                   ...
+                   "function_n": time
+               },
+               // Component data
+               "component_1":
+               {
+                   // Counters dict (Tracing)
+                   "Counters":
+                   {
+                       "counter_1":
+                       {
+                           "function_1": counter_1_value
+                           ...
+                           "function_n": counter_1_value
+                       },
+                       "counter_2":
+                       {
+                           ...
+                       }
+                   },
+                   "SYPD": component_1_SYPD,
+                   "nproc": component_1_nproc
+               },
+               "component_2":
+               {
+                   ...
+               }
+           },
+           // Model data
+           "SYPD": model_SYPD,
+           "nproc": model_nproc
+       },
+       "case_2":
+       {
+           ...
+       },
+       // Cases sorted by the model procs
+       "cases":
+       {
+           "case_1"
+           "case_2"
+       },
+       // Cases sorted by the components procs
+       "component_cases":
+       {
+           "component_1":
+           {
+               "case_2"
+               "case_1"
+           },
+           "component_2":
+           {
+               "case_1"
+               "case_2"
+           }
+       },
+       // List of model components
+       "components":
+       {
+           "component_1",
+           "component_2"
+       }
+   }
+
+Curation
+--------
+
+Usage
+^^^^^
+
+After the JSON file is created using the Parser all this data is used by the ``cfg/parser/reporter.py``. As the previous script all parameters are optional and require certain data in the dictionary to be able to run. An example of the script call with all the options:
+
+.. code-block:: bash
+
+   python3 cfg/parser/reporter.py \
+       -j TEST.json
+       --functions-file functions_summary.txt \
+       --most_expensive_function_summary most_expensive_function_summary.csv \
+       --tracking-folder tracking \
+       --scatter-plots "PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM"
+       --coupling-folder coupling \
+       --sypd-file TEST_scaling.csv \
+       --sypd-plot TEST_scaling.png
+
+The script takes as a parameters:
+
+
+* ``-j``\ : Name of the JSON file containing the dictionary.
+* ``--functions-file``\ : Output file name of the summary of the functions. Requires function time info from the Paramedir/timing files.
+* ``--most_expensive_function_summary``\ : Output file name to store the summary of the functions. Requires function info from the Paramedir files.
+* ``--tracking-folder``\ : Output folder name to store MPI functions data. Requires MPI info from the Paramedir files.
+* ``--scatter-plots``\ : List of plot combinations of PAPI counnters. Requires PAPI info from the Paramedir files.
+* ``--coupling-folder``\ : Output folder name to store the coupling. Requires coupling info from the lucia output.
+* ``--sypd-file``\ : Output file name  of the scalability table. Requires scalability info from timing/lucia files.
+* ``--sypd-plot``\ : Output file name  of the scalability plot image. Requires scalability info from timing/lucia files.
+
+Development
+^^^^^^^^^^^
+
+The curation step is also implemented in two different files:
+
+
+* ``cfg/parser/reporter.py``\ : This script parses the command line arguments, loads the JSON using the TimingInformation object and calls the corresponding functions to generate the output data.
+* ``cfg/parser/utils/curation.py``\ : Contains the definition of the functions that generate the plots/tables. The TimingInformation object is passed as a parameter to this functions.
+
+Report Generator
+----------------
+
+With all the resources (images, plots and tables) generated by the `curation <#curation>`_ script the workflow generates the Latex report using the Python script located in ``cfg/latex/ReportGenerator.py``. Check the `The ReportGenerator <The ReportGenerator>`_ wiki page for more details.
+
+How to add a platform
+---------------------
+
+Add AS config platform entry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First you need to add the platform to ``autosubmit/autosubmit/configuration/common/platforms.yml``\ , example of Marenostrum 5:
+
+.. code-block:: yml
+
+     mn5:
+       TYPE: slurm
+       HOST: glogin4.bsc.es
+       PROJECT: bsc32
+       USER: bsc032333
+       QUEUE: gp_bsces
+       SCRATCH_DIR: /gpfs/scratch
+       ADD_PROJECT_TO_HOST: false
+       MAX_WALLCLOCK: 02:00
+       MAX_PROCESSORS: 3584
+       TEMP_DIR: ''
+
+Check `AS wiki <https://autosubmit.readthedocs.io/en/master/userguide/configure/index.html#how-to-add-a-new-platform>`_ for other type of platform connections.
+
+The user will add their user name in ``~/platforms_credentials.yml``.
+
+Also, for jobs configuration that is specific to the platform add ``proj/auto-performance-profiling/autosubmit/configuration/jobs/platform/PLATFORM/jobs.yml``. An example of what this file should contain is the number of tasks to compile the model (Marenostrum 5):
+
+.. code-block:: yml
+
+   JOBS:
+     REMOTE_COMPILATION:
+       FOR: 
+         NAME: "%MODEL.ARCH_NAMES%"
+         TEST_NAME: "%MODEL.ARCH_NAMES%"
+       PROCESSORS: 1
+       THREADS: 112
+
+Add needed files
+^^^^^^^^^^^^^^^^
+
+To be able to run the models in the new platform you need to add:
+
+
+* 
+  ``cfg/arch/PLATFORM/MODEL/``\ : Arch files for the models you plan to run in the platform.
+
+* 
+  `cfg/env/MODEL/environment.env`: Environment file that contains the loading of the modules, PATH configuration... It must create the enviroment to be able to:
+
+
+  * Run BSC Tools commands: ``paaramedir``\ , ``Dimemas``\ , ``wxparaver``\ , ``prv2dim``.
+  * Compile HW benchmarks.
+  * Run ``python3``.
+
+* 
+  `cfg/trace_analysis/dimemas_configurations/PLATFORM/`: Dimemas configuration files, we recommend you to add:
+
+
+  * IdealMachine.cfg
+  * InfiniteBandwidth.cfg
+  * InfiniteProcessorSpeed.cfg
+  * NoLatency.cfg
+  * Original.cfg
+
+* 
+  **ECE4 only** ``cfg/utils/ecearth4/se.sh``\ : Add bash function ``se_env_platform`` to activate the environment to be able to run Script Engine.
+
+How to add a model
+------------------
+
+Add the model AS config
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The model will has to be configured in ``autosubmit/configuration/common/model/MODEL/proj.yml``.
+
+For a single component you can take NEMO's configuration as basis, if the model is multi-component take the ECE4's configuration (autosubmit/configuration/common/model/MODEL/proj.yml)
+
+The main differences between models configuration is the first section. What changes in the member's configuration is if multiple components are defined or not.
+
+.. code-block:: yml
+
+   # MODEL CONFIG
+   MODEL:
+     NAME: MODEL
+     COMPONENTS: [COMPONENT1, COMPONENT2]
+     ORIGIN: https://url/to/model.git
+     BRANCH_LIST: BRANCH
+
+     # Arch files prefixes to compile
+     # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
+     # - For ecearth4: ARCH_NAME.yml
+     # - For nemo: arch-ARCH_NAME.fcm
+     ARCH_NAMES: [ARCH1, ARCH2]
+
+   # EXPERIMENT CONFIG
+   EXPERIMENT:
+     RESOLUTION: "TCO95L91+eORCA1L75"
+     OIFS_RESOLUTION: "TCO95L91"
+     NEMO_RESOLUTION: "eORCA1L75"
+
+     START_DATE: 19900101
+     END_DATE: 19900201
+     FREQ: MONTHLY
+     INTERVAL: 1
+     TEST_STEPS: 960
+     OUTPUT: FALSE
+
+If some of the models variables present in the examples do not make sense for your model, you can remove them, but you will have to make sure that is not used in the scripts.
+
+Add the necessary parsers
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are performance metrics that are collected differently for different models, for example, for NEMO the SYPD is collected from the ``timing.log`` file and for ECE4 are collected from the Lucia logs. So for the following metrics you will have to add a new file parser to the ``parsers.py`` file:
+
+
+* SYPD: Get the SYPD of the model, and in the case of multicomponent models the SYPD of each of the components.
+* Coupling data: If the model reports coupling related information, you can also add a function to parse the file that contains that info.
+
+Check the `Parsers Development Documentation <#Parsers>`_ on how to add that function.
+
+The rest of metrics are reported by paramedir and are independent to the model.
+
+Add the model-specific functions to the AS templates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now you must add all the necessary functions to the
+
+
+* ``remote_setup.sh``\ : Add a function called ``clone_model`` to
+* ``compilation.sh``\ : Add a function called ``compile_model``
+* ``configuration_json.sh``\ : Add the model dependant input files to the ``input_files`` variable.
+* ``extrae.sh``\ : Add a function called ``trace_model`` to trace the model using Extrae.
+* ``functions_dir.sh``\ : Add a function called ``functions_dir_model`` to generate a list of user functions.
+* ``scalability.sh``\ : Add a function called ``run_model`` to run the model to get its scalability.
+
+Check the `Autosubmit scripts`_ to check exactly the pre- and post-conditions of these scripts.
+
+Add the project needed files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some configuration files are needed to run the model and must be added to the project:
+
+
+* ``cfg/arch/PLATFORM/MODEL/``\ : Arch files to compile the model on the platforms you plan to run it.
+* ``cfg/trace/model/MODEL/``\ : User functions list in case the automatic user functions list generation does not work or is deactivated.
+* ``cfg/utils/MODEL/``\ : Utils for the model (e.g. Bash functions that are used across different templates).
+* ``configurations/model/MODEL/resolutions.sh``\ : Bash dictionary definition, with the keys being the resolution and the values the tile size. This is used by the WeakScaling member.

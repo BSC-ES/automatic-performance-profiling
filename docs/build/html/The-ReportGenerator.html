@@ -1,0 +1,184 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReportGenerator usage &mdash; Automatic Performance Profiling 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Automatic Performance Profiling
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Developers-Guide.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How-to-run-the-workflow.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Automatic Performance Profiling</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ReportGenerator usage</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/The-ReportGenerator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reportgenerator-usage">
+<h1>ReportGenerator usage<a class="headerlink" href="#reportgenerator-usage" title="Link to this heading"></a></h1>
+<p>Short guide on how to use the class:</p>
+<ul>
+<li><p>To create a report object just call the class with the name you want and start adding a section
+.. code-block:: python</p>
+<blockquote>
+<div><p>python ReportGenerator.py -O ../report.pkl –section-title Introduction –section-number 1 -T Introduction.txt</p>
+</div></blockquote>
+<p>You can give a number for the section which for the moment is being ignored. And add some text you’ve stored somewhere.
+.. code-block:: bash</p>
+<blockquote>
+<div><p>python ReportGenerator.py -O ../report.pkl –section-title “Hardware Benchmarks” –section-number 2</p>
+</div></blockquote>
+<p>This will add another section to the same object. To add a subsection just give the -s option</p>
+</li>
+<li><p>To add images or csv files use the appropriate flag, you can pass either a single file or a folder, the script will loop inside it and search for files with the .png or .csv extension respectively.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>../report.pkl<span class="w"> </span>-S<span class="w"> </span><span class="s2">&quot;Hardware Benchmarks&quot;</span><span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;OSU Benchmark&quot;</span><span class="w"> </span>--add-img<span class="w"> </span>images/OSU
+python<span class="w"> </span>ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>../report.pkl<span class="w"> </span>-S<span class="w"> </span><span class="s2">&quot;Hardware Benchmarks&quot;</span><span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;STREAM Benchmark&quot;</span><span class="w"> </span>--add-csv<span class="w"> </span>images/STREAM/stream_48_fmt.csv
+</pre></div>
+</div>
+<p>If the file is a paramedir csv there is a small utility to format it (I don’t assure in any way it works with files different from the one I tried).
+Passing –c option will do the trick</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>../report.pkl<span class="w"> </span>-S<span class="w"> </span><span class="s2">&quot;MPI Profile&quot;</span><span class="w"> </span>--add-csv<span class="w">  </span>./48_MPI_call_profile.pm<span class="w"> </span>--c
+</pre></div>
+</div>
+<p>For the images there is also the option to add a caption</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span><span class="si">${</span><span class="nv">latex_folder</span><span class="si">}</span>/ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>report.pkl<span class="w"> </span><span class="se">\</span>
+<span class="w">                                    </span>-S<span class="w"> </span><span class="s2">&quot;Scalability&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                                    </span>--add-img<span class="w"> </span><span class="si">${</span><span class="nv">configuration_name</span><span class="si">}</span>_scaling.png<span class="w"> </span><span class="se">\</span>
+<span class="w">                                    </span>--add-img-caption<span class="w"> </span>cfg/latex/text/captions/Scalability.txt<span class="se">\</span>
+<span class="w">                                    </span>--add-csv<span class="w"> </span><span class="si">${</span><span class="nv">configuration_name</span><span class="si">}</span>_scaling.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">                                    </span>-T<span class="w"> </span>cfg/latex/text/Scalability.txt
+</pre></div>
+</div>
+<p>###### The new command
+In the caption you can use the same variable defined in the param.cfg file. For example, let’s say you want to put as a caption</p>
+<blockquote>
+<div><p>Scalability of ${model} model with ${configuration_name}.</p>
+</div></blockquote>
+<p>You can do this adding the param file as a newcommand:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="err">$</span><span class="p">{</span><span class="n">latex_folder</span><span class="p">}</span><span class="o">/</span><span class="n">ReportGenerator</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">O</span> <span class="n">report</span><span class="o">.</span><span class="n">pkl</span> <span class="o">--</span><span class="n">add</span><span class="o">-</span><span class="n">newcommand</span> <span class="n">param</span><span class="o">.</span><span class="n">cfg</span>
+</pre></div>
+</div>
+<p>This ofc works also with custom variables files different from the param file.</p>
+</li>
+<li><p>When you’re done adding sections and data you can specify title and authors</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>../report.pkl<span class="w"> </span>--report-title<span class="w"> </span><span class="s2">&quot;Report Nemo version 666&quot;</span>
+python<span class="w"> </span>ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>../report.pkl<span class="w"> </span>--report-authors<span class="w"> </span><span class="s2">&quot;O. Tinto Primis&quot;</span>
+python<span class="w"> </span>ReportGenerator.py<span class="w"> </span>-O<span class="w"> </span>../report.pkl<span class="w"> </span>--report-authors<span class="w"> </span><span class="s2">&quot;Stella V. Paronuzzi Ticco&quot;</span>
+</pre></div>
+</div>
+<p>Authors can be added at once, but also as above.</p>
+</li>
+<li><p>There is a small utility to printout what we have added so far to the report:
+.. code-block:: bash</p>
+<blockquote>
+<div><p>python ReportGenerator.py -O ../report.pkl -I</p>
+</div></blockquote>
+<p>This will print to screen a sort of map of section/subsection and data added.</p>
+</li>
+<li><p>Now if you want to generate the .tex file just dump the object to file with -d option:
+.. code-block:: bash</p>
+<blockquote>
+<div><p>python ReportGenerator.py -O  ./report.pkl -d</p>
+</div></blockquote>
+<p>If everything went fine, which I seriously doubt you should now have a .tex file, and
+.. code-block:: bash</p>
+<blockquote>
+<div><p>pdflatex file.tex &amp;&amp; evince file.pdf</p>
+</div></blockquote>
+<p>should open your report.</p>
+</li>
+</ul>
+<p>P.S.: In case you are using the script on MN4 facility, you have to</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>LATEX/20150523
+</pre></div>
+</div>
+<p>in order to compile.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

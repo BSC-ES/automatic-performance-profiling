@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide &mdash; Automatic Performance Profiling 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Developers Guide" href="Developers-Guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Automatic Performance Profiling
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Developers-Guide.html">Developers Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#supported-models-and-platforms-ids">Supported models and platforms ids</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#autosubmit">Autosubmit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bsc-es-hub">BSC-ES HUB</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#other-machines">Other machines</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#create-the-experiment">Create the experiment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#report-configuration">Report configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extrae-configuration">Extrae configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#run-the-workflow">Run the workflow</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Automatic Performance Profiling</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">User Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/How-to-run-the-workflow.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="user-guide">
+<h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading"></a></h1>
+<section id="supported-models-and-platforms-ids">
+<h2>Supported models and platforms ids<a class="headerlink" href="#supported-models-and-platforms-ids" title="Link to this heading"></a></h2>
+<p>Ids used by the workflow to identify the model and platform.</p>
+<p>Models:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nemo</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ecearth4</span></code></p></li>
+</ul>
+<p>Platforms:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mn5</span></code>: BSC’s Marenostrum 5 machine.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hpc2020</span></code>: ECMWF’s ATOS machine.</p></li>
+</ul>
+</section>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
+<section id="autosubmit">
+<h3>Autosubmit<a class="headerlink" href="#autosubmit" title="Link to this heading"></a></h3>
+<p>The Automatic Performance Profiling uses Autosubmit as its workflow manager and therefore is needed to run it.</p>
+<section id="bsc-es-hub">
+<h4>BSC-ES HUB<a class="headerlink" href="#bsc-es-hub" title="Link to this heading"></a></h4>
+<p>In the hub you can load the following module:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>autosubmit/4.1.8-foss-2021b-Python-3.9.6
+</pre></div>
+</div>
+</section>
+<section id="other-machines">
+<h4>Other machines<a class="headerlink" href="#other-machines" title="Link to this heading"></a></h4>
+<p>If Autosubmit is not installed in the machine you are planning to run the workflow you have to install it, you can check its <a class="reference external" href="https://autosubmit.readthedocs.io/en/master/installation/index.html">installation guide</a>.</p>
+</section>
+</section>
+</section>
+<section id="create-the-experiment">
+<h2>Create the experiment<a class="headerlink" href="#create-the-experiment" title="Link to this heading"></a></h2>
+<p>Then generate a new experiment id, replacing PLATFORM with one of the supported platforms ids and DESCRIPTION with the description of your experiment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>autosubmit<span class="w"> </span>expid<span class="w"> </span>-min<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;PLATFORM&quot;</span><span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;DESCRIPTION&quot;</span><span class="w"> </span>-repo<span class="w"> </span><span class="s2">&quot;https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git&quot;</span><span class="w"> </span>-b<span class="w"> </span><span class="s2">&quot;master&quot;</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Replace PLATFORM with one of the supported platform ids</p>
+</div>
+<p>Set the following environment variables to be able to run the following commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">model</span><span class="o">=</span>MODEL
+<span class="nv">expid</span><span class="o">=</span>EXPID
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Replace MODEL with one of the supported models id and EXPID with the expid printed by the AS command</p>
+</div>
+<p>Once the experiment is created, it’s time to configure the workflow. First, you have to navigate to the experiment root directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/esarchive/autosubmit/<span class="si">${</span><span class="nv">expid</span><span class="si">}</span>
+</pre></div>
+</div>
+<p>Run the following command to update <code class="docutils literal notranslate"><span class="pre">conf/minimal.yml</span></code> to use the AS configuration from the repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;s/CUSTOM_CONFIG: .*/MODEL: </span><span class="si">${</span><span class="nv">model</span><span class="si">}</span><span class="s2">\n  CUSTOM_CONFIG:\n    PRE:\n      \# General configuration\n      - \&quot;%PROJDIR%\/autosubmit\/configuration\/common\/model\/%DEFAULT.MODEL%\/proj.yml\&quot;\n      - \&quot;%PROJDIR%\/autosubmit\/configuration\/common\/\&quot;\n      \# Jobs configuration\n      - \&quot;%PROJDIR%\/autosubmit\/configuration\/jobs\/jobs.yml\&quot;\n      - \&quot;%PROJDIR%\/autosubmit\/configuration\/jobs\/\&quot;\n      - \&quot;%PROJDIR%\/autosubmit\/configuration\/jobs\/model\/%DEFAULT.MODEL%\/\&quot;\n      - \&quot;%PROJDIR%\/autosubmit\/configuration\/jobs\/platform\/%DEFAULT.HPCARCH%\/\&quot;\n      \# Member specific configuration\n      - \&quot;%PROJDIR%\/autosubmit\/configuration\/tracing\/\&quot;\n    POST: ~\/platforms_credentials.yml/&quot;</span><span class="w"> </span>conf/minimal.yml
+</pre></div>
+</div>
+<p>To configure the platform with your user create and edit <code class="docutils literal notranslate"><span class="pre">~/platforms_credentials.yml</span></code> with the platform id and your user, example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">hpc2020</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">USER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;HPC2020_USER&quot;</span>
+<span class="nt">mn5</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">USER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MN5_USER&quot;</span>
+<span class="nt">mn5-login</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">USER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MN5_USER&quot;</span>
+</pre></div>
+</div>
+<p>Then create the experiment, that</p>
+<p>The four supported members are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CompilationEfficiency</span></code>: Runs the same configuration with different compilation flags and generates a table to compare them.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HardwareBenchmarks</span></code>: Runs OSU and STREAM hardware benchmarks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">WeakScaling</span></code>: Runs a weak scaling test and generates a scalability table.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">StrongScaling</span></code>: Runs a strong scaling test and generates a scalability plot.</p></li>
+<li><p><cite>Tracing</cite>: Traces the execution of the model and generates a report for:</p>
+<ul>
+<li><p>User functions</p></li>
+<li><p>PAPI counters</p></li>
+<li><p>MPI calls</p></li>
+<li><p>Paraver images</p></li>
+<li><p>Dimemas images</p></li>
+</ul>
+</li>
+</ul>
+<p>Once you decide what members to run, you can configure the jobs that they will run in the <code class="docutils literal notranslate"><span class="pre">proj/auto-performance-profiling/autosubmit/configuration/common/model/${model}/proj.yml</span></code>.</p>
+<p>Now check the specific wiki for each of the models to know how to configure them:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="Configure-NEMO.html">NEMO wiki</a></p></li>
+<li><p><a class="reference external" href="Configure-ECE4.html">ECEARTH4 wiki</a></p></li>
+</ul>
+<section id="report-configuration">
+<h3>Report configuration<a class="headerlink" href="#report-configuration" title="Link to this heading"></a></h3>
+<p>For report configuration (what will be shown and run) and hw benchmarks configuration, check the <code class="docutils literal notranslate"><span class="pre">proj/auto-performance-profiling/autosubmit/configuration/common/common.yml</span></code> file.</p>
+<p>There you can configure:</p>
+<ul class="simple">
+<li><p>Report:</p>
+<ul>
+<li><p>Author: Any string.</p></li>
+<li><p>Title: String.</p></li>
+</ul>
+</li>
+<li><p>HW Benchmarks:</p>
+<ul>
+<li><p>OSU:</p>
+<ul>
+<li><p>Enable/Disable: “True” or “False”.</p></li>
+<li><p>Set list of OSU test to run.</p></li>
+<li><p>Processors configurations: YML integer list.</p></li>
+</ul>
+</li>
+<li><p>STREAM:</p>
+<ul>
+<li><p>Enable/Disable.</p></li>
+<li><p>Processors configurations.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Tracing:</p>
+<ul>
+<li><p>Paraver:</p>
+<ul>
+<li><p>Enable/Disable PV views in the report.</p></li>
+<li><p>List of views to report.</p></li>
+<li><p>Subset of views to create a comparisson view.</p></li>
+</ul>
+</li>
+<li><p>Dimemas:</p>
+<ul>
+<li><p>Enable/Disable PV views in the report.</p></li>
+<li><p>List of views to report.</p></li>
+</ul>
+</li>
+<li><p>User Functions:</p>
+<ul>
+<li><p>Enable/Disable User Functions in the report.</p></li>
+<li><p>PAPI Counters:</p>
+<ul>
+<li><p>Enable/Disable PAPI Counters in the report.</p></li>
+<li><p>List of plots to show in the report.</p></li>
+</ul>
+</li>
+<li><p>Sampling:</p>
+<ul>
+<li><p>Enable/Disable generating the function list through sampling or taking the list from <code class="docutils literal notranslate"><span class="pre">cfg/trace/model/MODEL/extrae_functions.txt</span></code>.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Modelfactors:</p>
+<ul>
+<li><p>Enable/Disable Modelfactors images in the report.</p></li>
+</ul>
+</li>
+<li><p>MPI:</p>
+<ul>
+<li><p>Enable/Disable MPI profiling results in the report.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="extrae-configuration">
+<h3>Extrae configuration<a class="headerlink" href="#extrae-configuration" title="Link to this heading"></a></h3>
+<p>The extrae.xml used by Tracing is configured through <code class="docutils literal notranslate"><span class="pre">proj/auto-performance-profiling/autosubmit/configuration/tracing/extrae.yml</span></code>.</p>
+<p>The fields are named as in the Extrae XML file, you can check its documentation <a class="reference external" href="https://tools.bsc.es/doc/html/extrae/xml.html">here</a>.</p>
+<p>It is important that you replace the HOME variable with the path to the Extrae installation you will use.</p>
+<p>For ECE4 you need to use an Extrae custom installation with <code class="docutils literal notranslate"><span class="pre">--disable-instrument-io</span></code> and <code class="docutils literal notranslate"><span class="pre">--disable-instrument-dynamic-memory</span></code> flags in order for it to work. You can use the following installation paths:</p>
+<ul class="simple">
+<li><p>mn5: <code class="docutils literal notranslate"><span class="pre">/gpfs/projects/bsc32/CS-share/extrae/src/extrae-4.2.4/build-impi-2021.10.0/install</span></code></p></li>
+<li><p>hpc2020: <code class="docutils literal notranslate"><span class="pre">/lus/h2resw01/hpcperm/c3rs/extrae-4.2.4/install/hpcx-openmpi-2.9.0</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="run-the-workflow">
+<h2>Run the workflow<a class="headerlink" href="#run-the-workflow" title="Link to this heading"></a></h2>
+<p>When you finish configuring the workflow, it’s time to run it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nohup<span class="w"> </span>autosubmit<span class="w"> </span>run<span class="w"> </span><span class="si">${</span><span class="nv">expid</span><span class="si">}</span><span class="w"> </span><span class="p">&amp;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Developers-Guide.html" class="btn btn-neutral float-left" title="Developers Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

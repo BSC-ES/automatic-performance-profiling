@@ -1,0 +1,11 @@
+numpydoc
+sphinxcontrib-autoprogram
+sphinx_design
+sphinx_rtd_theme
+sphinx-copybutton
+
+pandas
+matplotlib
+f90nml
+joblib
+pytest
