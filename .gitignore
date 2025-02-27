@@ -10,3 +10,4 @@ cfg/parser/utils/__pycache__
 report.pkl
 report
 templates/.idea
+docs/build/
