@@ -2,11 +2,28 @@ from matplotlib.ticker import StrMethodFormatter
 import numpy as np
 
 
-# @brief -> Runs the RNSAC regression test in order to find tests that do not
-#         scale as expected.
-# @return np.array -> returns a mask that identifies which tests are outliers
-def ransac_test(x: list(), y: list()) -> tuple[np.array, np.array]:
-    from sklearn.linear_model import RANSACRegressor
+
+def ransac_test(x: list, y: list) -> tuple[np.array, np.array]:
+    """
+    Perform RANSAC (RANdom SAmple Consensus) regression to identify inliers and outliers.
+
+    Parameters:
+    x (list): A list of x-values (independent variable).
+    y (list): A list of y-values (dependent variable).
+
+    Returns:
+    tuple[np.array, np.array]: A tuple containing two numpy arrays:
+        - inlier_mask: A boolean array indicating which points are inliers.
+        - outlier_mask: A boolean array indicating which points are outliers.
+
+    Notes:
+    - If the 'sklearn' library is not installed, the function will return arrays indicating all points as inliers and none as outliers.
+    - If the length of x is less than 4, the function will print a message and return arrays indicating all points as inliers and none as outliers.
+    """
+    try:
+        from sklearn.linear_model import RANSACRegressor
+    except ModuleNotFoundError:
+        return np.full(len(x), True), np.full(len(x), False)
 
     if len(x) < 4:
         print(
@@ -25,6 +42,22 @@ def ransac_test(x: list(), y: list()) -> tuple[np.array, np.array]:
 
 
 def plotter(data, experiment_name, scatter_labels=None, filename=None, linear_test=False):
+    """
+    Generate a scatter plot comparing two variables and save it as an image.
+
+    This function creates a scatter plot with an optional ideal line and RANSAC-based outlier detection.
+    The plot is saved as a PNG file.
+
+    Args:
+        data (dict): Dictionary containing two keys (x_label, y_label) with their corresponding data arrays
+        experiment_name (str): Name of the experiment, used as default filename if none provided
+        scatter_labels (list, optional): Labels for each scatter point. Defaults to None
+        filename (str, optional): Output filename for the plot. Defaults to experiment_name + ".png"
+        linear_test (bool, optional): If True, performs RANSAC outlier detection. Defaults to False
+
+    Returns:
+        None
+    """
     try:
         import matplotlib
         matplotlib.use('Agg')

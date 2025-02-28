@@ -44,5 +44,7 @@ Tool to generate a performance report of climate models automatically.
    :caption: Section Navigation:
    :hidden:
 
-   Developers-Guide
    How-to-run-the-workflow
+   Developers-Guide
+   Troubleshooting
+   API-reference

@@ -1,7 +1,8 @@
 
-In order to configure ECE4 and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/common/model/ecearth4/proj.yml`` located in your experiment root.
+Configure ECE4
+==============
 
-.. contents:: Table of Contents
+In order to configure ECE4 and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/common/model/ecearth4/proj.yml`` located in your experiment root.
 
 Automatic clone
 ---------------

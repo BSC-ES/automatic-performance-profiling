@@ -1,4 +1,8 @@
-# This script takes several timing.output logs and computes several stats
+"""
+This script processes various performance profiling logs and computes several statistics.
+It includes functions to parse filenames, merge dictionaries, process timing files, and
+generate summaries and plots for performance analysis.
+"""
 import re
 import numpy as np
 from cfg.parser.utils.curation import function_curated_summary, \
@@ -17,11 +21,18 @@ from cfg.parser.utils.histograms import process_category_histogram, split_3d_his
 
 def dictionary_pointer(dictionary, address):
     """
-    It creates the proper dictionary structure according to an address provided.
-    In case the proper structure already exists it only retrieves it.
-    :param dictionary:
-    :param address:
-    :return: dictionary section
+    Navigate through a nested dictionary using a sequence of keys and create missing sections.
+
+    This function traverses a nested dictionary using a sequence of keys (address) and ensures
+    that each level exists by creating empty dictionaries for missing sections. It returns
+    a pointer to the deepest level specified by the address.
+
+    Args:
+        dictionary (dict): The input dictionary to traverse and potentially modify.
+        address (Iterable): A sequence of keys defining the path to traverse in the dictionary.
+
+    Returns:
+        dict: A reference to the nested dictionary at the specified address.
     """
 
     def initialize_dictionary_section(d, section):
@@ -48,22 +59,12 @@ def parse_filename(filename, pattern):
 
 
 def parse_paramedir_filename(filename):
-    """
-    It parses a filename and gives the core count and the information type that the corresponds to the file
-    :param filename:
-    :return: number of cores, information type
-    """
     # The pattern of the paramedir filenames goes as follows: CORES_PARAMEDIRCFG.pm
     pattern = "([a-z]+)-([0-9a-zA-Z_]+)-([0-9a-zA-Z_]+).pm"
     return parse_filename(filename, pattern)
 
 
 def parse_dimemas_filename(filename):
-    """
-    It parses a filename and gives the core count and the information type that the corresponds to the file
-    :param filename:
-    :return: number of cores, information type
-    """
     # The pattern of the dimemas filenames goes as follows: CORES_DIMEMASCFG_PARAMEDIRCFG.dm
     pattern = "([0-9]+)_([a-zA-Z]+)_([a-zA-Z]+).dm"
     return parse_filename(filename, pattern)
@@ -71,11 +72,22 @@ def parse_dimemas_filename(filename):
 
 def merge_dictionaries(dict_one, dict_two, path = []):
     """
-    Takes two dictionaries and puts the information of both in a new dictionary
-    :param dict_one:
-    :param dict_two:
-    :return: new_dict
+    Merges two dictionaries recursively, with dict_one taking precedence in case of conflicts.
+
+    This function performs a deep merge of two dictionaries. For nested dictionaries,
+    it recursively merges their contents. For non-dictionary values, if there's a
+    conflict, the value from dict_one is preserved.
+
+    Args:
+        dict_one (dict): The primary dictionary that will be modified and returned.
+        dict_two (dict): The secondary dictionary whose values will be merged into dict_one.
+        path (list, optional): Used for recursive calls to track the current path in nested structures.
+            Defaults to empty list.
+
+    Returns:
+        dict: The merged dictionary (dict_one modified in place with dict_two's values).
     """
+
 
     if dict_one is None:
         return dict_two
@@ -96,13 +108,14 @@ def merge_dictionaries(dict_one, dict_two, path = []):
 def distributed_variable(values):
     return {"values": values, "average": np.average(values), "std": np.std(values)}
 
-
 def parse_paramedir_files(files):
     """
     Takes a list of filenames corresponding to outputs of paramedir runs and process it returning a dictionary with
     the data
-    :param files:
-    :return:
+    Args:
+        files (str): List of filenames corresponding to outputs of paramedir runs.
+    Returns:
+        dict: A dictionary containing the processed data from the Paramedir files.
     """
     results = {}
     for filename in files:
@@ -143,6 +156,28 @@ def parse_paramedir_files(files):
 
 
 def parse_timing_file(timing_fn: str):
+    """Parse timing information from a timing file.
+
+    This function reads and processes timing information from a file, extracting details about
+    function execution times, time steps, and simulation performance metrics.
+
+    Args:
+        timing_fn (str): Path to the timing file to be parsed.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - function_info (dict): Dictionary mapping function names to their execution times
+            - time_step_time (float): Average time per timestep
+            - number_ts (int): Total number of timesteps
+            - ts_per_second (float): Number of timesteps executed per second
+            - SYPD (float): Simulated Years Per Day metric
+            - nproc (int): Number of MPI processes used
+    Example:
+        >>> data = parse_timing_file("timing.output")
+        >>> print(data["SYPD"])
+        12.5
+    """
+
     data = {"function_info": {}, "time_step_time": 0,
             "number_ts": 0, "ts_per_second": 0, "SYPD": 0}
     step_length_ptrn = "timing step *([0-9]+) *: *(.*)"
@@ -182,6 +217,23 @@ def parse_timing_file(timing_fn: str):
 
 
 def parse_ifs_file(file):
+    """Parse an IFS (Input File System) statistics file to calculate timestamps per second.
+
+    This function reads a file containing IFS statistics and calculates the average
+    time per timestamp by dividing total accumulated time by total number of timestamps.
+
+    Args:
+        file (str): Path to the IFS statistics file to parse.
+
+    Returns:
+        dict: A dictionary containing:
+            - ts_per_second (float): Average time per timestamp calculated from the file data.
+
+    Note:
+        The input file is expected to have space-separated columns where:
+        - Column 4 (index 3) contains the timestamp number
+        - Column 7 (index 6) contains the time value
+    """
     data = {"ts_per_second": 0}
     with open(file, encoding="utf8") as f:
         total_time = 0
@@ -199,9 +251,12 @@ def parse_ifs_file(file):
 def parse_dimemas_files(files):
     """
     Takes a list of filenames corresponding to outputs of paramedir runs applied to dimemas simulations
-     and process it returning a dictionary with the data
-    :param files:
-    :return: dictionary
+    and process it returning a dictionary with the data
+    
+    Args:
+      files (str): List of filenames corresponding to outputs of paramedir runs applied to dimemas simulations.
+    Returns:
+      dict: A dictionary containing the processed data from the Dimemas files.
     """
     results = {}
     for filename in files:
@@ -229,41 +284,27 @@ def parse_dimemas_files(files):
 
 class TimingInformation:
     """
-    Class to store the information of one experiment in a nested dictionary
-    The dictionary stored at .data includes the following information (the values between '' are the actual keys).
+    TimingInformation class parses the input files and stores performance metrics from various sources.
 
-    case (number of processes used)
-    |---'Communication':
-    |   |---'collective_pct'
-    |   |---'collective_time'
-    |   |---'computing_time'
-    |   |---'p2p_pct'
-    |   |---'p2p_time'
-    |   |---'sypd'
-    |   |---'total_time'
-    |
-    |---'function_info'
-    |   |--- function_name (the name of the function)
-    |       |--- 'CPU Time(%)'
-    |       |--- 'CPU Time(s)'
-    |       |--- 'CPU/Elap'
-    |       |--- 'Elap. Time(%)'
-    |       |--- 'Elap. Time(s)'
-    |       |--- 'Freq'
-    |       |--- 'Max elap(%)'
-    |       |--- 'Min elap(%)'
-    |
-    |---'ProcessInfo'
-    |   |--- process_id (the number of the process 0 or 45 for example)
-    |       |--- 'CPU Time(s)'
-    |       |--- 'Elapsed Time(s)'
-    |       |--- 'Ratio CPU / Elapsed'
-    |---'time_step_time'
-    |   |--- (average, standard deviation) # (a tuple with the actual values)
+    Args:
+        timing_files (list, optional): List of timing files to load.
+        lucia_files (list, optional): List of Lucia files to load.
+        paramedir_files (list, optional): List of Paramedir files to load.
+        dimemas_files (list, optional): List of Dimemas files to load.
+        ifs_files (list, optional): List of IFS files to load.
+        test_info_files (list, optional): List of test info files to load.
+        processes_per_node (int, optional): Number of processes per node. Default is 48.
+        json_file (str, optional): Path to a JSON file to load.
+        param_file (str, optional): Path to a parameter file to load.
+        components (list, optional): List of components to initialize.
+
+    Raises:
+        AssertionError: If none of the timing_files, lucia_files, paramedir_files, json_file, or dimemas_files are provided.
     """
 
-    def __init__(self, timing_files=None, lucia_files=None, paramedir_files=None, dimemas_files=None, ifs_files=None, test_info_files=None,
-                 processes_per_node=48, json_file=None, param_file=None, components=None):
+    def __init__(self, timing_files: list=None, lucia_files: list=None, paramedir_files=None, dimemas_files=None, ifs_files=None, test_info_files=None,
+                 processes_per_node: int=48, json_file=None, param_file=None, components=None):
+
         # Init class variables
         self.experiment_name = None
         self.cases = None
@@ -275,7 +316,6 @@ class TimingInformation:
         self.data = None
         self.components = components
         self.components_cases = None
-        self.cases_translation = {}
 
         if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files):
             raise AssertionError("No files provided")
@@ -302,7 +342,17 @@ class TimingInformation:
     def __getitem__(self, item):
         return self.data[item]
 
-    def find_functions(self):
+    def find_functions(self) -> list:
+        """
+        Finds and returns a list of unique function names from the data structure.
+
+        This method iterates over all cases and components, extracting function names
+        from the "Time" counters in the data dictionary. It then flattens the list of
+        function names and removes duplicates.
+
+        Returns:
+            list: A list of unique function names.
+        """
         functions = []
         for case in self.cases:
             for component in self.components:
@@ -311,10 +361,24 @@ class TimingInformation:
         functions = sum(functions, [])
         return list(set(functions))
 
-    # Returns the information of the functions with the following structure
-    # {function_name: {case: {"nproc": nprocs, "elapsed_time": elapsed_time}}}
-    # with the cases sorted by the nproc of the component corresponding the function
-    def get_function_info(self, component=""):
+    def get_function_info(self, component: str="") -> dict:
+        """
+        Retrieve function information for all cases available or for a specific component.
+
+        This method creates a dictionary containing function information for each case.
+        If a specific component is provided, it retrieves information only for that component.
+        Otherwise, it retrieves information for all components.
+
+        Args:
+            component (str, optional): The name of the component to retrieve information for.
+                                       If not provided, information for all components is retrieved.
+
+        Returns:
+            dict: A dictionary where keys are function names and values are dictionaries containing
+                  case-specific information. Each case-specific dictionary contains:
+                  - "nproc" (int): The number of processors used.
+                  - "elapsed_time" (float): The elapsed time for the function in the given case.
+        """
         # Create a dictionary with function info for all cases available
         ret_val = {}
         if component == "":
@@ -340,7 +404,34 @@ class TimingInformation:
                         break
         return ret_val
 
-    def load_test_info(self, test_info_files):
+    def load_test_info(self, test_info_files: list):
+        """
+        Load test information from a list of CSV files and update the internal data structure.
+
+        Args:
+            test_info_files (list of str): List of file paths to the CSV files containing test information.
+
+        The CSV files are expected to have a specific format where each row represents a component's information.
+        The filename should match the pattern "([0-9a-zA-Z_]+)-([0-9a-zA-Z_]*test_info).csv" to extract the run ID.
+
+        The method updates the `self.data` dictionary with the parsed information. The structure of `self.data` is:
+            {
+            run_id: {
+                "components": {
+                    component_name: {
+                        ...component-specific data...
+                    },
+                    ...
+                },
+                ...model-specific data...
+            },
+            ...
+            }
+
+        Additionally, it initializes `self.cases` and `self.base_case` if they are not already set, based on the number
+        of processors (`nproc`). It also initializes `self.components_cases` for each component, sorted by the number
+        of processors.
+        """
         import csv
         for test_info_fn in test_info_files:
             test_dict = {}
@@ -373,7 +464,26 @@ class TimingInformation:
                     self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
 
 
-    def load_param(self, param_file):
+    def load_param(self, param_file) -> dict:
+        """
+        Load parameters from a given file and update the object's attributes.
+
+        Args:
+            param_file (str): Path to the parameter file.
+
+        Returns:
+            dict: A dictionary containing the parameters loaded from the file.
+
+        Raises:
+            AssertionError: If the parameter file does not exist.
+
+        Notes:
+            - Lines in the parameter file that contain '#' or are empty are ignored.
+            - Parameters are expected to be in the format 'key=value'.
+            - Values enclosed in single quotes are stripped of the quotes.
+            - The 'processes_per_node' parameter, if present, updates the object's `processes_per_node` attribute.
+            - The 'configuration_name' parameter, if present and if `experiment_name` is not already set, updates the object's `experiment_name` attribute.
+        """
         from os.path import isfile
         if param_file is None:
             return None
@@ -415,7 +525,25 @@ class TimingInformation:
     def most_expensive_function_summary(self, out_file_name):
         return most_expensive_function_summary(self, out_file_name)
 
-    def scatter_plots(self, x_axis="L3", y_axis="IPC", length_summary=10):
+    def scatter_plots(self, x_axis: str="L3", y_axis: str="IPC", length_summary: int=10):
+        """
+        Generates scatter plots of specified performance metrics for functions across different components.
+
+        Args:
+            x_axis (str): The performance metric to be plotted on the x-axis. Default is "L3".
+            y_axis (str): The performance metric to be plotted on the y-axis. Default is "IPC".
+            length_summary (int): The number of functions to track and plot. Default is 10.
+
+        Raises:
+            KeyError: If the specified function name is not present in the trace data.
+
+        This method creates scatter plots for each component, showing the relationship between the specified
+        performance metrics (x_axis and y_axis) for the tracked functions. The plots are saved as PNG files
+        with filenames in the format "{component_name}-{x_axis}-{y_axis}.png".
+
+        The method uses matplotlib to generate the plots and numpy for data manipulation. It also handles
+        cases where function names might not be present in the trace data by skipping those functions.
+        """
         import re
         # Function plot L3 cache misses vs IPC
         import matplotlib.pyplot as plt
@@ -509,7 +637,30 @@ class TimingInformation:
     def cases_component_data(self):
         return cases_component_data(self)
 
-    def save_json(self, filename=None):
+    def save_json(self, filename: str=None):
+        """
+        Save the current state of the object to a JSON file.
+
+        Args:
+            filename (str, optional): The name of the file to save the JSON data to. 
+                        If not provided, the experiment name will be used 
+                        as the filename with a .json extension. If the 
+                        experiment name is also not available, 'experiment.json' 
+                        will be used as the default filename.
+
+        The JSON file will contain the following keys:
+        - "experiment_name": The name of the experiment.
+        - "data": The data associated with the experiment.
+        - "cases": The cases related to the experiment.
+        - "base_case": The base case of the experiment.
+        - "processes_per_node": The number of processes per node.
+        - "functions": The functions involved in the experiment.
+        - "param_file": The parameter file used in the experiment.
+        - "components": The components of the experiment.
+        - "components_cases": The cases related to the components.
+
+        The method will ensure that the filename has a .json extension before saving.
+        """
         import json
         # Check if file name has been passed, if not use experiment name
         if filename is None:
@@ -530,13 +681,32 @@ class TimingInformation:
             "param_file": self.param_file,
             "components": self.components,
             "components_cases": self.components_cases,
-            "cases_translation": self.cases_translation
         }
 
         with open(filename, "w", encoding="utf8") as f:
             json.dump(dictionary_to_save, f)
 
-    def load_json(self, filename):
+    def load_json(self, filename: str):
+        """
+        Load and parse a JSON file, converting keys to integers where possible.
+
+        Args:
+            filename (str): The path to the JSON file to be loaded.
+
+        Raises:
+            KeyError: If any of the required keys are missing in the JSON file.
+
+        Attributes:
+            experiment_name (str): The name of the experiment.
+            data (dict): The data from the JSON file.
+            cases (dict): The cases from the JSON file.
+            base_case (str): The base case from the JSON file.
+            processes_per_node (int): The number of processes per node.
+            functions (dict): The functions from the JSON file.
+            components (dict): The components from the JSON file.
+            components_cases (dict): The components cases from the JSON file.
+            param_file (str, optional): The parameter file, if present in the JSON file.
+        """
         import json
 
         def json_keys2int(x):
@@ -557,27 +727,38 @@ class TimingInformation:
             self.functions = json_data["functions"]
             self.components = json_data["components"]
             self.components_cases = json_data["components_cases"]
-            self.cases_translation = json_data["cases_translation"]
             try:
                 self.param_file = json_data["param_file"]
             except KeyError:
                 pass
 
-    # This function renames the cases after getting all the info about them to have shorter names in the report
-    # it is not done before because is easier to merge the same cases if they have the same id
-    def rename_cases(self):
-        for i, _ in enumerate(self.cases):
-            new_case_name = f"Case {i}"
-            self.cases_translation[new_case_name] = self.cases[i]
-            if self.cases[i] == self.base_case:
-                self.base_case = new_case_name
-            self.data[new_case_name] = self.data.pop(self.cases[i])
-            for components in self.components:
-                self.components_cases[components][self.components_cases[components].index(
-                    self.cases[i])] = new_case_name
-            self.cases[i] = new_case_name
+    def load_lucia(self, lucia_files: list):
+        """
+        Load and parse Lucia performance profiling data from a list of CSV files.
 
-    def load_lucia(self, lucia_files):
+        This method reads multiple Lucia CSV files, extracts relevant performance data,
+        and organizes it into a dictionary structure. The data is then merged with the
+        existing data in the object.
+
+        Args:
+            lucia_files (list): A list of file paths to Lucia CSV files.
+
+        Raises:
+            re.error: If the regular expression pattern does not match the file path.
+
+        Notes:
+            - The method expects the file paths to follow a specific pattern:
+              "(scalability)_([0-9a-zA-Z_]+)/(lucia_lite_results/*)".
+            - The method renames certain component names for consistency:
+              "oceanx" to "nemo" and "OpenIFS" to "oifs".
+            - The method calculates and stores the "SYPD" (Simulated Years Per Day) value
+              for both the overall case and individual components.
+            - The method updates the `self.data` attribute with the merged data.
+            - If `self.cases` is None, it initializes and sorts the cases based on the
+              number of processors (`nproc`).
+            - If `self.components_cases` is None, it initializes and sorts the component
+              cases based on the number of processors (`nproc`).
+        """
         import pandas as pd
         lucia_dict = {}
         for lucia_file in lucia_files:
@@ -612,7 +793,28 @@ class TimingInformation:
                 self.components_cases[component] = sorted(
                     self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
 
-    def load_timings(self, timing_files):
+    def load_timings(self, timing_files: list):
+        """
+        Load timing data from a list of timing files and update the internal data structure.
+
+        Args:
+            timing_files (list of str): List of file paths to timing files. Each file name should follow the pattern
+                        "component-run_id-timing.output".
+
+        Raises:
+            ValueError: If the file name does not match the expected pattern.
+
+        Notes:
+            This method processes each timing file, extracts the component and run ID from the file name, and parses the
+            timing data. The parsed data is stored in a nested dictionary structure, where the top-level keys are run IDs
+            and the second-level keys are component names. The timing data for each component is stored under its respective
+            run ID.
+
+            If there is only one component, the method merges the component data into the main data structure. It also
+            initializes the `cases` and `components_cases` attributes if they are not already set.
+
+            The `ts_per_second` value for each run ID is updated to be the minimum value across all components for that run ID.
+        """
         # component-run_id-timing.output
         pattern = "([a-z]+)-([0-9a-zA-Z_]+)-timing.output"
         timing_dict = {}
@@ -646,7 +848,21 @@ class TimingInformation:
                     self.components_cases[component] = sorted(
                         self.data, key=lambda f: int(self.data[f]["nproc"]))
 
-    def load_paramedir(self, files):
+    def load_paramedir(self, files: list):
+        """
+        Load and process parameter directory files.
+
+        This method takes a list of Paramedit files, parses them, and merges the resulting
+        data with the existing data in the object. It also initializes cases,
+        functions, and component function information based on the parsed data.
+
+        Args:
+            files (list): A list of Paramedir file paths to be parsed.
+
+        Raises:
+            AssertionError: If the provided list of files is empty.
+
+        """
         if not files:
             raise AssertionError("Empty list of files")
 
@@ -676,7 +892,24 @@ class TimingInformation:
                 self.components_cases[component] = sorted(
                     self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
 
-    def load_ifs(self, files):
+    def load_ifs(self, files: list):
+        """
+        Load IFS timesteps timing data from a list of files and update the internal data structure.
+
+        Args:
+            files (list of str): List of file paths to be processed. Each file name should match the pattern 
+                     "([a-z]+)-([0-9a-zA-Z_]+)-ifs.stat".
+
+        Raises:
+            AssertionError: If the provided list of files is empty.
+
+        The method processes each file by:
+            1. Parsing the file name to extract the component and id.
+            2. Creating or updating a nested dictionary structure based on the id and component.
+            3. Parsing the IFS file content and storing it in the dictionary.
+            4. Updating the "ts_per_second" value for each id to be the minimum value found among its components.
+            5. Merging the newly created dictionary with the existing internal data structure.
+        """
         if not files:
             raise AssertionError("Empty list of files")
         pattern = "([a-z]+)-([0-9a-zA-Z_]+)-ifs.stat"
@@ -694,7 +927,21 @@ class TimingInformation:
 
         self.data = merge_dictionaries(self.data, ifs_dict)
 
-    def load_dimemas(self, files):
+    def load_dimemas(self, files: list):
+        """
+        Load and parse Dimemas files, then merge the parsed data into the existing data.
+
+        Args:
+            files (list): A list of file paths to Dimemas files.
+
+        Raises:
+            AssertionError: If the provided list of files is empty.
+
+        Updates:
+            self.data (dict): Merges the parsed Dimemas data into the existing data.
+            self.cases (list): Initializes with sorted keys from the merged data if not already set.
+            self.base_case: Sets to the first case in the sorted list of cases if not already set.
+        """
         if not files:
             raise AssertionError("Empty list of files")
 
@@ -704,16 +951,3 @@ class TimingInformation:
         if self.cases is None:
             self.cases = list(sorted(self.data.keys()))
             self.base_case = self.cases[0]
-
-    def fix_function_names(self, function_dict):
-        for core in function_dict:
-            function_info = function_dict[core]['function_info']
-            # We can not cycle directly on key, because dictionary will change size, raising an exception
-            list_of_function_names = [*function_info]
-            for function_name in list_of_function_names:
-                real_name = [f for f in self.functions if f.replace(
-                    "_", "").count(function_name.replace("_", ""))]
-                if real_name:
-                    # Updates the name of the function with the ones present in the trace
-                    function_info[real_name[0]] = function_info.pop(
-                        function_name)

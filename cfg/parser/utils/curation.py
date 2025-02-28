@@ -1,20 +1,40 @@
 # Imports
 import numpy as np
-from matplotlib.ticker import FormatStrFormatter
-
-from cfg.latex.ReportGenerator import Section
 
 
 class Log:
-    """
-    Object to store the Logs (info to be printed).
-    Probably there's an existing and better way of doing it.
-    """
+    """A class to handle text logging with file output capabilities.
 
+    This class provides functionality to accumulate text entries and output them
+    either to the console or to a file. It supports both string concatenation
+    and method-based text addition.
+
+    Attributes:
+        text (str): The accumulated log text.
+
+    Methods:
+        __add__(other, newline=True): Adds text to the log, with optional newline.
+        add(text, newline=True): Wrapper method for __add__.
+        print(file_out=None): Prints log content to console or saves to CSV file.
+        save(filename=None): Saves log content to a file or prints to console.
+    """
     def __init__(self):
         self.text = ""
 
-    def __add__(self, other, newline = True):
+    def __add__(self, other: str, newline: bool= True):
+        """
+        Add text to the current log entry.
+
+        This method allows concatenation of text or another Log object to the current log,
+        optionally adding a newline at the end.
+
+        Args:
+            other (Union[str, Log]): The text or Log object to append to the current log
+            newline (bool, optional): Whether to append a newline character. Defaults to True.
+
+        Returns:
+            Log: Returns self for method chaining
+        """
         if isinstance(other, Log):
             other = other.text
         self.text += other
@@ -22,10 +42,35 @@ class Log:
             self.text += "\n"
         return self
 
-    def add(self, text, newline = True):
+    def add(self, text: str, newline: bool= True):
+        """
+        Adds text to the object.
+
+        Args:
+            text: The text to be added.
+            newline (bool, optional): Whether to append a newline after the text. Defaults to True.
+
+        Returns:
+            None
+        """
         self.__add__(text, newline)
 
-    def print(self, file_out=None):
+    def print(self, file_out: str=None):
+        """
+        Print the contents of the text attribute to a file or stdout.
+
+        This method handles the printing of text content either to a specified file
+        (in CSV format) or to standard output if no file is specified.
+
+        Args:
+            file_out (str, optional): The path to the output file. If provided, the text
+                will be written to this file. If the file extension '.csv' is not present,
+                it will be automatically added. Defaults to None.
+
+        Note:
+            - If file_out is None, the text will be printed to stdout
+            - Underscores in the text content are removed before writing/printing
+        """
         if file_out is not None:
             if not file_out.count(".csv"):
                 file_out = file_out + ".csv"
@@ -35,7 +80,15 @@ class Log:
         else:
             print(self.text)
 
-    def save(self, filename=None):
+    def save(self, filename: str=None):
+        """Save the content of the object either by printing it to stdout or to a file.
+
+        Args:
+            filename (str, optional): Path to the output file. If None, prints to stdout. Defaults to None.
+
+        Raises:
+            IOError: If there are issues writing to the specified file.
+        """
         if filename is None:
             self.print()
         else:
@@ -43,16 +96,22 @@ class Log:
                 f.write(self.text)
 
 
-def go_to_dictionary_address(dictionary, address):
+def go_to_dictionary_address(dictionary: dict, address: tuple[str]) -> dict:
     """
-    It creates the proper dictionary structure according to an address provided.
-    In case the proper structure already exists it only retrieves it.
-    :param dictionary:
-    :param address:
-    :return: dictionary section
+    Navigate through a nested dictionary using a list of keys (address).
+
+    Args:
+        dictionary (dict): The nested dictionary to navigate.
+        address (list): A list of keys representing the path to the desired value.
+
+    Returns:
+        The value found at the specified address in the dictionary.
+
+    Raises:
+        AssertionError: If any key in the address does not exist in the dictionary.
     """
 
-    def go_to_section(d, section):
+    def go_to_section(d: dict, section: str):
         try:
             return d[section]
         except KeyError:
@@ -64,11 +123,18 @@ def go_to_dictionary_address(dictionary, address):
     return dictionary
 
 
-def function_curated_summary(experiment_data, filename):
+def function_curated_summary(experiment_data: dict, filename: str):
     """
-    This is an example of a function to curate the results and return something understandable
-    :param experiment_data:
-    :return: text with a summary of functions scalability in the experiment.
+    Generates a summary of function performance metrics from experiment data and saves it to a file.
+
+    Args:
+        experiment_data (dict): An object containing the experiment data, including components and their cases.
+        filename (str): The name of the file where the summary will be saved.
+
+    The summary includes:
+        - Resources: The number of processors used in each case.
+        - Speed-up: The speed-up achieved in each case compared to the base case.
+        - Efficiency: The efficiency of resource usage in each case.
     """
     log = Log()
     # Get the dictionary of function
@@ -101,12 +167,24 @@ def function_curated_summary(experiment_data, filename):
     log.save(filename)
 
 
-def dimemas_curated_summary(experiment_data):
+def dimemas_curated_summary(experiment_data: dict) -> Log:
     """
-    This is an example of a function to curate the results and return something understandable
-    :param experiment_data:
-    :return: text with a summary of functions scalability in the experiment.
+    Generates a curated summary of Dimemas experiment data.
+
+    Args:
+        experiment_data (dict): An object containing the experiment data.
+            - cases: List of cases in the experiment.
+            - base_case: The base case for comparison.
+            - data: Nested dictionary containing the experiment data.
+
+    Returns:
+        Log: A Log object containing the curated summary of the Dimemas experiment data.
+
+    The summary includes:
+        - Wallclock time for each case and experiment.
+        - The summary is formatted as a CSV string with cores and wallclock times.
     """
+
 
     log = Log()
     cases = experiment_data.cases
@@ -142,7 +220,35 @@ def dimemas_curated_summary(experiment_data):
     return log
 
 
-def coupling_info(experiment_data, coupling_folder):
+def coupling_info(experiment_data: dict, coupling_folder: str):
+    """
+    Generate coupling information summary for experiment cases and saves it to CSV files.
+
+    This function processes experiment data for each case, creating a summary table that includes
+    performance metrics for individual components and the coupled model. The summary is saved
+    as a CSV file in the specified coupling folder.
+
+    Args:
+        experiment_data (dict):
+            Dictionary containing experiment data with the following structure:
+            - cases: list of experiment cases
+            - components: list of model components
+            - data: nested dictionary with performance metrics for each case and component
+
+    coupling_folder (str): Base directory path where the CSV files will be saved. A subfolder will be created for each case.
+
+    Notes:
+        The generated CSV files contain the following columns:
+        - component: name of the component or 'coupled' for the coupled model
+        - nproc: number of processes
+        - chsy: chunking system information
+        - cpl_cost: coupling cost
+        - waiting_time: waiting time
+        - interpo_time: interpolation time
+
+        The function creates a directory for each case if it doesn't exist and saves
+        the summary as 'summary.csv' within that directory.
+    """
     import numpy as np
     import os
 
@@ -176,6 +282,30 @@ def coupling_info(experiment_data, coupling_folder):
 
 
 def generate_most_expensive_function_summary_data(experiment_data, out_file_name, length_summary=10, component_to_report=""):
+    """
+    Generate a CSV file containing a summary of the most expensive functions in terms of execution time.
+
+    This function processes experiment data to identify and report the functions that consume
+    the most execution time, calculating their percentage of the total execution time.
+
+    Args:
+        experiment_data: An object containing the performance profiling data with cases,
+                        components, and function execution times.
+        out_file_name (str): Path to the output CSV file where the summary will be written.
+        length_summary (int, optional): Number of top expensive functions to include in the summary.
+                                      Defaults to 10.
+        component_to_report (str, optional): Specific component to analyze. If empty string,
+                                           analyzes all components. Defaults to "".
+
+    Returns:
+        None. Writes results to a CSV file with the following columns:
+        - function_name: Name of the function
+        - case_name (percent): Percentage of total execution time for each case
+
+    Note:
+        The output CSV file will contain 'length_summary + 1' rows, with each row containing
+        a function name and its percentage of total execution time for each case.
+    """
     import csv
     from os.path import abspath
     header = []
@@ -220,7 +350,15 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
         print("Written file in " + abspath(out_file_name))
 
 
-def most_expensive_function_summary(experiment_data, out_file_name, length_summary=10):
+def most_expensive_function_summary(experiment_data: dict, out_file_name: str, length_summary: int=10):
+    """
+    Generate summaries of the most expensive functions for both the entire experiment and individual components.
+
+    Args:
+        experiment_data (dict): Dictionary containing the experiment profiling data and component information.
+        out_file_name (str): Base name for the output summary files.
+        length_summary (int, optional): Number of top expensive functions to include in summaries. Defaults to 10.
+    """
     generate_most_expensive_function_summary_data(
         experiment_data, out_file_name, length_summary)
 
@@ -229,10 +367,25 @@ def most_expensive_function_summary(experiment_data, out_file_name, length_summa
             experiment_data, component + "_" + out_file_name, length_summary, component)
 
 
-def function_info_csv(experiment_data, csv_folder):
+def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
     """
-    Function to save the results as a csv which will be used in the latex report
-    :param experiment_data:
+    Generate CSV files containing performance metrics for functions in experiment data.
+
+    Args:
+        experiment_data (dict): Object containing experimental data with components and function information.
+            Must have attributes 'components' and method 'get_function_info'.
+        csv_folder (str): Path to the folder where CSV files will be saved. If the folder doesn't exist, it will be created.
+
+    Returns:
+        Log: A Log object tracking the execution of the function.
+
+    Notes:
+        The CSV files will be named as '{component}_{function}.csv' and will contain:
+        - resources (nproc): Number of processors used
+        - speedup: Ratio of base case time to current case time
+        - efficiency: Speedup divided by resource increase ratio
+
+    The base case is determined by the first case in the function results.
     """
     import numpy as np
     from os import mkdir
@@ -286,7 +439,25 @@ def function_info_csv(experiment_data, csv_folder):
     return log
 
 
-def tracking_function_info(experiment_data):
+def tracking_function_info(experiment_data: dict) -> Log:
+    """
+    Generate a log of function timing information from experiment data.
+
+    This function creates a formatted log containing elapsed time information for different functions
+    across various test cases.
+
+    Args:
+        experiment_data (dict): A dictionary containing experimental data with the following structure:
+            - cases: List of test case names
+            - functions: List of function names
+            - Nested timing information accessible via case/function_info/function/Elap. Time(s) paths
+
+    Returns:
+        Log: A Log object containing CSV-formatted text with:
+            - Headers showing test cases
+            - Rows showing elapsed time for each function across test cases
+            - Values formatted to 2 decimal places
+    """
     log = Log()
 
     cases = experiment_data.cases
@@ -318,12 +489,17 @@ def tracking_function_info(experiment_data):
     return log
 
 
-def function_information_from_paramedir_outputs(experiment_data, component):
+def function_information_from_paramedir_outputs(experiment_data: dict, component: str) -> tuple[str, dict]:
     """
-    This funciton only returns the functions that are defined in the base case counters part with the elapsed time on
-    each one of them and the total execution time.
-    :param experiment_data:
-    :return: total_time, sorted dictionary with the time for each function
+    Extracts timing information from ParamEDIR experiment outputs for a specific component.
+    Args:
+        experiment_data (dict): Dictionary containing the experiment data from ParamEDIR
+        component (str): Name of the component to analyze
+
+    Returns:
+        tuple[str, dict]: A tuple containing:
+            - total_time (float): Sum of execution times for all functions in the component
+            - functions_time (dict): Dictionary mapping function names to their execution times
     """
     base_case = experiment_data.base_case
     address = (base_case, "components", component)
@@ -339,6 +515,31 @@ def function_information_from_paramedir_outputs(experiment_data, component):
 
 
 def tracking(experiment_data, folder, threshold=0.01):
+    """
+    Process and track performance data for functions in experiment components.
+
+    This function analyzes experiment data, filters functions based on a time threshold,
+    and generates MPI and counter logs for the significant functions.
+
+    Args:
+        experiment_data: Object containing experimental performance data and components
+        folder (str): Base output directory path for storing the generated logs
+        threshold (float, optional): Minimum fraction of total time a function must represent
+            to be included in analysis. Defaults to 0.01 (1%)
+
+    Creates:
+        - {folder}/MPI/: Directory containing MPI profile logs per function
+        - {folder}/counters/: Directory containing counter logs per function
+        Each log is saved as CSV in format: {component}_{function}.csv
+
+    Notes:
+        - Only functions consuming >= threshold % of total time are analyzed
+        - Creates separate MPI and counter logs for each significant function
+        - Combines all logs into a full log (currently commented out printing)
+
+    Returns:
+        None
+    """
     from os import makedirs
     from os.path import abspath
 
@@ -376,7 +577,20 @@ def tracking(experiment_data, folder, threshold=0.01):
     # full_log.print()
 
 
-def tracking_mpi_profile_per_function(experiment_data, function, component):
+def tracking_mpi_profile_per_function(experiment_data: dict, function: str, component: str) -> Log:
+    """
+    Extract and format MPI profiling data for a specific function from experiment data.
+
+    Args:
+        experiment_data (dict): Dictionary containing all experiment data including MPI profiles
+        function (str): Name of the function to analyze
+        component (str): Name of the component to analyze
+
+    Returns:
+        Log: A Log object containing formatted MPI profile data with the following format:
+            - First line: Header with "Cores" and MPI operation names
+            - Subsequent lines: Case number followed by time spent in each MPI operation
+    """
     base_case = experiment_data.base_case
     address = (
         base_case,
@@ -445,7 +659,21 @@ def tracking_mpi_profile_per_function(experiment_data, function, component):
     return log
 
 
-def tracking_counters_per_function(experiment_data, function, component):
+def tracking_counters_per_function(experiment_data: dict, function: str, component: str) -> Log:
+    """
+    Tracks and logs performance counters for a specific function within a given component across different cases in an experiment.
+
+    Args:
+        experiment_data (dict): The data from the experiment, containing base case and cases information.
+        function (str): The name of the function to track.
+        component (str): The component within which the function resides.
+
+    Returns:
+        Log: A log object containing the tracked performance counters for the specified function and component.
+
+    Raises:
+        AssertionError: If the address within the dictionary does not exist.
+    """
     log = Log()
     base_case = experiment_data.base_case
     cases = experiment_data.cases
@@ -485,7 +713,25 @@ def tracking_counters_per_function(experiment_data, function, component):
     return log
 
 
-def generate_sypd_summary_data(experiment_data, component=""):
+def generate_sypd_summary_data(experiment_data: dict, component: str="") -> Log:
+    """
+    Generates a summary of SYPD (Simulated Years Per Day) data for a given experiment.
+
+    Args:
+        experiment_data (dict): A dictionary containing the experiment data.
+        component (str, optional): The specific component to generate the summary for. Defaults to an empty string, 
+                               which means the summary will be generated for the entire experiment.
+
+    Returns:
+        Log: A Log object containing the summary data with columns: Case, Processes, SYPD, SpeedUp, Efficiency.
+
+        The summary includes:
+        - Case: The name of the case.
+        - Processes: The number of processes used in the case.
+        - SYPD: The SYPD value for the case.
+        - SpeedUp: The speedup factor compared to the base case.
+        - Efficiency: The efficiency of the case, calculated as speedup divided by the increase in resources.
+    """
     log = Log()
 
     if component == "":
@@ -519,12 +765,19 @@ def generate_sypd_summary_data(experiment_data, component=""):
     return log
 
 
-def simulated_years_per_day_summary(experiment_data, filename):
+def simulated_years_per_day_summary(experiment_data: dict, filename: str):
     """
-    Produces a simple log showing the simulated years per day of the different cases contained in the experiment,
-    with the speed up and the efficiency respect to the base case.
-    :param experiment_data:
-    :return:  Log object with a summary of the simulated years per day and few more metrics.
+    Generates and saves a summary of simulated years per day (SYPD) for the given experiment data.
+
+    This function creates a summary of the SYPD for the entire model and for each component
+    within the experiment data. The summaries are saved to the specified filename.
+
+    Args:
+        experiment_data (dict): A dictionary containing the experiment data, including components.
+        filename (str): The base filename to save the summary data.
+
+    Returns:
+        None
     """
     model_sypd_summary = generate_sypd_summary_data(experiment_data)
     model_sypd_summary.save(filename)
@@ -535,7 +788,28 @@ def simulated_years_per_day_summary(experiment_data, filename):
         component_sypd_summary.save(component + "_" + filename)
 
 
-def generate_sypd_plot_data(experiment_data, component=""):
+def generate_sypd_plot_data(experiment_data: dict, component: str="") -> dict:
+    """
+    Generate plot data for Simulated Years Per Day (SYPD) performance metric.
+
+    This function processes experiment data to create a dictionary containing x and y values
+    for plotting SYPD performance against number of processes. It can process either full
+    experiment data or data for a specific component.
+
+    Args:
+        experiment_data (dict): Dictionary containing experiment data with the following structure:
+            - cases: List of case names
+            - components_cases: Dictionary mapping component names to their cases
+            - data: Dictionary containing performance data for each case
+
+        component (str, optional): Name of the component to analyze. If empty string,
+            processes full experiment data. Defaults to "".
+
+    Returns:
+        dict: Dictionary containing plot data with the following keys:
+            - "Number of processes": numpy array of process counts
+            - "Simulated Years Per Day": numpy array of SYPD values
+    """
     x_label = "Number of processes"
     y_label = "Simulated Years Per Day "
     plot_data = {x_label: np.empty(0), y_label: np.empty(0)}
@@ -559,12 +833,21 @@ def generate_sypd_plot_data(experiment_data, component=""):
     return plot_data
 
 
-def simulated_years_per_day_plot(experiment_data, filename):
+def simulated_years_per_day_plot(experiment_data: dict, filename: str):
     """
-    Produces a simple log showing the simulated years per day of the different cases contained in the experiment,
-    with the speed up and the efficiency respect to the base case.
-    :param experiment_data:
-    :return:  Log object with a summary of the simulated years per day and few more metrics.
+    Generates and saves plots for simulated years per day (SYPD) data.
+
+    This function creates a plot for the overall experiment data and individual
+    component data within the experiment. It uses the `plotter` function from
+    the `cfg.parser.utils.plotter` module to generate the plots.
+
+    Args:
+        experiment_data (dict): An object containing the experiment data,
+            including the experiment name, cases, and components.
+        filename (str): The filename to save the overall plot.
+
+    Returns:
+        None
     """
     from cfg.parser.utils.plotter import plotter
 
@@ -579,7 +862,25 @@ def simulated_years_per_day_plot(experiment_data, filename):
                 scatter_labels=experiment_data.components_cases[component], filename=component + "_" + filename, linear_test=True)
 
 
-def cases_component_data(experiment_data):
+def cases_component_data(experiment_data: dict):
+    """
+    Creates a CSV file containing information about the number of processors (nproc) 
+    used by each component in different experiment cases.
+
+    Args:
+        experiment_data (dict): Dictionary containing information about experiment cases and components.
+            Expected to have the following attributes:
+                - components: List of component names
+                - cases: List of case names
+            And dictionary-like access with structure:
+                experiment_data[case]["components"][component]["nproc"]
+
+    Returns:
+        None. Creates a file named 'cases_info.csv' with the following format:
+            Case,COMPONENT1 nproc,COMPONENT2 nproc,...
+            case1,nproc1,nproc2,...
+            case2,nproc1,nproc2,...
+    """
     log = Log()
 
     header = "Case"
@@ -597,7 +898,22 @@ def cases_component_data(experiment_data):
     log.save("cases_info.csv")
 
 
-def experiment_comparison(experiment1, experiment2):
+def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
+    """
+    Compare the performance of two experiments based on their cases.
+
+    This function compares the simulated years per day (SYPD) and time-step length
+    for each case in the given experiments. It logs the speed, speedup, efficiency,
+    and ratio of the two experiments for each case.
+
+    Args:
+        experiment1 (dict): The first experiment data, where keys are case identifiers
+                            and values are dictionaries containing "sypd" and "time_step_time".
+        experiment2 (dict): The second experiment data, with the same structure as experiment1.
+
+    Returns:
+        Log: A log object containing the comparison results.
+    """
     cases_to_compare = list(
         sorted([c for c in experiment1.cases if c in experiment2.cases]))
     base_case = min(cases_to_compare)
@@ -642,7 +958,30 @@ def experiment_comparison(experiment1, experiment2):
     return log
 
 
-def multiexperiment_comparison(experiments, field1):
+def multiexperiment_comparison(experiments: list, field1: str) -> Log:
+    """
+    Compare multiple experiments based on a specified performance metric.
+
+    This function analyzes and compares performance data across multiple experiments,
+    calculating speeds, speedups, and efficiency metrics relative to a base case.
+
+    Args:
+        experiments (list): List of Experiment objects containing performance data to compare
+        field1 (str): Name of the performance metric field to compare across experiments typically 'simulated_years_per_day' or similar)
+
+    Returns:
+        Log: Log object containing formatted comparison results including:
+            - Resource usage information
+            - Speed measurements for each experiment
+            - Performance comparisons across different cases
+
+    Notes:
+        The comparison assumes all experiments have compatible structures with:
+        - A defined base_case
+        - Consistent case naming across experiments
+        - Process count information ('nproc' field)
+        - Performance metrics in the specified field1
+    """
     # List of process per node used in experiments
     processes_per_node = [
         int(exp.processes_per_node.replace("'", "")) for exp in experiments]
@@ -708,6 +1047,18 @@ def multiexperiment_comparison(experiments, field1):
 
 
 def generate_weakscaling_data(experiments: list, component_to_report: str = "") -> Log:
+    """Generates a log containing weak scaling data from a list of experiments.
+
+    Args:
+        experiments (list): List of experiment objects containing performance data.
+        component_to_report (str, optional): Specific component to generate report for.
+        If empty, reports data for all components. Defaults to "".
+
+    Note:
+        The function handles two reporting modes:
+        1. All components (component_to_report=""): Reports resolution and grid points for each component
+        2. Single component: Reports cores, resolution, timesteps/second, and grid points
+    """
     log = Log()
 
     if component_to_report == "":

@@ -85,16 +85,27 @@ To configure the platform with your user create and edit ``~/platforms_credentia
   mn5-login:
     USER: "MN5_USER"
 
-Then create the experiment, that
+Then create the experiment:
 
-The four supported members are:
+.. code-block:: bash
 
+  autosubmit create ${expid}
+
+Configure the workflow
+----------------------
+
+Members configuration
+~~~~~~~~~~~~~~~~~~~~
+
+You can configure what members to run in the ``proj/auto-performance-profiling/autosubmit/configuration/common/expdef.yml`` file by adding or removing the members id from the ``MEMBERS`` variable.
+
+The four supported members ids are:
 
 * ``CompilationEfficiency``\ : Runs the same configuration with different compilation flags and generates a table to compare them.
 * ``HardwareBenchmarks``\ : Runs OSU and STREAM hardware benchmarks.
 * ``WeakScaling``\ : Runs a weak scaling test and generates a scalability table. 
 * ``StrongScaling``\ : Runs a strong scaling test and generates a scalability plot.
-* `Tracing`: Traces the execution of the model and generates a report for:
+* ``Tracing``\: Traces the execution of the model and generates a report for:
 
   * User functions
   * PAPI counters
@@ -102,22 +113,27 @@ The four supported members are:
   * Paraver images
   * Dimemas images
 
-Models specific configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Model specific configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you decide what members to run, you can configure the jobs that they will run in the ``proj/auto-performance-profiling/autosubmit/configuration/common/model/${model}/proj.yml``.
 
 Now check the specific wiki for each of the models to know how to configure them:
 
 
-* `NEMO wiki <Configure-NEMO.html>`_
-* `ECEARTH4 wiki <Configure-ECE4.html>`_
+.. toctree::
+   :titlesonly:
+
+   Configure-NEMO
+   Configure-ECE4
+
 
 Common configuration
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
+
 
 Report configuration
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 For report configuration (what will be shown and run) and hw benchmarks configuration, check the ``proj/auto-performance-profiling/autosubmit/configuration/common/common.yml`` file.
 
@@ -176,7 +192,7 @@ There you can configure:
     * Enable/Disable MPI profiling results in the report.
 
 Extrae configuration
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 The extrae.xml used by Tracing is configured through ``proj/auto-performance-profiling/autosubmit/configuration/tracing/extrae.yml``. 
 
@@ -187,11 +203,15 @@ It is important that you replace the HOME variable with the path to the Extrae i
 Issues with ECE4
 """"""""""""""""
 
-For ECE4 you need to use an Extrae custom installation with ``--disable-instrument-io`` and ``--disable-instrument-dynamic-memory`` flags in order for it to work. You can use the following installation paths:
+For ECE4 you need to use an Extrae custom installation with ``--disable-instrument-io`` and ``--disable-instrument-dynamic-memory`` flags in order for it to work. You can use the following installation paths that are compiled using these flags:
 
+* mn5: 
 
-* mn5: ``/gpfs/projects/bsc32/CS-share/extrae/src/extrae-4.2.4/build-impi-2021.10.0/install``
-* hpc2020: ``/lus/h2resw01/hpcperm/c3rs/extrae-4.2.4/install/hpcx-openmpi-2.9.0``
+  - For IntelMPI: ``/gpfs/scratch/bsc32/bsc032333/extrae-4.2.5/build-impi-2021.10.0/install``
+
+  - For OpenMPI: ``/gpfs/scratch/bsc32/bsc032333/extrae-4.2.5/build-ompi-4.1.5/install``
+
+* hpc2020 (OpenMPI): ``/lus/h2resw01/hpcperm/c3rs/extrae-4.2.4/install/hpcx-openmpi-2.9.0``
 
 Run the workflow
 ----------------
