@@ -3,6 +3,7 @@ sphinxcontrib-autoprogram
 sphinx_design
 sphinx_rtd_theme
 sphinx-copybutton
+pydata_sphinx_theme
 
 pandas
 matplotlib
