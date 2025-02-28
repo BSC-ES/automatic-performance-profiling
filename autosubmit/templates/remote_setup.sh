@@ -36,6 +36,23 @@ function clone_nemo()
     
     cd nemo_${branch} || exit
     git checkout tags/${branch}
+
+    if [ ! -d ${root_dir}/xios ]; then
+        cd ${root_dir} || exit
+        svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
+
+        cp ${project}/cfg/arch/${platform}/xios/* ${root_dir}/xios/arch
+    fi
+
+    if [ ! -d ${inidata}/original ]; then
+        cd ${inidata} || exit
+        mkdir -p original
+        wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar
+        tar -xf ORCA2_ICE_v4.0.tar -C original
+        gunzip original/*
+        chmod -w original
+        rm ORCA2_ICE_v4.0.tar
+    fi
 }
 
 function clone_ecearth4()
@@ -69,57 +86,8 @@ function clone_ecearth4()
     return 0
 }
 
-###################
-# Start script
-###################
-
-if [ ! -d $project ] || [ ${refresh_git^^} == TRUE ];
-then
-    chmod +w -R $project || :
-    rm -rf $project% || :
-    git clone --single-branch --branch ecearth4 https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git $project
-fi
-
-source ${env_sources}
-set +u
-export PYTHONPATH=$PYTHONPATH:${project}
-set -u
-
-mkdir -p ${compilation}
-mkdir -p ${inidata}
-mkdir -p ${binaries}
-mkdir -p ${run_folder}
-mkdir -p ${inidata}
-
-# Clone the model source code
-branch=%MODEL.BRANCH%
-dest_dir=${compilation}
-if [[ ! -d ${model}_${branch} ]]; then
-    clone_${model}
-fi
-
-# Clone XIOS if NEMO is run
-if [ "${model}" = "nemo" ]; then
-    if [ ! -d ${root_dir}/xios ]; then
-        cd ${root_dir} || exit
-        svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
-
-        cp ${project}/cfg/arch/${platform}/xios/* ${root_dir}/xios/arch
-    fi
-
-    if [ ! -d ${inidata}/original ]; then
-        cd ${inidata} || exit
-        mkdir -p original
-        wget https://zenodo.org/record/3386310/files/ORCA2_ICE_v4.0.tar
-        tar -xf ORCA2_ICE_v4.0.tar -C original
-        gunzip original/*
-        chmod -w original
-        rm ORCA2_ICE_v4.0.tar
-    fi
-fi
-
-# If hardware benchmarks are run, clone OSU and STREAM
-if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
+function clone_hw_benchmarks() 
+{
     cd ${compilation} || exit
 
     osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
@@ -136,4 +104,31 @@ if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
     if ${stream_enabled} && [ ! -d STREAM ]; then
         git clone https://github.com/jeffhammond/STREAM.git STREAM
     fi
+}
+
+###################
+# Start script
+###################
+
+source ${env_sources}
+set +u
+export PYTHONPATH=$PYTHONPATH:${project}
+set -u
+
+mkdir -p ${compilation}
+mkdir -p ${inidata}
+mkdir -p ${binaries}
+mkdir -p ${run_folder}
+mkdir -p ${inidata}
+
+# Clone the model source code
+branch=%MODEL.BRANCH%
+dest_dir=${compilation}
+if [ ! -d ${model}_${branch} ]; then
+    clone_${model}
+fi
+
+# If hardware benchmarks are run, clone OSU and STREAM
+if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
+    clone_hw_benchmarks
 fi
