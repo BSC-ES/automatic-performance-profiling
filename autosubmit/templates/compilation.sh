@@ -72,8 +72,8 @@ function compile_nemo()
 #####################################################################################################################
 function compile_ecearth4()
 {
-    inidata=%EXPERIMENT.INIDATA%
-
+    local inidata=%EXPERIMENT.INIDATA%
+    local sed_inidata=${inidata//\//\\\/}
     # shellcheck source=proj/auto-performance-profiling/cfg/utils/ecearth4/se.sh
     . ${cfg}/utils/${model}/se.sh
 
@@ -106,7 +106,7 @@ function compile_ecearth4()
     cd ${arch_dir}/scripts/build || exit
     cp "${arch_file}" ../platforms
 
-    sed -i "s/INIDATA/${inidata}/" ../plarforms/${arch_name}.yml
+    sed -i "s/INIDATA/${sed_inidata}/" ../platforms/${arch_name}.yml
 
     # Compile using SE
     se user-settings.yml ../platforms/${arch_name}.yml compile-all.yml

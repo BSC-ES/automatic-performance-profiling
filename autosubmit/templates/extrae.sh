@@ -256,6 +256,7 @@ function trace_ecearth4()
     configure_extrae ${run_dir}
 
     cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+    chmod +x ${run_dir}/generate_function_list.sh
 
     cd ${compilation}/${arch_name}/scripts/runtime || exit
 
