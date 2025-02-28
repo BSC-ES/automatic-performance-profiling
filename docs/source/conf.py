@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 
 # -- Project information
-project = 'Automatic Performance Profiling'
+project = 'Auto Profiling'
 author = 'Roc Salvador Andreazini'
 copyright = '2024'
 release = '0.1.0'
@@ -25,7 +25,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinxcontrib.autoprogram',
 ]
-html_theme = 'sphinx_rtd_theme'  # Optional theme
+
+html_theme = 'pydata_sphinx_theme'  # Optional theme
 
 
 # -- Autoprogram options
@@ -36,6 +37,20 @@ autoprogram_options = {
         }
 }
 
+html_theme_options = {
+    "icon_links": [
+        {
+            # Label for this link
+            "name": "GitLab",
+            # URL where the link will redirect
+            "url": "https://earth.bsc.es/gitlab/ces/hpc-for-es-team/automatic_performance_profiling",  # required
+            # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
+            "icon": "fa-brands fa-square-gitlab",
+            # The type of image to be used (see below for details)
+            "type": "fontawesome",
+        }
+   ]
+}
 
 # -- Paths for templates and static files
 templates_path = ['_templates']

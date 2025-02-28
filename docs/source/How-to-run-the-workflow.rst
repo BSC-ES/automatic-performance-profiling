@@ -221,3 +221,6 @@ When you finish configuring the workflow, it's time to run it:
 .. code-block:: bash
 
    nohup autosubmit run ${expid} &
+  
+.. warning::
+  If you make any changes to the local configuration files, make sure that you rerun th synchronization job.

@@ -251,13 +251,21 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
   * **Run**\ : once
   * **Brief**\ : Cleans all the experiment files in case it was run already.
 
+* ``synchronization.sh``\ :
+
+  * **Run**\ : once
+  * **Brief**\ : Synchronizes the local AP repository with the HPC one.
+  * **Dependencies**\ :
+
+    * ``clean.sh``
+
 * ``remote_setup.sh``\ :
 
   * **Run**\ : once
   * **Brief**\ : Clones the model sources, this repository, the hardware benchmarks and inidata if needed.
   * **Dependencies**\ : 
 
-    * ``clean.sh``
+    * ``synchronization.sh``
 
   * **Members differences**\ :
 
@@ -425,6 +433,10 @@ The script takes as parameters:
 Development
 ^^^^^^^^^^^
 
+.. note::
+
+  Check the `API reference page <API-reference.html>`_ for specific function definitions.
+
 The parser section is implemented in two files:
 
 
@@ -447,7 +459,7 @@ The JSON is divided by cases where each case contains the performance metrics of
        {
            "components":
            {
-               "FunctionInfo":
+               "function_info":
                {
                    "function_1": time
                    ...
@@ -457,7 +469,7 @@ The JSON is divided by cases where each case contains the performance metrics of
                "component_1":
                {
                    // Counters dict (Tracing)
-                   "Counters":
+                   "counters":
                    {
                        "counter_1":
                        {
@@ -470,8 +482,10 @@ The JSON is divided by cases where each case contains the performance metrics of
                            ...
                        }
                    },
-                   "SYPD": component_1_SYPD,
+                   "sypd": component_1_sypd,
                    "nproc": component_1_nproc
+                   "resolution": component_1_resolution
+                   ...
                },
                "component_2":
                {
@@ -479,8 +493,10 @@ The JSON is divided by cases where each case contains the performance metrics of
                }
            },
            // Model data
-           "SYPD": model_SYPD,
+           "sypd": model_sypd,
            "nproc": model_nproc
+           "resolution": model_resolution
+           ...
        },
        "case_2":
        {
@@ -513,6 +529,7 @@ The JSON is divided by cases where each case contains the performance metrics of
            "component_2"
        }
    }
+
 
 Curation
 --------
@@ -548,6 +565,10 @@ The script takes as a parameters:
 
 Development
 ^^^^^^^^^^^
+
+.. note::
+
+  Check the `API reference page <API-reference.html>`_ for specific function definitions.
 
 The curation step is also implemented in two different files:
 
