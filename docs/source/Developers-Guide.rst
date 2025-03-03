@@ -589,7 +589,7 @@ Add AS config platform entry
 
 First you need to add the platform to ``autosubmit/autosubmit/configuration/common/platforms.yml``\ , example of Marenostrum 5:
 
-.. code-block:: yml
+.. code-block:: yaml
 
      mn5:
        TYPE: slurm
@@ -609,7 +609,7 @@ The user will add their user name in ``~/platforms_credentials.yml``.
 
 Also, for jobs configuration that is specific to the platform add ``proj/auto-performance-profiling/autosubmit/configuration/jobs/platform/PLATFORM/jobs.yml``. An example of what this file should contain is the number of tasks to compile the model (Marenostrum 5):
 
-.. code-block:: yml
+.. code-block:: yaml
 
    JOBS:
      REMOTE_COMPILATION:
@@ -661,7 +661,7 @@ For a single component you can take NEMO's configuration as basis, if the model 
 
 The main differences between models configuration is the first section. What changes in the member's configuration is if multiple components are defined or not.
 
-.. code-block:: yml
+.. code-block:: yaml
 
    # MODEL CONFIG
    MODEL:

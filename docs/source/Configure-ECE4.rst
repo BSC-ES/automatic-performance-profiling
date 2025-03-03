@@ -29,7 +29,7 @@ The main variables to update in this config file are:
 * OIFS_RESOLUTION: Oifs grid.
 * NEMO_RESOLUTION: NEMO grid.
 
-.. code-block:: yml
+.. code-block:: yaml
 
    # MODEL CONFIG
    MODEL:
@@ -82,7 +82,7 @@ The next list variables have to be the same length:
 * ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
 * PAPI_COUNTERS: Space separated string with the PAPI counters to trace, same id as returned by the command ``papi_avail``.
 
-.. code-block:: yml
+.. code-block:: yaml
 
    # TRACE CONFIG
    TRACING:
@@ -126,7 +126,7 @@ The next list variables have to be the same length:
 * 
   COUPLING: Enables/disables coupling report (Lucia).
 
-  .. code-block:: yml
+  .. code-block:: yaml
 
      # STRONG SCALING CONFIG
      STRONGSCALING:
@@ -166,7 +166,7 @@ The next list variables have to be the same length:
 * [COMPONENT]_RESOLUTION: List of components ran by each test.
 * ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
 
-.. code-block:: yml
+.. code-block:: yaml
 
    # WEAKSCALING CONFIG
    WEAKSCALING:
@@ -204,7 +204,7 @@ The next list variables have to be the same length:
 * THREADS: List of threads used by each test.
 * MODEL_RESOLUTION: Resolution with the test will run on.
 
-.. code-block:: yml
+.. code-block:: yaml
 
    # COMPILATION EFFICIENCY CONFIG
    COMPILATION_EFFICIENCY:
