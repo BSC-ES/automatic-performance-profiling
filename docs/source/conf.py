@@ -28,15 +28,6 @@ extensions = [
 
 html_theme = 'pydata_sphinx_theme'  # Optional theme
 
-
-# -- Autoprogram options
-autoprogram_options = {
-        'ImplementRPEtoSource' : {
-            '-i/--input-sources': "path/to/input/sources",
-            '-o/--output-sources': "path/to/output/sources"
-        }
-}
-
 html_theme_options = {
     "icon_links": [
         {
@@ -56,10 +47,8 @@ html_theme_options = {
 templates_path = ['_templates']
 #html_static_path = ['_static']
 
-
 # -- Path setup for source files
 source_suffix = '.rst'  # File extension for source files
-
 
 # -- Ignore external libraries
 autodoc_mock_imports = ["numpy", "tqdm", "paramiko", "networkx"]

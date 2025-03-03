@@ -7,10 +7,17 @@ JOBS:
     WALLCLOCK: 00:10
     CHECK: "true"
     RERUN_ONLY: true
+  SYNCHRONIZE:
+    FILE: autosubmit/templates/synchronize.sh
+    RUNNING: once
+    WALLCLOCK: 00:10
+    CHECK: "true"
+    PLATFORM: local
+    DEPENDENCIES: CLEAN
   # Downloads the git in the remote and some other stuff required by HW test, it requires connection to the internet
   REMOTE_SETUP:
     FILE: autosubmit/templates/remote_setup.sh
-    DEPENDENCIES: CLEAN
+    DEPENDENCIES: SYNCHRONIZE
     RUNNING: once
     WALLCLOCK: 00:30
     CHECK: "true"

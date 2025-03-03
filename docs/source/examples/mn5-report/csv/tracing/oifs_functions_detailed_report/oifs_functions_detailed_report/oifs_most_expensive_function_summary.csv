@@ -1,9 +1,0 @@
-function-name,trace-1 (percent),function-name,trace-2 (percent),function-name,trace-3 (percent)
-ec-phys-drv,32.03,ftinv-ctl,29.56,ftinv-ctl,31.98
-ftinv-ctl,20.41,ec-phys-drv,22.48,call-sl,15.81
-call-sl,18.11,call-sl,19.31,ec-phys-drv,15.41
-ftdir-ctl,7.03,ftdir-ctl,5.68,ltdir-ctl,11.23
-ltdir-ctl,2.22,ltdir-ctl,5.30,ltinv-ctl,6.77
-ltinv-ctl,2.03,ltinv-ctl,2.48,ftdir-ctl,4.77
-spcm,0.53,spcm,0.43,spcm,0.11
-magiccut,0.00,magiccut,0.00,magiccut,0.00

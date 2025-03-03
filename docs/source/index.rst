@@ -38,6 +38,24 @@ Tool to generate a performance report of climate models automatically.
 
              Developer Guide
 
+.. grid:: 2
+
+    .. grid-item-card::
+
+        .. image:: ./images/icons/examples.svg
+             :width: 30%
+             :alt: Alternative text
+             :align: center
+
+        +++
+
+        .. button-ref:: Examples
+             :expand:
+             :color: secondary
+             :click-parent:
+
+             Examples
+
 
 .. toctree::
    :maxdepth: 3
@@ -48,3 +66,4 @@ Tool to generate a performance report of climate models automatically.
    Developers-Guide
    Troubleshooting
    API-reference
+   Examples
