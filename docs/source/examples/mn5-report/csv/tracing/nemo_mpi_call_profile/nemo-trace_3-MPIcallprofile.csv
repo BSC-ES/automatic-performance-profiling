@@ -1,5 +1,0 @@
--,Outside-MPI,MPI-Send,MPI-Recv,MPI-Isend,MPI-Irecv,MPI-Wait,MPI-Waitall,MPI-Allreduce,MPI-Allgather,MPI-Iallreduce
-average,54.22,0.02,3.31,0.13,0.02,0.08,88.56,0.01,0.00,0.01
-maximum,100.00,0.07,7.52,0.81,0.02,0.07,1.94,97.86,0.01,0.02
-minimum,2.12,1.15,0.00,0.01,4.10,0.00,0.00,0.00,0.00,0.00
-stdev,46.33,0.02,1.68,0.11,0.02,0.22,6.65,0.00,0.00,0.00

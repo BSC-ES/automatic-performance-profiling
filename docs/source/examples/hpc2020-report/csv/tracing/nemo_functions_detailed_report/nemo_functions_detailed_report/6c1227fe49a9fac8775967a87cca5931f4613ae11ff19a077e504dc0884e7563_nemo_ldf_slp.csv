@@ -1,4 +1,0 @@
-Cores,Outside-MPI,MPI-Recv,MPI-Isend
-trace-1,92.10,7.05,0.19
-trace-2,89.41,9.31,0.36
-trace-3,84.41,12.72,0.42
