@@ -122,11 +122,13 @@ Now check the specific wiki for each of the models to know how to configure them
 
 
 .. toctree::
-   :titlesonly:
+   :hidden:
 
    Configure-NEMO
    Configure-ECE4
 
+- `Configure NEMO <Configure-NEMO.html>`_
+- `Configure ECE4 <Configure-ECE4.html>`_
 
 Common configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -200,18 +202,7 @@ The fields are named as in the Extrae XML file, you can check its documentation 
 
 It is important that you replace the HOME variable with the path to the Extrae installation you will use.
 
-Issues with ECE4
-""""""""""""""""
 
-For ECE4 you need to use an Extrae custom installation with ``--disable-instrument-io`` and ``--disable-instrument-dynamic-memory`` flags in order for it to work. You can use the following installation paths that are compiled using these flags:
-
-* mn5: 
-
-  - For IntelMPI: ``/gpfs/scratch/bsc32/bsc032333/extrae-4.2.5/build-impi-2021.10.0/install``
-
-  - For OpenMPI: ``/gpfs/scratch/bsc32/bsc032333/extrae-4.2.5/build-ompi-4.1.5/install``
-
-* hpc2020 (OpenMPI): ``/lus/h2resw01/hpcperm/c3rs/extrae-4.2.4/install/hpcx-openmpi-2.9.0``
 
 Run the workflow
 ----------------
@@ -224,3 +215,56 @@ When you finish configuring the workflow, it's time to run it:
   
 .. warning::
   If you make any changes to the local configuration files, make sure that you rerun th synchronization job.
+
+.. _Knwon-Issues:
+Known Issues
+------------
+
+Paraver views
+~~~~~~~~~~~~~
+
+If you run the workflow from the BSC-ES HUB, you won't be able the generate the Paraver views because X11 windows do not work with the HUB and AutoSubmit. 
+
+To generate the images you can connect through ssh to the HPC with the X11 forwarding enabled:
+
+.. code-block:: bash
+
+  ssh -X user@hpc
+
+And run the following command from the experiment root directory:
+
+.. code-block:: bash
+
+  ./auto-performance-profiling/generate_paraver_images.sh -r . -c "component1 component2 ..."
+
+Where ``-r`` points to the experiment root dir and ``-c`` is a list of the components you want to generate the images for.
+
+.. warning::
+  The components ids must coincide with the ones in the AS config.
+
+See the usage output for other options:
+
+.. code-block:: bash
+
+  Usage:
+  ./generate_paraver_images.sh -c "components" [ -r root_dir -o -p "compare_cfgs" -d ]
+  -c|--components 'components'          names of the components
+  -r|--root-dir /root/dir               root relative/global path of the experiment
+  -p|--compare-cfgs 'compare cfgs'      paraver cfgs to generate a compare view with
+  -o|--overwrite                        overwrite images if already created
+  -d|--debug                            display debug info
+  -h|--help                             display this message
+
+
+ECE4 and Extrae
+~~~~~~~~~~~~~~~
+
+For ECE4 you need to use an Extrae custom installation with ``--disable-instrument-io`` and ``--disable-instrument-dynamic-memory`` flags in order for it to work. You can use the following installation paths that are compiled using these flags:
+
+* mn5: 
+
+  - For IntelMPI: ``/gpfs/scratch/bsc32/bsc032333/extrae-4.2.5/build-impi-2021.10.0/install``
+
+  - For OpenMPI: ``/gpfs/scratch/bsc32/bsc032333/extrae-4.2.5/build-ompi-4.1.5/install``
+
+* hpc2020 (OpenMPI): ``/lus/h2resw01/hpcperm/c3rs/extrae-4.2.4/install/hpcx-openmpi-2.9.0``
