@@ -49,16 +49,8 @@ The post processing of the performance metrics and the report generation is done
    pandas
    matplotlib
    numpy
-   sklearn
-   os
-   csv
-   json
-   re
-   shutil
+   scikit-learn
    argparse
-   hashlib
-   math
-
 
 LaTeX
 ^^^^^
