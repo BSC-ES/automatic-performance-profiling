@@ -21,12 +21,12 @@ osu_enabled=${osu_enabled,,}
 stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
 stream_enabled=${stream_enabled,,}
 
-source $env_sources
+source ${env_sources}
 set +u
 export PYTHONPATH=$PYTHONPATH:${project}
 set -u
 
-cd $run_root/hardware_benchmarks || exit
+cd ${run_root}/hardware_benchmarks || exit
 
 if ${osu_enabled}; then
     osu_tests=(%HW_BENCHMARKS.OSU.TESTS%)
@@ -35,8 +35,11 @@ if ${osu_enabled}; then
     for test in "${osu_tests[@]}"
     do
         test_name=${test##*/}
-        python3 ${cfg}/benchmarks/OSU/OSU_test_plots.py -i OSU_RUN/DATA/${test_name}* -o OSU_RUN/IMAGE/
+        input_files=(OSU_RUN/DATA/${test_name}*)
+        python3 ${cfg}/benchmarks/OSU/osu_test_plots.py -i "${input_files[@]}" -o OSU_RUN/IMAGE/
     done
 fi
   
-${stream_enabled} && python3 ${cfg}/benchmarks/STREAM/STREAM_data_parser.py -i STREAM_RUN --png --png-output-name STREAM_RUN/${model}.png
+if ${stream_enabled}; then
+    python3 ${cfg}/benchmarks/STREAM/stream_data_parser.py -i STREAM_RUN --png --png-output-name STREAM_RUN/${model}.png
+fi
