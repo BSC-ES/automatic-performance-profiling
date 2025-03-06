@@ -40,6 +40,38 @@ Other machines
 
 If Autosubmit is not installed in the machine you are planning to run the workflow you have to install it, you can check its `installation guide <https://autosubmit.readthedocs.io/en/master/installation/index.html>`_.
 
+Ecaccess
+~~~~~~~~
+
+.. important::
+  Ecaccess is required to run the workflow in HPC2020.
+
+Installation
+^^^^^^^^^^^^
+
+BSC-ES HUB
+``````````
+
+In the hub you can load the following module:
+
+.. code-block:: bash
+
+  module load ecaccess-webtoolkit/6.3.1
+
+Other machines
+``````````````
+
+Follow the install instructions from the `Ecaccess documentation <https://confluence.ecmwf.int/display/ECAC/Releases+-+Web+Toolkit>`_.
+
+Create the certificate
+^^^^^^^^^^^^^^^^^^^^^^
+
+Then run the following command to configure the credentials:
+
+.. code-block:: bash
+
+  ecaccess-certificate-create
+
 Create the experiment
 ---------------------
 
