@@ -33,7 +33,7 @@ In the hub you can load the following module:
 
 .. code-block:: bash
 
-  module load autosubmit/4.1.8-foss-2021b-Python-3.9.6
+  module load autosubmit/4.1.11-foss-2021b-Python-3.9.6
 
 Other machines
 ^^^^^^^^^^^^^^
