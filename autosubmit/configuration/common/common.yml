@@ -14,7 +14,8 @@ HW_BENCHMARKS:
   HW_BENCHMARKS_PARAMETERS_ROOT: '%PARAMETERS_ENV_CONFIG.CONFIG_FOLDER%/hardware_benchmarks'
   OSU:
     ENABLED: true
-    TESTS: "pt2pt/osu_multi_lat pt2pt/osu_mbw_mr collective/osu_allgather"
+    # Binaries names found under c/mpi/ OSU root directory
+    TESTS: "pt2pt/standard/osu_multi_lat pt2pt/standard/osu_mbw_mr collective/blocking/osu_allgather"
     NAMES:      [112, 224, 336]
     PROCESSORS: [112, 224, 336]
   STREAM:

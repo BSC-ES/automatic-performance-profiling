@@ -24,7 +24,7 @@ function run_osu() {
     for test in "${osu_tests[@]}"
     do
         test_name=${test##*/}
-        cp $compilation/osu-micro-benchmarks-5.6.3/mpi/${test} ${test_name}
+        cp $compilation/osu-micro-benchmarks/c/mpi/${test} ${test_name}
         srun -n ${n_cores} ./${test_name} > ${test_name}_${n_cores}.txt
     done
 

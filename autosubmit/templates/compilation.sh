@@ -131,10 +131,9 @@ function compile_hw()
     fi
 
     if ${osu_enabled}; then
-        cd ${compilation}/osu-micro-benchmarks-7.5-1 || exit
+        cd ${compilation}/osu-micro-benchmarks || exit
         ./configure CC="$(which mpicc)" CXX="$(which mpicxx)" --prefix="$(pwd)"
-        make install
-        make
+        make install -j
     fi
 }
 
