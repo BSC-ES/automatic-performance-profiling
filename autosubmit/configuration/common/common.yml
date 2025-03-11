@@ -27,7 +27,7 @@ HW_BENCHMARKS:
 TRACING:
   PARAVER:
     # Enables Paraver views in the report
-    ENABLED: false
+    ENABLED: true
 
     # Paraver cfg, for all PV views see cfg/trace_analysis/paraver_configurations
     CFGS: MPI_call p2p_size
