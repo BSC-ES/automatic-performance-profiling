@@ -96,9 +96,9 @@ function clone_hw_benchmarks()
     stream_enabled=${stream_enabled,,}
 
     if ${osu_enabled}; then
-        wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.6.3.tar.gz
-        tar -xvf osu-micro-benchmarks-5.6.3.tar.gz
-        rm osu-micro-benchmarks-5.6.3.tar.gz
+        wget -O osu-micro-benchmarks.tar.gz http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5-1.tar.gz
+        tar -xvf osu-micro-benchmarks.tar.gz --one-top-level --strip-components=1
+        rm osu-micro-benchmarks.tar.gz
     fi
 
     if ${stream_enabled} && [ ! -d STREAM ]; then

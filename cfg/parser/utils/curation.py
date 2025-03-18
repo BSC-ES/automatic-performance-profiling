@@ -1,4 +1,62 @@
-# Imports
+"""
+This module contains utility functions for curating and analyzing performance data from HPC
+experiments.
+
+Classes:
+    Log: A simple class to store and manage text logs.
+
+Functions:
+    go_to_dictionary_address(dictionary, address): Navigate nested dictionaries using an
+        address list.
+    function_curated_summary(experiment_data, filename): Generate a summary of function scalability.
+    dimemas_curated_summary(experiment_data): Create a summary of Dimemas simulation results.
+    coupling_info(experiment_data, coupling_folder): Generate coupling information summaries.
+    generate_most_expensive_function_summary_data(experiment_data, out_file_name, 
+        length_summary, component_to_report): Create summary of most time-consuming functions.
+    most_expensive_function_summary(experiment_data, out_file_name, length_summary):
+        Generate summaries for all components.
+    function_info_csv(experiment_data, csv_folder): Save function performance data as CSV files.
+    tracking_function_info(experiment_data): Generate tracking information for functions.
+    function_information_from_paramedir_outputs(experiment_data, component): Extract
+        function timing from Paraver outputs.
+    tracking(experiment_data, folder, threshold): Generate tracking information for
+        functions above threshold.
+    tracking_mpi_profile_per_function(experiment_data, function, component): Generate MPI
+        profile for specific function.
+    tracking_counters_per_function(experiment_data, function, component): Generate
+        hardware counter data for function.
+    generate_sypd_summary_data(experiment_data, component): Generate simulated years per
+        day summary.
+    simulated_years_per_day_summary(experiment_data, filename): Create SYPD summary with metrics.
+    generate_sypd_plot_data(experiment_data, component): Prepare data for SYPD plotting.
+    simulated_years_per_day_plot(experiment_data, filename): Create plots of SYPD metrics.
+    cases_component_data(experiment_data): Generate component-wise case information.
+    experiment_comparison(experiment1, experiment2): Compare metrics between two experiments.
+    multiexperiment_comparison(experiments, field1): Compare metrics across multiple
+        experiments.
+    generate_weakscaling_data(experiments, component_to_report): Generate weak scaling
+        analysis data.
+    weakscaling_compute(experiments, file_out): Compute weak scaling metrics.
+    find_common_cases_and_functions(experiments): Identify common cases and functions across
+        experiments.
+    extract_data_from_experiments(experiments): Extract performance data from experiments.
+    fit_step_time_to_model(experiments): Fit time step data to performance model.
+    my_model(individual, data): Custom performance model implementation.
+    fit_data_to_model(data, model): Fit data to specified model using optimization.
+    genetic_optimizer(data, model): Genetic algorithm implementation for model fitting.
+    custom_optimizer(data, model): Custom optimization algorithm for model fitting.
+    fit_functions_to_model(experiments, function_name): Fit function performance to model.
+    get_functions_data(experiments, function_name): Extract function-specific performance data.
+    oversimplified_memory_model(experiments): Simple memory performance model analysis.
+
+The module focuses on performance analysis of HPC applications, providing tools for:
+- Function performance analysis
+- MPI communication analysis
+- Scalability studies
+- Data visualization
+- Performance modeling
+"""
+
 import numpy as np
 
 
@@ -960,89 +1018,54 @@ def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
 
 def multiexperiment_comparison(experiments: list, field1: str) -> Log:
     """
-    Compare multiple experiments based on a specified performance metric.
+    Compare multiple experiment results based on a specified field.
 
-    This function analyzes and compares performance data across multiple experiments,
-    calculating speeds, speedups, and efficiency metrics relative to a base case.
+    This function analyzes multiple experiments and creates a comparison table of their
+    performance metrics for cases with matching processor counts.
 
     Args:
-        experiments (list): List of Experiment objects containing performance data to compare
-        field1 (str): Name of the performance metric field to compare across experiments typically 'simulated_years_per_day' or similar)
+        experiments (list): List of TimingInformation objects to compare
+        field1 (str): Name of the field to compare between experiments (e.g. 'sypd')
 
     Returns:
-        Log: Log object containing formatted comparison results including:
-            - Resource usage information
-            - Speed measurements for each experiment
-            - Performance comparisons across different cases
+        Log: A Log object containing the formatted comparison table with the following format:
+            - Header row with experiment names
+            - Rows for each case showing the field1 value for each experiment
 
     Notes:
-        The comparison assumes all experiments have compatible structures with:
-        - A defined base_case
-        - Consistent case naming across experiments
-        - Process count information ('nproc' field)
-        - Performance metrics in the specified field1
+        - Cases are considered matching if they use the same number of processors
     """
-    # List of process per node used in experiments
-    processes_per_node = [
-        int(exp.processes_per_node.replace("'", "")) for exp in experiments]
-
-    # Find cases with common number of node among the experiments
-
-    for i, experiment in enumerate(experiments):
-        if i == 0:
-            common_cases = set(experiment.cases)
-        else:
-            common_cases.intersection_update(experiment.cases)
-
-    cases_to_compare = list(common_cases)
-
-    base_case = experiments[0].base_case
     # Initialize results printout
     log = Log()
 
-    # Simulated Years per Day
-    base_case_speed = [experiment[base_case][field1]
-                       for experiment in experiments]
-
-    # Find index of slowest experiment
-    slowest_index = np.argmin(base_case_speed)
-
-    ratios = [bcs / base_case_speed[slowest_index] for bcs in base_case_speed]
-
-    # Print header
-    # log_text = "%s, %s, %s" % (field1, field2, field3)
-    # log.add(log_text)
-    log_text = "Resources:"
-    for index, experiment in enumerate(experiments):
-        # add info on layout of proc on nodes
-        log_text += ", %s (SYPD)" % (experiment.experiment_name)
-
-    log.add(log_text)
+    corresponding_cases = [ ["" for _ in experiments ] for _ in experiments[0].cases ]
+    for i, case in enumerate(experiments[0].cases):
+        current_nproc = int(experiments[0][case]["nproc"])
+        corresponding_cases[i][0] = case
+        for j, experiment in enumerate(experiments[1:]):
+            for case in experiment.cases:
+                if int(experiment[case]["nproc"]) == current_nproc:
+                    corresponding_cases[i][j + 1] = case
+                    break
 
     # Add data
-    log_text = base_case
-    for index, experiment in enumerate(experiments):
-        log_text += ",%5.2f " % base_case_speed[index]
+    header = "Case:"
+    for experiment in experiments:
+        header += f", {experiment.experiment_name} (SYPD)"
 
-    log.add(log_text)
+    log.add(header)
 
-    base_case_nprocs = int(experiments[0][base_case]["nproc"])
-    for case in cases_to_compare:
-        if case == base_case:
-            continue
-        case_nprocs = int(experiments[0][case]["nproc"])
-        resource_increase = case_nprocs / base_case_nprocs
-        exp_speeds = [experiment[case][field1] for experiment in experiments]
-        exp_speedups = [exp_speeds[i] / base_case_speed[i]
-                        for i in range(len(experiments))]
-        exp_efficiency = [es / resource_increase for es in exp_speedups]
+    for i, case in enumerate(experiments[0].cases):
+        case_row = case
+        for j, experiment in enumerate(experiments):
+            # If there is no corresponding case in the experiment in number of procs,
+            # set invalid value
+            exp_speed = -1
+            if corresponding_cases[i][j] != "":
+                exp_speed = float(experiment[corresponding_cases[i][j]][field1])
+            case_row += f", {exp_speed:.2f} "
+        log.add(case_row)
 
-        ratios = [es / exp_speeds[slowest_index] for es in exp_speeds]
-
-        log_text = case
-        for index, experiment in enumerate(experiments):
-            log_text += ", %5.2f " % exp_speeds[index]
-        log.add(log_text)
     return log
 
 

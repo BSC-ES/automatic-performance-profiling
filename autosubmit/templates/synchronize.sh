@@ -7,8 +7,8 @@
 ###################
 # AS variables
 ###################
-hpc_proj=%HPCROOTDIR%/automatic_performance_profile
-local_proj=%CURRENT_ROOTDIR%/proj/auto-performance-profiling
+hpc_proj=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
+local_proj=%CURRENT_ROOTDIR%/proj/%PROJECT.PROJECT_DESTINATION%
 hpc_type=%HPCTYPE%
 hpc_host=%HPCHOST%
 hpc_user=%HPCUSER%
@@ -47,14 +47,14 @@ function recursive_ecaccess_cp() {
 # Start script
 ###################
 
-ignored_dirs="${local_proj}/docs ${local_proj}/autosubmit" 
+ignored_dirs="${local_proj}/docs ${local_proj}/autosubmit ${local_proj}/.git" 
 
 if [ ${hpc_type} = "ecaccess" ]; then
     recursive_ecaccess_cp ${local_proj} ${hpc_proj}
 elif [ ${hpc_type} = "slurm" ]; then
     ignored_dirs_rsync=""
-    for ingored_dir in ${ignored_dirs}; do
-        ignored_dirs+=" --exclude ${ignored_dir}"
+    for ignored_dir in ${ignored_dirs}; do
+        ignored_dirs_rsync+=" --exclude ${ignored_dir}"
     done
-    rsync -avz ${ignored_dirs_rsync} ${local_proj} ${hpc_user}@${hpc_host}:${hpc_proj}
+    rsync -avz ${ignored_dirs_rsync} ${local_proj}/ ${hpc_user}@${hpc_host}:${hpc_proj}
 fi

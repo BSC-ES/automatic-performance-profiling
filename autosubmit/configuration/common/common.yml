@@ -14,7 +14,8 @@ HW_BENCHMARKS:
   HW_BENCHMARKS_PARAMETERS_ROOT: '%PARAMETERS_ENV_CONFIG.CONFIG_FOLDER%/hardware_benchmarks'
   OSU:
     ENABLED: true
-    TESTS: "pt2pt/osu_multi_lat pt2pt/osu_mbw_mr collective/osu_allgather"
+    # Binaries names found under c/mpi/ OSU root directory
+    TESTS: "pt2pt/standard/osu_multi_lat pt2pt/standard/osu_mbw_mr collective/blocking/osu_allgather"
     NAMES:      [112, 224, 336]
     PROCESSORS: [112, 224, 336]
   STREAM:
@@ -26,7 +27,7 @@ HW_BENCHMARKS:
 TRACING:
   PARAVER:
     # Enables Paraver views in the report
-    ENABLED: false
+    ENABLED: true
 
     # Paraver cfg, for all PV views see cfg/trace_analysis/paraver_configurations
     CFGS: MPI_call p2p_size
@@ -63,10 +64,10 @@ TRACING:
 
 # DO NOT MODIFY FROM THIS LINE
 COMMON:
-  GIT_REPO: automatic_performance_profile
+  GIT_REPO: "%PROJECT.PROJECT_DESTINATION%"
   REFRESH_GIT_REPO: "false"
   CONFIGURATION: BENCH
-  EXP_ROOT: "%CURRENT_ROOTDIR%"
+  EXP_ROOT: "%HPCROOTDIR%"
 COMMON_PATH_LOCATIONS:
   PROJECT_ROOT: "%COMMON.EXP_ROOT%/%COMMON.GIT_REPO%"
   INIDATA_ROOT: "%CURRENT_ROOTDIR%/inidata"

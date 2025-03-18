@@ -19,13 +19,12 @@ member="tracing"
 
 # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
 . ${cfg}/utils/bash/utils.sh
+. ${env_sources}
 
 # Load array variables
 tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
 components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
-
-source ${env_sources}
 
 #####################################################################################################################
 # Brief: Create configuration string for paraver to ignore the non component processes
@@ -138,8 +137,7 @@ run_paraver()
                     fi
                     # Remove other-component tasks from the paraver view
                     sed "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${og_paraver_cfg_path} > ${paraver_cfg_path}
-
-                    if wxparaver -i ${trace} ${paraver_cfg_path} &> /dev/null; then
+                    if xvfb-run wxparaver -i ${trace} ${paraver_cfg_path} &> /dev/null; then
                         create_paraver_legend ${paraver_cfg_path} ${trace}
                     fi
                 done
@@ -151,6 +149,11 @@ run_paraver()
 ###################
 # Start script
 ###################
+
+if ! which xvfb-run &> /dev/null; then
+    echo "[ERROR] xvfb-run not found and it is required to run Paraver" >&2
+    exit 1
+fi
 
 paraver_enabled="%TRACING.PARAVER.ENABLED%"
 paraver_enabled=${paraver_enabled,,}
