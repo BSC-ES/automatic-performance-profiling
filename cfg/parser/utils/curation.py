@@ -504,7 +504,7 @@ def tracking_counters_per_function(experiment_data, function, component):
     log = Log()
     base_case = experiment_data.base_case
     cases = experiment_data.cases
-    address = (base_case, "components", "nemo", "counters")
+    address = (base_case, "components", component, "counters")
     counters_dictionary = go_to_dictionary_address(experiment_data, address)
     available_counters = list(counters_dictionary.keys())
     available_counters = ["Instructions", "Cycles", "IPC", "Time"]
