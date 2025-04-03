@@ -54,7 +54,7 @@ def parse_paramedir_filename(filename):
     :return: number of cores, information type
     """
     # The pattern of the paramedir filenames goes as follows: CORES_PARAMEDIRCFG.pm
-    pattern = "([a-z]+)-([0-9a-zA-Z_]+)-([0-9a-zA-Z_]+).pm"
+    pattern = "([a-zA-Z0-9]+)-([0-9a-zA-Z_]+)-([0-9a-zA-Z_]+).pm"
     return parse_filename(filename, pattern)
 
 
@@ -277,7 +277,7 @@ class TimingInformation:
         self.components_cases = None
         self.cases_translation = {}
 
-        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files):
+        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files) and (not ifs_files) and (not test_info_files):
             raise AssertionError("No files provided")
 
         # Update values with the provided files

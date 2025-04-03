@@ -104,6 +104,18 @@ function clone_hw_benchmarks()
     if ${stream_enabled} && [ ! -d STREAM ]; then
         git clone https://github.com/jeffhammond/STREAM.git STREAM
     fi
+
+    return 0
+}
+
+function clone_toy-model()
+{
+    cd ${compilation} || exit
+    if [ ! -d toy-model_${branch} ]; then
+        git clone ${model_origin} toy-model_${branch} --branch ${branch}
+    fi
+
+    return 0
 }
 
 ###################

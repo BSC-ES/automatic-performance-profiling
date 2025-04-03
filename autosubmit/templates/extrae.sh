@@ -86,6 +86,7 @@ function create_trace_sh()
 export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
 source ${extrae_home}/etc/extrae.sh
 
+export EXTRAE_SKIP_AUTO_LIBRARY_INITIALIZE=1
 export LD_PRELOAD=${extrae_home}/lib/${extrae_lib}
 export LD_LIBRARY_PATH=${extrae_home}/lib/:\$LD_LIBRARY_PATH
 
@@ -328,6 +329,53 @@ function trace_ecearth4()
     report_test_cfg
 
     rm -rf set-* ./*.nc
+}
+
+function trace_toy-model()
+{
+    run_id="%CURRENT_NAME%"
+    run_dir=${run_root}/${test_name}/trace_${run_id}
+    mkdir -p ${run_dir}
+    rm -rf ${run_dir:?}/*
+    cd ${run_dir} || exit
+
+    ln -s ${compilation}/toy-model_${branch}/bin/${arch_name}_toy-model toy-model
+    cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+    cp ${cfg}/trace/extrae.xml.tmpl ${run_dir}
+    cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}
+
+    ./generate_function_list.sh ./toy-model extrae_functions.txt
+    create_trace_sh ${run_dir}
+    configure_extrae ${run_dir}
+
+    mkdir -p ${run_dir}/inidata
+    local nts="%TRACING.TRACE_STEPS%"
+    local comp0_size="%EXPERIMENT.COMP0_SIZE%"
+    local comp1_size="%EXPERIMENT.COMP1_SIZE%"
+    local comp2_size="%EXPERIMENT.COMP2_SIZE%"
+
+    local comp0_procs="%CURRENT_COMP0_PROCS%"
+    local comp1_procs="%CURRENT_COMP1_PROCS%"
+    local comp2_procs="%CURRENT_COMP2_PROCS%"
+
+    echo 3 > inidata/0
+    echo ${nts} >> inidata/0
+    echo 1 ${comp0_procs} >> inidata/0
+    echo 2 ${comp1_procs} >> inidata/0
+    echo 3 ${comp2_procs} >> inidata/0
+
+    echo ${comp0_size} > inidata/1
+    echo ${comp1_size} > inidata/2
+    echo ${comp2_size} > inidata/3
+
+    srun -n %NUMPROC% ./trace.sh ./toy-model
+
+    trace_components=("COMP1" "COMP2" "COMP3")
+    processors=($comp0_procs $comp1_procs $comp2_procs)
+
+    cut_trace trace_components processors "${model}.prv"
+
+    mv test_info.csv ${run_id}-test_info.csv
 }
 
 ###################

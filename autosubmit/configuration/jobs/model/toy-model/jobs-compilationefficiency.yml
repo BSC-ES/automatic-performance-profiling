@@ -1,0 +1,38 @@
+JOBS:
+  Scalability:
+    FILE: autosubmit/templates/scalability.sh
+    FOR:
+      TEST_NAME: "%COMPILATION_EFFICIENCY.TEST_NAMES%"
+      NAME: "%COMPILATION_EFFICIENCY.NAMES%"
+      PROCESSORS: "%COMPILATION_EFFICIENCY.PROCESSORS%"
+      COMP0_PROCS: "%COMPILATION_EFFICIENCY.COMP0_PROCS%"
+      COMP1_PROCS: "%COMPILATION_EFFICIENCY.COMP1_PROCS%"
+      COMP2_PROCS: "%COMPILATION_EFFICIENCY.COMP2_PROCS%"
+    DEPENDENCIES:
+      PREPARE_TESTS:
+        MEMBERS_FROM:
+          StrongScaling, WeakScaling, HardwareBenchmarks, Tracing:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  report_setup:
+    FILE: autosubmit/templates/report_setup.sh
+    DEPENDENCIES:
+      Scalability:
+        FOR:
+          TEST_NAME: "%COMPILATION_EFFICIENCY.TEST_NAMES%"
+          NAME: "%COMPILATION_EFFICIENCY.NAMES%"
+          PROCESSORS: "%COMPILATION_EFFICIENCY.PROCESSORS%"
+        MEMBERS_FROM:
+          StrongScaling, WeakScaling, HardwareBenchmarks, Tracing:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED

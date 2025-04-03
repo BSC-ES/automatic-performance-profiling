@@ -59,6 +59,13 @@ function ini_ecearth4()
     echo INI
 }
 
+
+function ini_toy-model()
+{
+    # TODO not necessary for now
+    echo INI
+}
+
 ###################
 # Start script
 ###################

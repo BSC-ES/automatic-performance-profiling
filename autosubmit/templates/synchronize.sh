@@ -7,8 +7,9 @@
 ###################
 # AS variables
 ###################
+root_dir=%CURRENT_ROOTDIR%
 hpc_proj=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-local_proj=%CURRENT_ROOTDIR%/proj/%PROJECT.PROJECT_DESTINATION%
+local_proj=${root_dir}/proj/%PROJECT.PROJECT_DESTINATION%
 hpc_type=%HPCTYPE%
 hpc_host=%HPCHOST%
 hpc_user=%HPCUSER%
@@ -47,7 +48,7 @@ function recursive_ecaccess_cp() {
 # Start script
 ###################
 
-ignored_dirs="${local_proj}/docs ${local_proj}/autosubmit ${local_proj}/.git" 
+ignored_dirs="${local_proj}/docs ${local_proj}/autosubmit ${local_proj}/.git"
 
 if [ ${hpc_type} = "ecaccess" ]; then
     recursive_ecaccess_cp ${local_proj} ${hpc_proj}

@@ -258,6 +258,67 @@ function run_ecearth4()
     report_test_cfg
 }
 
+function run_toy-model()
+{
+    run_id="%CURRENT_NAME%"
+    run_dir=${run_root}/${test_name}/scalability_${run_id}
+    mkdir -p ${run_dir}
+    rm -rf ${run_dir:?}/*
+    cd ${run_dir} || exit
+
+    ln -s ${compilation}/toy-model_${branch}/bin/${arch_name}_toy-model toy-model
+    mkdir -p ${run_dir}/inidata
+
+    local nts="%EXPERIMENT.TEST_STEPS%"
+    if [ $current_member = "WeakScaling" ]; then
+        local comp0_size="%CURRENT_COMP0_SIZE%"
+        local comp1_size="%CURRENT_COMP0_SIZE%"
+        local comp2_size="%CURRENT_COMP0_SIZE%"
+
+        local comp0_base_procs="%WEAKSCALING.COMP0_BASE_PROCS%"
+        local comp1_base_procs="%WEAKSCALING.COMP1_BASE_PROCS%"
+        local comp2_base_procs="%WEAKSCALING.COMP2_BASE_PROCS%"
+
+        local comp0_procs=$((comp0_base_procs*%CURRENT_COMP0_SIZE%/%WEAKSCALING.COMP0_BASE_SIZE%))
+        local comp1_procs=$((comp1_base_procs*%CURRENT_COMP1_SIZE%/%WEAKSCALING.COMP1_BASE_SIZE%))
+        local comp2_procs=$((comp2_base_procs*%CURRENT_COMP2_SIZE%/%WEAKSCALING.COMP2_BASE_SIZE%))
+
+        local model_procs=$((comp0_procs+comp1_procs+comp2_procs))
+    else
+        local comp0_size="%EXPERIMENT.COMP0_SIZE%"
+        local comp1_size="%EXPERIMENT.COMP1_SIZE%"
+        local comp2_size="%EXPERIMENT.COMP2_SIZE%"
+
+        local comp0_procs="%CURRENT_COMP0_PROCS%"
+        local comp1_procs="%CURRENT_COMP1_PROCS%"
+        local comp2_procs="%CURRENT_COMP2_PROCS%"
+
+        local model_procs="%NUMPROC%"
+        local queue="%HPCQUEUE%"
+        local proj="%CURRENT_PROJ%"
+    fi
+
+    echo 3 > inidata/0
+    echo ${nts} >> inidata/0
+    echo 1 ${comp0_procs} >> inidata/0
+    echo 2 ${comp1_procs} >> inidata/0
+    echo 3 ${comp2_procs} >> inidata/0
+
+    echo ${comp0_size} > inidata/1
+    echo ${comp1_size} > inidata/2
+    echo ${comp2_size} > inidata/3
+
+    if [ "${current_member}" = "WeakScaling" ]; then
+        local queue="%HPCQUEUE%"
+        local proj="%CURRENT_PROJ%"
+        srun -A ${proj} -q ${queue} -n ${model_procs} ./toy-model
+    else
+        srun -n ${model_procs} ./toy-model
+    fi
+
+    mv test_info.csv ${run_dir}/${run_id}-test_info.csv
+}
+
 ###################
 # Start script
 ###################

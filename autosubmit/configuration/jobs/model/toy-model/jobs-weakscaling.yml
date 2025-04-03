@@ -1,0 +1,39 @@
+JOBS:
+  Scalability:
+    FILE: autosubmit/templates/scalability.sh
+    FOR:
+      TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
+      NAME: "%WEAKSCALING.NAMES%"
+      PROCESSORS: "%WEAKSCALING.PROCESSORS%"
+      COMP0_SIZE: "%WEAKSCALING.COMP0_SIZE%"
+      COMP1_SIZE: "%WEAKSCALING.COMP1_SIZE%"
+      COMP2_SIZE: "%WEAKSCALING.COMP2_SIZE%"
+    DEPENDENCIES:
+      PREPARE_TESTS:
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks, Tracing:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  report_setup:
+    FILE: autosubmit/templates/report_setup.sh
+    DEPENDENCIES:
+      Scalability:
+        FOR:
+          TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
+          NAME: "%WEAKSCALING.NAMES%"
+          PROCESSORS: "%WEAKSCALING.PROCESSORS%"
+        MEMBERS_FROM:
+          StrongScaling, CompilationEfficiency, HardwareBenchmarks, Tracing:
+            DATES_TO: None
+            MEMBERS_TO: None
+            CHUNKS_TO: None
+    RUNNING: member
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    NOTIFY_ON: FAILED

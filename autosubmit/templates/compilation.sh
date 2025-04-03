@@ -112,6 +112,14 @@ function compile_ecearth4()
     se user-settings.yml ../platforms/${arch_name}.yml compile-all.yml
 }
 
+function compile_toy-model()
+{
+    model_sources=${compilation}/${model}_${branch}
+    cd ${model_sources} || exit
+    cp ${project}/cfg/arch/${platform}/toy-model/${arch_name}.arch ${model_sources}/arch/
+    make ARCH=${arch_name} TARGET=${arch_name}_toy-model -j
+}
+
 
 #####################################################################################################################
 # Brief: Compiles STREAM and OSU HW benchmarks

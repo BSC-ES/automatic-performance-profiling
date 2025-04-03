@@ -14,7 +14,7 @@ for binary in "$@"; do
     if [ $i -eq $# ]; then
         continue
     fi
-    nm $binary | grep -i " T " | grep -w -f $functions_list | awk '{print $3" # "$1}' >> extrae_functions_for_xml.txt
+    nm -C $binary | grep -f $functions_list | awk '{print $3" # "$1}' >> extrae_functions_for_xml.txt
     i=$((i+1))
 done
 
