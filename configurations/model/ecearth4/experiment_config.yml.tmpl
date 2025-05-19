@@ -12,6 +12,8 @@
           RRULE:FREQ=FREQUENCY;UNTIL=END_DATE;INTERVAL=INTERVAL_VAL
         nlegs: 1
 
+      run_from_scratch: true
+
       nemo:
         start_from:
           # Chose ONE of the options below:
@@ -32,8 +34,96 @@
           restart:
             dir:
 
+      # Configure CMIP, oifs and nemo forcings
+      forcing:
+      
+        # Configure CMIP forcings
+        cmip:
+          #   sets NCMIPFIXYR in the NAMECECMIP6 namelist
+          #   default: -1
+          # fixyear: -1
+
+        # Configure oifs forcings (e.g. orbital forcing)
+        oifs:
+          orbital:
+            #   sets ORBMODE in the NAMORB namelists
+            #   default: variable_year
+            # mode: variable_year
+            #   sets ORBIY in the NAMORB namelists
+            #   default: experiment.schedule.start.year
+            # year:
+
+        # Configure nemo forcing
+        nemo:
+          ssr:
+            # Surface restoring will be activated when `data` is not empty
+            data:  # e.g. 's5' refers to ORAS5 dataset available at HPC2020 and MN5
+            # Coefficients for sea surface temperature and salinity restoring. Set to 0 if not a negative number
+            sstr_coeff:  # when a negative float, e.g. -40.0,   activate SST restoring: nn_sstr=1 with rn_dqdt={{sstr_coeff}}.
+            sssr_coeff:  # when a negative float, e.g. -166.67, activate SSS restoring: nn_sssr=2 with rn_deds={{sssr_coeff}}.
+            # Conventions for target data location, filenames, and variables within them. 
+            # If empty/undefined, default conventions are used. See scripts/runtime/scriptlib/config-nemo.yml
+            conventions: # e.g. !noparse "{{model_config.nemo.all_forcings.default_srr_conventions}}"
+          # PISCES forcings
+          co2: # if a number -- constant pCO2; if a string -- file with pCO2 data; if empty -- read atcco2.txt
+
+        # Atmospheric forcing for nemo-standalone simulations
+        nemo_only:
+          # Select one of the available forcing sets or define your own. Available sets are:
+          # * CoreII_interannual (provided in the official inidata);
+          # * ERA5_HRES (available on HPC2020 and MN5)
+          # * JRA55_1.5 (available on MN5)
+          # Conventions for location and names of atmospheric forcing files and variables within them
+          # are defined in scripts/runtime/scriptlib/config-nemo-only.yml and a matching namelist template
+          atmospheric: !noparse "{{model_config.nemo.all_forcings.CoreII_interannual}}"
+          fixed_year: true  # true for a climatology, false for yearly varying or integer year for fixed-year forcing (e.g. 2000)
+
       monitoring:
         activate: false
+        reference_vals:
+          # Provide reference values to be shown with the time series
+          # Example values are for present day climate, change for pre-industrial
+          # Comment any line (or set its key value=None) to disable the reference value feature
+          # Optional key "label" describes the origin of the reference value
+          tas: {"value": 14.4, "label": "ERA5 (1991-2020)"}
+          pr:  {"value": 2.93, "label": "ERA5 (1991-2020)"}
+          psl: {"value": 101143, "label": "ERA5 (1991-2020)"}
+          tos: {"value": 18.65, "label": "HadISST (1991-2020)"}
+      
+      # Configure ECmean4 diagnostics for model tuning and evaluation
+      # 'global_mean' activates the Global Mean diagnostics https://ecmean4.readthedocs.io/en/latest/globalmean.html
+      # 'performance_indices' activates Reicher and Kim (2008) Performance Indices https://ecmean4.readthedocs.io/en/latest/performanceindices.html
+      # Further configuration is available in templates/ecmean/config-ecmean.j2
+      # "Frequency" is the number of years between each ECmean4 run
+      # "Year1" and "Year2" are the years to be used in the ECmean4 run
+      # Options are not conflicting, and if possible can be used together
+      # If None is defined, the default is to run on the entire experiment period
+      ecmean:
+        activate: false
+        diags: ['global_mean', 'performance_indices']
+        frequency: 
+        year1: 
+        year2:
+
+    model_config:
+      components: [oifs, nemo, rnfm, xios, oasis]
+
+      oifs:
+        grid: !noparse "{{model_config.oifs.all_grids.TL255L91}}"
+        nudging: # false by default
+        nudging_path: # e.g. !noparse "{{experiment.repo_dir}}/nudging/atmos # path to the nudging files
+
+      nemo:
+        grid: !noparse "{{model_config.nemo.all_grids.eORCA1L75}}"
+        pisces: false  # false by default
+        # Inert tracers are activated via `inerttrc` list, e.g. inerttrc: [age, c14]
+        inerttrc: # valid tracers are [age, cfc11, cfc12, sf6, c14], others are filtered out
+
+      oasis:
+        # OASIS debug options, refer to Section 3.2 (p. 43-44) of sources/oasis3-mct-5.2/oasis3-mct-5/doc/oasis3mct_UserGuide.pdf
+        debug_mode: 0  # 0 by default, accepted values: 0, 1, 2, 5, 10, 12, 15, 20, 30. Greater means larger verbosity.
+        time_statistics: 0  # 0 by default, accepted values: 0, 1, 2, 3. Greater means more statistics. 
+        load_balancing: 0  # 0 by default, accepted values: 0, 1. 1 activate load balancing evaluation
 
     model_config:
       components: [oifs, xios, nemo, rnfm, oasis]
@@ -41,6 +131,7 @@
         grid: !noparse "{{model_config.oifs.all_grids.OIFS_RESOLUTION}}"
       nemo:
         grid: !noparse "{{model_config.nemo.all_grids.NEMO_RESOLUTION}}"
+
     job:
       launch:
         method: slurm-shell

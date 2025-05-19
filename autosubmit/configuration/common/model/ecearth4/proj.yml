@@ -5,7 +5,7 @@ MODEL:
   COMPONENTS: [oifs, xios, nemo, rnfm, oasis]
   ORIGIN: https://git.smhi.se/ec-earth/ecearth4.git
   # Project branch/commit
-  BRANCH: 6e8aa1734df63817482b18863bae82ae7b8dbf10
+  BRANCH: 7eded8868b263ffeda38f3bac5f63b06c2526295
 
   # Arch files prefixes to compile
   # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
@@ -15,12 +15,12 @@ MODEL:
 
 # EXPERIMENT CONFIG
 EXPERIMENT:
-  RESOLUTION: "TCO95L91+eORCA1L75"
-  OIFS_RESOLUTION: "TCO95L91"
+  RESOLUTION: "TL255L91+eORCA1L75"
+  OIFS_RESOLUTION: "TL255L91"
   NEMO_RESOLUTION: "eORCA1L75"
 
-  START_DATE: 19900101
-  END_DATE: 19900102
+  START_DATE: 20241020
+  END_DATE:   20241021
   FREQ: DAILY
   INTERVAL: 1
   TEST_STEPS: 32
@@ -28,12 +28,12 @@ EXPERIMENT:
 
   # Inidata path for mn5:     /gpfs/projects/bsc32/models/ecearth/ece4-trunk/inidata
   # Inidata path for hpc2020: /hpcperm/c3et/models/ecearth/v4-trunk
-  INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-trunk/inidata
+  INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-oifs48/inidata
 
 # TRACE CONFIG
 TRACING:
-  START_DATE: 19900101
-  END_DATE: 19900102
+  START_DATE: 20241020
+  END_DATE:   20241021
   FREQ: DAILY
   INTERVAL: 1
   TIMESTEP_ZERO: FALSE
@@ -51,7 +51,7 @@ TRACING:
   OIFS_PROCS: [55,      111    , 167    ]
   NEMO_PROCS: [55,      111    , 167    ]
   XIOS_PROCS: [1,       1      , 1      ]
-  THREADS:    [1,       1      , 1      ]
+  THREADS:    [2,       2      , 2      ]
   USE_OMP_THREADS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
@@ -85,15 +85,15 @@ WEAKSCALING:
   NEMO_BASE_PROCS: 111
   OIFS_BASE_PROCS: 333
   NEMO_BASE_RESOLUTION: eORCA1L75
-  OIFS_BASE_RESOLUTION: TCO95L91
+  OIFS_BASE_RESOLUTION: TL255L91
 
   # Processors must be set to 1, since processors count is computed during runtime
   # based on the base processors and resolution
-  TEST_NAMES:      [ws_1_1,    ws_1_2,    ws_1_3,    ws_1_4   ]
+  TEST_NAMES:      [ws_1,      ws_1,      ws_1,      ws_1     ]
   NAMES:           [ws_1_1,    ws_1_2,    ws_1_3,    ws_1_4   ]
   PROCESSORS:      [1,         1,         1,         1,       ]
   XIOS_PROCS:      [1,         1,         1,         1,       ]
-  OIFS_RESOLUTION: [TCO95L91,  TCO95L91,  TCO95L91,  TCO95L91 ]
+  OIFS_RESOLUTION: [TL255L91,  TL255L91,  TL255L91,  TL255L91 ]
   NEMO_RESOLUTION: [eORCA1L75, eORCA1L75, eORCA1L75, eORCA1L75]
 
   TEST_CONFIG: BENCH

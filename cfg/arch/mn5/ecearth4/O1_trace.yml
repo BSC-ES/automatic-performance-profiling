@@ -15,35 +15,36 @@
 - hpc.module.load:
     names:
     - intel/2023.2.0
-    - mkl/2023.2.0
     - openmpi/4.1.5
-    - pnetcdf/1.12.3-openmpi
     - hdf5/1.14.1-2-openmpi
-    - netcdf/2023-06-14-openmpi
-    - libaec/1.1.3
-    - eccodes/2.34.1-ompi
-    - ucx/1.17.0
-    - miniconda/24.1.2
-    - extrae/4.2.1
+    - pnetcdf/1.12.3-openmpi
+    - fftw/3.3.10-openmpi
+    - netcdf/c-4.9.2_fortran-4.6.1_cxx4-4.3.1_hdf5-1.14.1-2_pnetcdf-1.12.3-openmpi
+    - cmake/3.29.2
+    - aec/1.1.2
+    - mkl/2024.1
+    - ucx/1.16.0
+    - extrae/4.2.4
 
 - base.getenv:
     LD_LIBRARY_PATH: LD_LIBRARY_PATH
-    ECCODES_DIR: ECCODES_ROOT
     MKLROOT: MKLROOT
     HDF5_DIR: HDF5_DIR 
-    NETCDF_DIR: NETCDF_DIR
+    NETCDF_ROOT: NETCDF_ROOT
 
 - base.setenv:
     NETCDF4_PARALLEL_DIR: /gpfs/apps/MN5/GPP/PNETCDF/1.12.3/INTEL/OPENMPI/
     OASIS_BUILD_PATH: "{{ experiment.src_dir }}/oasis3-mct-5.2/arch_ecearth"
     LD_LIBRARY_PATH:  "{{
       experiment.src_dir + '/oasis3-mct-5.2/arch_ecearth/lib'
-      + ':/gpfs/apps/MN5/GPP/PNETCDF/1.12.3/INTEL/OPENMPI/lib'
-      + ':' + ECCODES_DIR + '/lib'
-      + ':' + HDF5_DIR + '/lib'
-      + ':' + NETCDF_DIR + '/lib'
+      + (':' + experiment.src_dir + '/oifs-48r1/build/lib')
+      + ':' + NETCDF_ROOT + '/lib'
       + (':' + LD_LIBRARY_PATH if LD_LIBRARY_PATH else '')
     }}"
+
+    TBBMALLOC_DIR: "/apps/GPP/ONEAPI/2023.2.0/tbb/2021.10.0/lib/intel64/gcc4.8"
+    TBBROOT: "/apps/GPP/ONEAPI/2023.2.0/tbb/2021.10.0/"
+    MKL_CBWR: "AUTO,STRICT"
 
 - base.context:
     platform:
@@ -65,6 +66,9 @@
           compiler: mpicc
           flags: -traceback -g -O1 -xHost -finstrument-functions
           preprocessor: cpp
+
+        cxx:
+          compiler: mpicxx
 
         linker:
           command: !noparse "{{ build.lang.fortran.compiler }}"
@@ -88,7 +92,7 @@
           samples_path: "/MEMFS/samples:/MEMFS/ifs_samples/grib1_mlgrib2:/apps/GPP/ECCODES/2.34.1/INTEL/OPENMPI/share/eccodes/ifs_samples/grib1_mlgrib2"
 
         netcdf:
-          base_dir: "{{ NETCDF_DIR }}"
+          base_dir: "{{ NETCDF_ROOT }}"
           inc_dir: !noparse "{{ build.deps.netcdf.base_dir }}/include"
           mod_dir: !noparse "{{ build.deps.netcdf.base_dir }}/include"
           lib_dir: !noparse "{{ build.deps.netcdf.base_dir }}/lib"
