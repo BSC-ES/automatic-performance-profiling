@@ -81,9 +81,6 @@ function compile_ecearth4()
 
     set +u
 
-    # Fix for autosubmit logs
-    sed -i "s/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'/dst: 'log\/{{\"%03d\" % experiment.schedule.leg.num}}'\n    ignore_not_found: true/" ${model_sources}/scripts/runtime/scriptlib/main.yml
-
     # Update number of tasks
     cp ${project}/configurations/model/${model}/user-settings-${current_arch,,}.yml ${model_sources}/scripts/build/user-settings.yml
     sed -i "s/JOBS/${ntasks}/" ${model_sources}/scripts/build/user-settings.yml
@@ -99,8 +96,11 @@ function compile_ecearth4()
     # Enable lucia logs
     sed -i "s/nlogprt.*/nlogprt: \"1 0 1\"/" ${arch_dir}/scripts/runtime/templates/oasis/namcouple.yml
 
+    printf "$(cat ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake)\nstring(CONCAT IFS_Fortran_FLAGS \"\${IFS_Fortran_FLAGS} -finstrument-functions -g\")" > ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake
+    printf "$(cat ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake)\nstring(CONCAT ECBUILD_SHARED_LINKER_FLAGS \"\${ECBUILD_SHARED_LINKER_FLAGS} -rdynamic\")" > ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake
+    
     # Add magiccut sentinel function
-    cd ${arch_dir}/sources/oifs-43r3v2 || exit
+    cd ${arch_dir}/sources/oifs-48r1 || exit
     git apply ${cfg}/trace/model/${model}/sentinel.diff
     
     cd ${arch_dir}/scripts/build || exit
@@ -109,7 +109,7 @@ function compile_ecearth4()
     sed -i "s/INIDATA/${sed_inidata}/" ../platforms/${arch_name}.yml
 
     # Compile using SE
-    se user-settings.yml ../platforms/${arch_name}.yml compile-all.yml
+    se user-settings.yml ../platforms/${arch_name}.yml compile-components.yml
 }
 
 

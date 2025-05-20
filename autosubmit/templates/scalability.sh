@@ -151,8 +151,9 @@ function get_vars_ecearth4()
 #####################################################################################################################
 function run_ecearth4()
 {
-    # Get AS variables
+    . ${cfg}/utils/${model}/se.sh
 
+    # Get AS variables
     get_vars_ecearth4
 
     local start_date="%EXPERIMENT.START_DATE%"
@@ -160,23 +161,18 @@ function run_ecearth4()
     local freq="%EXPERIMENT.FREQ%"
     local interval="%EXPERIMENT.INTERVAL%"
 
-    . ${project}/cfg/utils/${model}/se.sh
-
-    local model_sources=${compilation}/${model}_${branch}
+    # Remove and create the run directory
     local test_dir=${run_root}/${test_name}
     local run_id="%CURRENT_NAME%"
     local run_dir=${test_dir}/scalability_${run_id}
     local src_dir=${compilation}/${arch_name}/sources/
 
-    # Remove all run folder content just in case
     mkdir -p ${run_dir}
-    rm -rf ${run_dir}/*
+    rm -rf ${run_dir:?}/*
 
     cd ${compilation}/${arch_name}/scripts/runtime || exit
 
-
     # Update all configuration according to AS variables
-    
     local config_file=config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
@@ -216,18 +212,15 @@ function run_ecearth4()
     # Disable DR HOOK as it may cause issues
     sed -i "s/DR_HOOK=1/DR_HOOK=0/"              templates/launch/run-srun-multiprog.sh.j2
 
-
     # Activate the SE enviroment and run
-
     set +u
     se_env_${platform,,} trunk
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
 
-
     # Post process model output
-
     module purge
     source ${env_sources}
+
     # Temporary issue regarding xarray module in mn5
     if [ "${platform,,}" = "mn5" ]; then
         source /gpfs/home/bsc/bsc032333/.venv/bin/activate
@@ -239,9 +232,9 @@ function run_ecearth4()
     lucia_ts=$(cat time.step)
     lucia_ts=$((lucia_ts-1))
 
-    while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} && [ $lucia_ts -gt 0 ]; do
-        lucia_ts=$((lucia_ts-1))
-    done
+        while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} --generate_plots true && [ $lucia_ts -gt 0 ]; do
+            lucia_ts=$((lucia_ts-1))
+        done
 
     if ${coupling_enabled}; then
         coupling_dir=${test_dir}/coupling/${run_id}

@@ -44,6 +44,9 @@ function configure_extrae()
     cp ${cfg}/trace/extrae.xml.tmpl ${extrae_xml}
 
     local sed_extrae_home=%EXTRAE.HOME%
+    if ! [ -d ${sed_extrae_home} ]; then
+        sed_extrae_home=$EXTRAE_HOME
+    fi
     sed_extrae_home=${sed_extrae_home//\//\\\/}
     local sed_user_functions_list=%EXTRAE.USER_FUNCTIONS.LIST%
     sed_user_functions_list=${sed_user_functions_list//\//\\\/}
@@ -87,6 +90,7 @@ function create_trace_sh()
 
 export PYTHONPATH=${extrae_home}/libexec/:\$PYTHONPATH
 export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
+export EXTRAE_SKIP_AUTO_LIBRARY_INITIALIZE=1
 source ${extrae_home}/etc/extrae.sh
 
 export EXTRAE_SKIP_AUTO_LIBRARY_INITIALIZE=1
@@ -242,6 +246,25 @@ function trace_nemo()
     rm -rf set-* ./*.nc
 }
 
+function get_vars_ecearth4()
+{
+    # If it is Weak Scaling that is being run compute the current procs based on the
+    # base procs and resolution
+    oifs_procs="%CURRENT_OIFS_PROCS%"
+    oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
+    nemo_procs="%CURRENT_NEMO_PROCS%"
+    nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
+    use_omp_threads="%USE_OMP_THREADS%"
+    oifs_omp_threads=1
+    if [ "${use_omp_threads^^}" == "TRUE" ]; then
+        oifs_omp_threads=%CURRENT_THREADS%
+    fi
+    
+    xios_procs="%CURRENT_XIOS_PROCS%"
+
+    rnfm_procs=1
+}
+
 #####################################################################################################################
 # Brief: Traces ECE4 execution using Extrae
 # Global:
@@ -252,56 +275,53 @@ function trace_ecearth4()
 {
     . ${cfg}/utils/${model}/se.sh
 
-    local model_sources=${compilation}/${model}_${branch}
-    local oifs_procs="%CURRENT_OIFS_PROCS%"
-    local nemo_procs="%CURRENT_NEMO_PROCS%"
-    local xios_procs="%CURRENT_XIOS_PROCS%"
-    local oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
-    local nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
-    local use_omp_threads="%USE_OMP_THREADS%"
-    local oifs_omp_threads=1
-    if [ "${use_omp_threads^^}" == "TRUE" ]; then
-        oifs_omp_threads=%CURRENT_THREADS%
-    fi
-
-    local run_id="%CURRENT_NAME%"
-    local run_dir=${run_root}/${test_name}/trace_${run_id}
-    local src_dir=${compilation}/${arch_name}/sources/
-    mkdir -p ${run_dir}
-    # Remove all run folder content just in case it was already created
-    rm -rf ${run_dir:?}/*
-
-    configure_extrae ${run_dir}
-
-    cp ${cfg}/trace/generate_function_list.sh ${run_dir}
-    chmod +x ${run_dir}/generate_function_list.sh
-
-    cd ${compilation}/${arch_name}/scripts/runtime || exit
-
-    create_trace_sh ${run_dir}
-
-    # Update all variable according to AS config
-    local config_file=trace-${test}-${run_id}.yml
-    cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
-
-    local sed_run_dir=${run_dir//\//\\\/}
-    local sed_src_dir=${src_dir//\//\\\/}
-    local ecearth_root=${compilation}/${arch_name}
-    local sed_ecearth_root=${ecearth_root//\//\\\/}
+    # Get AS variables
+    get_vars_ecearth4
 
     local start_date="%TRACING.START_DATE%"
     local end_date="%TRACING.END_DATE%"
     local freq="%TRACING.FREQ%"
     local interval="%TRACING.INTERVAL%"
 
+    # Remove and create the run directory
+    local test_dir=${run_root}/${test_name}
+    local run_id="%CURRENT_NAME%"
+    local run_dir=${test_dir}/trace_${run_id}
+    local src_dir=${compilation}/${arch_name}/sources/
+
+    mkdir -p ${run_dir}
+    rm -rf ${run_dir:?}/*
+
+    cd ${compilation}/${arch_name}/scripts/runtime || exit
+
+    # Create and copy Extrae necessary files
+    create_trace_sh ${run_dir}
+
+    configure_extrae ${run_dir}
+
+    cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+    chmod +x ${run_dir}/generate_function_list.sh
+
+    local config_file=trace-${test}-${run_id}.yml
+    cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
+
+
+    # Update all configuration according to AS variables
+    local actual_run_dir=${run_dir}/run
+    local sed_run_dir=${actual_run_dir//\//\\\/}
+    local sed_src_dir=${src_dir//\//\\\/}
+    local ecearth_root=${compilation}/${arch_name}
+    local sed_ecearth_root=${ecearth_root//\//\\\/}
+
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
-    sed -i "s/OIFS_PROCS/${oifs_procs}/"             ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
-    sed -i "s/OIFS_PPN/${oifs_procs}/"               ${config_file}
-    sed -i "s/NEMO_PROCS/${nemo_procs}/"             ${config_file}
-    sed -i "s/NEMO_PPN/${nemo_procs}/"               ${config_file}
+    for component in "${report_components[@]}"; do
+        component_procs=${component}_procs
+        sed -i "s/${component^^}_PPN/${!component_procs}/"   ${config_file}
+        sed -i "s/${component^^}_PROCS/${!component_procs}/" ${config_file}
+    done
     sed -i "s/XIOS_PROCS/${xios_procs}/"             ${config_file}
     sed -i "s/XIOS_PPN/${xios_procs}/"               ${config_file}
     sed -i "s/FREQUENCY/${freq}/"                    ${config_file}
@@ -311,10 +331,8 @@ function trace_ecearth4()
     sed -i "s/OIFS_RESOLUTION/${oifs_resolution}/"   ${config_file}
     sed -i "s/NEMO_RESOLUTION/${nemo_resolution}/"   ${config_file}
 
-    # Change launch script
+    # Change launch script to the trace script
     sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
-
-    sed -i "s/RRULE:FREQ=MONTHLY;UNTIL=19900301;INTERVAL=1/RRULE:FREQ=DAILY;UNTIL=19900102;INTERVAL=1/" ${config_file}
 
     # Copy user functions list
     fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
@@ -330,11 +348,13 @@ function trace_ecearth4()
     se_env_${platform,,} trunk
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
 
-    # Reload modules to exit from SE
+    # Post process trace
     module purge
     source ${env_sources}
 
     cd ${run_dir} || exit
+
+    mv run/*prv run/*pcf run/*row .
 
     actual_nemo_procs=$(grep "exceeds the maximum number of ocean subdomains" log/001/ocean.output | grep -oE "[0-9]+" || echo ${nemo_procs})
 
