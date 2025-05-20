@@ -60,7 +60,7 @@ def parse_filename(filename, pattern):
 
 def parse_paramedir_filename(filename):
     # The pattern of the paramedir filenames goes as follows: CORES_PARAMEDIRCFG.pm
-    pattern = "([a-z]+)-([0-9a-zA-Z_]+)-([0-9a-zA-Z_]+).pm"
+    pattern = "([A-Z0-9a-z]+)-([0-9a-zA-Z_]+)-([0-9a-zA-Z_]+).pm"
     return parse_filename(filename, pattern)
 
 
@@ -433,18 +433,21 @@ class TimingInformation:
         of processors.
         """
         import csv
+
         for test_info_fn in test_info_files:
             test_dict = {}
             pattern = "([0-9a-zA-Z_]+)-([0-9a-zA-Z_]*test_info).csv"
             run_id, _ = parse_filename(test_info_fn, pattern)
 
             test_dict[run_id] = {"components": {}}
-            with open(test_info_fn, mode='r') as test_info_f:
+            with open(test_info_fn, mode="r", encoding="utf8") as test_info_f:
                 reader = csv.DictReader(test_info_f)
                 for dict_line in reader:
                     component_name = dict_line["component"]
                     dict_line.pop("component")
-                    if component_name == "model":
+                    if component_name == "experiment":
+                        test_dict.update(dict_line)
+                    elif component_name == "model":
                         test_dict[run_id].update(dict_line)
                     else:
                         if not component_name in test_dict[run_id]["components"]:

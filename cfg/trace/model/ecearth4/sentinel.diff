@@ -1,22 +1,21 @@
-diff --git a/src/ifs/control/cnt4.F90 b/src/ifs/control/cnt4.F90
-index 1c7698f..b718430 100644
---- a/src/ifs/control/cnt4.F90
-+++ b/src/ifs/control/cnt4.F90
-@@ -524,6 +524,9 @@ ELSE
- ENDIF
+diff --git a/ifs-source/arpifs/control/cnt4.F90 b/ifs-source/arpifs/control/cnt4.F90
+index 4e339bf..abac1ae 100644
+--- a/ifs-source/arpifs/control/cnt4.F90
++++ b/ifs-source/arpifs/control/cnt4.F90
+@@ -1119,7 +1119,8 @@ DO
+     CALL SETUP_PH9_CORR(YDDYNA,YT0,YT9,YPH9)
  
- DO JSTEP=NSTAR2,ISTOP
-+  #ifdef MAGICCUT
-+  CALL MAGICCUT()
-+  #endif
+     DO JSITER=1,NSITER-1
+-
++      CALL MAGICCUT()
++
+       NCURRENT_ITER=JSITER
  
-   CALL USER_CLOCK(PTOTAL_CP=ZT1)
- 
-@@ -1378,3 +1381,10 @@ END ASSOCIATE
+       IF (LRHDI_LASTITERPC) THEN
+@@ -1427,3 +1428,9 @@ END ASSOCIATE
  END ASSOCIATE
  IF (LHOOK) CALL DR_HOOK('CNT4',1,ZHOOK_HANDLE)
  END SUBROUTINE CNT4
-+
 +
 +SUBROUTINE MAGICCUT()
 +  IF (MYPROC == 1) THEN

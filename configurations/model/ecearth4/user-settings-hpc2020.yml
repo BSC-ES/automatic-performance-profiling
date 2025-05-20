@@ -10,5 +10,6 @@
         base_dir: "{{se.cli.cwd}}/../.."
         src_dir: !noparse "{{experiment.base_dir}}/sources"
     build:
+        components: [oasis, xios, oifs, nemo, rnfm, amipfr]
         jobs: JOBS
-        clean: yes
+        clean: no

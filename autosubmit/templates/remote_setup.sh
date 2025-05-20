@@ -68,6 +68,7 @@ function clone_ecearth4()
     
     cd ecearth4_${branch} || exit
     git checkout ${branch}
+    git submodule update --init --recursive
 
     # Update config for AS to worl with SE
     sed -i "/- base.move:/a \ \ \ \ ignore_not_found: true" scripts/runtime/scriptlib/main.yml

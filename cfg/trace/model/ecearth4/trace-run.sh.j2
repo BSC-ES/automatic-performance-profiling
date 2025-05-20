@@ -21,7 +21,7 @@ export OASIS_OMP_NUM_THREADS=1
 ulimit -s unlimited
 ulimit -c unlimited
 
-./generate_function_list.sh ./nemo.exe ./oifs.exe ./extrae_functions.txt
+../generate_function_list.sh ./nemo.exe {{experiment.src_dir}}/oifs-48r1/build/lib/libarpifs.DP.so ../extrae_functions.txt
 
 function launch()
 {
@@ -55,9 +55,9 @@ function launch()
             echo "ERROR! job.oifs.omp_num_threads cannot be > 1 in this launcher!"
             exit 1
             {%- endif %}
-            executable="bash -c '{% if job.oifs.omp_num_threads %} OMP_NUM_THREADS={{job.oifs.omp_num_threads}}{% endif %}{% if job.oifs.omp_stacksize %} OMP_STACKSIZE={{job.oifs.omp_stacksize}}{% endif %} ./trace.sh ${executable}${cmd_opts}'"
+            executable="bash -c '{% if job.oifs.omp_num_threads %} OMP_NUM_THREADS={{job.oifs.omp_num_threads}}{% endif %}{% if job.oifs.omp_stacksize %} OMP_STACKSIZE={{job.oifs.omp_stacksize}}{% endif %} ../trace.sh ${executable}${cmd_opts}'"
         else
-            executable="./trace.sh ${executable} ${cmd_opts}"
+            executable="../trace.sh ${executable} ${cmd_opts}"
         fi
 
         cmd="${_task0}-${_task1} ${executable}"
