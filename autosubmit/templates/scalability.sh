@@ -235,16 +235,15 @@ function run_ecearth4()
 
     local coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
     coupling_enabled=${coupling_enabled,,}
-    if ${coupling_enabled}; then
-        cd ${run_dir} || exit
-        lucia_ts=$(cat time.step)
+    cd ${run_dir} || exit
+    lucia_ts=$(cat time.step)
+    lucia_ts=$((lucia_ts-1))
+
+    while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} && [ $lucia_ts -gt 0 ]; do
         lucia_ts=$((lucia_ts-1))
+    done
 
-        while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} && [ $lucia_ts -gt 0 ]; do
-            lucia_ts=$((lucia_ts-1))
-        done
-
-        run_id=${run_dir//*scalability_}
+    if ${coupling_enabled}; then
         coupling_dir=${test_dir}/coupling/${run_id}
         mkdir -p ${coupling_dir}
         cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
@@ -260,63 +259,136 @@ function run_ecearth4()
 
 function run_toy-model()
 {
-    run_id="%CURRENT_NAME%"
-    run_dir=${run_root}/${test_name}/scalability_${run_id}
+    local COMP1_procs=%CURRENT_COMP1_PROCS%
+    local COMP2_procs=%CURRENT_COMP2_PROCS%     
+    local COMP3_procs=%CURRENT_COMP3_PROCS%
+    local COMP1_resolution="1"
+    local COMP2_resolution="2"  
+    local COMP3_resolution="3"
+
+    local CHUNKSIZE=%EXPERIMENT.CHUNKSIZE%
+    local CHUNKSIZEUNIT="%EXPERIMENT.CHUNKSIZEUNIT%"
+
+    local components=($(bashify_array "%MODEL.COMPONENTS%"))
+    local model_sources=${compilation}/toy-model_${branch}
+    source ${model_sources}/sources/ece3-toy-model/mn5.env
+
+    # setup pyOasis environment
+    source ${model_sources}/sources/oasis3-mct/generated/python/init.sh
+    set -u
+
+    # Check that inidata dir exists and is not empty, rise error and exit otherwise
+    if [ ! -d ${inidata} ]; then
+        echo "ERROR: ${inidata} does not exist"
+        exit 1
+    fi
+    if [ ! -n "$(ls -A ${inidata})" ]; then
+        echo "ERROR: ${inidata} is empty"
+        exit 1
+    fi
+
+    # Set the number of components based on the count of YAML config files in the directory
+    number_of_components=${#components[@]}
+
+    # Create the member runtime directory if it is the first Chunk
+    local test_dir=${run_root}/${test_name}
+    local run_id="%CURRENT_NAME%"
+    local run_dir=${test_dir}/scalability_${run_id}
+    # Remove old runtime if exists and create a new one
+    if [ -d ${run_dir} ]; then
+        rm -rf ${run_dir}
+    fi
     mkdir -p ${run_dir}
-    rm -rf ${run_dir:?}/*
+
+    # Copy the initial data files from inidata to runtime
+    cp -r ${inidata}/* ${run_dir}
+
+    # Go to the rundir
     cd ${run_dir} || exit
 
-    ln -s ${compilation}/toy-model_${branch}/bin/${arch_name}_toy-model toy-model
-    mkdir -p ${run_dir}/inidata
+    # Print the values of the environment variables before the loop
+    for ((i=1; i<=number_of_components; i++)); do
+        nproc_var="COMP${i}_procs"
+        echo "$nproc_var: ${!nproc_var}"
+    done
 
-    local nts="%EXPERIMENT.TEST_STEPS%"
-    if [ $current_member = "WeakScaling" ]; then
-        local comp0_size="%CURRENT_COMP0_SIZE%"
-        local comp1_size="%CURRENT_COMP0_SIZE%"
-        local comp2_size="%CURRENT_COMP0_SIZE%"
+    # Declare an array to store YAML filenames for each component
+    declare -a component_yaml_files
 
-        local comp0_base_procs="%WEAKSCALING.COMP0_BASE_PROCS%"
-        local comp1_base_procs="%WEAKSCALING.COMP1_BASE_PROCS%"
-        local comp2_base_procs="%WEAKSCALING.COMP2_BASE_PROCS%"
+    # Define the number of processors for each component from the environment variables
+    total_nproc=0
+    for ((i=1; i<=number_of_components; i++)); do
+        yaml_file="${run_dir}/COMP${i}_toy_model.yaml"
+        component_yaml_files+=("${yaml_file}")
 
-        local comp0_procs=$((comp0_base_procs*%CURRENT_COMP0_SIZE%/%WEAKSCALING.COMP0_BASE_SIZE%))
-        local comp1_procs=$((comp1_base_procs*%CURRENT_COMP1_SIZE%/%WEAKSCALING.COMP1_BASE_SIZE%))
-        local comp2_procs=$((comp2_base_procs*%CURRENT_COMP2_SIZE%/%WEAKSCALING.COMP2_BASE_SIZE%))
+        # Substitute the number of processors in the yaml file
+        nproc_var="COMP${i}_procs"
+        nproc="${!nproc_var}"
+        sed -i "s/model_nproc: .*/model_nproc: ${nproc}/" "${yaml_file}"
+        total_nproc=$((total_nproc+nproc))
+    done
 
-        local model_procs=$((comp0_procs+comp1_procs+comp2_procs))
-    else
-        local comp0_size="%EXPERIMENT.COMP0_SIZE%"
-        local comp1_size="%EXPERIMENT.COMP1_SIZE%"
-        local comp2_size="%EXPERIMENT.COMP2_SIZE%"
-
-        local comp0_procs="%CURRENT_COMP0_PROCS%"
-        local comp1_procs="%CURRENT_COMP1_PROCS%"
-        local comp2_procs="%CURRENT_COMP2_PROCS%"
-
-        local model_procs="%NUMPROC%"
-        local queue="%HPCQUEUE%"
-        local proj="%CURRENT_PROJ%"
+    # Modify the runtime length
+    # Change CHUNKSIZEUNIT "hour" "day" "week" or "month" to the corresponding number of seconds
+    if [ ${CHUNKSIZEUNIT} == "hour" ]; then
+        CHUNKSIZEUNIT_seconds=3600
+        lucia_ts=1.5
+    elif [ ${CHUNKSIZEUNIT} == "day" ]; then
+        CHUNKSIZEUNIT_seconds=86400
+        lucia_ts=32
+    elif [ ${CHUNKSIZEUNIT} == "week" ]; then
+        CHUNKSIZEUNIT_seconds=604800
+        lucia_ts=223
+    elif [ ${CHUNKSIZEUNIT} == "month" ]; then
+        CHUNKSIZEUNIT_seconds=2592000
+        lucia_ts=960
     fi
 
-    echo 3 > inidata/0
-    echo ${nts} >> inidata/0
-    echo 1 ${comp0_procs} >> inidata/0
-    echo 2 ${comp1_procs} >> inidata/0
-    echo 3 ${comp2_procs} >> inidata/0
+    lucia_ts=$(echo "${lucia_ts}*${CHUNKSIZE}" | bc)
+    # Run length time is the CHUNKSIZE multiplied by the number of chunks
+    sim_length_seconds=$((CHUNKSIZE*CHUNKSIZEUNIT_seconds))
 
-    echo ${comp0_size} > inidata/1
-    echo ${comp1_size} > inidata/2
-    echo ${comp2_size} > inidata/3
+    # Change the run_length_sec in the yaml files for the value in sim_length_seconds
+    for yaml_config_file in "${component_yaml_files[@]}"; do
+        sed -i "s/run_length_sec: .*/run_length_sec: ${sim_length_seconds}/" "${yaml_config_file}"
+    done
+    # Change the run_length_sec in the namcouple file
+    line_number=$(grep -n "RUNTIME" namcouple | cut -d: -f1)
+    next_line_number=$((line_number+1))
+    sed -i "${next_line_number}s/.*/   ${sim_length_seconds}/" namcouple
 
-    if [ "${current_member}" = "WeakScaling" ]; then
-        local queue="%HPCQUEUE%"
-        local proj="%CURRENT_PROJ%"
-        srun -A ${proj} -q ${queue} -n ${model_procs} ./toy-model
-    else
-        srun -n ${model_procs} ./toy-model
-    fi
+    # Prepare the run command
+    run_command="srun --multi-prog multiprog.conf"
+    curr_proc=0
+    for yaml_config_file in "${component_yaml_files[@]}"; do
+        echo "${curr_proc}-${curr_proc} python3 toy_model.py --yaml_file_path ${yaml_config_file}" >> multiprog.conf
+        curr_proc=$((curr_proc+1))
+    done
 
-    mv test_info.csv ${run_dir}/${run_id}-test_info.csv
+    # Run the model (in sequential)
+    t0=$(date +%s)
+    ${run_command}
+    t1=$(date +%s)
+
+    # Calculate the execution time and SYPD
+    runtime_seconds=$((t1-t0))
+    echo "Runtime: ${runtime_seconds} seconds"
+    echo "Total number of processors: ${total_nproc}"
+    sypd=$(echo "scale=2; ${sim_length_seconds}/365/${runtime_seconds}" | bc)
+    echo "SYPD: ${sypd}"
+    # get the CHSY by multiplying the number of processors by 24 and dividing by the SYPD
+    chsy=$(echo "scale=2; ${total_nproc}*24/${sypd}" | bc)
+    echo "CHSY: ${chsy}"
+
+    module load hdf5 python
+
+    python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 $((lucia_ts-2)) --generate_plots true
+    coupling_dir=${test_dir}/coupling/${run_id}
+    mkdir -p ${coupling_dir}
+    cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
+    cp ${run_dir}/lucia_lite_plots/*  ${coupling_dir}
+
+    report_test_cfg
 }
 
 ###################

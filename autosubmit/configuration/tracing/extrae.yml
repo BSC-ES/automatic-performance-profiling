@@ -1,8 +1,8 @@
 # This file contains the configuration for Extrae used during the tracing runs.
 # The variables are used to create a valid extra.xml from the cfg/trace/extrae.xml.tmpl template.
 EXTRAE:
-  HOME: /usr/local/apps/extrae/4.0.6/HPCX/2.9
-  TRACING_LIB: libmpitracef.so
+  HOME: /apps/GPP/BSCTOOLS/extrae/4.2.13/impi_2021_10_0/
+  TRACING_LIB: libmpitrace.so
   TRACE_NAME: "%MODEL.NAME%.prv"
 
   MPI: 

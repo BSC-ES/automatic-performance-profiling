@@ -3,7 +3,7 @@ MODEL:
   NAME: toy-model
   REPORT_COMPONENTS: [COMP1, COMP2, COMP3]
   COMPONENTS: [COMP1, COMP2, COMP3]
-  ORIGIN: https://earth.bsc.es/gitlab/ces/toy-model.git
+  ORIGIN: https://earth.bsc.es/gitlab/ces/hpc-for-es-team/toy-model.git
   # Project branch/commit
   BRANCH: main
 
@@ -15,23 +15,21 @@ MODEL:
 
 # EXPERIMENT CONFIG
 EXPERIMENT:
-  COMP0_SIZE: 1000
-  COMP1_SIZE: 2000
-  COMP2_SIZE: 3000
-  TEST_STEPS: 32
+  CHUNKSIZE: 1
+  CHUNKSIZEUNIT: "day"
 
 # TRACE CONFIG
 TRACING:
   USER_FUNCTIONS_PROC: 4
   USER_FUNCTIONS_THREADS: 1
-  TRACE_STEPS: 10
+  TRACE_STEPS: 32
 
   TEST_NAMES:  [BENCH,   BENCH  , BENCH  ]
   NAMES:       [trace_1, trace_2, trace_3]
-  PROCESSORS:  [6,       12     , 18     ]
-  COMP0_PROCS: [1,       2      , 3      ]
-  COMP1_PROCS: [2,       4      , 6      ]
-  COMP2_PROCS: [3,       6      , 9      ]
+  PROCESSORS:  [3,       3      , 3      ]
+  COMP1_PROCS: [1000,    2000   , 3000   ]
+  COMP2_PROCS: [2000,    3000   , 4000   ]
+  COMP3_PROCS: [1500,    3000   , 4500   ]
   THREADS:     [1,       1      , 1      ]
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_ompi_trace
@@ -41,35 +39,38 @@ TRACING:
 STRONGSCALING:
   STRONGSCALING_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling"
 
-  TEST_NAMES:  [BENCH,   BENCH  , BENCH  ]
-  NAMES:       [bench_1, bench_2, bench_3]
-  PROCESSORS:  [3,       6      , 9      ]
-  COMP0_PROCS: [1,       2      , 3      ]
-  COMP1_PROCS: [1,       2      , 3      ]
-  COMP2_PROCS: [1,       2      , 3      ]
+  TEST_NAMES:  [BENCH,    BENCH  ,  BENCH   ]
+  NAMES:       [bench_1,  bench_2,  bench_3 ]
+  PROCESSORS:  [3,        3,        3       ]
+  COMP1_PROCS: [1000,     2000,     3000    ]
+  COMP2_PROCS: [2000,     3000,     4000    ]
+  COMP3_PROCS: [1500,     3000,     4500    ]
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_ompi_prod
+
+  COUPLING: 
+    ENABLED: true
 
 # WEAKSCALING CONFIG
 WEAKSCALING:
   WEAKSCALING_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling"
 
   # Base case configuration, meaning the resolution and processors configuration
-  COMP0_BASE_PROCS: 1
   COMP1_BASE_PROCS: 1
   COMP2_BASE_PROCS: 1
-  COMP0_BASE_SIZE: 1000
+  COMP3_BASE_PROCS: 1
   COMP1_BASE_SIZE: 1000
   COMP2_BASE_SIZE: 1000
+  COMP3_BASE_SIZE: 1000
 
   # Processors must be set to 1, since processors count is computed during runtime
   # based on the base processors and resolution
   TEST_NAMES: [ws_1_1, ws_1_2, ws_1_3]
   NAMES:      [ws_1_1, ws_1_2, ws_1_3]
-  PROCESSORS: [1,      1,      1     ]
-  COMP0_SIZE: [1000,   2000,   3000  ]
+  PROCESSORS: [3,      3,      3     ]
   COMP1_SIZE: [1000,   2000,   3000  ]
   COMP2_SIZE: [1000,   2000,   3000  ]
+  COMP3_SIZE: [1000,   2000,   3000  ]
 
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_ompi_prod
@@ -81,8 +82,8 @@ COMPILATION_EFFICIENCY:
   # For compilation efficiency the arch name is taken from the test name
   TEST_NAMES:  [O3_ompi_prod, O3_ompi_prod, O3_ompi_prod, O3_impi_prod, O3_impi_prod, O3_impi_prod]
   NAMES:       [ompi_1,       ompi_2,       ompi_3,       impi_1,       impi_2,       impi_3      ]
-  PROCESSORS:  [3,            6,            9,            3,            6,            9           ]
-  COMP0_PROCS: [1,            2,            3,            1,            2,            3           ]
-  COMP1_PROCS: [1,            2,            3,            1,            2,            3           ]
-  COMP2_PROCS: [1,            2,            3,            1,            2,            3           ]
+  PROCESSORS:  [3,            3,            3,            3,            3,            3           ]
+  COMP1_PROCS: [1000,         2000,         3000,         1000,         2000,         3000        ]
+  COMP2_PROCS: [1000,         2000,         3000,         1000,         2000,         3000        ]
+  COMP3_PROCS: [1000,         2000,         3000,         1000,         2000,         3000        ]
   TEST_CONFIG: BENCH

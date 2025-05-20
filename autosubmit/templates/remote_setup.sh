@@ -80,7 +80,7 @@ function clone_ecearth4()
     if echo ${members} | grep -w "StrongScaling" && [ ! -d lucia-alternative ]; then
         coupling_enabled=%STRONGSCALING.COUPLING.ENABLED%
         coupling_enabled=${coupling_enabled,,}
-    	${coupling_enabled} && git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
+    	[ ! -d lucia-alternative ] && git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
     fi
 
     return 0
@@ -114,6 +114,11 @@ function clone_toy-model()
     if [ ! -d toy-model_${branch} ]; then
         git clone ${model_origin} toy-model_${branch} --branch ${branch}
     fi
+
+    if [ ! -d lucia-alternative ]; then
+        git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
+    fi
+    
 
     return 0
 }

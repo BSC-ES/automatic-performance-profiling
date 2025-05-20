@@ -112,14 +112,6 @@ function compile_ecearth4()
     se user-settings.yml ../platforms/${arch_name}.yml compile-all.yml
 }
 
-function compile_toy-model()
-{
-    model_sources=${compilation}/${model}_${branch}
-    cd ${model_sources} || exit
-    cp ${project}/cfg/arch/${platform}/toy-model/${arch_name}.arch ${model_sources}/arch/
-    make ARCH=${arch_name} TARGET=${arch_name}_toy-model -j
-}
-
 
 #####################################################################################################################
 # Brief: Compiles STREAM and OSU HW benchmarks
@@ -143,6 +135,23 @@ function compile_hw()
         ./configure CC="$(which mpicc)" CXX="$(which mpicxx)" --prefix="$(pwd)"
         make install -j
     fi
+}
+
+function compile_toy-model()
+{
+    local model_sources=${compilation}/${model}_${branch}
+    cd ${model_sources} || exit
+
+CONTENT=$(cat <<EOF
+curr_path = \$(dir \$(realpath \$(lastword \$(MAKEFILE_LIST))))
+include  \$(curr_path)/make.mn5
+EOF
+)
+    echo "$CONTENT" > sources/oasis3-mct/util/make_dir/make.inc
+
+    (cd ./sources/amip-forcing/src/fortran && make clean)
+    (cd ./sources/amip-forcing/src/fortran && make oasis)
+    (cd ./sources/amip-forcing/src/fortran && make)
 }
 
 ###################

@@ -124,7 +124,7 @@ function add_StrongScaling() {
         # Coupling info (ECE4 only)
         coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
         coupling_enabled=${coupling_enabled,,}
-        if ${coupling_enabled} && [ ${model} = "ecearth4" ]; then
+        if ${coupling_enabled} && ([ ${model} = "ecearth4" ] || [ ${model} = "toy-model" ]); then
             for case in coupling/*; do
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \

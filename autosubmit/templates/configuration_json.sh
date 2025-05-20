@@ -37,7 +37,8 @@ case  "${model}" in
         reporter_params="--coupling-folder coupling"
     ;;
     "toy-model")
-        input_files+="scalability_*/*test_info.csv"
+        input_files+="scalability_*/*test_info.csv scalability_*/lucia_lite_results/table.csv"
+        reporter_params="--coupling-folder coupling"
 esac
 
 # Set the member variables and the extra reporter params for Tracing

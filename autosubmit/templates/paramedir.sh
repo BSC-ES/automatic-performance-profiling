@@ -14,6 +14,7 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
+model=%MODEL.NAME%
 
 # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
 . ${cfg}/utils/bash/utils.sh
@@ -87,6 +88,10 @@ do
                 mod_cfg=$(basename ${cfg})
 
                 sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${mod_cfg}
+                # Python user functions use different id in Extrae
+                if [ ${model} = "toy-model" ]; then
+                    sed -i "s/60000019/60000100/" ${mod_cfg}
+                fi
 
                 paramedir ${trace} ${mod_cfg} 
                 # Get the extension

@@ -16,6 +16,12 @@ inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 members="%EXPERIMENT.MEMBERS%"
+compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
+branch=%MODEL.BRANCH%
+
+# shellcheck source=proj/git_project/cfg/utils/bash/utils.sh
+. ${cfg}/utils/bash/utils.sh
+
 
 #####################################################################################################################
 # Path variables: TODO
@@ -62,8 +68,43 @@ function ini_ecearth4()
 
 function ini_toy-model()
 {
-    # TODO not necessary for now
-    echo INI
+    components=($(bashify_array "%MODEL.COMPONENTS%"))
+    model_sources=${compilation}/toy-model_${branch}
+    launch_dir=${model_sources}/sources/ece3-toy-model
+
+    if [ -d ${inidata} ]; then
+        rm --recursive --force ${inidata}
+    fi
+    mkdir -p ${inidata}
+
+    # Copy the initial data files from the original location
+    original_inidata=${model_sources}/tests/data/ece3-toy-model
+    # Copy the data files
+    for f in masks.nc grids.nc areas.nc rmp*; do
+        cp --force ${original_inidata}/$f ${inidata}
+    done
+
+    # Copy toy model files (python and yaml) and namcouple configuration
+    cp --force ${launch_dir}/toy_model.py ${inidata}
+    cp --force ${launch_dir}/*.yaml ${inidata}
+    cp --force ${launch_dir}/namcouple ${inidata}
+
+    # Copy the Oasis restart files (rstos and rstas nc files)
+    cp --force ${launch_dir}/{rstos.nc,rstas.nc} ${inidata}
+
+    number_of_components=${#components[@]}
+
+    # Copy the scalability data
+    scalability_data_src_dir=${model_sources}/sources/ece3-toy-model/ece3_scalability_data
+    for n in $(seq 1 "${number_of_components}"); do
+        cp --force ${scalability_data_src_dir}/COMP${n}_scalability.csv ${inidata}
+    done
+
+    # Set the corresponding scalability data file in the yaml files
+    for n in $(seq 1 "${number_of_components}"); do
+        yaml_config_file=${inidata}/COMP${n}_toy_model.yaml
+        sed -i "s|scalability: .*|scalability: COMP${n}_scalability.csv|" "${yaml_config_file}"
+    done
 }
 
 ###################

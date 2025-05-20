@@ -41,7 +41,7 @@ if __name__ == "__main__":
     if SYPD:
         # Example how to get comparison of SYPD
         multiexperiment_comparison(
-            experiment_data, field1="ts_per_second").print(file_out)
+            experiment_data, field1="sypd").print(file_out)
 
     # Prints weak scaling info
     if weak_scaling:
