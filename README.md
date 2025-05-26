@@ -24,7 +24,7 @@ The tool currently supports the following climate models:
 
 - NEMO 4.2.1
 
-And ported and tested for the following HPC platforms:
+And it has been ported and tested in the following HPC platforms:
 
 - Marenostrum 5 (BSC)
 
@@ -34,6 +34,6 @@ And ported and tested for the following HPC platforms:
 
 For users and developers documentation, check the [wiki](https://automatic-performance-profiling.readthedocs.io/en/latest/) at Read the Docs.
 
-## New features and troubleshooting
+## Contact
 
-For any new features requests or issues you may find running the workflow, please send an email to [roc.salvador@bsc.es](roc.salvador@bsc.es).
+For any new features requests or issues you may find running the workflow, please send an email to [roc.salvador@bsc.es](mailto:roc.salvador@bsc.es).
