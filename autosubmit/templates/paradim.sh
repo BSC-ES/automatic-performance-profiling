@@ -26,10 +26,10 @@ function run_paradim() {
     do
         test_name=${member}/${test}
         cd ${run_root}/${test_name} || exit
-        for trace_folder in trace_*
+        for trace_folder in run_*
         do
             trace=${trace_folder}/${model}.best_cut.prv
-            trace_id=${trace_folder//*trace_/}
+            trace_id=${trace_folder//*run_/}
             
             # paramdim.target
             ##################
