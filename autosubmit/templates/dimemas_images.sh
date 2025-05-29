@@ -25,9 +25,9 @@ function run_dimemas_images() {
         mkdir -p $test_root/dimemas_images
         cd $test_root/dimemas_images || exit
 
-        for trace_folder in trace_*
+        for trace_folder in run_*
         do
-            n_cores=$(echo $trace_folder | sed 's/.*trace_//')
+            n_cores=$(echo $trace_folder | sed 's/.*run_//')
             
             # dimemas.target
             ##################

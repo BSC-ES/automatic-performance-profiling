@@ -35,10 +35,10 @@ do
         magiccut_steps=${trace_steps}
     fi
     
-    # Iterate over all trace_* folders
+    # Iterate over all run_* folders
     for name in "${names[@]}"
     do
-        trace_folder=${run_root}/${test_name}/trace_${name}
+        trace_folder=${run_root}/${test_name}/run_${name}
         cd ${trace_folder} || exit
 
         test_info_fn=${name}-ts_test_info.csv

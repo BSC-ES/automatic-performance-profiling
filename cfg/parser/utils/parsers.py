@@ -765,7 +765,7 @@ class TimingInformation:
         import pandas as pd
         lucia_dict = {}
         for lucia_file in lucia_files:
-            pattern = "(scalability)_([0-9a-zA-Z_]+)/(lucia_lite_results/*)"
+            pattern = "([a-z0-9A-Z]+)_([0-9a-zA-Z_]+)/(lucia_lite_results/*)"
             _, id, _ = re.match(pattern, lucia_file).groups()
             lucia_df = pd.read_csv(lucia_file)
             lucia_dict[id] = {"components": {}}

@@ -174,7 +174,7 @@ for test in ${root_dir}/run/tracing/*; do
     # Get the slowest timestep for all components
     declare -A components_slowest_ts
     for component in $components; do components_slowest_ts[$component]=0; done
-    for trace_folder in ${test}/trace_*; do
+    for trace_folder in ${test}/run_*; do
         for component in $components; do 
             max_time=${components_slowest_ts[$component]}
             cur_time=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
@@ -183,9 +183,9 @@ for test in ${root_dir}/run/tracing/*; do
     done
 
     # Iterate traces to generate the Paraver images
-    for trace_folder in ${test}/trace_*; do
+    for trace_folder in ${test}/run_*; do
         trace_folder_basename=$(basename ${trace_folder})
-        trace_id=$(echo ${trace_folder_basename} | sed 's/trace_//')
+        trace_id=$(echo ${trace_folder_basename} | sed 's/run_//')
         components_names=($(echo ${trace_folder_basename} | sed -E 's/(trace|[0-9])//g' | sed -E 's/_/ /g'))
         components_procs=($(echo ${trace_folder_basename} | sed -E 's/(trace|[a-z])//g' | sed -E 's/_/ /g'))
 

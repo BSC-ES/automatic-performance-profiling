@@ -25,7 +25,7 @@ function run_modelfactors() {
         mkdir -p ${test_root}/modelfactors
 
         for component in "${components[@]}"; do
-            traces=($test_root/trace_*/$component.best_cut.prv)
+            traces=($test_root/run_*/$component.best_cut.prv)
 
             mkdir -p ${test_root}/modelfactors/$component
             cd ${test_root}/modelfactors/$component || exit

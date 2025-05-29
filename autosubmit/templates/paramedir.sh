@@ -67,12 +67,12 @@ do
     cd "${test_folder}/paramedir" || exit
     rm -f *.pm
 
-    for trace_folder in $test_folder/trace_*
+    for trace_folder in $test_folder/run_*
     do
         basename_trace_folder=$(basename ${trace_folder})
         components_names=($(echo ${basename_trace_folder} | sed -e 's/\(trace_\|[0-9]\)//g' | sed 's/_/ /g'))
         components_procs=($(echo ${basename_trace_folder} | sed -e 's/\(trace_\|[a-zA-Z]\)//g' | sed 's/_/ /g'))
-        trace_id=$(echo ${basename_trace_folder} | sed -e 's/trace_//')
+        trace_id=$(echo ${basename_trace_folder} | sed -e 's/run_//')
 
         for component in "${components[@]}"; do
             trace=${trace_folder}/${component}.best_cut.prv
