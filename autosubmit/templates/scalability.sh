@@ -102,31 +102,30 @@ EOF
 #####################################################################################################################
 function run_nemo()
 {
-    if [ ${current_member} = "WeakScaling" ]; then
-        local nemo_resolution="%CURRENT_RESOLUTION%"
-    else
-        local nemo_resolution="%EXPERIMENT.RESOLUTION%"
-    fi
-    local nemo_procs=%NUMPROC%
+    . ${env_sources}
+
+    local nemo_resolution="%EXPERIMENT.RESOLUTION%"
+    local test_steps="%EXPERIMENT.TEST_STEPS%"
+    local run_id="%CURRENT_NAME%"
+    local nemo_procs="%NUMPROC%"
     local output="%EXPERIMENT.OUTPUT%"
-    local test_steps="%EXPERIMENT.TEST_STEPS%" 
+    local run_dir=${run_root}/${test_name}/run_${run_id}
+    local model_sources=${compilation}/${model}_${branch}
+    local configuration_folder=tests
+    [ ${current_member} = "WeakScaling" ] && nemo_resolution="%CURRENT_RESOLUTION%"
+    [ ${current_member} = "Tracing" ] && test_steps="%TRACING.TEST_STEPS%"
 
-    run_id=nemo_${nemo_procs}
-    run_dir=${run_root}/${test_name}/run_${run_id}
+    rm -rf ${run_dir:?}/*
     mkdir -p ${run_dir}
+    cd ${run_dir} || exit
 
-    source ${env_sources}
-
-    model_sources=${model}_${branch}
-    configuration_folder=tests
-    
     # Link inidata
     cp ${inidata}/$test_name/* ${run_dir}
     ln -rsf ${inidata}/original ${run_dir}
     rsync -rv --exclude=.nc ${inidata} ${run_dir}
 
     # Copy everything from reference run_root
-    cp --remove-destination ${compilation}/${model_sources}/${configuration_folder}/${arch_name}/EXP00/* ${run_dir}
+    cp --remove-destination ${model_sources}/${configuration_folder}/${arch_name}/EXP00/* ${run_dir}
     cp ${run_dir}/namelist_cfg_${nemo_resolution}_like ${run_dir}/namelist_cfg
 
     # Change namelist parameters
@@ -135,28 +134,50 @@ function run_nemo()
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_meshmask .false.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_timing   .true.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_timing   .true.
+    ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref nn_fsbc     1
+
     # Disable output
-    if [ ${output} = False ] ; then \
+    if [ ${output^^} = "FALSE" ] ; then \
         sed -i "s/^.*file_definition.*$$//g" ${run_dir}/context_nemo.xml ; \
     fi
 
-    cd ${run_dir} || exit
-
     # If it is Weak Scaling that is being run compute the current procs based on the
     # base procs and resolution
-    if [ ${current_member} = "WeakScaling" ]; then
-        . ${project}/configurations/model/${model}/resolutions.sh 
-        local base_procs="%WEAKSCALING.BASE_PROCS%"
-        local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
-        local base_tile_size=${nemo_resolutions[${base_resolution^^}]}
-        local nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
-        nemo_procs=$((base_procs*nemo_curr_tile_size/base_tile_size))
-        local queue="%HPCQUEUE%"
-        local proj="%CURRENT_PROJ%"
-        time srun -A ${proj} -q ${queue} -n $nemo_procs ./nemo
-    else
-        time srun -n $nemo_procs ./nemo
-    fi
+    case "$current_member" in
+        "WeakScaling")
+            . ${project}/configurations/model/${model}/resolutions.sh 
+            local base_procs="%WEAKSCALING.BASE_PROCS%"
+            local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
+            local base_tile_size=${nemo_resolutions[${base_resolution^^}]}
+            local nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
+            nemo_procs=$((base_procs*nemo_curr_tile_size/base_tile_size))
+            local queue="%HPCQUEUE%"
+            local proj="%CURRENT_PROJ%"
+
+            time srun -A ${proj} -q ${queue} -n $nemo_procs ./nemo
+        ;;
+        "Tracing")
+            configure_extrae ${run_dir}
+            create_trace_sh  ${run_dir}
+            cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+            # Copy function.txt
+            fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=${fd_enabled,,}
+            if ${fd_enabled}; then
+                cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
+            else
+                cp $cfg/trace/model/nemo/extrae_functions.txt ${run_dir}/
+            fi
+            ./generate_function_list.sh ./nemo extrae_functions.txt
+
+            time srun -n ${nemo_procs} ./trace.sh ./nemo || true
+            ! [ -f nemo.pcf ] && exit
+            rm -rf set-* ./*.nc
+        ;;
+        *)
+            time srun -n ${nemo_procs} ./nemo
+        ;;
+    esac
 
     # Rename timing output
     cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
