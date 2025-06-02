@@ -165,10 +165,12 @@ parse_args "$@"
 
 cd ${root_dir} || exit
 root_dir=$(pwd)
-cfg=${root_dir}/automatic_performance_profile/cfg
+cfg=${root_dir}/*/cfg
 analysis_tools=${cfg}/trace_analysis
 paraver_configurations=$(find ${analysis_tools}/paraver_configurations/*)
 log_file=${root_dir}/paraver_$(date +%s).log
+
+. ${cfg}/utils/bash/utils.sh
 
 for test in ${root_dir}/run/tracing/*; do
     # Get the slowest timestep for all components
@@ -184,16 +186,16 @@ for test in ${root_dir}/run/tracing/*; do
 
     # Iterate traces to generate the Paraver images
     for trace_folder in ${test}/run_*; do
+        [ -f ${trace_folder}/job_geometry.sh ] && . ${trace_folder}/job_geometry.sh
+
         trace_folder_basename=$(basename ${trace_folder})
         trace_id=$(echo ${trace_folder_basename} | sed 's/run_//')
-        components_names=($(echo ${trace_folder_basename} | sed -E 's/(trace|[0-9])//g' | sed -E 's/_/ /g'))
-        components_procs=($(echo ${trace_folder_basename} | sed -E 's/(trace|[a-z])//g' | sed -E 's/_/ /g'))
-
         img_folder=${test}/paraver_images/${trace_id}
         mkdir -p ${img_folder}
 
         for component in ${components}; do
-            create_threads_to_ignore
+            threads_to_ignore=""
+            ! [ -z ${job_geometry[@]} ] && create_threads_to_ignore ${component}
 
             cp ${paraver_configurations} ${img_folder}
 
