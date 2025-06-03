@@ -32,18 +32,10 @@ report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 #####################################################################################################################
 function create_paraver_legend()
 {
-    cfg=$1
-    cfg_name=${cfg##*/}
-    cfg_name=${cfg%%.*}
+    local current_picture_name=$1
 
-    trace=$2
-    trace_name=$(basename $trace)
-    trace_name=${trace_name%.*}
-
-    current_picture_name=${cfg_name}@${trace_name}
-
-    if ! ls ${current_picture_name}* 1>/dev/null 2>&1; then
-        echo $current_picture_name"* not found"
+    if ! ls ${current_picture_name}.png 1>/dev/null 2>&1; then
+        echo ${current_picture_name}.png" not found"
         return
     fi
 
@@ -52,11 +44,11 @@ function create_paraver_legend()
         mv ${current_picture_name}.w_legend.png ${current_picture_name}.png
     # Is a graph with discrete legend
     elif ls ${current_picture_name}.code_legend.png 1>/dev/null 2>&1; then
-        image_to_append=${current_picture_name}.code_legend.png
+        local image_to_append=${current_picture_name}.code_legend.png
         convert ${current_picture_name}.png ${image_to_append} -append ${current_picture_name}.png
     fi
     # Remove the rest
-    rm -f *_legend.png
+    rm -f ./*_legend.png
 }
 
 run_paraver()
@@ -102,6 +94,7 @@ run_paraver()
                     og_paraver_cfg_path=${paraver_configurations_path}/${paraver_cfg}.cfg
                     paraver_cfg_path=${img_folder}/${paraver_cfg}-${component}.cfg
                     cp ${og_paraver_cfg_path} ${paraver_cfg_path}
+                    
                     if echo ${compare_cfgs} | grep -w ${paraver_cfg} &> /dev/null; then
                         # Set time to the slowest timestep of the different tests
                         ts_ratio=$(echo $slowest_ts / $cur_ts | bc -l)
@@ -109,8 +102,15 @@ run_paraver()
                     fi
                     # Remove other-component tasks from the paraver view
                     [ "${threads_to_ignore}" != "" ] && sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg_path}
+
+                    # Generate the paraver view image
                     if xvfb-run wxparaver -i ${trace} ${paraver_cfg_path} &> /dev/null; then
-                        create_paraver_legend ${paraver_cfg_path} ${trace}
+                        local cfg_name=$(basename ${og_paraver_cfg_path})
+                        cfg_name=${cfg_name%.cfg}
+                        local trace_name=$(basename ${trace})
+                        trace_name=${trace_name%.prv}
+                        local curr_picture_name=${cfg_name}@${trace_name}
+                        create_paraver_legend ${curr_picture_name}
                     fi
                 done
             done
