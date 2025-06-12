@@ -173,6 +173,12 @@ function run_nemo()
             time srun -n ${nemo_procs} ./trace.sh ./nemo || true
             ! [ -f nemo.pcf ] && exit
             rm -rf set-* ./*.nc
+
+            ( 
+                echo "unset job_geometry"
+                echo "declare -Ag job_geometry"
+                echo "job_geometry=([\"nemo\"]=\"0-$((nemo_procs-1))\")" 
+            ) > job_geometry.sh
         ;;
         *)
             time srun -n ${nemo_procs} ./nemo
