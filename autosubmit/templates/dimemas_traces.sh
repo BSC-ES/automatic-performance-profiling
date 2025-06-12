@@ -34,11 +34,11 @@ function run_dimemas() {
         # WORKING DIR: test's root folder
         cd $run_root/$test_name || exit
         mkdir -p dimemas_traces
-        for trace_folder in trace_*
+        for trace_folder in run_*
         do
             for component in "${components[@]}"; do
                 trace=${trace_folder}/${component}.best_cut.prv
-                trace_id=${trace_folder//*trace_/}
+                trace_id=${trace_folder//*run_/}
                 dim_trace=dimemas_traces/${trace_id}.dim
                 
                 prv2dim ${trace} ${dim_trace}

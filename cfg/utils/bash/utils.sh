@@ -50,3 +50,124 @@ function report_test_cfg()
 
     echo "model,${model_nproc},-" >> ${test_info_fn}
 }
+
+
+function parse_multiprog()
+{
+    local multiprog_fn=$1
+    unset job_geometry
+    declare -Ag job_geometry
+
+    while IFS= read -r line; do
+        local procs_range=$(echo ${line} | awk -F ' ' '{print $1}')
+        for exe_regex in "${!supported_exes[@]}"; do
+            if echo ${line} | grep ${exe_regex} &> /dev/null; then
+                curr_component=${supported_exes[${exe_regex}]}
+                break
+            fi
+        done
+        if [ "${job_geometry[${curr_component}]}" = "" ]; then
+            job_geometry[${curr_component}]="${procs_range}"
+        else
+            job_geometry[${curr_component}]+=",${procs_range}"
+        fi
+    done < ${multiprog_fn}
+}
+
+function save_job_geometry()
+{
+    local f_ty=$1
+    local fn=$2
+
+    declare -A supported_exes
+    supported_exes=(["nemo"]="nemo" ["oifs"]="oifs" ["runoff-mapper"]="rnfm" ["xios_server"]="xios" ["amip-reader"]="amipfr")
+
+    parse_${f_ty} ${fn}
+
+    echo "unset job_geometry"
+    echo "declare -Ag job_geometry"
+    echo -n "job_geometry=("
+    for component in ${!job_geometry[@]}; do
+        echo -n " [\"${component}\"]=\"${job_geometry[$component]}\"" 
+    done
+    echo -n ")"
+}
+
+#####################################################################################################################
+# Brief: Create configuration string for paraver to ignore the non component processes
+# Global:
+#   component - Name of the component NOT to ignore
+#   components_names - Array with the names of the different components
+#   components_procs - Array with the processes of the different components in the same order as components_names
+#####################################################################################################################
+function create_threads_to_ignore() 
+{
+    local component=$1
+    threads_to_ignore=""
+    for curr_component in ${!job_geometry[@]}; do
+        component_ranges=${job_geometry[${curr_component}]}
+        component_ranges=${component_ranges//,/ }
+        for component_range in ${component_ranges}; do
+            first_proc=${component_range//-*}   
+            last_proc=${component_range//*-}
+            if [ "${curr_component}" != "${component}" ]; then
+                for j in $(seq $first_proc $last_proc); do
+                    if [ "${threads_to_ignore}" != "" ]; then
+                        threads_to_ignore="${threads_to_ignore}\n"
+                    fi
+                    threads_to_ignore="${threads_to_ignore}window_object thread { 0, $j, 1, { 0 } }"
+                done
+            fi
+        done
+    done
+}
+
+#####################################################################################################################
+# Brief: Cut the whole model trace by its components
+# Param: 
+#   $1 - Components names array name
+#   $2 - Components processors array name
+#   $3 - Trace file *.prv
+#####################################################################################################################
+function cut_trace()
+{
+    local -n components_names="$1"
+    local -n components_processors="$2"
+    local trace_file=$3
+
+    local first_proc=1
+    local i=0
+    while [ $i -lt ${#components_names[@]} ]; do
+        local component_procs=${components_processors[i]}
+        local last_proc=$((first_proc+component_procs-1))
+
+        cat << EOF > cutter.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <!-- CUTTER OPTIONS -->
+  <cutter>
+    <tasks>${first_proc}-${last_proc}</tasks>
+    <max_trace_size>0</max_trace_size>
+    <by_time>0</by_time>
+    <minimum_time>0</minimum_time>
+    <maximum_time>0</maximum_time>
+    <minimum_time_percentage>0</minimum_time_percentage>
+    <maximum_time_percentage>100</maximum_time_percentage>
+    <original_time>0</original_time>
+    <break_states>1</break_states>
+    <remove_first_states>0</remove_first_states>
+    <remove_last_states>0</remove_last_states>
+    <keep_events>0</keep_events>
+  </cutter>
+</config>
+EOF
+        paramedir -c cutter.xml ${trace_file}
+
+        mv ${model}.chop*.prv ${components_names[i]}.prv
+        mv ${model}.chop*.pcf ${components_names[i]}.pcf
+        mv ${model}.chop*.row ${components_names[i]}.row
+
+        first_proc=$((last_proc+1))
+        i=$((i+1))
+    done
+}

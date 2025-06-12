@@ -1,6 +1,6 @@
 JOBS:
   trace:
-    FILE: autosubmit/templates/extrae.sh
+    FILE: autosubmit/templates/scalability.sh
     FOR:
       TEST_NAME: "%TRACING.TEST_NAMES%"
       NAME: "%TRACING.NAMES%"

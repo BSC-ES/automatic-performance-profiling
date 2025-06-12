@@ -1,4 +1,5 @@
-# This file includes common configuration among models
+# This file includes shared workflow configurations by all the models
+
 
 # REPORT CONFIGURATION
 REPORT:
@@ -8,6 +9,7 @@ REPORT:
   NAME: report
   FOLDER: "%CURRENT_ROOTDIR%/report"
   LOGO_PATH: "%COMMON_PATH_LOCATIONS.CFG%/latex/img/bsc.png"
+
 
 # HW_BENCHMARKS OPTIONS
 HW_BENCHMARKS:
@@ -23,6 +25,7 @@ HW_BENCHMARKS:
     NAMES:      [1, 2, 4, 8, 16, 32, 64, 92, 112]
     PROCESSORS: [1, 2, 4, 8, 16, 32, 64, 92, 112]
 
+
 # TRACING COMMON OPTIONS
 TRACING:
   PARAVER:
@@ -30,10 +33,10 @@ TRACING:
     ENABLED: true
 
     # Paraver cfg, for all PV views see cfg/trace_analysis/paraver_configurations
-    CFGS: MPI_call p2p_size
+    CFGS: MPI_call p2p_size Average_IPC affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
 
     # Subset of Paraver cfgs
-    COMPARE_CFGS:  MPI_call
+    COMPARE_CFGS:  MPI_call UserFunctions
 
   DIMEMAS:
     ENABLED: false
@@ -61,6 +64,7 @@ TRACING:
   # Enable/Disable MPI profiling results in the report
   MPI:
     ENABLED: true
+
 
 # DO NOT MODIFY FROM THIS LINE
 COMMON:

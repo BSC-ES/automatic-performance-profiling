@@ -8,12 +8,11 @@
 # AS variables
 ###################
 model=%MODEL.NAME%
-cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
+cfg=%COMMON_PATH_LOCATIONS.CFG%
 env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-cfg=%COMMON_PATH_LOCATIONS.CFG%
 latex_folder=${cfg}/latex/
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 members="%EXPERIMENT.MEMBERS%"
