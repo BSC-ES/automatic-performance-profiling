@@ -33,7 +33,7 @@ TRACING:
     ENABLED: true
 
     # Paraver cfg, for all PV views see cfg/trace_analysis/paraver_configurations
-    CFGS: MPI_call p2p_size Average_IPC affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
+    CFGS: MPI_call p2p_size Average_IPC affinity_per_node L3_Total_cache_misses MPI_collective_call
 
     # Subset of Paraver cfgs
     COMPARE_CFGS:  MPI_call UserFunctions
@@ -45,7 +45,7 @@ TRACING:
     CFGS: MPI_call p2p_size
 
   USER_FUNCTIONS:
-    ENABLED: true
+    ENABLED: false
     PAPI_COUNTERS:
       # Space separated list where the elements are PC_id_1-PC_id_2,
       # you can get the ids from the papi_avail command

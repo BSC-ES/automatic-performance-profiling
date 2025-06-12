@@ -76,10 +76,27 @@ function configure_extrae()
 function create_trace_sh()
 {
     local run_directory=$1
+    local is_py=${2:-false}
     local trace=${run_directory}/trace.sh
     local extrae_lib="%EXTRAE.TRACING_LIB%"
     local extrae_home="%EXTRAE.HOME%"
-    cat << EOF > $trace
+    if ${is_py}; then
+        cat << EOF > $trace
+#!/bin/bash
+
+export PYTHONPATH=${extrae_home}/libexec/:\$PYTHONPATH
+export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
+export EXTRAE_SKIP_AUTO_LIBRARY_INITIALIZE=1
+source ${extrae_home}/etc/extrae.sh
+
+export EXTRAE_SKIP_AUTO_LIBRARY_INITIALIZE=1
+export LD_PRELOAD=${extrae_home}/lib/${extrae_lib}
+export LD_LIBRARY_PATH=${extrae_home}/lib/:\$LD_LIBRARY_PATH
+
+\$*
+EOF
+    else
+        cat << EOF > $trace
 #!/bin/bash
 
 export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
@@ -91,6 +108,7 @@ export LD_LIBRARY_PATH=${extrae_home}/lib/:\$LD_LIBRARY_PATH
 
 \$*
 EOF
+    fi
     chmod +x ${trace}
 }
 
@@ -421,7 +439,7 @@ function run_toy-model()
     # Create the member runtime directory if it is the first Chunk
     local test_dir=${run_root}/${test_name}
     local run_id="%CURRENT_NAME%"
-    local run_dir=${test_dir}/scalability_${run_id}
+    local run_dir=${test_dir}/run_${run_id}
     # Remove old runtime if exists and create a new one
     if [ -d ${run_dir} ]; then
         rm -rf ${run_dir}
@@ -433,6 +451,14 @@ function run_toy-model()
 
     # Go to the rundir
     cd ${run_dir} || exit
+
+    if [ ${current_member} = "Tracing" ]; then
+        create_trace_sh ${run_dir} true
+
+        configure_extrae ${run_dir}
+
+        cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}/extrae_functions_for_xml.txt
+    fi
 
     # Print the values of the environment variables before the loop
     for ((i=1; i<=number_of_components; i++)); do
@@ -489,7 +515,12 @@ function run_toy-model()
     run_command="srun --multi-prog multiprog.conf"
     curr_proc=0
     for yaml_config_file in "${component_yaml_files[@]}"; do
-        echo "${curr_proc}-${curr_proc} python3 toy_model.py --yaml_file_path ${yaml_config_file}" >> multiprog.conf
+        if ${current_member} = "Tracing"; then
+            component_cmd="${curr_proc}-${curr_proc} ./trace.sh python3 toy_model.py --yaml_file_path ${yaml_config_file}"
+        else
+            component_cmd="${curr_proc}-${curr_proc} python3 toy_model.py --yaml_file_path ${yaml_config_file}"
+        fi
+        echo "${component_cmd}" >> multiprog.conf
         curr_proc=$((curr_proc+1))
     done
 

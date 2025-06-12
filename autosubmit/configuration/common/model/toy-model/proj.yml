@@ -11,7 +11,7 @@ MODEL:
   # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
   # - For ecearth4: ARCH_NAME.yml
   # - For nemo: arch-ARCH_NAME.fcm
-  ARCH_NAMES: [O3_ompi_trace, O3_ompi_prod, O3_impi_prod]
+  ARCH_NAMES: [O3_impi_prod]
 
 # EXPERIMENT CONFIG
 EXPERIMENT:
