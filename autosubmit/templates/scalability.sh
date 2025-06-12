@@ -132,7 +132,6 @@ function run_nemo()
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg nn_itend    ${test_steps}
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_icebergs .false.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_meshmask .false.
-    ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_timing   .true.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_timing   .true.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref nn_fsbc     1
 
