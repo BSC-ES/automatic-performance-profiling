@@ -61,7 +61,7 @@ run_paraver()
     for test in "${tests[@]}"; do
         test_folder=${run_root}/${member}/${test}
 
-        declare -A components_slowest_ts
+        local -A components_slowest_ts
         for component in "${report_components[@]}"; do components_slowest_ts[$component]=0; done
         for trace_folder in ${test_folder}/run_*; do
             for component in "${report_components[@]}"; do 
@@ -104,7 +104,7 @@ run_paraver()
                     [ "${threads_to_ignore}" != "" ] && sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg_path}
 
                     # Generate the paraver view image
-                    if xvfb-run wxparaver -i ${trace} ${paraver_cfg_path} &> /dev/null; then
+                    if xvfb-run -d wxparaver -i ${trace} ${paraver_cfg_path}; then
                         local cfg_name=$(basename ${og_paraver_cfg_path})
                         cfg_name=${cfg_name%.cfg}
                         local trace_name=$(basename ${trace})
