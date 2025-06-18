@@ -121,7 +121,7 @@ function add_StrongScaling() {
         done
 
         # Coupling info (ECE4 only)
-        coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
+        coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
         coupling_enabled=${coupling_enabled,,}
         if ${coupling_enabled} && [ ${model} = "ecearth4" ]; then
             for case in coupling/*; do

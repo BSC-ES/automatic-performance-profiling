@@ -79,7 +79,7 @@ function clone_ecearth4()
 
     cd ${dest_dir} || exit
     if echo ${members} | grep -w "StrongScaling" && [ ! -d lucia-alternative ]; then
-        coupling_enabled=%STRONGSCALING.COUPLING.ENABLED%
+        coupling_enabled=%STRONGSCALING.COUPLING_REPORT.ENABLED%
         coupling_enabled=${coupling_enabled,,}
     	${coupling_enabled} && git clone https://earth.bsc.es/gitlab/es/lucia-alternative.git
     fi

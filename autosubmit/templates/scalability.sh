@@ -248,7 +248,8 @@ function get_vars_ecearth4()
     
     xios_procs="%CURRENT_XIOS_PROCS%"
 
-    rnfm_procs=1
+    rnfm_procs="%CURRENT_RNFM_PROCS%"
+    amipfr_procs="%CURRENT_AMIP_PROCS%"
 }
 
 
@@ -291,12 +292,14 @@ function run_ecearth4()
     local ecearth_root=${compilation}/${arch_name}
     local sed_ecearth_root=${ecearth_root//\//\\\/}
 
+    sed -i "s/COMPONENTS/${yml_components}/"         ${config_file}
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/BASE_FOLDER/${sed_run_dir}/"           ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
-    for component in "${report_components[@]}"; do
+    for component in "${components[@]}"; do
+        [ "${component}" = "oasis" ] && continue
         component_procs=${component}_procs
         sed -i "s/${component^^}_PPN/${!component_procs}/"   ${config_file}
         sed -i "s/${component^^}_PROCS/${!component_procs}/" ${config_file}
@@ -369,7 +372,7 @@ function run_ecearth4()
             rm -rf set-* ./*.nc
         ;;
         *)
-            local coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
+            local coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
             coupling_enabled=${coupling_enabled,,}
             if ${coupling_enabled}; then
                 cd ${run_dir} || exit
@@ -379,14 +382,23 @@ function run_ecearth4()
                 else 
                     lucia_ts=$(cat log/001/NODE.001_01 | grep NSTOP | awk -F ' ' '{print $3}')
                 fi
-                while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} --generate_plots true > lucia.log && [ $lucia_ts -gt 0 ]; do
+
+                local ignore_ini_ts="%STRONGSCALING.COUPLING_REPORT.LUCIA.IGNORE_INI_TS%"
+                local ignore_end_ts="%STRONGSCALING.COUPLING_REPORT.LUCIA.IGNORE_END_TS%"
+                local ignored_ts=$((ignore_ini_ts+ignore_end_ts))
+                while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average ${ignore_ini_ts} ${ignore_end_ts} ${lucia_ts} --generate_plots true > lucia.log && [ ${lucia_ts} -gt ${ignored_ts} ]; do
                     lucia_ts=$((lucia_ts-1))
                 done
 
-                coupling_dir=${test_dir}/coupling/${run_id}
-                mkdir -p ${coupling_dir}
-                cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
-                cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
+                if [ ${lucia_ts} -le ${ignored_ts} ]; then
+                    echo "[ERROR] Could not generate coupling report using lucia, check the logs or disable the coupling report in the AS settings." >&2 
+                    return 1
+                else
+                    coupling_dir=${test_dir}/coupling/${run_id}
+                    mkdir -p ${coupling_dir}
+                    cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
+                    cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
+                fi
             fi
 
             echo "${components[@]}" | grep -w "oifs" && cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat
@@ -395,6 +407,8 @@ function run_ecearth4()
     esac
 
     report_test_cfg
+
+    return 0
 }
 
 ###################
