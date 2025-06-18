@@ -198,6 +198,9 @@ function run_nemo()
 #####################################################################################################################
 function get_vars_ecearth4()
 {
+    yml_components="%MODEL.COMPONENTS%"
+    components=($(bashify_array "${yml_components}"))
+
     # If it is Weak Scaling that is being run compute the current procs based on the
     # base procs and resolution
     if [ ${current_member} = "Tracing" ]; then
@@ -309,37 +312,37 @@ function run_ecearth4()
 
 
     # Specific members config
-    if [ ${current_member} = "Tracing" ]; then
-        #shellcheck source=proj/auto-performance-profiling/cfg/trace/utils.sh
-        . ${cfg}/trace/utils.sh
+    case ${current_member} in
+        "Tracing")
+            # Change launch script to the trace script
+            sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
 
-        # Change launch script to the trace script
-        sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
+            # Copy user functions list
+            fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=${fd_enabled,,}
+            if ${fd_enabled}; then
+                cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
+            else
+                cp $cfg/trace/model/ecearth4/extrae_functions.txt ${run_dir}/
+            fi
 
-        # Copy user functions list
-        fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
-        fd_enabled=${fd_enabled,,}
-        if ${fd_enabled}; then
-            cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
-        else
-            cp $cfg/trace/model/ecearth4/extrae_functions.txt ${run_dir}/
-        fi
+            # Create and copy Extrae necessary files
+            create_trace_sh ${run_dir}
 
-        # Create and copy Extrae necessary files
-        create_trace_sh ${run_dir}
+            configure_extrae ${run_dir}
 
-        configure_extrae ${run_dir}
-
-        cp ${cfg}/trace/generate_function_list.sh ${run_dir}
-        chmod +x ${run_dir}/generate_function_list.sh
-    elif [ "$current_member" = "WeakScaling" ]; then
-        # Set the queue and project only for weakscaling since it is run intercatively 
-        # and it is not taking the AS platform configuration
-        local queue="%HPCQUEUE%"
-        local proj="%CURRENT_PROJ%"
-        sed -i "s/QUEUE/${queue}/"                   ${config_file}
-        sed -i "s/ACCOUNT/${proj}/"                  ${config_file}
-    fi
+            cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+            chmod +x ${run_dir}/generate_function_list.sh
+        ;;
+        "WeakScaling")
+            # Set the queue and project only for weakscaling since it is run intercatively 
+            # and it is not taking the AS platform configuration
+            local queue="%HPCQUEUE%"
+            local proj="%CURRENT_PROJ%"
+            sed -i "s/QUEUE/${queue}/"                   ${config_file}
+            sed -i "s/ACCOUNT/${proj}/"                  ${config_file}
+        ;;
+    esac
 
 
     # Activate the SE enviroment and run
@@ -352,40 +355,44 @@ function run_ecearth4()
     module purge
     . ${env_sources}
 
-    if [ ${current_member} = "Tracing" ]; then
-        # Moce and cut the trace by the model's components
-        cd ${run_dir} || exit
-
-        mv run/*prv run/*pcf run/*row .
-
-        actual_nemo_procs=$(grep "exceeds the maximum number of ocean subdomains" log/001/ocean.output | grep -oE "[0-9]+" || echo ${nemo_procs})
-
-        trace_components=("xios" "nemo" "rnf" "oifs")
-        processors=($xios_procs $nemo_procs 1 $oifs_procs)
-
-        cut_trace trace_components processors "${model}.prv"
-
-        rm -rf set-* ./*.nc
-    else
-        local coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
-        coupling_enabled=${coupling_enabled,,}
-        if ${coupling_enabled}; then
+    case ${current_member} in
+        "Tracing")
+            # Moce and cut the trace by the model's components
             cd ${run_dir} || exit
-            lucia_ts=$(cat time.step)
 
-            while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} --generate_plots true > lucia.log && [ $lucia_ts -gt 0 ]; do
-                lucia_ts=$((lucia_ts-1))
-            done
+            save_job_geometry multiprog run/multiprog.conf > job_geometry.sh
 
-            coupling_dir=${test_dir}/coupling/${run_id}
-            mkdir -p ${coupling_dir}
-            cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
-            cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
-        fi
+            mv run/*prv run/*pcf run/*row .
 
-        cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat
-        cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
-    fi
+            cut_trace job_geometry.sh "${model}.prv"
+
+            rm -rf set-* ./*.nc
+        ;;
+        *)
+            local coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
+            coupling_enabled=${coupling_enabled,,}
+            if ${coupling_enabled}; then
+                cd ${run_dir} || exit
+
+                if echo "${components[@]}" | grep -w "nemo"; then
+                    lucia_ts=$(cat time.step)
+                else 
+                    lucia_ts=$(cat log/001/NODE.001_01 | grep NSTOP | awk -F ' ' '{print $3}')
+                fi
+                while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} --generate_plots true > lucia.log && [ $lucia_ts -gt 0 ]; do
+                    lucia_ts=$((lucia_ts-1))
+                done
+
+                coupling_dir=${test_dir}/coupling/${run_id}
+                mkdir -p ${coupling_dir}
+                cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
+                cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
+            fi
+
+            echo "${components[@]}" | grep -w "oifs" && cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat
+            echo "${components[@]}" | grep -w "nemo" && cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
+        ;;
+    esac
 
     report_test_cfg
 }

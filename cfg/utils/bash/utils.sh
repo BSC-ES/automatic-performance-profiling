@@ -82,12 +82,12 @@ function save_job_geometry()
     declare -A supported_exes
     supported_exes=(["nemo"]="nemo" ["oifs"]="oifs" ["runoff-mapper"]="rnfm" ["xios_server"]="xios" ["amip-reader"]="amipfr")
 
-    parse_${f_ty} ${fn}
+    parse_${f_ty} "${fn}"
 
     echo "unset job_geometry"
     echo "declare -Ag job_geometry"
     echo -n "job_geometry=("
-    for component in ${!job_geometry[@]}; do
+    for component in "${!job_geometry[@]}"; do
         echo -n " [\"${component}\"]=\"${job_geometry[$component]}\"" 
     done
     echo -n ")"
@@ -104,14 +104,14 @@ function create_threads_to_ignore()
 {
     local component=$1
     threads_to_ignore=""
-    for curr_component in ${!job_geometry[@]}; do
+    for curr_component in "${!job_geometry[@]}"; do
         component_ranges=${job_geometry[${curr_component}]}
         component_ranges=${component_ranges//,/ }
         for component_range in ${component_ranges}; do
             first_proc=${component_range//-*}   
             last_proc=${component_range//*-}
             if [ "${curr_component}" != "${component}" ]; then
-                for j in $(seq $first_proc $last_proc); do
+                for j in $(seq "${first_proc}" "${last_proc}"); do
                     if [ "${threads_to_ignore}" != "" ]; then
                         threads_to_ignore="${threads_to_ignore}\n"
                     fi
@@ -125,28 +125,28 @@ function create_threads_to_ignore()
 #####################################################################################################################
 # Brief: Cut the whole model trace by its components
 # Param: 
-#   $1 - Components names array name
-#   $2 - Components processors array name
-#   $3 - Trace file *.prv
+#   $1 - Job geometry dict definition file path
+#   $2 - Trace file path
 #####################################################################################################################
 function cut_trace()
 {
-    local -n components_names="$1"
-    local -n components_processors="$2"
-    local trace_file=$3
+    local job_geometry_fn=$1
+    local trace_file=$2
+    local trace_name
+    trace_name=$(basename "${trace_file}" .prv)
 
-    local first_proc=1
-    local i=0
-    while [ $i -lt ${#components_names[@]} ]; do
-        local component_procs=${components_processors[i]}
-        local last_proc=$((first_proc+component_procs-1))
+    # shellcheck source=/dev/null
+    . "${job_geometry_fn}"
+
+    for component_name in "${!job_geometry[@]}"; do
+        local procs_range=${job_geometry[${component_name}]}
 
         cat << EOF > cutter.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
   <!-- CUTTER OPTIONS -->
   <cutter>
-    <tasks>${first_proc}-${last_proc}</tasks>
+    <tasks>${procs_range}</tasks>
     <max_trace_size>0</max_trace_size>
     <by_time>0</by_time>
     <minimum_time>0</minimum_time>
@@ -161,13 +161,10 @@ function cut_trace()
   </cutter>
 </config>
 EOF
-        paramedir -c cutter.xml ${trace_file}
+        paramedir -c cutter.xml "${trace_file}"
 
-        mv ${model}.chop*.prv ${components_names[i]}.prv
-        mv ${model}.chop*.pcf ${components_names[i]}.pcf
-        mv ${model}.chop*.row ${components_names[i]}.row
-
-        first_proc=$((last_proc+1))
-        i=$((i+1))
+        mv "${trace_name}".chop*.prv "${component_name}".prv
+        mv "${trace_name}".chop*.pcf "${component_name}".pcf
+        mv "${trace_name}".chop*.row "${component_name}".row
     done
 }
