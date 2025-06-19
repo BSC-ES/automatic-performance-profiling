@@ -145,7 +145,7 @@ function run_nemo()
     case "$current_member" in
         "WeakScaling")
             . ${project}/configurations/model/${model}/resolutions.sh 
-            local base_procs="%WEAKSCALING.BASE_PROCS%"
+            local base_nproc="%WEAKSCALING.BASE_PROCS%"
             local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
             local base_grid_points=${nemo_resolutions[${base_resolution^^}]}
             local nemo_grid_points${nemo_resolutions[${nemo_resolution^^}]}
@@ -219,6 +219,7 @@ function get_vars_ecearth4()
     fi 
 
     if [ ${current_member} = "WeakScaling" ]; then
+        #shellcheck source=proj/auto-performance-profiling/configurations/model/nemo/resolutions.sh
         . ${project}/configurations/model/nemo/resolutions.sh 
         # Overwrite resolution var with the current test resolution
         nemo_resolution=%CURRENT_NEMO_RESOLUTION%
@@ -376,11 +377,13 @@ function run_ecearth4()
             rm -rf set-* ./*.nc
         ;;
         *)
+            cd ${run_dir} || exit
+
             local coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
             coupling_enabled=${coupling_enabled,,}
+            # If enabled, run lucia to get the coupling report
             if ${coupling_enabled}; then
-                cd ${run_dir} || exit
-
+                # Get test timesteps
                 if echo "${components[@]}" | grep -w "nemo"; then
                     lucia_ts=$(cat time.step)
                 else 
@@ -403,6 +406,11 @@ function run_ecearth4()
                     cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
                     cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
                 fi
+            else
+                # Get sypd from the logs since lucia is not enabled
+                echo "${components[@]}" | grep -w "oifs" && oifs_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
+                echo "${components[@]}" | grep -w "nemo" && nemo_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
+                model_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
             fi
 
             echo "${components[@]}" | grep -w "oifs" && cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat

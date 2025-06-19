@@ -28,13 +28,20 @@ components=$(bashify_array "%MODEL.REPORT_COMPONENTS%" true)
 # Set the input files depending on the model
 reporter_params=""
 input_files="run_*/*-test_info.csv "
-case  "${model}" in
+case "${model}" in
     "nemo")
         input_files+="run_*/*-timing.output"
     ;;
     "ecearth4")
-        input_files+="run_*/lucia_lite_results/table.csv run_*/*-ifs.stat run_*/*-timing.output"
-        reporter_params="--coupling-folder coupling"
+        coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
+        coupling_enabled=${coupling_enabled,,}
+        if ${coupling_enabled}; then
+            input_files+="run_*/lucia_lite_results/table.csv"
+            reporter_params="--coupling-folder coupling"
+        fi
+
+        echo "${components[@]}" | grep -w "oifs" && input_files+="run_*/*-ifs.stat"
+        echo "${components[@]}" | grep -w "nemo" && input_files+="run_*/*-timing.output"
     ;;
 esac
 
