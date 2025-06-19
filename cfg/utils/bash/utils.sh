@@ -22,33 +22,34 @@ function bashify_array() {
 
 #####################################################################################################################
 # Biref: Creates a csv file run_id-test_info.csv that contains the configuration of the test
+# Arguments:
+#   - List of the names of variables to report
 # Global:
 #   - Paths: run_dir
 #   - Other: run_id, components, (component)_procs, (component)_resolution, (component)_curr_tile_size
 #####################################################################################################################
 function report_test_cfg()
 {
-    test_info_fn=${run_dir}/${run_id}-test_info.csv
-    header="component,nproc,resolution"
-    if [ "$current_member" = "WeakScaling" ]; then header+=",grid_points"; fi
-    echo ${header} > ${test_info_fn}
-    local model_resolution=""
-    local model_gridpoints=""
-    local model_nproc=0
-    for component in "${report_components[@]}"; do
-        component_procs="${component}_procs"
-        component_resolution="${component}_resolution"
-        row="${component},${!component_procs},${!component_resolution}"
-        if [ "$current_member" = "WeakScaling" ]; then 
-            component_grid_points="${component}_curr_tile_size"
-            row+=",${!component_grid_points}"
-        fi
-        echo ${row} >> ${test_info_fn}
-        actual_component_procs=${!component_procs}
-        model_nproc=$((model_nproc+actual_component_procs))
-    done
+    local -a variables_to_report=( "$@" )
+    local -a components=( "${report_components[@]}")
+    components+=( "model" )
 
-    echo "model,${model_nproc},-" >> ${test_info_fn}
+    test_info_fn=${run_dir}/${run_id}-test_info.csv
+    var_to_report_str="${variables_to_report[@]// /,}"
+    header="component,${var_to_report_str// /,}"
+    echo ${header} > ${test_info_fn}
+
+    for component in "${components[@]}"; do
+        row="${component}"
+        for variable_to_report in "${variables_to_report[@]}"; do
+            variable_to_report=${component}_${variable_to_report}
+            variable_value=${!variable_to_report}
+            [ "${variable_value}" = "" ] && variable_value="-"
+            row+=",${variable_value}"
+        done
+
+        echo ${row} >> ${test_info_fn}
+    done
 }
 
 

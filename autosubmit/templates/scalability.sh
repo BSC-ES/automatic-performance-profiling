@@ -98,7 +98,7 @@ EOF
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
 # Global:
 #   - Paths: inidata, binaries, compilation, run_dir
-#   - Other: test_name, nemo_procs
+#   - Other: test_name, nemo_nproc
 #####################################################################################################################
 function run_nemo()
 {
@@ -107,7 +107,7 @@ function run_nemo()
     local nemo_resolution="%EXPERIMENT.RESOLUTION%"
     local test_steps="%EXPERIMENT.TEST_STEPS%"
     local run_id="%CURRENT_NAME%"
-    local nemo_procs="%NUMPROC%"
+    local nemo_nproc="%NUMPROC%"
     local output="%EXPERIMENT.OUTPUT%"
     local run_dir=${run_root}/${test_name}/run_${run_id}
     local model_sources=${compilation}/${model}_${branch}
@@ -147,13 +147,13 @@ function run_nemo()
             . ${project}/configurations/model/${model}/resolutions.sh 
             local base_procs="%WEAKSCALING.BASE_PROCS%"
             local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
-            local base_tile_size=${nemo_resolutions[${base_resolution^^}]}
-            local nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
-            nemo_procs=$((base_procs*nemo_curr_tile_size/base_tile_size))
+            local base_grid_points=${nemo_resolutions[${base_resolution^^}]}
+            local nemo_grid_points${nemo_resolutions[${nemo_resolution^^}]}
+            nemo_nproc=$((base_nproc*nemo_grid_points/base_grid_points))
             local queue="%HPCQUEUE%"
             local proj="%CURRENT_PROJ%"
 
-            time srun -A ${proj} -q ${queue} -n $nemo_procs ./nemo
+            time srun -A ${proj} -q ${queue} -n $nemo_nproc ./nemo
         ;;
         "Tracing")
             configure_extrae ${run_dir}
@@ -169,26 +169,29 @@ function run_nemo()
             fi
             ./generate_function_list.sh ./nemo extrae_functions.txt
 
-            time srun -n ${nemo_procs} ./trace.sh ./nemo || true
+            time srun -n ${nemo_nproc} ./trace.sh ./nemo || true
             ! [ -f nemo.pcf ] && exit
             rm -rf set-* ./*.nc
 
             ( 
                 echo "unset job_geometry"
                 echo "declare -Ag job_geometry"
-                echo "job_geometry=([\"nemo\"]=\"0-$((nemo_procs-1))\")" 
+                echo "job_geometry=([\"nemo\"]=\"0-$((nemo_nproc-1))\")" 
             ) > job_geometry.sh
         ;;
         *)
-            time srun -n ${nemo_procs} ./nemo
+            time srun -n ${nemo_nproc} ./nemo
         ;;
     esac
 
     # Rename timing output
     cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
 
-    # Create test info csv for the JSON
-    report_test_cfg
+    model_nproc=%NUMPROC%
+    variables_to_report="nproc resolution"
+    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
+
+    report_test_cfg ${variables_to_report}
 }
 
 #####################################################################################################################
@@ -219,25 +222,26 @@ function get_vars_ecearth4()
         . ${project}/configurations/model/nemo/resolutions.sh 
         # Overwrite resolution var with the current test resolution
         nemo_resolution=%CURRENT_NEMO_RESOLUTION%
-        nemo_base_procs=%WEAKSCALING.NEMO_BASE_PROCS%
+        nemo_base_nproc=%WEAKSCALING.NEMO_BASE_PROCS%
         nemo_base_resolution=%WEAKSCALING.NEMO_BASE_RESOLUTION%
-        base_tile_size=${nemo_resolutions[${nemo_base_resolution^^}]}
-        nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
-        nemo_procs=$((nemo_base_procs*nemo_curr_tile_size/base_tile_size))
+        base_grid_points=${nemo_resolutions[${nemo_base_resolution^^}]}
+        nemo_grid_points=${nemo_resolutions[${nemo_resolution^^}]}
+        nemo_nproc=$((nemo_base_nproc*nemo_grid_points/base_grid_points))
 
+        #shellcheck source=proj/auto-performance-profiling/configurations/model/oifs/resolutions.sh
         . ${project}/configurations/model/oifs/resolutions.sh 
         # Overwrite resolution var with the current test resolution
         oifs_resolution=%CURRENT_OIFS_RESOLUTION%
-        oifs_base_procs=%WEAKSCALING.OIFS_BASE_PROCS%
+        oifs_base_nproc=%WEAKSCALING.OIFS_BASE_PROCS%
         oifs_base_resolution=%WEAKSCALING.OIFS_BASE_RESOLUTION%
-        base_tile_size=${oifs_resolutions[${oifs_base_resolution^^}]}
-        oifs_curr_tile_size=${oifs_resolutions[${oifs_resolution^^}]}
-        oifs_procs=$((oifs_base_procs*oifs_curr_tile_size/base_tile_size))
+        base_grid_points=${oifs_resolutions[${oifs_base_resolution^^}]}
+        oifs_grid_points=${oifs_resolutions[${oifs_resolution^^}]}
+        oifs_nproc=$((oifs_base_nproc*oifs_grid_points/base_grid_points))
     else 
-        oifs_procs="%CURRENT_OIFS_PROCS%"
+        oifs_nproc="%CURRENT_OIFS_PROCS%"
         oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
 
-        nemo_procs="%CURRENT_NEMO_PROCS%"
+        nemo_nproc="%CURRENT_NEMO_PROCS%"
         nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
     fi
     use_omp_threads="%USE_OMP_THREADS%"
@@ -246,10 +250,10 @@ function get_vars_ecearth4()
         oifs_omp_threads=%CURRENT_THREADS%
     fi
     
-    xios_procs="%CURRENT_XIOS_PROCS%"
+    xios_nproc="%CURRENT_XIOS_PROCS%"
 
-    rnfm_procs="%CURRENT_RNFM_PROCS%"
-    amipfr_procs="%CURRENT_AMIP_PROCS%"
+    rnfm_nproc="%CURRENT_RNFM_PROCS%"
+    amipfr_nproc="%CURRENT_AMIP_PROCS%"
 }
 
 
@@ -300,12 +304,12 @@ function run_ecearth4()
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
     for component in "${components[@]}"; do
         [ "${component}" = "oasis" ] && continue
-        component_procs=${component}_procs
-        sed -i "s/${component^^}_PPN/${!component_procs}/"   ${config_file}
-        sed -i "s/${component^^}_PROCS/${!component_procs}/" ${config_file}
+        component_nproc=${component}_nproc
+        sed -i "s/${component^^}_PPN/${!component_nproc}/"   ${config_file}
+        sed -i "s/${component^^}_PROCS/${!component_nproc}/" ${config_file}
     done
-    sed -i "s/XIOS_PROCS/${xios_procs}/"             ${config_file}
-    sed -i "s/XIOS_PPN/${xios_procs}/"               ${config_file}
+    sed -i "s/XIOS_PROCS/${xios_nproc}/"             ${config_file}
+    sed -i "s/XIOS_PPN/${xios_nproc}/"               ${config_file}
     sed -i "s/FREQUENCY/${freq}/"                    ${config_file}
     sed -i "s/START_DATE/${start_date}/"             ${config_file}
     sed -i "s/END_DATE/${end_date}/"                 ${config_file}
@@ -406,7 +410,12 @@ function run_ecearth4()
         ;;
     esac
 
-    report_test_cfg
+    model_nproc=%NUMPROC%
+    variables_to_report="nproc resolution"
+    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
+    ! ${coupling_enabled} && variables_to_report+=" sypd"
+
+    report_test_cfg ${variables_to_report}
 
     return 0
 }
