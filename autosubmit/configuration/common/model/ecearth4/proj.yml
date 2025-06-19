@@ -72,6 +72,7 @@ STRONGSCALING:
   NEMO_PROCS: [55,      111    , 167    , 223    , 279    ]
   XIOS_PROCS: [1,       1      , 1      , 1      , 1      ]
   AMIP_PROCS: [1,       1      , 1      , 1      , 1      ]
+  RNFM_PROCS: [1,       1      , 1      , 1      , 1      ]
   THREADS:    [1,       1      , 1      , 1      , 1      ]
   USE_OMP_THREADS: false
   MODEL_RESOLUTION: orca1
