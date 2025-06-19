@@ -47,6 +47,7 @@ TRACING:
 
   TEST_NAMES: [BENCH,   BENCH  , BENCH  ]
   NAMES:      [trace_1, trace_2, trace_3]
+  # Total processor count of the job
   PROCESSORS: [112,     224    , 336    ]
   OIFS_PROCS: [55,      111    , 167    ]
   NEMO_PROCS: [55,      111    , 167    ]
