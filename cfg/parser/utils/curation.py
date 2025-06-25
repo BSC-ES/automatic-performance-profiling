@@ -625,13 +625,13 @@ def simulated_years_per_day_plot(experiment_data, filename):
 
     plot_data = generate_sypd_plot_data(experiment_data)
     plotter(experiment_name=experiment_data.experiment_name, data=plot_data,
-            scatter_labels=experiment_data.cases, filename=filename, linear_test=True)
+            scatter_labels=experiment_data.cases, filename=filename, highlight_outliers=True)
 
     for component in experiment_data.components:
         component_plot_data = generate_sypd_plot_data(
             experiment_data, component)
         plotter(experiment_name=experiment_data.experiment_name, data=component_plot_data,
-                scatter_labels=experiment_data.components_cases[component], filename=component + "_" + filename, linear_test=True)
+                scatter_labels=experiment_data.components_cases[component], filename=component + "_" + filename, highlight_outliers=True)
 
 
 def cases_component_data(experiment_data):

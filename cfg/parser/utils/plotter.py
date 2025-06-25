@@ -1,39 +1,42 @@
-from matplotlib.ticker import StrMethodFormatter
+import os
 import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 
 
-# @brief -> Runs the RNSAC regression test in order to find tests that do not
-#         scale as expected.
-# @return np.array -> returns a mask that identifies which tests are outliers
-def ransac_test(x: list(), y: list()) -> tuple[np.array, np.array]:
-    from sklearn.linear_model import RANSACRegressor
+def detect_outliers(nproc, sypd):
+    def amdahls_law(n, ymax, p):
+        return ymax / ((1 - p) + (p / n))
 
-    if len(x) < 4:
-        print(
-            f"Minimum of 4 tests to run the linear regression test")
-        return np.full(len(x), True), np.full(len(x), False)
+    popt_sypd, _ = curve_fit(amdahls_law, nproc, sypd)
 
-    x = np.array([[i] for i in x])
-    y = np.array([[j] for j in y])
+    sypd_expected = amdahls_law(nproc, *popt_sypd)
 
-    ransac = RANSACRegressor(random_state=42).fit(x, y)
+    sypd_residuals = sypd - sypd_expected
 
-    inlier_mask = ransac.inlier_mask_
-    outlier_mask = ~inlier_mask
+    # Calculate IQR for residuals
+    sypd_q1, sypd_q3 = np.percentile(sypd_residuals, [25, 75]) # [25, 75] interquartile range
+    sypd_iqr = sypd_q3 - sypd_q1
 
-    return inlier_mask, outlier_mask
+    # Dynamic IQR multiplier (more tolerant for larger nproc)
+    tolerance = 1.0 
+
+    # Outlier thresholds (SYPD: low values, CHSY: high values)
+    sypd_lower = sypd_expected + (sypd_q1 - tolerance * sypd_iqr)
+
+    # Identify outliers
+    sypd_outliers = sypd < sypd_lower
+    sypd_inliers = sypd >= sypd_lower
+
+    popt_sypd, _ = curve_fit(amdahls_law, nproc[sypd_inliers], sypd[sypd_inliers])
+    sypd_expected_no_out = amdahls_law(nproc[sypd_inliers], *popt_sypd)
+
+    return sypd_inliers, sypd_outliers, sypd_expected_no_out
 
 
-def plotter(data, experiment_name, scatter_labels=None, filename=None, linear_test=False):
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        from matplotlib import pyplot as plt
-        import numpy as np
-        import os
-    except ModuleNotFoundError:
-        return
-
+def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight_outliers=False):
     if filename is None:
         filename = experiment_name + ".png"
 
@@ -41,15 +44,17 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, linear_te
     x_label, y_label = data.keys()
     x, y = data[x_label], data[y_label]
 
-    if linear_test:
-        inlier_mask, outlier_mask = ransac_test(x, y)
+    if highlight_outliers:
+        inlier_mask, outlier_mask, sypd_expected = detect_outliers(x, y)
         plt.scatter(
-            x[inlier_mask], y[inlier_mask], color="blue", label="Inliers")
+            x[inlier_mask], y[inlier_mask], color="blue")
         plt.scatter(
-            x[outlier_mask], y[outlier_mask], color="red", label="Outliers")
+            x[outlier_mask], y[outlier_mask], color="red")
+        if any(outlier_mask):
+            plt.plot(x[inlier_mask], sypd_expected, ":", alpha=.75, color="k", label="Expected speed")
     else:
-        plt.scatter(x, y, alpha=.5)
-    plt.plot(x, y, alpha=.25)
+        plt.scatter(x, y, alpha=.5, legend=False)
+    plt.plot(x, y, alpha=.5, label="Real speed")
 
     # Plot ideal
     x_min, x_max = min(x), max(x)
@@ -59,7 +64,7 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, linear_te
 
     ideal_range = np.arange(x_min, x_max, 1)
     ideal_speed = [ideal_speed(_x) for _x in ideal_range]
-    plt.plot(ideal_range, ideal_speed, ":", alpha=.25, color="k")
+    plt.plot(ideal_range, ideal_speed, ":", alpha=.25, color="k", label="Ideal speed")
 
     # Format stuff
     plt.title(os.path.splitext(os.path.basename(filename))[0])
@@ -68,7 +73,8 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, linear_te
 
     if not scatter_labels is None:
         for i, label in enumerate(scatter_labels):
-            plt.annotate(label, (x[i] + 2, y[i]))
+            plt.annotate(label, (x[i] + 4, y[i] - 0.2))
 
+    plt.legend()
     plt.savefig(filename)
     plt.close()
