@@ -284,6 +284,16 @@ function run_ecearth4()
     # Update all configuration according to AS variables
     cd ${compilation}/${arch_name}/scripts/runtime || exit
 
+    local output="%EXPERIMENT.OUTPUT%"
+    output=${output,,}
+    if ${output}; then
+        sed -i 's/enabled="false"/enabled="true"/g' templates/xios/file_def_*
+        sed -i 's/enabled=".FALSE."/enabled=".TRUE."/g' templates/xios/field_def_*
+    else
+        sed -i 's/enabled="true"/enabled="false"/g' templates/xios/file_def_*
+        sed -i 's/enabled=".TRUE."/enabled=".FALSE."/g' templates/xios/field_def_*
+    fi
+
     local config_file=experiment_config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
