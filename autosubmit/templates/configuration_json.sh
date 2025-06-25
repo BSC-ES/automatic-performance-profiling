@@ -36,12 +36,12 @@ case "${model}" in
         coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
         coupling_enabled=${coupling_enabled,,}
         if ${coupling_enabled}; then
-            input_files+="run_*/lucia_lite_results/table.csv"
+            input_files+=" run_*/lucia_lite_results/table.csv"
             reporter_params="--coupling-folder coupling"
         fi
 
-        echo "${components[@]}" | grep -w "oifs" && input_files+="run_*/*-ifs.stat"
-        echo "${components[@]}" | grep -w "nemo" && input_files+="run_*/*-timing.output"
+        echo "${components[@]}" | grep -w "oifs" && input_files+=" run_*/*-ifs.stat"
+        echo "${components[@]}" | grep -w "nemo" && input_files+=" run_*/*-timing.output"
     ;;
 esac
 
@@ -59,15 +59,17 @@ case "$current_member" in
         pc_enabled=${pc_enabled,,}
 
         reporter_params=""
-        ${uf_enabled} && reporter_params+=" -f function_csv"
-        ${uf_enabled} && reporter_params+=" --functions-file functions_summary.txt"
-        ${uf_enabled} && reporter_params+=" --most_expensive_function_summary most_expensive_function_summary.csv"
-        ${uf_enabled} && reporter_params+=" --tracking-folder tracking"
-        ${uf_enabled} && ${pc_enabled} && reporter_params+=" --scatter-plots ${pc_plots// /:}"
+        if ${uf_enabled}; then
+            reporter_params+=" -f function_csv"
+            reporter_params+=" --functions-file functions_summary.txt"
+            reporter_params+=" --most_expensive_function_summary most_expensive_function_summary.csv"
+            reporter_params+=" --tracking-folder tracking"
+            ${pc_enabled} && reporter_params+=" --scatter-plots ${pc_plots// /:}"
+        fi
 
         member="tracing"
         tests="%TRACING.TEST_NAMES%"
-        input_files="run_*/*test_info.csv paramedir/*pm"
+        input_files=" paramedir/*pm"
     ;;
     "CompilationEfficiency")
         member="compilation_efficiency"
