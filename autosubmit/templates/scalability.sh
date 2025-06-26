@@ -421,7 +421,10 @@ function run_ecearth4()
                 fi
             else
                 # Get sypd from the logs since lucia is not enabled
-                echo "${components[@]}" | grep -w "oifs" && oifs_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
+                if echo "${components[@]}" grep -w "oifs"; then
+                    oifs_sypd=$(grep "FORECAST DAYS PER DAY" log/001/NODE.001_01 |  grep -oE "[0-9.]+" )
+                    oifs_sypd=$(echo ${oifs_sypd} / 365 | bc -l)
+                fi
                 echo "${components[@]}" | grep -w "nemo" && nemo_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
                 model_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
             fi
