@@ -31,9 +31,9 @@ def detect_outliers(nproc, sypd):
     sypd_inliers = sypd >= sypd_lower
 
     popt_sypd, _ = curve_fit(amdahls_law, nproc[sypd_inliers], sypd[sypd_inliers])
-    sypd_expected_no_out = amdahls_law(nproc[sypd_inliers], *popt_sypd)
+    expected_sypd = amdahls_law(nproc, *popt_sypd)
 
-    return sypd_inliers, sypd_outliers, sypd_expected_no_out
+    return sypd_inliers, sypd_outliers, expected_sypd
 
 
 def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight_outliers=False):
@@ -45,13 +45,13 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight
     x, y = data[x_label], data[y_label]
 
     if highlight_outliers:
-        inlier_mask, outlier_mask, sypd_expected = detect_outliers(x, y)
+        inlier_mask, outlier_mask, expected_sypd = detect_outliers(x, y)
         plt.scatter(
             x[inlier_mask], y[inlier_mask], color="blue")
         plt.scatter(
             x[outlier_mask], y[outlier_mask], color="red")
         if any(outlier_mask):
-            plt.plot(x[inlier_mask], sypd_expected, ":", alpha=.75, color="k", label="Expected speed")
+            plt.plot(x, expected_sypd, ":", alpha=.75, color="k", label="Expected speed")
     else:
         plt.scatter(x, y, alpha=.5, legend=False)
     plt.plot(x, y, alpha=.5, label="Real speed")
