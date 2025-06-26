@@ -397,7 +397,10 @@ function run_ecearth4()
                 if echo "${components[@]}" | grep -w "nemo"; then
                     lucia_ts=$(cat time.step)
                 else 
-                    lucia_ts=$(cat log/001/NODE.001_01 | grep NSTOP | awk -F ' ' '{print $3}')
+                    # If nemo is not present, it means that oifs is running coupled with amipfr
+                    sim_length=$(cat namelist.amip | grep -oE "RunLengthSec = [0-9]+" | awk -F ' ' '{print $3}')
+                    amip_coupling_period=$(cat namelist.amip | grep -oE "TimeStepSec = [0-9]+" | awk -F ' ' '{print $3}')
+                    lucia_ts=$((sim_length/amip_coupling_period))
                 fi
 
                 local ignore_ini_ts="%STRONGSCALING.COUPLING_REPORT.LUCIA.IGNORE_INI_TS%"
