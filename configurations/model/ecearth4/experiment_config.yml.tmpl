@@ -134,17 +134,14 @@
       resubmit: false
       oifs:
         ntasks: OIFS_PROCS
-        ntasks_per_node: OIFS_PPN
         omp_num_threads: OIFS_OMP_THREADS
         omp_stacksize: "64M"
       amipfr:
         ntasks: AMIPFR_PROCS
       nemo:
         ntasks: NEMO_PROCS
-        ntasks_per_node: NEMO_PPN
       xios:
         ntasks: XIOS_PROCS
-        ntasks_per_node: XIOS_PPN
       
       slurm:
         sbatch:

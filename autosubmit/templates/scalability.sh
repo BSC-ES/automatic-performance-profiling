@@ -320,7 +320,6 @@ function run_ecearth4()
     for component in "${components[@]}"; do
         [ "${component}" = "oasis" ] && continue
         component_nproc=${component}_nproc
-        sed -i "s/${component^^}_PPN/${!component_nproc}/"   ${config_file}
         sed -i "s/${component^^}_PROCS/${!component_nproc}/" ${config_file}
     done
     sed -i "s/XIOS_PROCS/${xios_nproc}/"             ${config_file}
