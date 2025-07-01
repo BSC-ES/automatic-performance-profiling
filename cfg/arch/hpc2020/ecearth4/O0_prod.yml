@@ -1,49 +1,88 @@
-# System-dependent configuration for EC-Earth 4 build and runtime
+# System-dependent configuration for ECE4 build and runtime
+#
 # ECMWF Atos Sequana XH2000 HPCF (HPC2020)
-# Uses intel compiler+lapack and openmpi
+#
+# This configuration uses the Intel compilers, MKL and OpenMPI
+#
+# Needs modules (versions below tested, newer versions might work):
+#   prgenv/intel
+#   intel/2021.4.0 (for reference, automatically loaded by prgenv/intel)
+#   intel-mkl/19.0.5
+#   hpcx-openmpi/2.9.0
+#   netcdf4-parallel/4.9.1
 
 - base.echo:
-   msg: Apply system configuration for ecmwf-hpc2020
-
-# load modules and set required environment variables
+    msg: Apply platform configuration for ECMWF/HPC2020 (Intel+OpenMPI)
 
 - hpc.module:
-   cmd: reset
+    cmd: reset
 
 - hpc.module.load:
     names:
-    - python3/3.10.10-01
     - prgenv/intel
     - intel/2021.4.0
-    - intel-mkl/19.0.5
     - hpcx-openmpi/2.9.0
-    - hdf5-parallel/1.12.2
+    - intel-mkl/19.0.5
+    - fftw/3.3.9
     - netcdf4-parallel/4.9.1
-    - ecmwf-toolbox/2023.04.1.0
+    - cmake/3.20.2
+
+#--------------------------------------------------------------------------------
+# Module configuration used for HPC2020/intel+openmpi (from OpenIFS distribution)
+# 
+# - This requires switching to netcdf4_seq in scripts/build/compile-xios.yml:
+#        -        --netcdf_lib, netcdf4_par,
+#        +        --netcdf_lib, netcdf4_seq,
+#   and replacing below:
+#        -    NETCDF4_PARALLEL_DIR: NETCDF4_PARALLEL_DIR
+#        +    NETCDF4_PARALLEL_DIR: NETCDF4_DIR
+#--------------------------------------------------------------------------------
+#- hpc.module:
+#    cmd: purge
+#
+#- hpc.module.load:
+#    names:
+#    - prgenv/intel
+#    - intel/2021.4.0
+#    - hpcx-openmpi/2.9.0
+#    - intel-mkl/19.0.5
+#    - fftw/3.3.9
+#    - netcdf4/4.7.4
+#    - hdf5/1.10.6
+#    - eigen/3.3.7 
+#    - cmake/3.20.2
+#    - ninja/1.10.0
+#    - fcm/2019.05.0
+#    - aec/1.0.4
+
+- hpc.module:
+    cmd: list
 
 - base.getenv:
     LD_LIBRARY_PATH: LD_LIBRARY_PATH
-    ECCODES_DIR: ECCODES_DIR
     NETCDF4_PARALLEL_DIR: NETCDF4_PARALLEL_DIR
     MKLROOT: MKLROOT
-    HDF5_DIR: HDF5_DIR 
 
 - base.setenv:
     OASIS_BUILD_PATH: "{{ experiment.src_dir }}/oasis3-mct-5.2/arch_ecearth"
     LD_LIBRARY_PATH:  "{{
       experiment.src_dir + '/oasis3-mct-5.2/arch_ecearth/lib'
+      + (':' + experiment.src_dir + '/oifs-48r1/build/lib')
       + ':' + NETCDF4_PARALLEL_DIR + '/lib'
-      + ':' + ECCODES_DIR + '/lib'
-      + ':' + HDF5_DIR + '/lib'
       + (':' + LD_LIBRARY_PATH if LD_LIBRARY_PATH else '')
     }}"
+    MKL_CBWR: "AUTO,STRICT"
+    OMP_PROC_BIND: "true"
+    OMP_PLACES: "threads"
+
+- when: '{{ experiment.ini_dir is not defined }}'
+  base.context:
+    experiment:
+      ini_dir: INIDATA
 
 - base.context:
     platform:
       cpus_per_node: 128
-
-    experiment:
-      ini_dir: INIDATA
 
     job:
       slurm:
@@ -53,67 +92,72 @@
             qos: np
 
     build:
+      lang:
+        fortran:
+          compiler: mpifort
+          flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O0 -march=core-avx2
+          #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O0 -march=core-avx2
+          #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O0  -march=core-avx2 -init=snan,arrays -check uninit,bounds -fpe0
+          preprocessor: fpp
 
+        c:
+          compiler: mpicc
+          flags: -traceback -g -O0 
+          preprocessor: cpp
+
+        linker:
+          command: !noparse "{{ build.lang.fortran.compiler }}"
+
+        cxx:
+          compiler: mpicxx
+
+        make:
+          command: gmake
+
+      deps:
+        mpi: null
+
+        lapack:
+          base_dir: "{{ MKLROOT }}"
+          lib_dir: !noparse "{{ build.deps.lapack.base_dir }}/lib/intel64"
+          libs: [mkl_intel_lp64, mkl_core, mkl_sequential]
+
+        grib:
+          base_dir: "{{ experiment.src_dir }}/oifs-48r1/build"
+          inc_dir: !noparse "{{ build.deps.grib.base_dir }}/include"
+          lib_dir: !noparse "{{ build.deps.grib.base_dir }}/lib"
+          libs: [eccodes_f90, eccodes, pthread]
+          samples_path: "/MEMFS/samples:/MEMFS/ifs_samples/grib1_mlgrib2"
+
+        netcdf:
+          base_dir: "{{ NETCDF4_PARALLEL_DIR }}"
+          inc_dir: !noparse "{{ build.deps.netcdf.base_dir }}/include"
+          mod_dir: !noparse "{{ build.deps.netcdf.base_dir }}/include"
+          lib_dir: !noparse "{{ build.deps.netcdf.base_dir }}/lib"
+          libs: [netcdff, netcdf]
+
+        hdf5: null
+
+      # This is only needed to compile OIFS43R3, which requires grib
+      # lib built in OIFS48R1 externals. I.e. compile 48r1 **before**
+      # 43r3, if you want the latter.
+      oifs:
         lang:
-            fortran:
-                compiler: mpifort
-                flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O0 -xHost 
-            #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O0 -xHost
-            #   flags: -r8 -traceback -g -fp-model precise -fp-speculation=safe -O0 -xHost -init=snan,arrays -check uninit,bounds -fpe0
-                preprocessor: fpp
+          fortran:
+            #flags: -fpe0 -convert big_endian -assume byterecl -align array64byte -traceback -fpic -qopenmp -qopenmp-threadprivate compat -fp-model precise -fp-speculation=safe -qopt-report=2 -qopt-report-phase=all -fast-transcendentals -ftz -finline-functions -finline-limit=1500 -Winline -assume realloc_lhs -diag-disable=7713 -diag-disable=11021 -diag-disable=10397 -init=snan -g -O0 -march=core-avx2 -no-fma
+            flags: -fpe0 -convert big_endian -march=core-avx2 -qopenmp
+            flags_fixed: -r8
+            macros: BLAS LITTLE LINUX INTEGER_IS_INT
+          c:
+            macros: BLAS LITTLE LINUX INTEGER_IS_INT _ABI64
+          linker:
+            flags: -qmkl=sequential -qopenmp
 
-            c:
-                compiler: mpicc
-                flags: -traceback -g -O0 -xHost
-                preprocessor: cpp
-
-            linker:
-                command: !noparse "{{build.lang.fortran.compiler}}"
-
-            make:
-                command: gmake
-
-        deps:
-            mpi: null
-
-            lapack:
-                base_dir: !noparse "{{MKLROOT}}"
-                lib_dir: !noparse "{{build.deps.lapack.base_dir}}/lib/intel64"
-                libs: [mkl_intel_lp64, mkl_core, mkl_sequential]
-
-            grib:
-                base_dir: !noparse "{{ECCODES_DIR}}"
-                inc_dir: !noparse "{{build.deps.grib.base_dir}}/include"
-                lib_dir: !noparse "{{build.deps.grib.base_dir}}/lib"
-                libs: [eccodes_f90, eccodes, pthread]
-                samples_path: !noparse "/MEMFS/samples:/MEMFS/ifs_samples/grib1_mlgrib2"
-
-            netcdf:
-                base_dir: !noparse "{{NETCDF4_PARALLEL_DIR}}"
-                inc_dir: !noparse "{{build.deps.netcdf.base_dir}}/include"
-                mod_dir: !noparse "{{build.deps.netcdf.base_dir}}/include"
-                lib_dir: !noparse "{{build.deps.netcdf.base_dir}}/lib"
-                libs: [netcdff, netcdf]
-
-            hdf5:
-                base_dir: !noparse "{{HDF5_DIR}}"
-                inc_dir: !noparse "{{build.deps.hdf5.base_dir}}/include"
-                lib_dir: !noparse "{{build.deps.hdf5.base_dir}}/lib"
-                libs: [hdf5_hl, hdf5, z]
-
-        oifs:
-            lang:
-                fortran:
-                    flags: !noparse "-fpe0 -convert big_endian -march=core-avx2 -qopenmp"
-                    flags_fixed: -r8
-                    macros: BLAS LITTLE LINUX INTEGER_IS_INT
-                c:
-                    macros: BLAS LITTLE LINUX INTEGER_IS_INT _ABI64
-                linker:
-                    flags: -qmkl=sequential -qopenmp
-        oasis:
-            lang:
-                fortran:
-                    flags_shared: -fPIC
-                linker:
-                    flags_shared: -shared
+      oasis:
+        lang:
+          fortran:
+            flags: -qopenmp
+            flags_shared: -fPIC
+          linker:
+            flags: -qopenmp
+            flags_shared: -shared
