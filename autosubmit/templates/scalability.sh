@@ -204,6 +204,8 @@ function get_vars_ecearth4()
     yml_components="%MODEL.COMPONENTS%"
     components=($(bashify_array "${yml_components}"))
 
+    inidata=%EXPERIMENT.INIDATA%
+
     # If it is Weak Scaling that is being run compute the current procs based on the
     # base procs and resolution
     if [ ${current_member} = "Tracing" ]; then
@@ -306,11 +308,13 @@ function run_ecearth4()
     local sed_src_dir=${src_dir//\//\\\/}
     local ecearth_root=${compilation}/${arch_name}
     local sed_ecearth_root=${ecearth_root//\//\\\/}
+    local sed_inidata=${inidata//\//\\\/}
 
     sed -i "s/COMPONENTS/${yml_components}/"         ${config_file}
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/BASE_FOLDER/${sed_run_dir}/"           ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
+    sed -i "s/INIDATA/${sed_inidata}/"               ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
     for component in "${components[@]}"; do
