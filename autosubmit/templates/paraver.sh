@@ -53,6 +53,19 @@ function create_paraver_legend()
 
 run_paraver()
 {
+    # Check available X11 "fake" servers
+    if which xvfb-run &> /dev/null; then
+        paraver_cmd="xvfb-run -d wxparaver"
+    elif which vncserver &> /dev/null; then
+        export DISPLAY=:1
+        vncserver $DISPLAY
+        vncserver -list
+        paraver_cmd="wxparaver"
+    else
+        echo "[ERROR] xvfb-run or vncserver commands not found, cannot run Paraver to generate images" 1>&2
+        return 1
+    fi
+
     export analysis_tools=${cfg}/trace_analysis
     local paraver_configurations_path=${analysis_tools}/paraver_configurations
     local compare_cfgs="%TRACING.PARAVER.COMPARE_CFGS%"
@@ -104,7 +117,7 @@ run_paraver()
                     [ "${threads_to_ignore}" != "" ] && sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg_path}
 
                     # Generate the paraver view image
-                    if xvfb-run -d wxparaver -i ${trace} ${paraver_cfg_path}; then
+                    if  ${paraver_cmd} -i ${trace} ${paraver_cfg_path}; then
                         local cfg_name=$(basename ${og_paraver_cfg_path})
                         cfg_name=${cfg_name%.cfg}
                         local trace_name=$(basename ${trace})
@@ -121,11 +134,6 @@ run_paraver()
 ###################
 # Start script
 ###################
-
-if ! which xvfb-run &> /dev/null; then
-    echo "[ERROR] xvfb-run not found and it is required to run Paraver" >&2
-    exit 1
-fi
 
 paraver_enabled="%TRACING.PARAVER.ENABLED%"
 paraver_enabled=${paraver_enabled,,}
