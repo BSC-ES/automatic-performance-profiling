@@ -1,0 +1,43 @@
+\begin{description}
+\item[Strong Scaling] A measure of the performance gain achieved by increasing the number of processing units (e.g., cores, processors) while keeping the problem size constant (resolution in the climate models case). It evaluates how well an application can take advantage of additional resources to reduce the time required to complete a fixed amount of work.
+
+\item[Weak Scaling] A measure of the performance gain achieved by increasing the number of processing units and the problem size proportionally (resolution in the climate models case). It evaluates how well an application can handle larger problem sizes as more resources become available, keeping the workload per processing unit constant.
+
+\item[SYPD (Simulated Years Per Day)] A metric that measures the rate at which a simulation can process one year of simulated time per day of real time. It is often used to evaluate the performance of climate models, weather forecasting models, and other simulations that involve time-dependent processes.
+
+\item[CHSY (Core Hours per Simulated Year)] A metric that measures the computational resources required to simulate one year of time. It is typically expressed in core hours, which represents the number of hours a single core would take to perform the simulation, and is used to estimate the cost and efficiency of large-scale simulations.
+
+\item[Coupling Cost] The overhead incurred when different components or models are coupled together to form a larger simulation or application. This can include the cost of data transfer, synchronization, and communication between components, and can impact the overall performance and efficiency of the simulation.
+
+\item[Efficiency] Efficiency is calculated as the ratio of the actual speedup achieved to the theoretical speedup that could be achieved if the system were perfectly parallelizable. In other words, it measures how close the actual performance is to the ideal performance.
+
+\item[Speed Up] The ratio of the time taken to complete a task on a single processing unit to the time taken to complete the same task on multiple processing units. It is a measure of the performance gain achieved through parallel processing and is often used to evaluate the effectiveness of parallel algorithms and implementations.
+
+\item[Parallel Efficiency] A measure of how well a parallel application utilizes multiple processing units to achieve a performance gain. It is often expressed as a percentage, with higher values indicating better utilization of resources and reduced overhead due to parallelization.
+
+\item[Communication Efficiency] Refers to the ability of a parallel program to minimize the overhead associated with exchanging data between processes. This is crucial in achieving good scalability and performance in distributed-memory architectures.
+
+\item[Load Balance] The distribution of workload across multiple processing units or resources in a parallel system. Good load balance ensures that each processing unit is utilized efficiently, with no significant idle time, and helps to achieve optimal performance and scalability.
+
+\item[PAPI Counters] A set of counters and interfaces provided by the Performance API (PAPI) library, which allows developers to access and measure various hardware performance metrics, such as cache misses, branch mispredictions, and floating-point operations. PAPI counters are useful for optimizing application performance and identifying bottlenecks.
+
+    \begin{itemize}
+    \item \textbf{TOTAL INS}: This counter tracks the \textbf{total number of instructions} executed by the processor. It counts every instruction that is fetched, decoded, and executed, regardless of whether it's a load, store, arithmetic, or control flow instruction. This counter provides insight into the overall throughput of the processor.
+
+    \item \textbf{L1 DCM}: \textbf{Level 1 Data Cache Misses}. This counter measures the number of times the processor attempts to access data in the Level 1 (L1) data cache but finds that the data is not present (a "miss"). The L1 cache is the smallest and fastest cache level, closest to the processor core. A high number of L1 DCM can indicate that the working set of the application does not fit well within the L1 cache, leading to performance issues due to slower access times for data in higher-level caches or main memory.
+
+    \item \textbf{L2 DCM}: \textbf{Level 2 Data Cache Misses}. Similar to L1 DCM, but this counter tracks misses in the Level 2 (L2) data cache. The L2 cache is larger and slower than the L1 cache but still much faster than the main memory. L2 DCM can indicate issues with the application's data locality that are not severe enough to cause significant main memory access but still impact performance due to the slower access times compared to the L1 cache.
+
+    \item \textbf{L3 TCM}: \textbf{Level 3 Total Cache Misses}. This counter tracks the total number of misses in the Level 3 (L3) cache. The L3 cache, also known as the Last Level Cache (LLC) in some architectures, is shared among multiple cores in multi-core processors and is the last level of cache before main memory. High L3 TCM values can indicate poor data locality, large working sets, or contention between different cores for cache space, leading to increased memory access latency and potentially significant performance degradation.
+    \end{itemize}
+
+\item[User Functions] Custom functions or subroutines written by users to perform specific tasks or operations within an application or simulation. These functions can be used to extend the functionality of the application, implement new algorithms, or optimize performance for specific use cases.
+
+\item[Paraver] A performance analysis tool used to visualize and analyze the behavior of parallel applications. It provides a graphical representation of the execution timeline, allowing developers to identify performance bottlenecks, optimize resource utilization, and improve overall application performance.
+
+\item[Modelfactors] A set of factors or parameters that influence the behavior and performance of a simulation or model, also the name of the tool developed at BSC.
+
+\item[Extrae] A tracing tool used to collect and analyze performance data from parallel applications developed by Tools at BSC. It provides detailed information on the execution behavior of the application, including MPI and OMPI communication patterns, L1-3 cache misses, User Functions elapsed time... which can be used to optimize performance and identify bottlenecks.
+
+\item[Trace] A record of the execution history of an application or simulation, including information on the sequence of events, function calls, and resource utilization. Traces can be used to analyze performance, identify bottlenecks, and optimize application behavior, and in our case are create by Extrae.
+\end{description}

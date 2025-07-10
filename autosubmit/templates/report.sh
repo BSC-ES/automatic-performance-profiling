@@ -491,6 +491,11 @@ for current_member in ${members}; do
     add_${current_member}
 done
 
+python3 ${cfg}/latex/ReportGenerator.py \
+    -O ${report_full_path}.pkl \
+    --section-title "Glossary" \
+    -T ${cfg}/latex/text/Glossary.txt
+
 cd ${report_folder} || exit
 echo model=${model^^} > param.cfg
 echo configuration_name=${configuration_name} >> param.cfg
