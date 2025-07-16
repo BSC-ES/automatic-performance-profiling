@@ -191,7 +191,7 @@ function run_nemo()
     variables_to_report="nproc resolution"
     [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
 
-    report_test_cfg ${variables_to_report}
+    report_test_cfg ${variables_to_report} > ${run_dir}/${run_id}-test_info.csv
 }
 
 #####################################################################################################################
@@ -370,81 +370,6 @@ function run_ecearth4()
     set +u
     se_env_${platform,,} trunk
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
-
-
-    # Run postprocessing
-    module purge
-    . ${env_sources}
-
-    case ${current_member} in
-        "Tracing")
-            # Moce and cut the trace by the model's components
-            cd ${run_dir} || exit
-
-            save_job_geometry multiprog run/multiprog.conf > job_geometry.sh
-
-            mv run/*prv run/*pcf run/*row .
-
-            cut_trace job_geometry.sh "${model}.prv"
-
-            rm -rf set-* ./*.nc
-        ;;
-        *)
-            cd ${run_dir} || exit
-
-            local coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
-            coupling_enabled=${coupling_enabled,,}
-            # If enabled, run lucia to get the coupling report
-            if ${coupling_enabled}; then
-                # Get test timesteps
-                if echo "${components[@]}" | grep -w "nemo"; then
-                    lucia_ts=$(cat time.step)
-                else 
-                    # If nemo is not present, it means that oifs is running coupled with amipfr
-                    sim_length=$(cat namelist.amip | grep -oE "RunLengthSec = [0-9]+" | awk -F ' ' '{print $3}')
-                    amip_coupling_period=$(cat namelist.amip | grep -oE "TimeStepSec = [0-9]+" | awk -F ' ' '{print $3}')
-                    lucia_ts=$((sim_length/amip_coupling_period))
-                fi
-
-                local ignore_ini_ts="%STRONGSCALING.COUPLING_REPORT.LUCIA.IGNORE_INI_TS%"
-                local ignore_end_ts="%STRONGSCALING.COUPLING_REPORT.LUCIA.IGNORE_END_TS%"
-                local ignored_ts=$((ignore_ini_ts+ignore_end_ts))
-                while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average ${ignore_ini_ts} ${ignore_end_ts} ${lucia_ts} --generate_plots true > lucia.log && [ ${lucia_ts} -gt ${ignored_ts} ]; do
-                    lucia_ts=$((lucia_ts-1))
-                done
-
-                if [ ${lucia_ts} -le ${ignored_ts} ]; then
-                    echo "[ERROR] Could not generate coupling report using lucia, check the logs or disable the coupling report in the AS settings." >&2 
-                    return 1
-                else
-                    coupling_dir=${test_dir}/coupling/${run_id}
-                    mkdir -p ${coupling_dir}
-                    cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
-                    cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
-                fi
-            else
-                # Get sypd from the logs since lucia is not enabled
-                if echo "${components[@]}" grep -w "oifs"; then
-                    oifs_sypd=$(grep "FORECAST DAYS PER DAY" log/001/NODE.001_01 |  grep -oE "[0-9.]+" )
-                    oifs_sypd=$(echo ${oifs_sypd} / 365 | bc -l)
-                fi
-                echo "${components[@]}" | grep -w "nemo" && nemo_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
-                model_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
-            fi
-
-            echo "${components[@]}" | grep -w "oifs" && cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat
-            echo "${components[@]}" | grep -w "nemo" && cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
-        ;;
-    esac
-
-    model_nproc=%NUMPROC%
-    variables_to_report="nproc resolution"
-    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
-    ! ${coupling_enabled} && variables_to_report+=" sypd"
-
-    report_test_cfg ${variables_to_report}
-
-    return 0
 }
 
 ###################

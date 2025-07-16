@@ -34,10 +34,9 @@ function report_test_cfg()
     local -a components=( "${report_components[@]}")
     components+=( "model" )
 
-    test_info_fn=${run_dir}/${run_id}-test_info.csv
     var_to_report_str="${variables_to_report[@]// /,}"
     header="component,${var_to_report_str// /,}"
-    echo ${header} > ${test_info_fn}
+    echo ${header}
 
     for component in "${components[@]}"; do
         row="${component}"
@@ -48,7 +47,7 @@ function report_test_cfg()
             row+=",${variable_value}"
         done
 
-        echo ${row} >> ${test_info_fn}
+        echo ${row}
     done
 }
 
@@ -67,7 +66,7 @@ function parse_multiprog()
                 break
             fi
         done
-        if [ "${job_geometry[${curr_component}]}" = "" ]; then
+        if [ -z ${job_geometry[${curr_component}]+word} ]; then
             job_geometry[${curr_component}]="${procs_range}"
         else
             job_geometry[${curr_component}]+=",${procs_range}"
