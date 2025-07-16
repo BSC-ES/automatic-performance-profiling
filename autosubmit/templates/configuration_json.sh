@@ -27,7 +27,7 @@ components=$(bashify_array "%MODEL.REPORT_COMPONENTS%" true)
 
 # Set the input files depending on the model
 reporter_params=""
-input_files="run_*/*-test_info.csv "
+input_files="run_*/*test_info.csv "
 case "${model}" in
     "nemo")
         input_files+="run_*/*-timing.output"
@@ -69,7 +69,7 @@ case "$current_member" in
 
         member="tracing"
         tests="%TRACING.TEST_NAMES%"
-        input_files=" paramedir/*pm"
+        input_files+=" paramedir/*pm"
     ;;
     "CompilationEfficiency")
         member="compilation_efficiency"
