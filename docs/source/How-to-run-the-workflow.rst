@@ -184,15 +184,6 @@ The fields are named as in the Extrae XML file, you can check its documentation 
 
 It is important that you replace the HOME variable with the path to the Extrae installation you will use.
 
-Issues with ECE4
-""""""""""""""""
-
-For ECE4 you need to use an Extrae custom installation with ``--disable-instrument-io`` and ``--disable-instrument-dynamic-memory`` flags in order for it to work. You can use the following installation paths:
-
-
-* mn5: ``/gpfs/projects/bsc32/CS-share/extrae/src/extrae-4.2.4/build-impi-2021.10.0/install``
-* hpc2020: ``/lus/h2resw01/hpcperm/c3rs/extrae-4.2.4/install/hpcx-openmpi-2.9.0``
-
 Run the workflow
 ----------------
 
