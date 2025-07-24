@@ -309,6 +309,7 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
 
   * **Brief**\ : Runs the post processing of the model logs to get the SYPD and other performance metrics.
   * **Post**\ :
+
     * **Tracing**\ : Cuts the model trace into the component traces and renames the files to match the naming convention (COMPONENT.prv).
     * **CompilationEfficiency/StrongScaling/WeakScaling/Traciing**\ : It creates a csv that includes the sypd, nproc and resolution information for each component named as TEST_NAME-test_info.csv. Also if Lucia is enabled, it runs the tool.
 
