@@ -47,10 +47,13 @@ TRACING:
 
   TEST_NAMES: [BENCH,   BENCH  , BENCH  ]
   NAMES:      [trace_1, trace_2, trace_3]
+  # Total processor count of the job
   PROCESSORS: [112,     224    , 336    ]
   OIFS_PROCS: [55,      111    , 167    ]
   NEMO_PROCS: [55,      111    , 167    ]
   XIOS_PROCS: [1,       1      , 1      ]
+  AMIP_PROCS: [1,       1      , 1      ]
+  RNFM_PROCS: [1,       1      , 1      ]
   THREADS:    [2,       2      , 2      ]
   USE_OMP_THREADS: false
   MODEL_RESOLUTION: orca1
@@ -62,20 +65,25 @@ TRACING:
 STRONGSCALING:
   STRONGSCALING_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling"
 
-  TEST_NAMES: [BENCH,   BENCH  , BENCH  , BENCH  ]
-  NAMES:      [bench_1, bench_2, bench_3, bench_4]
-  PROCESSORS: [112,     224    , 336    , 168    ]
-  OIFS_PROCS: [55,      111    , 167    , 83     ]
-  NEMO_PROCS: [55,      111    , 167    , 83     ]
-  XIOS_PROCS: [1,       1      , 1      , 1      ]
-  THREADS:    [1,       1      , 1      , 1      ]
+  TEST_NAMES: [BENCH,   BENCH  , BENCH  , BENCH  , BENCH  ]
+  NAMES:      [bench_1, bench_2, bench_3, bench_4, bench_5]
+  PROCESSORS: [112,     224    , 336    , 448    , 560    ]
+  OIFS_PROCS: [110,     222    , 334    , 446    , 558    ]
+  NEMO_PROCS: [55,      111    , 167    , 223    , 279    ]
+  XIOS_PROCS: [1,       1      , 1      , 1      , 1      ]
+  AMIP_PROCS: [1,       1      , 1      , 1      , 1      ]
+  RNFM_PROCS: [1,       1      , 1      , 1      , 1      ]
+  THREADS:    [1,       1      , 1      , 1      , 1      ]
   USE_OMP_THREADS: false
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_ompi_prod
 
-  COUPLING: 
+  COUPLING_REPORT: 
     ENABLED: true
+    LUCIA:
+      IGNORE_INI_TS: 1
+      IGNORE_END_TS: 1
 
 # WEAKSCALING CONFIG
 WEAKSCALING:
@@ -93,6 +101,8 @@ WEAKSCALING:
   NAMES:           [ws_1_1,    ws_1_2,    ws_1_3,    ws_1_4   ]
   PROCESSORS:      [1,         1,         1,         1,       ]
   XIOS_PROCS:      [1,         1,         1,         1,       ]
+  AMIP_PROCS:      [1,         1,         1,         1,       ]
+  RNFM_PROCS:      [1,         1,         1,         1,       ]
   OIFS_RESOLUTION: [TL255L91,  TL255L91,  TL255L91,  TL255L91 ]
   NEMO_RESOLUTION: [eORCA1L75, eORCA1L75, eORCA1L75, eORCA1L75]
 
@@ -110,6 +120,8 @@ COMPILATION_EFFICIENCY:
   OIFS_PROCS: [55,           111,          167,          55,           111,          167         ]
   NEMO_PROCS: [55,           111,          167,          55,           111,          167         ]
   XIOS_PROCS: [1,            1,            1,            1,            1,            1           ]
+  AMIP_PROCS: [1,            1,            1,            1,            1,            1           ]
+  RNFM_PROCS: [1,            1,            1,            1,            1,            1           ]
   THREADS:    [1,            1,            1,            1,            1,            1           ]
   MODEL_RESOLUTION: orca1
   TEST_CONFIG: BENCH

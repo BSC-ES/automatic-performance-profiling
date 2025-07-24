@@ -317,7 +317,7 @@ class TimingInformation:
         self.components = components
         self.components_cases = None
 
-        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files):
+        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files) and (not ifs_files) and (not test_info_files):
             raise AssertionError("No files provided")
 
         # Update values with the provided files

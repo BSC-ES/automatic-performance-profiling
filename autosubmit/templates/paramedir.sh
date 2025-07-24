@@ -21,34 +21,6 @@ env_sources=${cfg}/env/${platform}/environment.env
 components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
 
-#####################################################################################################################
-# Brief: Create configuration string for paraver to ignore the non component processes
-# Global:
-#   component - Name of the component NOT to ignore
-#   components_names - Array with the names of the different components
-#   components_procs - Array with the processes of the different components in the same order as components_names
-#####################################################################################################################
-function generate_threads_to_ignore_str()
-{
-    threads_to_ignore=""
-    local i=0
-    local first_proc=0
-    while [ $i -lt ${#components_names[@]} ]; do
-        component_procs=${components_procs[i]}
-        last_proc=$((first_proc+component_procs-1))
-        if [ "${components_names[i]}" != "${component}" ]; then
-            for j in $(seq ${first_proc} ${last_proc}); do
-                if [ "${threads_to_ignore}" != "" ]; then
-                    threads_to_ignore="${threads_to_ignore}\n"
-                fi
-                threads_to_ignore="${threads_to_ignore}window_object thread { 0, $j, 1, { 0 } }"
-            done
-        fi
-        first_proc=$((last_proc+1))
-        i=$((i+1))
-    done
-}
-
 ###################
 # Start script
 ###################
@@ -69,15 +41,15 @@ do
 
     for trace_folder in $test_folder/run_*
     do
+        [ -f ${trace_folder}/job_geometry.sh ] && . ${trace_folder}/job_geometry.sh
         basename_trace_folder=$(basename ${trace_folder})
-        components_names=($(echo ${basename_trace_folder} | sed -e 's/\(trace_\|[0-9]\)//g' | sed 's/_/ /g'))
-        components_procs=($(echo ${basename_trace_folder} | sed -e 's/\(trace_\|[a-zA-Z]\)//g' | sed 's/_/ /g'))
         trace_id=$(echo ${basename_trace_folder} | sed -e 's/run_//')
 
         for component in "${components[@]}"; do
             trace=${trace_folder}/${component}.best_cut.prv
 
-            generate_threads_to_ignore_str
+            threads_to_ignore=""
+            ! [ -z ${job_geometry[@]} ] && create_threads_to_ignore ${component}
 
             # paramedir.target
             ##################
@@ -86,7 +58,7 @@ do
                 cp ${cfg} .
                 mod_cfg=$(basename ${cfg})
 
-                sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${mod_cfg}
+                [ "${threads_to_ignore}" != "" ] && sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${mod_cfg}
 
                 paramedir ${trace} ${mod_cfg} 
                 # Get the extension

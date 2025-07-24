@@ -121,7 +121,7 @@ function add_StrongScaling() {
         done
 
         # Coupling info (ECE4 only)
-        coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
+        coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
         coupling_enabled=${coupling_enabled,,}
         if ${coupling_enabled} && [ ${model} = "ecearth4" ]; then
             for case in coupling/*; do
@@ -490,6 +490,11 @@ python3 ${latex_folder}/ReportGenerator.py \
 for current_member in ${members}; do
     add_${current_member}
 done
+
+python3 ${cfg}/latex/ReportGenerator.py \
+    -O ${report_full_path}.pkl \
+    --section-title "Glossary" \
+    -T ${cfg}/latex/text/Glossary.txt
 
 cd ${report_folder} || exit
 echo model=${model^^} > param.cfg

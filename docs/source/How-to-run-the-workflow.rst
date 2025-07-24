@@ -234,8 +234,6 @@ The fields are named as in the Extrae XML file, you can check its documentation 
 
 It is important that you replace the HOME variable with the path to the Extrae installation you will use.
 
-
-
 Run the workflow
 ----------------
 

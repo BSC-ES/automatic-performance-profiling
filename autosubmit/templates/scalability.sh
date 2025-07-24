@@ -98,7 +98,7 @@ EOF
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
 # Global:
 #   - Paths: inidata, binaries, compilation, run_dir
-#   - Other: test_name, nemo_procs
+#   - Other: test_name, nemo_nproc
 #####################################################################################################################
 function run_nemo()
 {
@@ -107,7 +107,7 @@ function run_nemo()
     local nemo_resolution="%EXPERIMENT.RESOLUTION%"
     local test_steps="%EXPERIMENT.TEST_STEPS%"
     local run_id="%CURRENT_NAME%"
-    local nemo_procs="%NUMPROC%"
+    local nemo_nproc="%NUMPROC%"
     local output="%EXPERIMENT.OUTPUT%"
     local run_dir=${run_root}/${test_name}/run_${run_id}
     local model_sources=${compilation}/${model}_${branch}
@@ -132,7 +132,6 @@ function run_nemo()
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg nn_itend    ${test_steps}
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_icebergs .false.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_meshmask .false.
-    ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref ln_timing   .true.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_cfg ln_timing   .true.
     ${project}/cfg/replace_namelist_parameter ${run_dir}/namelist_ref nn_fsbc     1
 
@@ -146,15 +145,15 @@ function run_nemo()
     case "$current_member" in
         "WeakScaling")
             . ${project}/configurations/model/${model}/resolutions.sh 
-            local base_procs="%WEAKSCALING.BASE_PROCS%"
+            local base_nproc="%WEAKSCALING.BASE_PROCS%"
             local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
-            local base_tile_size=${nemo_resolutions[${base_resolution^^}]}
-            local nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
-            nemo_procs=$((base_procs*nemo_curr_tile_size/base_tile_size))
+            local base_grid_points=${nemo_resolutions[${base_resolution^^}]}
+            local nemo_grid_points${nemo_resolutions[${nemo_resolution^^}]}
+            nemo_nproc=$((base_nproc*nemo_grid_points/base_grid_points))
             local queue="%HPCQUEUE%"
             local proj="%CURRENT_PROJ%"
 
-            time srun -A ${proj} -q ${queue} -n $nemo_procs ./nemo
+            time srun -A ${proj} -q ${queue} -n $nemo_nproc ./nemo
         ;;
         "Tracing")
             configure_extrae ${run_dir}
@@ -170,20 +169,29 @@ function run_nemo()
             fi
             ./generate_function_list.sh ./nemo extrae_functions.txt
 
-            time srun -n ${nemo_procs} ./trace.sh ./nemo || true
+            time srun -n ${nemo_nproc} ./trace.sh ./nemo || true
             ! [ -f nemo.pcf ] && exit
             rm -rf set-* ./*.nc
+
+            ( 
+                echo "unset job_geometry"
+                echo "declare -Ag job_geometry"
+                echo "job_geometry=([\"nemo\"]=\"0-$((nemo_nproc-1))\")" 
+            ) > job_geometry.sh
         ;;
         *)
-            time srun -n ${nemo_procs} ./nemo
+            time srun -n ${nemo_nproc} ./nemo
         ;;
     esac
 
     # Rename timing output
     cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
 
-    # Create test info csv for the JSON
-    report_test_cfg
+    model_nproc=%NUMPROC%
+    variables_to_report="nproc resolution"
+    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
+
+    report_test_cfg ${variables_to_report} > ${run_dir}/${run_id}-test_info.csv
 }
 
 #####################################################################################################################
@@ -193,6 +201,11 @@ function run_nemo()
 #####################################################################################################################
 function get_vars_ecearth4()
 {
+    yml_components="%MODEL.COMPONENTS%"
+    components=($(bashify_array "${yml_components}"))
+
+    inidata=%EXPERIMENT.INIDATA%
+
     # If it is Weak Scaling that is being run compute the current procs based on the
     # base procs and resolution
     if [ ${current_member} = "Tracing" ]; then
@@ -208,28 +221,30 @@ function get_vars_ecearth4()
     fi 
 
     if [ ${current_member} = "WeakScaling" ]; then
+        #shellcheck source=proj/auto-performance-profiling/configurations/model/nemo/resolutions.sh
         . ${project}/configurations/model/nemo/resolutions.sh 
         # Overwrite resolution var with the current test resolution
         nemo_resolution=%CURRENT_NEMO_RESOLUTION%
-        nemo_base_procs=%WEAKSCALING.NEMO_BASE_PROCS%
+        nemo_base_nproc=%WEAKSCALING.NEMO_BASE_PROCS%
         nemo_base_resolution=%WEAKSCALING.NEMO_BASE_RESOLUTION%
-        base_tile_size=${nemo_resolutions[${nemo_base_resolution^^}]}
-        nemo_curr_tile_size=${nemo_resolutions[${nemo_resolution^^}]}
-        nemo_procs=$((nemo_base_procs*nemo_curr_tile_size/base_tile_size))
+        base_grid_points=${nemo_resolutions[${nemo_base_resolution^^}]}
+        nemo_grid_points=${nemo_resolutions[${nemo_resolution^^}]}
+        nemo_nproc=$((nemo_base_nproc*nemo_grid_points/base_grid_points))
 
+        #shellcheck source=proj/auto-performance-profiling/configurations/model/oifs/resolutions.sh
         . ${project}/configurations/model/oifs/resolutions.sh 
         # Overwrite resolution var with the current test resolution
         oifs_resolution=%CURRENT_OIFS_RESOLUTION%
-        oifs_base_procs=%WEAKSCALING.OIFS_BASE_PROCS%
+        oifs_base_nproc=%WEAKSCALING.OIFS_BASE_PROCS%
         oifs_base_resolution=%WEAKSCALING.OIFS_BASE_RESOLUTION%
-        base_tile_size=${oifs_resolutions[${oifs_base_resolution^^}]}
-        oifs_curr_tile_size=${oifs_resolutions[${oifs_resolution^^}]}
-        oifs_procs=$((oifs_base_procs*oifs_curr_tile_size/base_tile_size))
+        base_grid_points=${oifs_resolutions[${oifs_base_resolution^^}]}
+        oifs_grid_points=${oifs_resolutions[${oifs_resolution^^}]}
+        oifs_nproc=$((oifs_base_nproc*oifs_grid_points/base_grid_points))
     else 
-        oifs_procs="%CURRENT_OIFS_PROCS%"
+        oifs_nproc="%CURRENT_OIFS_PROCS%"
         oifs_resolution="%EXPERIMENT.OIFS_RESOLUTION%"
 
-        nemo_procs="%CURRENT_NEMO_PROCS%"
+        nemo_nproc="%CURRENT_NEMO_PROCS%"
         nemo_resolution="%EXPERIMENT.NEMO_RESOLUTION%"
     fi
     use_omp_threads="%USE_OMP_THREADS%"
@@ -238,9 +253,10 @@ function get_vars_ecearth4()
         oifs_omp_threads=%CURRENT_THREADS%
     fi
     
-    xios_procs="%CURRENT_XIOS_PROCS%"
+    xios_nproc="%CURRENT_XIOS_PROCS%"
 
-    rnfm_procs=1
+    rnfm_nproc="%CURRENT_RNFM_PROCS%"
+    amipfr_nproc="%CURRENT_AMIP_PROCS%"
 }
 
 
@@ -270,6 +286,16 @@ function run_ecearth4()
     # Update all configuration according to AS variables
     cd ${compilation}/${arch_name}/scripts/runtime || exit
 
+    local output="%EXPERIMENT.OUTPUT%"
+    output=${output,,}
+    if ${output}; then
+        sed -i 's/enabled="false"/enabled="true"/g' templates/xios/file_def_*
+        sed -i 's/enabled=".FALSE."/enabled=".TRUE."/g' templates/xios/field_def_*
+    else
+        sed -i 's/enabled="true"/enabled="false"/g' templates/xios/file_def_*
+        sed -i 's/enabled=".TRUE."/enabled=".FALSE."/g' templates/xios/field_def_*
+    fi
+
     local config_file=experiment_config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
@@ -282,19 +308,22 @@ function run_ecearth4()
     local sed_src_dir=${src_dir//\//\\\/}
     local ecearth_root=${compilation}/${arch_name}
     local sed_ecearth_root=${ecearth_root//\//\\\/}
+    local sed_inidata=${inidata//\//\\\/}
 
+    sed -i "s/COMPONENTS/${yml_components}/"         ${config_file}
     sed -i "s/RUN_FOLDER/${sed_run_dir}/"            ${config_file}
     sed -i "s/BASE_FOLDER/${sed_run_dir}/"           ${config_file}
     sed -i "s/SRC_FOLDER/${sed_src_dir}/"            ${config_file}
+    sed -i "s/INIDATA/${sed_inidata}/"               ${config_file}
     sed -i "s/ECEARTH_ROOT/${sed_ecearth_root}/"     ${config_file}
     sed -i "s/OIFS_OMP_THREADS/${oifs_omp_threads}/" ${config_file}
-    for component in "${report_components[@]}"; do
-        component_procs=${component}_procs
-        sed -i "s/${component^^}_PPN/${!component_procs}/"   ${config_file}
-        sed -i "s/${component^^}_PROCS/${!component_procs}/" ${config_file}
+    for component in "${components[@]}"; do
+        [ "${component}" = "oasis" ] && continue
+        component_nproc=${component}_nproc
+        sed -i "s/${component^^}_PROCS/${!component_nproc}/" ${config_file}
     done
-    sed -i "s/XIOS_PROCS/${xios_procs}/"             ${config_file}
-    sed -i "s/XIOS_PPN/${xios_procs}/"               ${config_file}
+    sed -i "s/XIOS_PROCS/${xios_nproc}/"             ${config_file}
+    sed -i "s/XIOS_PPN/${xios_nproc}/"               ${config_file}
     sed -i "s/FREQUENCY/${freq}/"                    ${config_file}
     sed -i "s/START_DATE/${start_date}/"             ${config_file}
     sed -i "s/END_DATE/${end_date}/"                 ${config_file}
@@ -304,85 +333,43 @@ function run_ecearth4()
 
 
     # Specific members config
-    if [ ${current_member} = "Tracing" ]; then
-        #shellcheck source=proj/auto-performance-profiling/cfg/trace/utils.sh
-        . ${cfg}/trace/utils.sh
+    case ${current_member} in
+        "Tracing")
+            # Change launch script to the trace script
+            sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
 
-        # Change launch script to the trace script
-        sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
+            # Copy user functions list
+            fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=${fd_enabled,,}
+            if ${fd_enabled}; then
+                cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
+            else
+                cp $cfg/trace/model/ecearth4/extrae_functions.txt ${run_dir}/
+            fi
 
-        # Copy user functions list
-        fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
-        fd_enabled=${fd_enabled,,}
-        if ${fd_enabled}; then
-            cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
-        else
-            cp $cfg/trace/model/ecearth4/extrae_functions.txt ${run_dir}/
-        fi
+            # Create and copy Extrae necessary files
+            create_trace_sh ${run_dir}
 
-        # Create and copy Extrae necessary files
-        create_trace_sh ${run_dir}
+            configure_extrae ${run_dir}
 
-        configure_extrae ${run_dir}
-
-        cp ${cfg}/trace/generate_function_list.sh ${run_dir}
-        chmod +x ${run_dir}/generate_function_list.sh
-    elif [ "$current_member" = "WeakScaling" ]; then
-        # Set the queue and project only for weakscaling since it is run intercatively 
-        # and it is not taking the AS platform configuration
-        local queue="%HPCQUEUE%"
-        local proj="%CURRENT_PROJ%"
-        sed -i "s/QUEUE/${queue}/"                   ${config_file}
-        sed -i "s/ACCOUNT/${proj}/"                  ${config_file}
-    fi
+            cp ${cfg}/trace/generate_function_list.sh ${run_dir}
+            chmod +x ${run_dir}/generate_function_list.sh
+        ;;
+        "WeakScaling")
+            # Set the queue and project only for weakscaling since it is run intercatively 
+            # and it is not taking the AS platform configuration
+            local queue="%HPCQUEUE%"
+            local proj="%CURRENT_PROJ%"
+            sed -i "s/QUEUE/${queue}/"                   ${config_file}
+            sed -i "s/ACCOUNT/${proj}/"                  ${config_file}
+        ;;
+    esac
 
 
     # Activate the SE enviroment and run
     set +u
     se_env_${platform,,} trunk
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
-
-
-    # Run postprocessing
-    module purge
-    . ${env_sources}
-
-    if [ ${current_member} = "Tracing" ]; then
-        # Moce and cut the trace by the model's components
-        cd ${run_dir} || exit
-
-        mv run/*prv run/*pcf run/*row .
-
-        actual_nemo_procs=$(grep "exceeds the maximum number of ocean subdomains" log/001/ocean.output | grep -oE "[0-9]+" || echo ${nemo_procs})
-
-        trace_components=("xios" "nemo" "rnf" "oifs")
-        processors=($xios_procs $nemo_procs 1 $oifs_procs)
-
-        cut_trace trace_components processors "${model}.prv"
-
-        rm -rf set-* ./*.nc
-    else
-        local coupling_enabled="%STRONGSCALING.COUPLING.ENABLED%"
-        coupling_enabled=${coupling_enabled,,}
-        if ${coupling_enabled}; then
-            cd ${run_dir} || exit
-            lucia_ts=$(cat time.step)
-
-            while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average 1 1 ${lucia_ts} --generate_plots true > lucia.log && [ $lucia_ts -gt 0 ]; do
-                lucia_ts=$((lucia_ts-1))
-            done
-
-            coupling_dir=${test_dir}/coupling/${run_id}
-            mkdir -p ${coupling_dir}
-            cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
-            cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
-        fi
-
-        cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${run_id}-ifs.stat
-        cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
-    fi
-
-    report_test_cfg
 }
 
 ###################

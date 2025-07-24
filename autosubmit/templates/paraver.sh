@@ -22,36 +22,7 @@ member="tracing"
 
 # Load array variables
 tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
-components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
-
-
-#####################################################################################################################
-# Brief: Create configuration string for paraver to ignore the non component processes
-# Global:
-#   component - Name of the component NOT to ignore
-#   components_names - Array with the names of the different components
-#   components_procs - Array with the processes of the different components in the same order as components_names
-#####################################################################################################################
-function create_threads_to_ignore() 
-{
-    threads_to_ignore=""
-    i=0
-    first_proc=0
-    while [ $i -lt ${#components_names[@]} ]; do
-        component_procs=${components_procs[i]}
-        last_proc=$((first_proc + component_procs - 1))
-        if [ "${components_names[i]}" != "${component}" ]; then
-            for j in $(seq $first_proc $last_proc); do
-                if [ "${threads_to_ignore}" != "" ]; then
-                    threads_to_ignore="${threads_to_ignore}\n"
-                fi
-                threads_to_ignore="${threads_to_ignore}window_object thread { 0, $j, 1, { 0 } }"
-            done
-        fi
-        first_proc=$((last_proc + 1))
-        i=$((i + 1))
-    done
-}
+report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 #####################################################################################################################
 # Brief: Add paraver images and legends together
@@ -61,18 +32,10 @@ function create_threads_to_ignore()
 #####################################################################################################################
 function create_paraver_legend()
 {
-    cfg=$1
-    cfg_name=${cfg##*/}
-    cfg_name=${cfg%%.*}
+    local current_picture_name=$1
 
-    trace=$2
-    trace_name=$(basename $trace)
-    trace_name=${trace_name%.*}
-
-    current_picture_name=${cfg_name}@${trace_name}
-
-    if ! ls ${current_picture_name}* 1>/dev/null 2>&1; then
-        echo $current_picture_name"* not found"
+    if ! ls ${current_picture_name}.png 1>/dev/null 2>&1; then
+        echo ${current_picture_name}.png" not found"
         return
     fi
 
@@ -81,15 +44,28 @@ function create_paraver_legend()
         mv ${current_picture_name}.w_legend.png ${current_picture_name}.png
     # Is a graph with discrete legend
     elif ls ${current_picture_name}.code_legend.png 1>/dev/null 2>&1; then
-        image_to_append=${current_picture_name}.code_legend.png
+        local image_to_append=${current_picture_name}.code_legend.png
         convert ${current_picture_name}.png ${image_to_append} -append ${current_picture_name}.png
     fi
     # Remove the rest
-    rm -f *_legend.png
+    rm -f ./*_legend.png
 }
 
 run_paraver()
 {
+    # Check available X11 "fake" servers
+    if which xvfb-run &> /dev/null; then
+        paraver_cmd="xvfb-run -d wxparaver"
+    elif which vncserver &> /dev/null; then
+        export DISPLAY=:1
+        vncserver $DISPLAY
+        vncserver -list
+        paraver_cmd="wxparaver"
+    else
+        echo "[ERROR] xvfb-run or vncserver commands not found, cannot run Paraver to generate images" 1>&2
+        return 1
+    fi
+
     export analysis_tools=${cfg}/trace_analysis
     local paraver_configurations_path=${analysis_tools}/paraver_configurations
     local compare_cfgs="%TRACING.PARAVER.COMPARE_CFGS%"
@@ -98,10 +74,10 @@ run_paraver()
     for test in "${tests[@]}"; do
         test_folder=${run_root}/${member}/${test}
 
-        declare -A components_slowest_ts
-        for component in "${components[@]}"; do components_slowest_ts[$component]=0; done
+        local -A components_slowest_ts
+        for component in "${report_components[@]}"; do components_slowest_ts[$component]=0; done
         for trace_folder in ${test_folder}/run_*; do
-            for component in "${components[@]}"; do 
+            for component in "${report_components[@]}"; do 
                 max_time=${components_slowest_ts[$component]}
                 cur_time=$(cat ${trace_folder}/${component}_fastest_ts.txt | sed 's/\..*//')
                 components_slowest_ts[$component]=$(( cur_time  > max_time ? cur_time : max_time )); 
@@ -109,17 +85,18 @@ run_paraver()
         done
 
         for trace_folder in ${test_folder}/run_*; do
+            [ -f ${trace_folder}/job_geometry.sh ] && . ${trace_folder}/job_geometry.sh
             trace_folder_basename=$(basename ${trace_folder})
             trace_id=$(echo ${trace_folder_basename} | sed 's/run_//')
-            components_names=($(echo ${trace_folder_basename} | sed -E 's/(trace|[0-9])//g' | sed -E 's/_/ /g'))
-            components_procs=($(echo ${trace_folder_basename} | sed -E 's/(trace|[a-z])//g' | sed -E 's/_/ /g'))
-
             img_folder=${test_folder}/paraver_images/${trace_id}
+
+            rm -rf ${img_folder}
             mkdir -p ${img_folder}
             cd ${img_folder} || exit
 
-            for component in "${components[@]}"; do
-                create_threads_to_ignore
+            for component in "${report_components[@]}"; do
+                threads_to_ignore=""
+                ! [ -z ${job_geometry[@]} ] && create_threads_to_ignore ${component}
 
                 trace=${trace_folder}/${component}.best_cut.prv
 
@@ -128,16 +105,25 @@ run_paraver()
 
                 for paraver_cfg in ${paraver_cfgs}; do
                     og_paraver_cfg_path=${paraver_configurations_path}/${paraver_cfg}.cfg
-                    paraver_cfg_path=${img_folder}/${paraver_cfg}.cfg
-                    if echo $paraver_cfg | grep -w $compare_cfgs &> /dev/null; then
+                    paraver_cfg_path=${img_folder}/${paraver_cfg}-${component}.cfg
+                    cp ${og_paraver_cfg_path} ${paraver_cfg_path}
+                    
+                    if echo ${compare_cfgs} | grep -w ${paraver_cfg} &> /dev/null; then
                         # Set time to the slowest timestep of the different tests
                         ts_ratio=$(echo $slowest_ts / $cur_ts | bc -l)
-                        sed "s/window_end_time_relative.*/window_end_time_relative ${ts_ratio}/" ${og_paraver_cfg_path} > ${paraver_cfg_path}
+                        sed -i "s/window_end_time_relative.*/window_end_time_relative ${ts_ratio}/" ${paraver_cfg_path}
                     fi
                     # Remove other-component tasks from the paraver view
-                    sed "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${og_paraver_cfg_path} > ${paraver_cfg_path}
-                    if xvfb-run wxparaver -i ${trace} ${paraver_cfg_path} &> /dev/null; then
-                        create_paraver_legend ${paraver_cfg_path} ${trace}
+                    [ "${threads_to_ignore}" != "" ] && sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg_path}
+
+                    # Generate the paraver view image
+                    if  ${paraver_cmd} -i ${trace} ${paraver_cfg_path}; then
+                        local cfg_name=$(basename ${og_paraver_cfg_path})
+                        cfg_name=${cfg_name%.cfg}
+                        local trace_name=$(basename ${trace})
+                        trace_name=${trace_name%.prv}
+                        local curr_picture_name=${cfg_name}@${trace_name}
+                        create_paraver_legend ${curr_picture_name}
                     fi
                 done
             done
@@ -148,11 +134,6 @@ run_paraver()
 ###################
 # Start script
 ###################
-
-if ! which xvfb-run &> /dev/null; then
-    echo "[ERROR] xvfb-run not found and it is required to run Paraver" >&2
-    exit 1
-fi
 
 paraver_enabled="%TRACING.PARAVER.ENABLED%"
 paraver_enabled=${paraver_enabled,,}
