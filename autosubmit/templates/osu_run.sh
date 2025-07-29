@@ -12,12 +12,18 @@ function run_osu() {
     cfg=%COMMON_PATH_LOCATIONS.CFG%
     platform=%DEFAULT.HPCARCH%
     platform=${platform,,}
-    env_sources=${cfg}/env/${platform}/environment.env
+    env_sources=${cfg}/arch/${platform}/hw_benchmarks/environment.env
     run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
     n_cores=%NUMPROC%
-    osu_tests=(%HW_BENCHMARKS.OSU_TESTS%)
 
-    source ${env_sources}
+    # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+    . ${cfg}/utils/bash/utils.sh
+
+    # Load necessary modules
+    . ${env_sources}
+
+    osu_tests=($(bashify_array "%HW_BENCHMARKS.OSU.TESTS%" true))
+
     mkdir -p $run_folder/hardware_benchmarks/OSU_RUN/${n_cores}
     cd $run_folder/hardware_benchmarks/OSU_RUN/${n_cores}
 

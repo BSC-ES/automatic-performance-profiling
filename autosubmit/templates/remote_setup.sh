@@ -136,3 +136,8 @@ fi
 if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
     clone_hw_benchmarks
 fi
+
+# If tracing is enabled, clone MagicCut
+if echo "${members[@]}" | grep -q -w "Tracing"; then
+    clone_tracing
+fi

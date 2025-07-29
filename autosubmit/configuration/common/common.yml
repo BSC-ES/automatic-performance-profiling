@@ -17,7 +17,7 @@ HW_BENCHMARKS:
   OSU:
     ENABLED: true
     # Binaries names found under c/mpi/ OSU root directory
-    TESTS: "pt2pt/standard/osu_multi_lat pt2pt/standard/osu_mbw_mr collective/blocking/osu_allgather"
+    TESTS: [pt2pt/standard/osu_multi_lat, pt2pt/standard/osu_mbw_mr, collective/blocking/osu_allgather]
     NAMES:      [112, 224, 336]
     PROCESSORS: [112, 224, 336]
   STREAM:

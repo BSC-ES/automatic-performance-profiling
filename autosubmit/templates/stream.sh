@@ -9,12 +9,12 @@ function run_stream() {
     cfg=%COMMON_PATH_LOCATIONS.CFG%
     platform=%DEFAULT.HPCARCH%
     platform=${platform,,}
-    env_sources=${cfg}/env/${platform}/environment.env
+    env_sources=${cfg}/arch/${platform}/hw_benchmarks/environment.env
     run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
     compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
     nproc=%NUMPROC%
 
-    source ${env_sources}
+    . ${env_sources}
     cd $run_root/hardware_benchmarks/STREAM_RUN || exit
     $compilation/STREAM/stream > stream_${nproc}.txt
 }
