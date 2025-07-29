@@ -113,8 +113,9 @@ function run_nemo()
     local model_sources=${compilation}/${model}_${branch}
     local configuration_folder=tests
     [ ${current_member} = "WeakScaling" ] && nemo_resolution="%CURRENT_RESOLUTION%"
-    [ ${current_member} = "Tracing" ] && test_steps="%TRACING.TEST_STEPS%"
+    [ ${current_member} = "Tracing" ] && test_steps="%TRACING.TRACE_STEPS%"
 
+    chmod +w -R ${run_dir}
     rm -rf ${run_dir:?}/*
     mkdir -p ${run_dir}
     cd ${run_dir} || exit
@@ -148,7 +149,7 @@ function run_nemo()
             local base_nproc="%WEAKSCALING.BASE_PROCS%"
             local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
             local base_grid_points=${nemo_resolutions[${base_resolution^^}]}
-            local nemo_grid_points${nemo_resolutions[${nemo_resolution^^}]}
+            local nemo_grid_points=${nemo_resolutions[${nemo_resolution^^}]}
             nemo_nproc=$((base_nproc*nemo_grid_points/base_grid_points))
             local queue="%HPCQUEUE%"
             local proj="%CURRENT_PROJ%"
@@ -172,26 +173,11 @@ function run_nemo()
             time srun -n ${nemo_nproc} ./trace.sh ./nemo || true
             ! [ -f nemo.pcf ] && exit
             rm -rf set-* ./*.nc
-
-            ( 
-                echo "unset job_geometry"
-                echo "declare -Ag job_geometry"
-                echo "job_geometry=([\"nemo\"]=\"0-$((nemo_nproc-1))\")" 
-            ) > job_geometry.sh
         ;;
         *)
             time srun -n ${nemo_nproc} ./nemo
         ;;
     esac
-
-    # Rename timing output
-    cp ${run_dir}/timing.output ${run_dir}/nemo-${run_id}-timing.output
-
-    model_nproc=%NUMPROC%
-    variables_to_report="nproc resolution"
-    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
-
-    report_test_cfg ${variables_to_report} > ${run_dir}/${run_id}-test_info.csv
 }
 
 #####################################################################################################################

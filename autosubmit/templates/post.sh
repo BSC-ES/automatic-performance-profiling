@@ -26,7 +26,33 @@ report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 function post_nemo()
 {
-    echo "Postprocessing Nemo model"
+    cd ${run_dir} || exit
+
+    nemo_nproc=${test_procs[$i]}
+    model_nproc=${nemo_nproc}
+
+    case ${current_member} in
+        "WeakScaling")
+            nemo_ws_resolutions=($(bashify_array "%WEAKSCALING.RESOLUTION%"))
+            nemo_resolution=${nemo_ws_resolutions[$i]}
+            model_resolution=${nemo_resolution}
+            . ${project}/configurations/model/nemo/resolutions.sh 
+            nemo_grid_points=${nemo_resolutions[${nemo_resolution^^}]}
+            model_grid_points=${nemo_grid_points}
+        ;;
+        *)
+            model_resolution=%EXPERIMENT.RESOLUTION%
+            nemo_resolution=${model_resolution}
+        ;;
+    esac
+
+    # Rename timing output
+    cp ${run_dir}/timing.output ${run_dir}/nemo-${test}-timing.output
+
+    variables_to_report="nproc resolution"
+    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
+
+    report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
 }
 
 function post_ecearth4()
@@ -163,21 +189,26 @@ case "$current_member" in
         member="compilation_efficiency"
         test_names=($(bashify_array "%COMPILATION_EFFICIENCY.NAMES%"))
         test_tys=($(bashify_array "%COMPILATION_EFFICIENCY.TEST_NAMES%"))
+        test_procs=($(bashify_array "%COMPILATION_EFFICIENCY.PROCESSORS%"))
         ;;
     "StrongScaling")
         member="strong_scaling"
         test_names=($(bashify_array "%STRONGSCALING.NAMES%"))
         test_tys=($(bashify_array "%STRONGSCALING.TEST_NAMES%"))
+        test_procs=($(bashify_array "%STRONGSCALING.PROCESSORS%"))
+        test
         ;;
     "WeakScaling")
         member="weakscaling"
         test_names=($(bashify_array "%WEAKSCALING.NAMES%"))
         test_tys=($(bashify_array "%WEAKSCALING.TEST_NAMES%"))
+        test_procs=($(bashify_array "%WEAKSCALING.PROCESSORS%"))
         ;;
     "Tracing")
         member="tracing"
         test_names=($(bashify_array "%TRACING.NAMES%"))
         test_tys=($(bashify_array "%TRACING.TEST_NAMES%"))
+        test_procs=($(bashify_array "%TRACING.PROCESSORS%"))
         ;;
 esac
 
