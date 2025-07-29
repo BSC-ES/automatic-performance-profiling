@@ -103,6 +103,13 @@ function clone_hw_benchmarks()
     fi
 }
 
+function clone_tracing()
+{
+    if [ ! -d ${root_dir}/magiccut ]; then 
+        git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch generic_platform $root_dir/magiccut
+    fi
+}
+
 ###################
 # Start script
 ###################
