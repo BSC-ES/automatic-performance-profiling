@@ -35,6 +35,9 @@ current_member=%MEMBER%
 #####################################################################################################################
 function compile_nemo()
 {
+    env_file=${cfg}/arch/${platform}/${model}/${arch_name}.env
+    . ${env_file}
+
     # Compile XIOS
     cd ${exp_root}/xios || exit
     cp $project/cfg/arch/${platform}/xios/arch-* arch
