@@ -18,8 +18,8 @@ JOBS:
     CHECK: "true"
     CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
     NOTIFY_ON: FAILED
-  report_setup:
-    FILE: autosubmit/templates/report_setup.sh
+  post:
+    FILE: autosubmit/templates/post.sh
     DEPENDENCIES:
       trace:
         FOR:

@@ -16,8 +16,6 @@ JOBS:
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
   modelfactors:
     PLATFORM: marenostrum0
-  report_setup:
-    PLATFORM: marenostrum0
   dimemas_traces:
     CUSTOM_DIRECTIVES: "#SBATCH --cpus-per-task=48"
   dimemas_images:

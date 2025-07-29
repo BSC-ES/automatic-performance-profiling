@@ -19,8 +19,8 @@ JOBS:
     CHECK: "true"
     NOTIFY_ON: FAILED
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
-  report_setup:
-    FILE: autosubmit/templates/report_setup.sh
+  post:
+    FILE: autosubmit/templates/post.sh
     DEPENDENCIES:
       Scalability:
         FOR:

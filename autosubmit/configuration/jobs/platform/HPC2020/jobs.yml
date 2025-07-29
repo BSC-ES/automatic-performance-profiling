@@ -6,9 +6,6 @@ JOBS:
   PREPARE_TESTS:
     QUEUE: ef
     EC_QUEUE: ecs
-  REPORT_SETUP:
-    QUEUE: ef
-    EC_QUEUE: ecs
   REMOTE_INIDATA:
     QUEUE: ef
     EC_QUEUE: ecs

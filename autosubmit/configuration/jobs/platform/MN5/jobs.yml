@@ -18,8 +18,6 @@ JOBS:
     CUSTOM_DIRECTIVES: "['#SBATCH -p interactive']"
   modelfactors:
     PLATFORM: mn5-login
-  report_setup:
-    PLATFORM: mn5-login
   dimemas_traces:
     THREADS: 112
   dimemas_images:

@@ -31,8 +31,8 @@ JOBS:
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED
-  report_setup:
-    FILE: autosubmit/templates/report_setup.sh
+  post:
+    FILE: autosubmit/templates/post.sh
     DEPENDENCIES:
       STREAM:
         FOR:
