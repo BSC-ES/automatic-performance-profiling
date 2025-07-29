@@ -30,8 +30,6 @@ JOBS:
     PLATFORM: mn5-login
     X11: True
     X11_OPTIONS: "-A bsc32 --qos=gp_debug --x11=all --time=02:00:00 -c 12"
-  hardware_bench_images:
-    PLATFORM: mn5-login
   configuration_json:
     PLATFORM: mn5-login
   report:
