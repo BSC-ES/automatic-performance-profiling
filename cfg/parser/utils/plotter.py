@@ -44,7 +44,7 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight
     x_label, y_label = data.keys()
     x, y = data[x_label], data[y_label]
 
-    if highlight_outliers:
+    if highlight_outliers and len(x) > 4:
         inlier_mask, outlier_mask, expected_sypd = detect_outliers(x, y)
         plt.scatter(
             x[inlier_mask], y[inlier_mask], color="blue")
@@ -53,7 +53,7 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight
         if any(outlier_mask):
             plt.plot(x, expected_sypd, ":", alpha=.75, color="k", label="Expected speed")
     else:
-        plt.scatter(x, y, alpha=.5, legend=False)
+        plt.scatter(x, y, alpha=.5)
     plt.plot(x, y, alpha=.5, label="Real speed")
 
     # Plot ideal
