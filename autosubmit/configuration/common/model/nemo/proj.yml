@@ -58,6 +58,7 @@ WEAKSCALING:
   TEST_NAMES: [orca1, orca025]
   PROCESSORS: [1,     1      ]
   THREADS:    [1,     1      ]
+  RESOLUTION: [orca1, orca025]
   TEST_CONFIG: BENCH
   ARCH_NAME: O3_prod
 
