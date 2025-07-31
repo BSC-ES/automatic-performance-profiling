@@ -226,7 +226,6 @@ case "$current_member" in
         test_names=($(bashify_array "%STRONGSCALING.NAMES%"))
         test_tys=($(bashify_array "%STRONGSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%STRONGSCALING.PROCESSORS%"))
-        test
         ;;
     "WeakScaling")
         member="weakscaling"
