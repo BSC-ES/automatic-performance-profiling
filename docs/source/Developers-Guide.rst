@@ -372,7 +372,7 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
 * ``paraver.sh``\ :
 
   * **Run**\ : Tracing
-  * **Brief**\ : Generates Paraver images from the cut traces using the configuration in ``cfg/trace_analysis/paraver_configurations``. Needs X11 to work.
+  * **Brief**\ : Generates Paraver images from the cut traces using the configuration in ``cfg/trace_analysis/paraver_configurations``.
   * **Dependencies**\ :
 
     * ``trace_cut.sh``\ : Needs the cut traces located in the run directory.

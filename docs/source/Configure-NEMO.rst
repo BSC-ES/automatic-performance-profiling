@@ -59,15 +59,47 @@ The next list variables have to be the same length:
 * ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
 * PAPI_COUNTERS: Space separated string with the PAPI counters to trace, same id as returned by the command `papi_avail`.
 
-    # STRONG SCALING CONFIG
-    STRONGSCALING:
-     STRONGSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling'
-     TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
-     NAMES:      [bench_1, bench_2, bench_3]
-     PROCESSORS: [112,     224,     336    ]
-     THREADS:    [1,       1,       1      ]
-     TEST_CONFIG: BENCH
-     ARCH_NAME: O3_prod
+.. code-block:: yaml
+
+  TRACING:
+    TIMESTEP_ZERO: false
+    TRACE_STEPS: 32
+
+    # CONFIG FOR USER FUNCTIONS SAMPLING
+    USER_FUNCTIONS_PROC: 112
+    USER_FUNCTIONS_THREADS: 4
+    TRACE_N_FUNCTIONS: 40
+
+    TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
+    NAMES:      [trace_1, trace_2, trace_3]
+    PROCESSORS: [112,     224,     336    ]
+    THREADS:    [4,       4,       4      ]
+    TEST_CONFIG: BENCH
+    ARCH_NAME: O3_trace
+
+
+StrongScaling
+^^^^^^^^^^^^^
+
+The possible variables to configure for Strong Scaling are:
+
+* TEST_NAMES: List of test names to run.
+* NAMES: List of unique names for each test.
+* PROCESSORS: List of processors used by each test.
+* THREADS: List of threads used by each test.
+* TEST_CONFIG: NEMO test configuration to use.
+
+.. code-block:: yaml
+
+  # STRONG SCALING CONFIG
+  STRONGSCALING:
+    STRONGSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling'
+    TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
+    NAMES:      [bench_1, bench_2, bench_3]
+    PROCESSORS: [112,     224,     336    ]
+    THREADS:    [1,       1,       1      ]
+    TEST_CONFIG: BENCH
+    ARCH_NAME: O3_prod
 
 Weakscaling
 ^^^^^^^^^^^
@@ -86,18 +118,20 @@ The next list variables have to be the same length:
 * RESOLUTION: List of NEMO supported resolution ran by each test. This is the setting that will be used to compute the number of processors based on the base case resolution.
 * ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
 
-    # WEAKSCALING CONFIG
-    WEAKSCALING:
-     WEAKSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling'
-     BASE_PROCS: 56
-     BASE_RESOLUTION: orca1
-     NAMES:      [orca1, orca025]
-     TEST_NAMES: [orca1, orca025]
-     PROCESSORS: [1,     1      ]
-     THREADS:    [1,     1      ]
-     RESOLUTION: [orca1, orca025]
-     TEST_CONFIG: BENCH
-     ARCH_NAME: O3_prod
+.. code-block:: yaml
+
+  # WEAKSCALING CONFIG
+  WEAKSCALING:
+    WEAKSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling'
+    BASE_PROCS: 56
+    BASE_RESOLUTION: orca1
+    NAMES:      [orca1, orca025]
+    TEST_NAMES: [orca1, orca025]
+    PROCESSORS: [1,     1      ]
+    THREADS:    [1,     1      ]
+    RESOLUTION: [orca1, orca025]
+    TEST_CONFIG: BENCH
+    ARCH_NAME: O3_prod
 
 CompilationEfficiency
 ^^^^^^^^^^^^^^^^^^^^^
