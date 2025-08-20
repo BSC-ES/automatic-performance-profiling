@@ -11,7 +11,6 @@ compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
-env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
@@ -19,7 +18,6 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 branch=%MODEL.BRANCH%
 test="%CURRENT_TEST_NAME%"
-platform="%DEFAULT.HPCARCH%"
 
 # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
 . ${cfg}/utils/bash/utils.sh
@@ -102,7 +100,8 @@ EOF
 #####################################################################################################################
 function run_nemo()
 {
-    . ${env_sources}
+    env_file=${cfg}/arch/${platform}/${model}/${arch_name}.env
+    . ${env_file}
 
     local nemo_resolution="%EXPERIMENT.RESOLUTION%"
     local test_steps="%EXPERIMENT.TEST_STEPS%"

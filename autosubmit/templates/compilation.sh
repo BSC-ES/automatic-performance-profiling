@@ -13,7 +13,6 @@ binaries=%COMMON_PATH_LOCATIONS.BINARIES_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
-env_sources=${cfg}/env/${platform}/environment.env
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 ntasks=%THREADS%
@@ -35,6 +34,9 @@ current_member=%MEMBER%
 #####################################################################################################################
 function compile_nemo()
 {
+    env_file=${cfg}/arch/${platform}/${model}/${arch_name}.env
+    . ${env_file}
+
     # Compile XIOS
     cd ${exp_root}/xios || exit
     cp $project/cfg/arch/${platform}/xios/arch-* arch
@@ -120,10 +122,13 @@ function compile_ecearth4()
 #####################################################################################################################
 function compile_hw()
 {
+    local env_sources=${cfg}/arch/${platform}/hw_benchmarks/environment.env
     local osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
     local osu_enabled=${osu_enabled,,}
     local stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
     local stream_enabled=${stream_enabled,,}
+
+    . ${env_sources}
 
     if ${stream_enabled}; then
         cd ${compilation}/STREAM || exit
@@ -143,8 +148,6 @@ function compile_hw()
 
 mkdir -p $compilation
 mkdir -p $binaries
-
-source $env_sources
 
 compile_model=true
 echo "${members[@]}" | grep -qwE "CompilationEfficiency|WeakScaling|StrongScaling|Tracing" || compile_model=false

@@ -47,14 +47,14 @@ function recursive_ecaccess_cp() {
 # Start script
 ###################
 
-ignored_dirs="${local_proj}/docs ${local_proj}/autosubmit ${local_proj}/.git" 
 
-if [ ${hpc_type} = "ecaccess" ]; then
-    recursive_ecaccess_cp ${local_proj} ${hpc_proj}
-elif [ ${hpc_type} = "slurm" ]; then
-    ignored_dirs_rsync=""
-    for ignored_dir in ${ignored_dirs}; do
-        ignored_dirs_rsync+=" --exclude ${ignored_dir}"
-    done
-    rsync -avz ${ignored_dirs_rsync} ${local_proj}/ ${hpc_user}@${hpc_host}:${hpc_proj}
-fi
+case ${hpc_type} in
+    "ecaccess")
+        ignored_dirs="${local_proj}/docs ${local_proj}/autosubmit ${local_proj}/.git" 
+        recursive_ecaccess_cp ${local_proj} ${hpc_proj}
+    ;;
+    "slurm")
+        ignored_dirs=( --exclude={"docs/","autosubmit/",".git/"} )
+        rsync -avz "${ignored_dirs[@]}" ${local_proj}/ ${hpc_user}@${hpc_host}:${hpc_proj}
+    ;;
+esac

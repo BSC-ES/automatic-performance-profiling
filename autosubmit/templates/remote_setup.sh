@@ -103,6 +103,13 @@ function clone_hw_benchmarks()
     fi
 }
 
+function clone_tracing()
+{
+    if [ ! -d ${root_dir}/magiccut ]; then 
+        git clone https://earth.bsc.es/gitlab/ces/magiccut.git --branch generic_platform $root_dir/magiccut
+    fi
+}
+
 ###################
 # Start script
 ###################
@@ -128,4 +135,9 @@ fi
 # If hardware benchmarks are run, clone OSU and STREAM
 if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
     clone_hw_benchmarks
+fi
+
+# If tracing is enabled, clone MagicCut
+if echo "${members[@]}" | grep -q -w "Tracing"; then
+    clone_tracing
 fi

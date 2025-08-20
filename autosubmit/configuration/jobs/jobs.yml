@@ -167,19 +167,6 @@ JOBS:
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
-  hardware_bench_images:
-    FILE: autosubmit/templates/hardware_bench_images.sh
-    DEPENDENCIES:
-      report_setup:
-        MEMBERS_FROM:
-          StrongScaling, WeakScaling, CompilationEfficiency, StrongScaling, Tracing:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-    RUNNING: member
-    WALLCLOCK: 00:30
-    CHECK: "true"
-    NOTIFY_ON: FAILED
   modelfactors:
     FILE: autosubmit/templates/modelfactors.sh
     DEPENDENCIES:
@@ -192,13 +179,6 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 02:00
     CHECK: "true"
-    NOTIFY_ON: FAILED
-  POST:
-    FILE: autosubmit/templates/post.sh
-    DEPENDENCIES: report_setup
-    WALLCLOCK: 02:00
-    CHECK: "true"
-    RUNNING: member
     NOTIFY_ON: FAILED
   configuration_json:
     FILE: autosubmit/templates/configuration_json.sh
@@ -232,7 +212,7 @@ JOBS:
         MEMBERS_TO: Tracing
       dimemas_images:
         MEMBERS_TO: Tracing
-      hardware_bench_images:
+      post:
         MEMBERS_TO: HardwareBenchmarks
       modelfactors:
         MEMBERS_TO: Tracing

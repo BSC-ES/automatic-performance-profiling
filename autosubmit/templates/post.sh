@@ -24,6 +24,36 @@ components=($(bashify_array "%MODEL.COMPONENTS%" true))
 report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 
+function post_hw_benchmarks()
+{
+    osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
+    osu_enabled=${osu_enabled,,}
+    stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
+    stream_enabled=${stream_enabled,,}
+
+    set +u
+    export PYTHONPATH=$PYTHONPATH:${project}
+    set -u
+
+    cd ${run_root}/hardware_benchmarks || exit
+
+    if ${osu_enabled}; then
+        osu_tests=($(bashify_array "%HW_BENCHMARKS.OSU.TESTS%" true))
+        mkdir -p OSU_RUN/IMAGE
+
+        for test in "${osu_tests[@]}"
+        do
+            test_name=${test##*/}
+            input_files=(OSU_RUN/DATA/${test_name}*)
+            python3 ${cfg}/benchmarks/OSU/osu_test_plots.py -i "${input_files[@]}" -o OSU_RUN/IMAGE/
+        done
+    fi
+    
+    if ${stream_enabled}; then
+        python3 ${cfg}/benchmarks/STREAM/stream_data_parser.py -i STREAM_RUN --png --png-output-name STREAM_RUN/${model}.png
+    fi
+}
+
 function post_nemo()
 {
     cd ${run_dir} || exit
@@ -196,7 +226,6 @@ case "$current_member" in
         test_names=($(bashify_array "%STRONGSCALING.NAMES%"))
         test_tys=($(bashify_array "%STRONGSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%STRONGSCALING.PROCESSORS%"))
-        test
         ;;
     "WeakScaling")
         member="weakscaling"
@@ -209,6 +238,9 @@ case "$current_member" in
         test_names=($(bashify_array "%TRACING.NAMES%"))
         test_tys=($(bashify_array "%TRACING.TEST_NAMES%"))
         test_procs=($(bashify_array "%TRACING.PROCESSORS%"))
+        ;;
+    "HardwareBenchmarks")
+        post_hw_benchmarks
         ;;
 esac
 
