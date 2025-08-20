@@ -15,6 +15,7 @@ REPORT:
 HW_BENCHMARKS:
   HW_BENCHMARKS_PARAMETERS_ROOT: '%PARAMETERS_ENV_CONFIG.CONFIG_FOLDER%/hardware_benchmarks'
   OSU:
+    SOURCE: https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5.1.tar.gz
     ENABLED: true
     # Binaries names found under c/mpi/ OSU root directory
     TESTS: [pt2pt/standard/osu_multi_lat, pt2pt/standard/osu_mbw_mr, collective/blocking/osu_allgather]
