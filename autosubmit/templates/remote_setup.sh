@@ -92,7 +92,7 @@ function clone_hw_benchmarks()
     stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
     stream_enabled=${stream_enabled,,}
 
-    if ${osu_enabled}; then
+    if ${osu_enabled} && [ ! -d osu-micro-benchmarks ]; then
         osu_source=%HW_BENCHMARKS.OSU.SOURCE%
         wget -O osu-micro-benchmarks.tar.gz ${osu_source}
         tar -xvf osu-micro-benchmarks.tar.gz --one-top-level --strip-components=1
