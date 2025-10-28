@@ -1,5 +1,6 @@
-User Guide
+Users Guide
 ==========
+
 
 Supported models and platforms ids
 ----------------------------------
@@ -104,7 +105,7 @@ Run the following command to update ``conf/minimal.yml`` to use the AS configura
 
 .. code-block:: bash
 
-  sed -i "s/CUSTOM_CONFIG: .*/MODEL: ${model}\n  CUSTOM_CONFIG:\n    PRE:\n      \# General configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/common\/model\/%DEFAULT.MODEL%\/proj.yml\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/common\/\"\n      \# Jobs configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/jobs.yml\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/model\/%DEFAULT.MODEL%\/\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/platform\/%DEFAULT.HPCARCH%\/\"\n      \# Member specific configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/tracing\/\"\n    POST: ~\/platforms_credentials.yml/" conf/minimal.yml
+  sed -i "s/CUSTOM_CONFIG: .*/MODEL: ${model}\n  CUSTOM_CONFIG:\n    PRE:\n      \# General configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/common\/model\/%DEFAULT.MODEL%\/proj.yml\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/common\/\"\n      \# Jobs configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/static\/jobs\/jobs.yml\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/static\/jobs\/\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/model\/%DEFAULT.MODEL%\/\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/platform\/%DEFAULT.HPCARCH%\/\"\n      \# Member specific configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/tracing\/\"\n    POST: ~\/platforms_credentials.yml/" conf/minimal.yml
 
 To configure the platform with your user create and edit ``~/platforms_credentials.yml`` with the platform id and your user, example:
 
@@ -153,14 +154,12 @@ Once you decide what members to run, you can configure the jobs that they will r
 Now check the specific wiki for each of the models to know how to configure them:
 
 
+
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
-   Configure-NEMO
-   Configure-ECE4
-
-- `Configure NEMO <Configure-NEMO.html>`_
-- `Configure ECE4 <Configure-ECE4.html>`_
+   configure_nemo
+   configure_ece4
 
 Common configuration
 ~~~~~~~~~~~~~~~~~~~~

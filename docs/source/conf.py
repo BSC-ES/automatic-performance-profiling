@@ -24,9 +24,10 @@ extensions = [
     'sphinx_design',
     'sphinx.ext.autosummary',
     'sphinxcontrib.autoprogram',
+    'sphinx.ext.autosectionlabel',
 ]
 
-html_theme = 'pydata_sphinx_theme'  # Optional theme
+html_theme = "sphinx_rtd_theme"
 
 html_theme_options = {
     "icon_links": [
