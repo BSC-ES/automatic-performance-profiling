@@ -1,0 +1,14 @@
+DEFAULT:
+  CUSTOM_CONFIG:
+    PRE:
+      # General configuration
+      - "%PROJDIR%/autosubmit/configuration/common/model/%DEFAULT.MODEL%/proj.yml"
+      - "%PROJDIR%/autosubmit/configuration/common/"
+      # Jobs configuration
+      - "%PROJDIR%/autosubmit/configuration/jobs/jobs.yml"
+      - "%PROJDIR%/autosubmit/configuration/jobs/model/%DEFAULT.MODEL%/"
+      - "%PROJDIR%/autosubmit/configuration/jobs/platform/%DEFAULT.HPCARCH%/"
+      - "%PROJDIR%/autosubmit/configuration/jobs/"
+      # Member specific configuration
+      - "%PROJDIR%/autosubmit/configuration/tracing/"
+    POST: "~/platforms_credentials.yml"
