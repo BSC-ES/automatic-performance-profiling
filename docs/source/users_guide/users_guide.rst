@@ -80,7 +80,13 @@ Then generate a new experiment id, replacing PLATFORM with one of the supported 
 
 .. code-block:: bash
 
-  autosubmit expid -min -H "PLATFORM" -d "DESCRIPTION" -repo "https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git" -b "master"
+  autosubmit expid \
+    -min \
+    -H "PLATFORM" \
+    -d "DESCRIPTION" \
+    --git_as_conf autosubmit/configuration/bootstrap.yml \
+    -repo "https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git" \
+    -b "master"
 
 .. warning::
   Replace PLATFORM with one of the supported platform ids
@@ -101,11 +107,11 @@ Once the experiment is created, it's time to configure the workflow. First, you 
 
   cd /esarchive/autosubmit/${expid}
 
-Run the following command to update ``conf/minimal.yml`` to use the AS configuration from the repository:
+Run the following command to update ``conf/minimal.yml`` to use the AS configuration for the model you want to run:
 
 .. code-block:: bash
 
-  sed -i "s/CUSTOM_CONFIG: .*/MODEL: ${model}\n  CUSTOM_CONFIG:\n    PRE:\n      \# General configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/common\/model\/%DEFAULT.MODEL%\/proj.yml\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/common\/\"\n      \# Jobs configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/static\/jobs\/jobs.yml\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/static\/jobs\/\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/model\/%DEFAULT.MODEL%\/\"\n      - \"%PROJDIR%\/autosubmit\/configuration\/jobs\/platform\/%DEFAULT.HPCARCH%\/\"\n      \# Member specific configuration\n      - \"%PROJDIR%\/autosubmit\/configuration\/tracing\/\"\n    POST: ~\/platforms_credentials.yml/" conf/minimal.yml
+  sed -i "/HPCARCH: .*/a \ \ MODEL: ${model}" conf/minimal.yml
 
 To configure the platform with your user create and edit ``~/platforms_credentials.yml`` with the platform id and your user, example:
 
