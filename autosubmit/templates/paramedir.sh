@@ -20,6 +20,7 @@ env_sources=${cfg}/env/${platform}/environment.env
 
 components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 tests=($(bashify_array "%TRACING.TEST_NAMES%" true))
+names=($(bashify_array "%TRACING.NAMES%" true))
 
 ###################
 # Start script
@@ -39,8 +40,9 @@ do
     cd "${test_folder}/paramedir" || exit
     rm -f *.pm
 
-    for trace_folder in $test_folder/run_*
+    for name in "${names[@]}"
     do
+        trace_folder=${test_folder}/run_${name}
         [ -f ${trace_folder}/job_geometry.sh ] && . ${trace_folder}/job_geometry.sh
         basename_trace_folder=$(basename ${trace_folder})
         trace_id=$(echo ${basename_trace_folder} | sed -e 's/run_//')
