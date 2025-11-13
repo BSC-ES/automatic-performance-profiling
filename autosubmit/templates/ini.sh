@@ -59,6 +59,12 @@ function ini_ecearth4()
     echo INI
 }
 
+function ini_hpcw()
+{
+    # TODO not necessary for now
+    echo INI
+}
+
 ###################
 # Start script
 ###################

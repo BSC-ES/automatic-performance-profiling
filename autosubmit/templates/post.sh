@@ -210,6 +210,20 @@ function post_ecearth4()
     return 0
 }
 
+function post_hpcw()
+{
+    post_nemo
+
+    case ${current_member} in
+        "Tracing")
+            # Remove unneeded files
+            cp ${run_dir}/${model}.prv ${run_dir}/nemo.prv
+            cp ${run_dir}/${model}.pcf ${run_dir}/nemo.pcf
+            cp ${run_dir}/${model}.row ${run_dir}/nemo.row
+        ;;
+    esac
+}
+
 # Run postprocessing
 module purge
 . ${env_sources}

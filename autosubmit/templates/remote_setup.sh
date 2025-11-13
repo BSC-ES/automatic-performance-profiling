@@ -104,6 +104,20 @@ function clone_hw_benchmarks()
     fi
 }
 
+function clone_hpcw()
+{
+    mkdir -p ${dest_dir}
+    cd ${dest_dir} || exit
+    
+    # Clone HPCW repository
+    if [ ! -d hpcw_${branch} ]; then
+        git clone ${model_origin} hpcw_${branch}
+    fi
+    
+    cd hpcw_${branch} || exit
+    git checkout ${branch}
+}
+
 function clone_tracing()
 {
     if [ ! -d ${root_dir}/magiccut ]; then 

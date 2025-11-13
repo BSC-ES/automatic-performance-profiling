@@ -114,6 +114,25 @@ function compile_ecearth4()
     se user-settings.yml ../platforms/${arch_name}.yml compile-components.yml
 }
 
+function compile_hpcw()
+{
+    local model_sources=${compilation}/${model}_${branch}
+    local arch_dir=${compilation}/${arch_name}
+    local arch_cmake=${cfg}/arch/${platform}/${model}/${arch_name}.cmake
+    rsync -av ${model_sources}/ ${arch_dir}
+
+    mkdir -p ${arch_dir}/build/nemo
+    cd ${arch_dir}/build/nemo || exit
+
+    local cmake_flags="-DBUILD_PARALLEL_LEVEL=4 -DENABLE_nemo=ON -DCMAKE_TOOLCHAIN_FILE=${arch_cmake} -DHPCW_SOURCE_DIR=${arch_dir}"
+
+    HPCW_SOURCE_DIR=${arch_dir} source ${arch_dir}/toolchains/mareNostrum5/bsc-intel.env.sh
+
+    cmake ${cmake_flags} ${arch_dir}
+
+    make VERBOSE=1 -j4
+}
+
 
 #####################################################################################################################
 # Brief: Compiles STREAM and OSU HW benchmarks

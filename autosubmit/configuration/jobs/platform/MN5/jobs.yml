@@ -34,6 +34,8 @@ JOBS:
     PLATFORM: mn5-login
   report:
     PLATFORM: mn5-login
+  POST:
+    PLATFORM: mn5-login
   trace:
     FILE: autosubmit/templates/extrae.sh
     FOR:

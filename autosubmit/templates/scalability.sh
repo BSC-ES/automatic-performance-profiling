@@ -357,6 +357,103 @@ function run_ecearth4()
     se --nocolor --loglevel debug ${config_file} ../platforms/${arch_name}.yml scriptlib/main.yml
 }
 
+function run_hpcw()
+{
+    local test_dir=${run_root}/${test_name}
+    local run_id="%CURRENT_NAME%"
+    local run_dir=${test_dir}/run_${run_id}
+    local src_dir=${compilation}/${arch_name}
+    local nemo_nproc="%NUMPROC%"
+
+    rm -rf ${run_dir}
+    mkdir -p ${run_dir}
+    cd ${run_dir} || exit
+
+    "${src_dir}/toolchains/job-stagein.sh" --strip-components=-1 \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/context_nemo.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/domain_def_nemo.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/field_def_nemo-ice.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/field_def_nemo-oce.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/file_def_nemo-ice.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/file_def_nemo-oce.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_precip_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_q_10_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_rain_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_rlds_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_rsds_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_slp_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_snow_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_t_10_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_u_10_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/JRA55_v_10_y2000.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/ORCA025_ESACCI_CHLA_bicubic_new.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/ORCA025_JRA55_weights_bicubic.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/Forcing/ORCA025_JRA55_weights_bilinear.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/domain_cfg.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/domain_cfg_updated.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/domain_cfg_updated_new.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/ORCA025_ESACCI_CHLA_bicubic.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/ORCA025_ESACCI_CHLA_bicubic_new.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/ORCA025_ESACCI_CHLA_bilinear.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/ORCA025_ESACCI_weights_bilinear.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/ORCA025_JRA55_weights_bicubic.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/ORCA025_JRA55_weights_bilinear.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/runoff_child.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/runoff_clim.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/runoff.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/WOA13_ORCA025_S_nomask.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/InitialConditions/WOA13_ORCA025_T_nomask.nc" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/grid_def_nemo.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/iodef.xml" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/namelist_cfg" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/namelist_ice_cfg" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/namelist_ice_ref" \
+    -s "${src_dir}/build/nemo/inputs/nemo-orca25/namelist_ref"
+
+    ln -sf "${src_dir}/build/nemo/nemo_orca25/cfgs/MY_ORCA25/BLD/bin/nemo.exe" nemo
+
+    export SETTE_DIR="${src_dir}/build/nemo/nemo_orca25/sette"
+    export EXE_DIR="$PWD"
+
+    . "${SETTE_DIR}/all_functions.sh"
+
+    set_namelist namelist_ref sn_cfctl%l_runstat .true.
+    set_namelist namelist_ref ln_timing   .true.
+
+    HPCW_INSTALL="${src_dir}/build/nemo/install" . ${cfg}/arch/${platform}/${model}/${arch_name}.env
+
+    case "${current_member}" in
+        "Tracing")
+            trace_steps="%TRACING.TRACE_STEPS%"
+            set_namelist namelist_cfg nn_itend ${trace_steps}
+
+            # Copy user functions list
+            fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=${fd_enabled,,}
+            if ${fd_enabled}; then
+                cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
+            else
+                cp $cfg/trace/model/${model}/extrae_functions.txt ${run_dir}/
+            fi
+            chmod +x ${cfg}/trace/generate_function_list.sh
+            ${cfg}/trace/generate_function_list.sh ./nemo extrae_functions.txt
+
+            # Create and copy Extrae necessary files
+            create_trace_sh ${run_dir}
+
+            configure_extrae ${run_dir}
+
+            srun -n ${nemo_nproc} ./trace.sh ./nemo
+            ;;
+        *)
+            steps="%EXPERIMENT.TEST_STEPS%"
+            set_namelist namelist_cfg nn_itend ${steps}
+
+            srun -n ${nemo_nproc} ./nemo
+            ;;
+    esac
+}
+
 ###################
 # Start script
 ###################
