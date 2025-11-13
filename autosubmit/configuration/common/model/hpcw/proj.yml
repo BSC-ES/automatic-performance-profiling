@@ -1,0 +1,56 @@
+# MODEL CONFIG
+MODEL:
+  NAME: hpcw
+  COMPONENTS: [nemo]
+  REPORT_COMPONENTS: [nemo]
+  ORIGIN: https://gitlab.dkrz.de/hpcw/hpcw.git
+  BRANCH: v3.0
+
+  # Arch files prefixes to compile
+  # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
+  # - For ecearth4: ARCH_NAME.yml
+  # - For nemo: arch-ARCH_NAME.fcm
+  ARCH_NAMES: [O1_prod, O3_prod, O3_trace]
+
+# EXPERIMENT CONFIG
+EXPERIMENT:
+  RESOLUTION: orca1
+  TEST_STEPS: 32
+  OUTPUT: false
+
+# TRACE CONFIG
+TRACING:
+  TIMESTEP_ZERO: false
+  TRACE_STEPS: 32
+
+  # CONFIG FOR USER FUNCTIONS SAMPLING
+  USER_FUNCTIONS_PROC: 112
+  USER_FUNCTIONS_THREADS: 4
+  TRACE_N_FUNCTIONS: 40
+
+  TEST_NAMES: [BENCH,   BENCH, ]
+  NAMES:      [trace_1, trace_2]
+  PROCESSORS: [112,     224,   ]
+  THREADS:    [4,       4,     ]
+  TEST_CONFIG: BENCH
+  ARCH_NAME: O3_trace
+
+# STRONG SCALING CONFIG
+STRONGSCALING:
+  STRONGSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling'
+  TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
+  NAMES:      [bench_1, bench_2, bench_3]
+  PROCESSORS: [112,     224,     336    ]
+  THREADS:    [1,       1,       1      ]
+  TEST_CONFIG: BENCH
+  ARCH_NAME: O3_prod
+
+# COMPILATION EFFICIENCY CONFIG
+COMPILATION_EFFICIENCY:
+  COMPILATION_EFFICIENCY_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency'
+  # For compilation efficiency the arch name is taken from the test name
+  TEST_NAMES: [O1_prod, O1_prod, O3_prod, O3_prod]
+  NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
+  PROCESSORS: [112,     224,     112,     224    ]
+  THREADS:    [1,       1,       1,       1      ]
+  TEST_CONFIG: BENCH
