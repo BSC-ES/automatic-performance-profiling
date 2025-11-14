@@ -124,6 +124,8 @@ function compile_hpcw()
     mkdir -p ${arch_dir}/build/nemo
     cd ${arch_dir}/build/nemo || exit
 
+    sed -i "s/%FCFLAGS -g.*/%FCFLAGS \${CMAKE_Fortran_FLAGS} >/g" ${arch_dir}/projects/nemo.cmake
+
     local cmake_flags="-DBUILD_PARALLEL_LEVEL=4 -DENABLE_nemo=ON -DCMAKE_TOOLCHAIN_FILE=${arch_cmake} -DHPCW_SOURCE_DIR=${arch_dir}"
 
     HPCW_SOURCE_DIR=${arch_dir} source ${arch_dir}/toolchains/mareNostrum5/bsc-intel.env.sh

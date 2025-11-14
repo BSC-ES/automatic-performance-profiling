@@ -6,7 +6,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-set(CMAKE_Fortran_FLAGS "$ENV{FCFLAGS}")
+set(CMAKE_Fortran_FLAGS "-g -xHost -align array64byte -traceback -i4 -r8 -O1 -fp-model precise -fno-alias")
 
 # ##############################################################################
 set(USE_SYSTEM_cdo ON)

@@ -420,7 +420,7 @@ function run_hpcw()
     set_namelist namelist_ref sn_cfctl%l_runstat .true.
     set_namelist namelist_ref ln_timing   .true.
 
-    HPCW_INSTALL="${src_dir}/build/nemo/install" . ${cfg}/arch/${platform}/${model}/${arch_name}.env
+    HPCW_SOURCE_DIR=${src_dir} HPCW_INSTALL="${src_dir}/build/nemo/install" . ${cfg}/arch/${platform}/${model}/${arch_name}.env
 
     case "${current_member}" in
         "Tracing")
