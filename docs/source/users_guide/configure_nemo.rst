@@ -93,7 +93,6 @@ The possible variables to configure for Strong Scaling are:
 
   # STRONG SCALING CONFIG
   STRONGSCALING:
-    STRONGSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling'
     TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
     NAMES:      [bench_1, bench_2, bench_3]
     PROCESSORS: [112,     224,     336    ]
@@ -122,7 +121,6 @@ The next list variables have to be the same length:
 
   # WEAKSCALING CONFIG
   WEAKSCALING:
-    WEAKSCALING_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling'
     BASE_PROCS: 56
     BASE_RESOLUTION: orca1
     NAMES:      [orca1, orca025]
@@ -150,7 +148,6 @@ The next list variables have to be the same length:
 
   # COMPILATION EFFICIENCY CONFIG
   COMPILATION_EFFICIENCY:
-    COMPILATION_EFFICIENCY_PARAMETERS_ROOT: '%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency'
     # For compilation efficiency the arch name is taken from the test name
     TEST_NAMES: [O1_prod, O1_prod, O3_prod, O3_prod]
     NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]

@@ -63,8 +63,6 @@ TRACING:
 
 # STRONG SCALING CONFIG
 STRONGSCALING:
-  STRONGSCALING_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/strongscaling"
-
   TEST_NAMES: [BENCH,   BENCH  , BENCH  , BENCH  , BENCH  ]
   NAMES:      [bench_1, bench_2, bench_3, bench_4, bench_5]
   PROCESSORS: [112,     224    , 336    , 448    , 560    ]
@@ -87,8 +85,6 @@ STRONGSCALING:
 
 # WEAKSCALING CONFIG
 WEAKSCALING:
-  WEAKSCALING_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/weakscaling"
-
   # Base case configuration, meaning the resolution and processors configuration
   NEMO_BASE_PROCS: 111
   OIFS_BASE_PROCS: 333
@@ -111,8 +107,6 @@ WEAKSCALING:
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
-  COMPILATION_EFFICIENCY_PARAMETERS_ROOT: "%PROJECT_FLAGS.MODEL_CONFIG_FOLDER%/MultiExperiment/compilation_efficiency"
-
   # For compilation efficiency the arch name is taken from the test name
   TEST_NAMES: [O3_ompi_prod, O3_ompi_prod, O3_ompi_prod, O3_impi_prod, O3_impi_prod, O3_impi_prod]
   NAMES:      [ompi_1,       ompi_2,       ompi_3,       impi_1,       impi_2,       impi_3      ]
