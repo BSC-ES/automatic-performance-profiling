@@ -372,29 +372,38 @@ function add_Tracing() {
 }
 
 #####################################################################################################################
-# Brief: Adds compilation efficiency experiments comparisson to the report
+# Brief: Adds compilation efficiency experiments comparisons to the report
 # Global: None
 # Param: None
 #####################################################################################################################
 function add_CompilationEfficiency() {
     local member="compilation_efficiency"
+    local ce_names="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+    ce_names=($(bashify_array "${ce_names}" true))
     local flag=-s
+
+    json_files=""
+    multiexperiment_id=""
+    for ce_name in "${ce_names[@]}"; do
+        json_files+="${run_root}/${member}/${ce_name}/${ce_name}.json "
+        multiexperiment_id+="${ce_name}-"
+    done
 
     # Generate tests comparisson csv
     python3 ${cfg}/parser/comparator.py \
-        --json-files $run_root/$member/*/*.json \
+        --json-files ${json_files}  \
         ${flag} \
-        --file-out ${run_root}/${member}/${member}.csv
+        --out-dir ${run_root}/${member}/
 
     member_title=${member//_/ }
-    member_title=${member^}
+    member_title=${member_title^}
 
     # Add cases info table
     test_folders=($run_root/$member/*/)
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
-        -s $member_title \
+        -s "${member_title}" \
         --add-csv ${test_folders[0]}/cases_info.csv \
         --add-caption "${member_title} cases info." 
 
@@ -402,10 +411,17 @@ function add_CompilationEfficiency() {
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
-        -s $member_title \
-        --add-csv ${run_root}/${member}/${member}.csv \
-        --add-caption "${member_title} case comparison scalability." \
+        -s "${member_title}" \
+        --add-csv ${run_root}/${member}/${multiexperiment_id}scaling.csv \
+        --add-caption "${member_title} case comparison scalability table." \
         -T ${cfg}/latex/text/${current_member}.txt
+
+    python3 ${latex_folder}/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s "${member_title}" \
+        --add-img ${run_root}/${member}/${multiexperiment_id}scaling.png \
+        --add-caption "${member_title} case comparison scalability plot."
 }
 
 #####################################################################################################################

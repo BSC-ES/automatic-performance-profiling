@@ -36,45 +36,46 @@ def detect_outliers(nproc, sypd):
     return sypd_inliers, sypd_outliers, expected_sypd
 
 
-def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight_outliers=False):
+def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight_outliers=False, plot_ideal=True):
     if filename is None:
         filename = experiment_name + ".png"
 
     # Plot data
-    x_label, y_label = data.keys()
-    x, y = data[x_label], data[y_label]
+    for case in data:
+        x_label, y_label = data[case].keys()
+        x, y = data[case][x_label], data[case][y_label]
 
-    if highlight_outliers and len(x) > 4:
-        inlier_mask, outlier_mask, expected_sypd = detect_outliers(x, y)
-        plt.scatter(
-            x[inlier_mask], y[inlier_mask], color="blue")
-        plt.scatter(
-            x[outlier_mask], y[outlier_mask], color="red")
-        if any(outlier_mask):
-            plt.plot(x, expected_sypd, ":", alpha=.75, color="k", label="Expected speed")
-    else:
-        plt.scatter(x, y, alpha=.5)
-    plt.plot(x, y, alpha=.5, label="Real speed")
+        if highlight_outliers and len(x) > 4:
+            inlier_mask, outlier_mask, expected_sypd = detect_outliers(x, y)
+            plt.scatter(
+                x[inlier_mask], y[inlier_mask], color="blue")
+            plt.scatter(
+                x[outlier_mask], y[outlier_mask], color="red")
+            if any(outlier_mask):
+                plt.plot(x, expected_sypd, ":", alpha=.75, color="k", label=f"{case} expected speed")
+        else:
+            plt.scatter(x, y, alpha=.5)
+        plt.plot(x, y, alpha=.5, label=f"{case} real speed")
 
-    # Plot ideal
-    x_min, x_max = min(x), max(x)
+        if plot_ideal:
+            x_min, x_max = min(x), max(x)
 
-    def ideal_speed(cores):
-        return y[0]/x[0] * cores
+            def ideal_speed(cores):
+                
+                return y[0]/x[0] * cores
 
-    ideal_range = np.arange(x_min, x_max, 1)
-    ideal_speed = [ideal_speed(_x) for _x in ideal_range]
-    plt.plot(ideal_range, ideal_speed, ":", alpha=.25, color="k", label="Ideal speed")
+            ideal_range = np.arange(x_min, x_max, 1)
+            ideal_speed = [ideal_speed(_x) for _x in ideal_range]
+            plt.plot(ideal_range, ideal_speed, ":", alpha=.25, color="k", label=f"{case} ideal speed")
 
-    # Format stuff
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+
+        if not scatter_labels is None:
+            for i, label in enumerate(scatter_labels):
+                plt.annotate(label, (x[i] + 4, y[i] - 0.2))
+
     plt.title(os.path.splitext(os.path.basename(filename))[0])
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-
-    if not scatter_labels is None:
-        for i, label in enumerate(scatter_labels):
-            plt.annotate(label, (x[i] + 4, y[i] - 0.2))
-
     plt.legend()
     plt.savefig(filename)
     plt.close()

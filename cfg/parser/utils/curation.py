@@ -58,6 +58,7 @@ The module focuses on performance analysis of HPC applications, providing tools 
 """
 
 import numpy as np
+from cfg.parser.utils.plotter import plotter
 
 
 class Log:
@@ -909,13 +910,13 @@ def simulated_years_per_day_plot(experiment_data: dict, filename: str):
     """
     from cfg.parser.utils.plotter import plotter
 
-    plot_data = generate_sypd_plot_data(experiment_data)
+    plot_data = {experiment_data.experiment_name: generate_sypd_plot_data(experiment_data)}
     plotter(experiment_name=experiment_data.experiment_name, data=plot_data,
             scatter_labels=experiment_data.cases, filename=filename, highlight_outliers=True)
 
     for component in experiment_data.components:
-        component_plot_data = generate_sypd_plot_data(
-            experiment_data, component)
+        component_plot_data = {experiment_data.experiment_name: generate_sypd_plot_data(
+            experiment_data, component)}
         plotter(experiment_name=experiment_data.experiment_name, data=component_plot_data,
                 scatter_labels=experiment_data.components_cases[component], filename=component + "_" + filename, highlight_outliers=True)
 
@@ -1015,6 +1016,13 @@ def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
             case, exp1_length, exp2_length))
     return log
 
+
+def multiexperiment_scalability_plot(experiments: list, filename: str):
+    plot_data = {}
+    for experiment in experiments:
+        plot_data[experiment.experiment_name] = generate_sypd_plot_data(experiment)
+    plotter(experiment_name=experiment.experiment_name, data=plot_data,
+            scatter_labels=experiment.cases, filename=filename, highlight_outliers=True, plot_ideal=False)
 
 def multiexperiment_comparison(experiments: list, field1: str) -> Log:
     """
