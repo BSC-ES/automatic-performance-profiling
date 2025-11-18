@@ -226,9 +226,10 @@ function add_paraver() {
         for case_comparison_cfg in ${case_comparison_cfgs}; do
             local img_caption="${case_comparison_cfg} for the fastest timestep of the cases (top to bottom): "
             local case_comparison_imgs=""
-            for case in paraver_images/*; do 
-                img_caption+="$(basename $case) "
-                case_comparison_img="$case/${case_comparison_cfg}@${component}.best_cut.png"
+            for case in "${tracing_names[@]}"; do
+                case_paraver_folder=${test_root}/paraver_images/${case}
+                img_caption+="${case} "
+                case_comparison_img="${case_paraver_folder}/${case_comparison_cfg}@${component}.best_cut.png"
                 ! [ -f $case_comparison_img ] && echo $case_comparison_img was not generated, skipping... && continue
                 case_comparison_imgs+="$case_comparison_img "
             done
@@ -244,19 +245,20 @@ function add_paraver() {
         done
         
         # Add other Paraver views
-        for case in ${test_root}/paraver_images/*; do                    
+        for case in "${tracing_names[@]}"; do                    
             for paraver_cfg in $paraver_cfgs; do
+                case_paraver_folder=${test_root}/paraver_images/${case}
                 echo $case_comparison_cfgs | grep -w $paraver_cfg &> /dev/null && continue
-                local paraver_image="$case/$paraver_cfg@${component}.best_cut.png"
+                local paraver_image="${case_paraver_folder}/$paraver_cfg@${component}.best_cut.png"
                 ! [ -f $paraver_image ] && echo $paraver_image was not generated, skipping... && continue
 
                 local paraver_caption=${paraver_image##*/}
-                paraver_caption="${paraver_caption//@*} configuration for the fastest timestep in ${component^^} trace"
+                paraver_caption="${paraver_caption//@*} configuration for the fastest timestep in ${component^^} trace for case ${case}."
                 python3 ${latex_folder}/ReportGenerator.py \
                     -O ${report_full_path}.pkl \
                     -S "Tracing" \
                     -s "${component^^} Paraver" \
-                    -ss "$(basename ${case})" \
+                    -ss "${case}" \
                     --add-img ${paraver_image} \
                     --add-caption "${paraver_caption}."
             done
