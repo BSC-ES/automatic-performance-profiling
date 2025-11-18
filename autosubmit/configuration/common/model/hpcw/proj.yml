@@ -14,9 +14,13 @@ MODEL:
 
 # EXPERIMENT CONFIG
 EXPERIMENT:
-  RESOLUTION: orca1
+  # Current available HPCW test configurations: 
+  #   - orca025-medium
+  #   - orca1-like-small
+  TEST_CONFIG: orca025-medium
   TEST_STEPS: 32
   OUTPUT: false
+  RESOLUTION: "%EXPERIMENT.TEST_CONFIG%"
 
 # TRACE CONFIG
 TRACING:
