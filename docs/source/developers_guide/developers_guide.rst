@@ -126,8 +126,8 @@ The different members create folders to run the experiment and store the data in
        │       ├── coupling
        │       │   ├── NAME_1     
        │       │   └── NAME_2
-       │       ├── scalability_NAME_1    # Test run dir
-       │       └── scalability_NAME_2    # Test run dir
+       │       ├── run_NAME_1    # Test run dir
+       │       └── run_NAME_2    # Test run dir
        ├── tracing
        │   └── TEST
        │       ├── dimemas_images
@@ -137,13 +137,13 @@ The different members create folders to run the experiment and store the data in
        │       ├── modelfactors
        │       ├── paramedir
        │       ├── paraver_images
-       │       ├── trace_NAME_1          # Test run dir
-       │       ├── trace_NAME_2          # Test run dir
+       │       ├── run_NAME_1          # Test run dir
+       │       ├── run_NAME_2          # Test run dir
        │       └── tracking
        └── weakscaling
            └── TEST
-               ├── scalability_NAME_1    # Test run dir
-               └── scalability_NAME_2    # Test run dir
+               ├── run_NAME_1    # Test run dir
+               └── run_NAME_2    # Test run dir
 
 The NAME_X are defined by the test names that are defined in the proj.yml AS configuration file.
 
@@ -185,6 +185,8 @@ To make the workflow easier to configure for different models and platforms, the
    │   ├── model
    │   │   ├── ecearth4
    │   │   │   └── proj.yml
+   │   │   ├── hpcw
+   │   │   │   └── proj.yml
    │   │   └── nemo
    │   │       └── proj.yml
    │   ├── platforms.yml
@@ -199,6 +201,12 @@ To make the workflow easier to configure for different models and platforms, the
    │   │   │   ├── jobs-tracing.yml
    │   │   │   ├── jobs-weakscaling.yml
    │   │   │   └── jobs.yml
+   │   │   ├── hpcw
+   │   │   │   ├── jobs-compilationefficiency.yml
+   │   │   │   ├── jobs-strongscaling.yml
+   │   │   │   ├── jobs-tracing.yml
+   │   │   │   ├── jobs-weakscaling.yml
+   │   │   │   └── jobs.yml
    │   │   └── nemo
    │   │       ├── jobs-compilationefficiency.yml
    │   │       ├── jobs-strongscaling.yml
@@ -206,8 +214,6 @@ To make the workflow easier to configure for different models and platforms, the
    │   │       └── jobs-weakscaling.yml
    │   └── platform
    │       ├── hpc2020
-   │       │   └── jobs.yml
-   │       ├── MN4
    │       │   └── jobs.yml
    │       └── mn5
    │           └── jobs.yml
@@ -454,9 +460,9 @@ The JSON is divided by cases where each case contains the performance metrics of
            {
                "function_info":
                {
-                   "function_1": time
-                   ...
-                   "function_n": time
+                   "function_1": "time",
+                   // ...
+                   "function_n": "time"
                },
                // Component data
                "component_1":
@@ -466,39 +472,39 @@ The JSON is divided by cases where each case contains the performance metrics of
                    {
                        "counter_1":
                        {
-                           "function_1": counter_1_value
-                           ...
-                           "function_n": counter_1_value
+                           "function_1": "counter_1_value",
+                           // ...
+                           "function_n": "counter_1_value"
                        },
                        "counter_2":
                        {
-                           ...
+                           // ...
                        }
                    },
-                   "sypd": component_1_SYPD,
-                   "nproc": component_1_nproc
-                   "resolution": component_1_resolution
-                   ...
+                   "sypd": "component_1_SYPD",
+                   "nproc": "component_1_nproc",
+                   "resolution": "component_1_resolution"
+                   // ...
                },
                "component_2":
                {
-                   ...
+                  // ...
                }
            },
            // Model data
-           "sypd": model_SYPD,
-           "nproc": model_nproc
-           "resolution": model_resolution
-           ...
+           "sypd": "model_SYPD",
+           "nproc": "model_nproc",
+           "resolution": "model_resolution"
+           // ...
        },
        "case_2":
        {
-           ...
+           // ...
        },
        // Cases sorted by the model procs
        "cases":
        {
-           "case_1"
+           "case_1",
            "case_2"
        },
        // Cases sorted by the components procs
@@ -506,12 +512,12 @@ The JSON is divided by cases where each case contains the performance metrics of
        {
            "component_1":
            {
-               "case_2"
+               "case_2",
                "case_1"
            },
            "component_2":
            {
-               "case_1"
+               "case_1",
                "case_2"
            }
        },
@@ -644,7 +650,7 @@ To be able to run the models in the new platform you need to add:
   ``cfg/arch/PLATFORM/MODEL/``\ : Arch files for the models you plan to run in the platform.
 
 * 
-  `cfg/env/MODEL/environment.env`: Environment file that contains the loading of the modules, PATH configuration... It must create the enviroment to be able to:
+  ``cfg/env/MODEL/environment.env``\: Environment file that contains the loading of the modules, PATH configuration... It must create the enviroment to be able to:
 
 
   * Run BSC Tools commands: ``paaramedir``\ , ``Dimemas``\ , ``wxparaver``\ , ``prv2dim``.
@@ -652,7 +658,7 @@ To be able to run the models in the new platform you need to add:
   * Run ``python3``.
 
 * 
-  `cfg/trace_analysis/dimemas_configurations/PLATFORM/`: Dimemas configuration files, we recommend you to add:
+  ``cfg/trace_analysis/dimemas_configurations/PLATFORM/``\: Dimemas configuration files, we recommend you to add:
 
 
   * IdealMachine.cfg

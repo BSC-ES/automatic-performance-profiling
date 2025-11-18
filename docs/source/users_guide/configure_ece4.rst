@@ -13,7 +13,6 @@ Configure the model
 
 The main variables to update in this config file are:
 
-
 * ORIGIN: url with the git repository containing ECE4.
 * COMPONENTS: list of all needed components to run your specific configuration. Supported component ids: ``oifs``, ``nemo``, ``rnfm``, ``xios``, ``oasis`` and ``amipfr``.
 * REPORT_COMPONENTS: list of components that you want to get info in the report. Possible values, subset of MODEL.COMPONENTS.
@@ -89,7 +88,6 @@ The next list variables have to be the same length:
 * PROCESSORS: List of processors used by each test.
 * THREADS: List of threads used by each test.
 * ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
-* PAPI_COUNTERS: Space separated string with the PAPI counters to trace, same id as returned by the command ``papi_avail``.
 
 .. code-block:: yaml
 
@@ -119,11 +117,10 @@ The next list variables have to be the same length:
     TEST_CONFIG: BENCH
     ARCH_NAME: O3_impi_trace
 
-StrongScaling
+Strong Scaling
 ^^^^^^^^^^^^^
 
 The next list variables have to be the same length:
-
 
 * TEST_NAMES: List of test names to run.
 * NAMES: List of unique names for each test.
@@ -158,10 +155,10 @@ The next list variables have to be the same length:
         IGNORE_INI_TS: 1
         IGNORE_END_TS: 1
 
-Weakscaling
+Weak Scaling
 ^^^^^^^^^^^
 
-The Weakscaling configuration differs from the rest, since the test names indicate the resolution and the processors are computed in runtime:
+The Weak Scaling configuration differs from the rest, since the test names indicate the resolution and the processors are computed in runtime:
 
 
 * [COMPONENT]_BASE_PROCS: COMPONENT processors of the base case.
@@ -202,13 +199,12 @@ The next list variables have to be the same length:
     TEST_CONFIG: BENCH
     ARCH_NAME: O3_impi_prod
 
-CompilationEfficiency
+Compilation Efficiency
 ^^^^^^^^^^^^^^^^^^^^^
 
-The configuration of the compilation efficiency follows the same idea as the Weakscaling, the test names define what arch should each test be run with:
+The configuration of the Compilation Efficiency follows the same idea as the Weak Scaling, the test names define what arch should each test be run with:
 
 The next list variables have to be the same length:
-
 
 * TEST_NAMES: List of the arch configs to run for each test, they have to be defined in MODEL.ARCH_NAMES.
 * NAMES: List of unique names for each test.

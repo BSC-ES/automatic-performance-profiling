@@ -1,20 +1,20 @@
 Users Guide
 ==========
 
+Welcome to the Automatic Performance Profiling Users Guide. This guide will help you to configure and run the workflow in your HPC platform.
 
 Supported models and platforms ids
 ----------------------------------
 
-Ids used by the workflow to identify the model and platform.
+To be able to run the workflow you will need to use one of the supported models and platforms ids.
 
-Models:
+The current supported models ids are:
 
+* ``nemo``: For the NEMO ocean model.
+* ``ecearth4``: For the EC-Earth multicomponent earth system model.
+* ``hpcw``: For the HPCW NEMO benchmark.
 
-* ``nemo``
-* ``ecearth4``
-
-Platforms:
-
+And the supported platforms ids are:
 
 * ``mn5``\ : BSC's Marenostrum 5 machine.
 * ``hpc2020``\ : ECMWF's ATOS machine.
@@ -22,7 +22,13 @@ Platforms:
 Dependencies
 ------------
 
-Autosubmit
+The Automatic Performance Profiling workflow depends on the following software:
+
+* Autosubmit
+* Ecaccess (only for ``hpc2020``\)
+
+
+How to install Autosubmit
 ~~~~~~~~~~
 
 The Automatic Performance Profiling uses Autosubmit as its workflow manager and therefore is needed to run it.
@@ -41,11 +47,10 @@ Other machines
 
 If Autosubmit is not installed in the machine you are planning to run the workflow you have to install it, you can check its `installation guide <https://autosubmit.readthedocs.io/en/master/installation/index.html>`_.
 
-Ecaccess
+How to install Ecaccess
 ~~~~~~~~
 
-.. important::
-  Ecaccess is only required to run the workflow in HPC2020.
+Ecaccess is the ECMWF software to access their HPC systems and is required to run the workflow in HPC2020.
 
 Installation
 ^^^^^^^^^^^^
@@ -166,6 +171,7 @@ Now check the specific wiki for each of the models to know how to configure them
 
    configure_nemo
    configure_ece4
+   configure_hpcw
 
 Common configuration
 ~~~~~~~~~~~~~~~~~~~~
