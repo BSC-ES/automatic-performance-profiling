@@ -175,8 +175,8 @@ def parse_nemo5_timing(timing_fn: str):
     functions_ptrn = "([0-9a-zA-Z_]+)[ ]*\|[ ]*([0-9.]+)s"
     total_time_ptrn = "avg over all MPI processes = ([0-9.]+)s"
 
-    data = {"function_info": {}, "time_step_time": 0,
-            "number_ts": 0, "ts_per_second": 0, "sypd": 0, "total_time": 0}
+    data = {"total_sim_functions_time": {}, "avg_ts_time": 0,
+            "number_ts": 0, "ts_per_second": 0, "sypd": 0, "total_sim_time": 0}
     
     runtime_path = os.path.dirname(timing_fn)
     namelist_cfg_fn = os.path.join(runtime_path, "namelist_cfg")
@@ -201,14 +201,14 @@ def parse_nemo5_timing(timing_fn: str):
             if total_time == 0 and total_time_match:
                 total_time = float(total_time_match.group(1))
             elif ts_per_second == 0 and step_length_match:
-                data["time_step_time"] = float(step_length_match.group(1)) / 1e6
-                ts_per_second = 1 / data["time_step_time"]
+                data["avg_ts_time"] = float(step_length_match.group(1)) / 1e6
+                ts_per_second = 1 / data["avg_ts_time"]
             elif functions_header_match: 
                 n_functions_header += 1
             elif n_functions_header == 1 and functions_match:
                 function_name, function_net_time = functions_match.groups()
                 if function_name != "Section":
-                    data["function_info"][function_name] = float(function_net_time)
+                    data["total_sim_functions_time"][function_name] = float(function_net_time)
 
         if "rn_Dt" in namelist_data:
             ts_length_seconds = float(namelist_data["rn_Dt"])
@@ -217,7 +217,7 @@ def parse_nemo5_timing(timing_fn: str):
         if ts_length_seconds > 0 and data["number_ts"] > 0:
             data["sypd"] = (ts_length_seconds * data["number_ts"]) / (365 * total_time)
 
-        data["total_time"] = total_time
+        data["total_sim_time"] = total_time
         data["ts_per_second"] = ts_per_second
 
     return data
@@ -227,7 +227,7 @@ def parse_nemo4_timing(timing_fn: str):
     functions_ptrn = "([0-9a-zA-Z_]+) +" + "([0-9\.E\+\-]+) +" * 7 + "([0-9\.E\+\-]+)"
     total_time_ptrn = "Total *time : +{[0-9\.E\+]+} +\(SYPD: +([0-9\.E\+]+) +\) on +MPI +rank +: +{[0-9\.E\+}+)"
 
-    data = {"function_info": {}, "time_step_time": 0,
+    data = {"total_sim_functions_time": {}, "avg_ts_time": 0,
             "number_ts": 0, "ts_per_second": 0, "sypd": 0}
 
     with open(timing_fn, "r", encoding="utf8") as timing_f:
@@ -247,14 +247,14 @@ def parse_nemo4_timing(timing_fn: str):
             elif functions_match:
                 function_name = functions_match.groups()[0]
                 values = [float(v) for v in functions_match.groups()[1:]]
-                data["function_info"][function_name] = values[1]
+                data["total_sim_functions_time"][function_name] = values[1]
             elif total_time_match:
                 _, sypd, nproc = total_time_match.groups()
                 sypds.append(float(sypd))
 
-        data["time_step_time"] = np.average(steps_length)
+        data["avg_ts_time"] = np.average(steps_length)
         data["number_ts"] = number_ts
-        data["ts_per_second"] = 1 / data["time_step_time"]
+        data["ts_per_second"] = 1 / data["avg_ts_time"]
         data["sypd"] = np.average(sypds)
         data["nproc"] = int(nproc)
 
@@ -461,7 +461,7 @@ class TimingInformation:
                         "nproc": nproc, "elapsed_time": 0}
                     try:
                         # Store results in dictionary if present
-                        ret_val[function][case]["elapsed_time"] = self[case]["components"][component_name]["function_info"][function]
+                        ret_val[function][case]["elapsed_time"] = self[case]["components"][component_name]["fastest_ts_functions_info"][function]
                     except KeyError:
                         # Remove the entry and pass to the next function
                         del ret_val[function]
@@ -900,7 +900,6 @@ class TimingInformation:
 
         if len(self.components) == 1:
             for case in self.data:
-                print(self.data[case])
                 self.data[case] = merge_dictionaries(
                     self.data[case], list(self.data[case]["components"].values())[0])
 
@@ -943,15 +942,21 @@ class TimingInformation:
 
         self.functions = self.find_functions()
 
-        if self.function_info_src == "paramedir":
-            for case in self.cases:
-                for component in self.components:
-                    component_function_info = {}
-                    component_dict = dictionary_pointer(
-                        self.data, (case, "components", component))
-                    for function_name in component_dict["counters"]["Time"]:
-                        component_function_info[function_name] = component_dict["counters"]["Time"][function_name]["Average"][0]
-                    component_dict["function_info"] = component_function_info
+        for case in self.cases:
+            for component in self.components:
+                component_function_info = {}
+                component_dict = dictionary_pointer(
+                    self.data, (case, "components", component))
+                if not "counters" in component_dict:
+                    print(f"[WARNING] No counters found in paramedir data for case {case} component {component}")
+                    continue
+                if not "Time" in component_dict["counters"]:
+                    print(f"[WARNING] No Time counters found in paramedir data for case {case} component {component}")
+                    continue
+
+                for function_name in component_dict["counters"]["Time"]:
+                    component_function_info[function_name] = component_dict["counters"]["Time"][function_name]["Average"][0] / 1e3
+                component_dict["fastest_ts_functions_time"] = component_function_info
 
         if self.components_cases is None:
             self.components_cases = {}

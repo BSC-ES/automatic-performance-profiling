@@ -378,7 +378,7 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
         ts_length = 0
         for component in components:
             ts_length = max(float(
-                experiment_data.data[case]["components"][component]["ts_length"]) / pow(10, 6), ts_length)
+                experiment_data.data[case]["components"][component]["fastest_ts_time"]), ts_length)
 
         header.append("function_name")
         header.append(case + " (percent)")
@@ -387,7 +387,7 @@ def generate_most_expensive_function_summary_data(experiment_data, out_file_name
         functions_elapsed_time = {}
         for component in components:
             functions_elapsed_time.update(go_to_dictionary_address(
-                experiment_data.data, (case, "components", component, "function_info")))
+                experiment_data.data, (case, "components", component, "fastest_ts_functions_time")))
 
         sorted_functions = list(
             sorted(functions_elapsed_time.items(), key=lambda f: f[1], reverse=True))
@@ -536,7 +536,7 @@ def tracking_function_info(experiment_data: dict) -> Log:
             log_text += f"{function}"
             for case in cases:
                 address = (case,
-                           "function_info",
+                           "ts_function_info",
                            function,
                            info_type,
                            )
@@ -967,7 +967,7 @@ def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
 
     Args:
         experiment1 (dict): The first experiment data, where keys are case identifiers
-                            and values are dictionaries containing "sypd" and "time_step_time".
+                            and values are dictionaries containing "sypd" and "avg_ts_time".
         experiment2 (dict): The second experiment data, with the same structure as experiment1.
 
     Returns:
@@ -1001,8 +1001,8 @@ def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
             "                     %4i processes  speed :  %5.1f|%5.1f SYPD   SpeedUp:   %4.1fx |%4.1fx   Efficiency: %4.2f|%4.2f  -> %.2f ratio." %
             (case, exp1_speed, exp2_speed, exp1_speedup, exp2_speedup, exp1_efficiency, exp2_efficiency, ratio))
     # Time-step length
-    exp1_base_length = experiment1[base_case]["time_step_time"]
-    exp2_base_length = experiment2[base_case]["time_step_time"]
+    exp1_base_length = experiment1[base_case]["avg_ts_time"]
+    exp2_base_length = experiment2[base_case]["avg_ts_time"]
     log.add("_" * 30)
     log.add("Base time-step length(s) with %4i processes:    %4.2f | %4.2f" %
             (base_case, exp1_base_length, exp2_base_length))
@@ -1010,8 +1010,8 @@ def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
         if case == base_case:
             continue
         resource_increase = case / base_case
-        exp1_length = experiment1[case]["time_step_time"]
-        exp2_length = experiment2[case]["time_step_time"]
+        exp1_length = experiment1[case]["avg_ts_time"]
+        exp2_length = experiment2[case]["avg_ts_time"]
         log.add("                              %4i processes:    %4.2f | %4.2f" % (
             case, exp1_length, exp2_length))
     return log
@@ -1148,10 +1148,10 @@ def find_common_cases_and_functions(experiments):
     base_case = min(common_cases)
 
     # Search common functions
-    common_functions = set(experiments[0][base_case]["function_info"].keys())
+    common_functions = set(experiments[0][base_case]["total_sim_functions_time"].keys())
     for experiment in experiments[1:]:
         common_functions.intersection_update(
-            experiment[base_case]["function_info"].keys())
+            experiment[base_case]["total_sim_functions_time"].keys())
     common_functions = list(common_functions)
 
     return common_cases, common_functions
@@ -1163,7 +1163,7 @@ def extract_data_from_experiments(experiments):
     for experiment in experiments:
         for case in experiment.cases:
             to_append = (ceil(case / experiment.processes_per_node),
-                         case, experiment[case]["time_step_time"])
+                         case, experiment[case]["avg_ts_time"])
             data.append(to_append)
     return data
 
@@ -1272,7 +1272,7 @@ def fit_functions_to_model(experiments, function_name=None):
 
 def get_functions_data(experiments, function_name=None):
     from math import ceil
-    fun_key = "function_info"
+    fun_key = "total_sim_functions_time"
     data = []
     for experiment in experiments:
         base_case = experiment.base_case
@@ -1300,7 +1300,7 @@ def oversimplified_memory_model(experiments):
           (100. * mb / tt, 100. * cb / tt, 100. * error / tt))
     print("Top10 Functions:")
     functions = list(
-        experiments[0].data[experiments[0].base_case]["function_info"].labels())
+        experiments[0].data[experiments[0].base_case]["total_sim_functions_time"].labels())
     functions = functions[:10]
     for function in functions:
         error, parameters = fit_functions_to_model(

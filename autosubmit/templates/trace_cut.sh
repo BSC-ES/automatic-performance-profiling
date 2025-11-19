@@ -42,7 +42,7 @@ do
         cd ${trace_folder} || exit
 
         test_info_fn=${name}-ts_test_info.csv
-        echo "component,ts_length" > ${test_info_fn}
+        echo "component,fastest_ts_time" > ${test_info_fn}
 
         for component in "${components[@]}"; do
             curr_mc_steps=${magiccut_steps}
@@ -53,7 +53,7 @@ do
             ${magiccut} $component.prv $curr_mc_steps | tee ${component}_magiccut.log
             grep "Worst / best" ${component}_magiccut.log | awk -F ' ' '{print $8}' > ${component}_fastest_ts.txt
             
-            echo "${component},$(cat ${component}_fastest_ts.txt)" >> ${test_info_fn}
+            echo "${component},$(echo $(cat ${component}_fastest_ts.txt) / 1000000000 | bc -l)" >> ${test_info_fn}
         done
     done
 done

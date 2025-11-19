@@ -458,7 +458,13 @@ The JSON is divided by cases where each case contains the performance metrics of
        {
            "components":
            {
-               "function_info":
+               "total_sim_functions_time":
+               {
+                   "function_1": "time",
+                   // ...
+                   "function_n": "time"
+               },
+               "fastest_ts_functions_time":
                {
                    "function_1": "time",
                    // ...
