@@ -29,7 +29,7 @@ components=$(bashify_array "%MODEL.REPORT_COMPONENTS%" true)
 reporter_params=""
 input_files="run_*/*test_info.csv "
 case "${model}" in
-    "nemo")
+    "nemo"|"hpcw")
         input_files+="run_*/*-timing.output"
     ;;
     "ecearth4")
