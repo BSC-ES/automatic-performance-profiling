@@ -1021,8 +1021,7 @@ def multiexperiment_scalability_plot(experiments: list, filename: str):
     plot_data = {}
     for experiment in experiments:
         plot_data[experiment.experiment_name] = generate_sypd_plot_data(experiment)
-    plotter(experiment_name=experiment.experiment_name, data=plot_data,
-            scatter_labels=experiment.cases, filename=filename, highlight_outliers=True, plot_ideal=False)
+    plotter(experiment_name=experiment.experiment_name, data=plot_data, filename=filename, highlight_outliers=True, plot_ideal=False)
 
 def multiexperiment_comparison(experiments: list, field1: str) -> Log:
     """
@@ -1057,14 +1056,14 @@ def multiexperiment_comparison(experiments: list, field1: str) -> Log:
                     break
 
     # Add data
-    header = "Case:"
+    header = "Nproc"
     for experiment in experiments:
         header += f", {experiment.experiment_name} (SYPD)"
 
     log.add(header)
 
     for i, case in enumerate(experiments[0].cases):
-        case_row = case
+        case_row = experiments[0][case]["nproc"]
         for j, experiment in enumerate(experiments):
             # If there is no corresponding case in the experiment in number of procs,
             # set invalid value

@@ -36,11 +36,12 @@ def detect_outliers(nproc, sypd):
     return sypd_inliers, sypd_outliers, expected_sypd
 
 
-def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight_outliers=False, plot_ideal=True):
+def plotter(data: dict, experiment_name: str, filename=None, highlight_outliers=False, plot_ideal=True, scatter_labels=None):
     if filename is None:
         filename = experiment_name + ".png"
 
     # Plot data
+    x_max_length = 0
     for case in data:
         x_label, y_label = data[case].keys()
         x, y = data[case][x_label], data[case][y_label]
@@ -57,9 +58,11 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight
             plt.scatter(x, y, alpha=.5)
         plt.plot(x, y, alpha=.5, label=f"{case} real speed")
 
+        x_min, x_max = min(x), max(x)
+        y_min, y_max = min(y), max(y)
+        x_range = abs(x_max - x_min)
+        y_range = abs(y_max - y_min)
         if plot_ideal:
-            x_min, x_max = min(x), max(x)
-
             def ideal_speed(cores):
                 
                 return y[0]/x[0] * cores
@@ -71,9 +74,13 @@ def plotter(data, experiment_name, scatter_labels=None, filename=None, highlight
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
-        if not scatter_labels is None:
+        if len(x) > x_max_length:
+            plt.xticks(x, [int(_x) for _x in x])
+            x_max_length = len(x)
+
+        if scatter_labels:
             for i, label in enumerate(scatter_labels):
-                plt.annotate(label, (x[i] + 4, y[i] - 0.2))
+                plt.annotate(label, (x[i] + x_range * 0.03, y[i] - y_range * 0.05))
 
     plt.title(os.path.splitext(os.path.basename(filename))[0])
     plt.legend()
