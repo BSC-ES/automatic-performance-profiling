@@ -24,6 +24,8 @@ The tool currently supports the following climate models:
 
 - NEMO 4.2.1
 
+- HPCW 3.0
+
 And it has been ported and tested in the following HPC platforms:
 
 - Marenostrum 5 (BSC)
