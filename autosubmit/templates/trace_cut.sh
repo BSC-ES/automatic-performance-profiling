@@ -12,6 +12,7 @@ magiccut=%CURRENT_ROOTDIR%/magiccut/magicCut
 timestep_zero=%TRACING.TIMESTEP_ZERO%
 trace_steps=%TRACING.TRACE_STEPS%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
+model=%MODEL.NAME%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
@@ -29,11 +30,16 @@ source ${env_sources}
 for test in "${tests[@]}"
 do
     test_name=$member/$test
-    if [ "${timestep_zero}" = "TRUE" ]; then
-        magiccut_steps=$(echo ${trace_steps}+1 | bc)
-    else
-        magiccut_steps=${trace_steps}
-    fi
+    case ${model} in
+        "monarch")
+            dt_int=%MONARCH.DT_INT%
+            nhours=%TRACING.NHOURS%
+            magiccut_steps=$((nhours*3600/dt_int))
+        ;;
+        *)
+            magiccut_steps=${trace_steps}
+        ;;
+    esac
     
     # Iterate over all run_* folders
     for name in "${names[@]}"

@@ -1,0 +1,43 @@
+EXPERIMENT:
+  # DO NOT CHANGE THIS, it is used by Autosubmit to know which tests to run
+  APP_TESTS:
+    STRONGSCALING:
+      ENABLED: "FALSE"
+    WEAKSCALING:
+      ENABLED: "FALSE"
+    TRACING:
+      ENABLED: "FALSE"
+    COMPILATION_EFFICIENCY:
+      ENABLED: "FALSE"
+
+  # Can be any date, it is not used by the experiment but Autosubmit needs it
+  DATELIST: "20210811"
+  # You can disable some tests to be run by Autosubmit if you delete them from the list
+  # This can be done in your $expid/conf to don't change the proj configuration
+  MEMBERS: "000"
+  # Irevelant
+  CHUNKSIZEUNIT: month
+  # Irrelevant
+  CHUNKSIZE: "1"
+  # Irrelevant because the lowest level of the workflow is member
+  NUMCHUNKS: "1"
+  CALENDAR: standard
+
+COMMON:
+  GIT_REPO: "%PROJECT.PROJECT_DESTINATION%"
+  REFRESH_GIT_REPO: "false"
+  CONFIGURATION: BENCH
+  EXP_ROOT: "%HPCROOTDIR%"
+COMMON_PATH_LOCATIONS:
+  PROJECT_ROOT: "%COMMON.EXP_ROOT%/%COMMON.GIT_REPO%"
+  INIDATA_ROOT: "%CURRENT_ROOTDIR%/inidata"
+  BINARIES_ROOT: "%CURRENT_ROOTDIR%/bin"
+  RUN_ROOT: "%CURRENT_ROOTDIR%/run"
+  COMPILATION_ROOT: "%CURRENT_ROOTDIR%/compilation"
+  PROVIDED_TRACES_PATH: ""
+  CFG: "%COMMON_PATH_LOCATIONS.PROJECT_ROOT%/cfg"
+PARAMETERS_ENV_CONFIG:
+  CONVERT_PARAM_FILE: "%COMMON_PATH_LOCATIONS.PROJECT_ROOT%/cfg/target/ConvertParamFile.py"
+  CONFIG_FOLDER: "%COMMON_PATH_LOCATIONS.PROJECT_ROOT%/configurations"
+PROJECT_FLAGS:
+  MODEL_CONFIG_FOLDER: "%PARAMETERS_ENV_CONFIG.CONFIG_FOLDER%/model/%COMMON.MODEL%"

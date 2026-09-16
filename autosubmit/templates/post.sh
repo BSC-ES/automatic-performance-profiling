@@ -9,11 +9,8 @@ platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-current_member=%MEMBER%
-inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
-branch=%MODEL.BRANCH%
 test="%CURRENT_TEST_NAME%"
 platform="%DEFAULT.HPCARCH%"
 
@@ -35,7 +32,7 @@ function post_hw_benchmarks()
     export PYTHONPATH=$PYTHONPATH:${project}
     set -u
 
-    cd ${run_root}/hardware_benchmarks || exit
+    cd ${run_root}/hw_benchmarks || exit
 
     if ${osu_enabled}; then
         osu_tests=($(bashify_array "%HW_BENCHMARKS.OSU.TESTS%" true))
@@ -62,7 +59,7 @@ function post_nemo()
     model_nproc=${nemo_nproc}
 
     case ${current_member} in
-        "WeakScaling")
+        "weakscaling")
             nemo_ws_resolutions=($(bashify_array "%WEAKSCALING.RESOLUTION%"))
             nemo_resolution=${nemo_ws_resolutions[$i]}
             model_resolution=${nemo_resolution}
@@ -80,7 +77,7 @@ function post_nemo()
     cp ${run_dir}/timing.output ${run_dir}/nemo-${test}-timing.output
 
     variables_to_report="nproc resolution"
-    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
+    [ ${current_member} = "weakscaling" ] && variables_to_report+=" grid_points"
 
     report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
 }
@@ -94,7 +91,7 @@ function post_ecearth4()
 
     cd ${run_dir} || exit
 
-    if [ ${current_member} = "Tracing" ]; then
+    if [ ${current_member} = "tracing" ]; then
         multiprog_fn=${run_dir}/run/multiprog.conf
     else
         multiprog_fn=${run_dir}/multiprog.conf
@@ -119,7 +116,7 @@ function post_ecearth4()
     model_nproc=$((last_proc + 1))
 
     case ${current_member} in
-        "Tracing")
+        "tracing")
             # Moce and cut the trace by the model's components
 
             mv run/*prv run/*pcf run/*row .
@@ -178,7 +175,7 @@ function post_ecearth4()
 
 
     case ${current_member} in
-        "WeakScaling")
+        "weakscaling")
             # Get the grid points from the nemo timing output
             if ${oifs_on}; then
                 oifs_ws_resolutions=($(bashify_array "%WEAKSCALING.OIFS_RESOLUTION%"))
@@ -202,8 +199,8 @@ function post_ecearth4()
     esac
 
     variables_to_report="nproc resolution"
-    [ ${current_member} = "WeakScaling" ] && variables_to_report+=" grid_points"
-    [ ${current_member} != "Tracing" ] && ! ${coupling_enabled} && variables_to_report+=" sypd"
+    [ ${current_member} = "weakscaling" ] && variables_to_report+=" grid_points"
+    [ ${current_member} != "tracing" ] && ! ${coupling_enabled} && variables_to_report+=" sypd"
     
     report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
 
@@ -215,7 +212,7 @@ function post_hpcw()
     post_nemo
 
     case ${current_member} in
-        "Tracing")
+        "tracing")
             # Remove unneeded files
             cp ${run_dir}/${model}.prv ${run_dir}/nemo.prv
             cp ${run_dir}/${model}.pcf ${run_dir}/nemo.pcf
@@ -224,44 +221,108 @@ function post_hpcw()
     esac
 }
 
+function post_monarch()
+{
+    if [ ${current_member} = "tracing" ]; then
+        # Remove unneeded files
+        cp ${run_dir}/1/${model}.prv ${run_dir}/
+        cp ${run_dir}/1/${model}.pcf ${run_dir}/
+        cp ${run_dir}/1/${model}.row ${run_dir}/
+        splits=1
+    fi
+    
+    declare -a model_split_sdpd
+    model_sdpd=0
+    for split in $(seq 1 ${splits}); do
+        split_run_dir=${run_dir}/${split}
+        # Extract the time string from the `time` output (e.g. "11m21.224s", "1h2m3.456s", "21.224s")
+        time_str=$(grep "real" ${split_run_dir}/model_output.log | awk '{print $2}')
+        # Parse hours, minutes, seconds (seconds may be fractional)
+        hours=$(echo "${time_str}" | grep -oE '[0-9]+h' | grep -oE '[0-9]+' 2>/dev/null || echo 0)
+        minutes=$(echo "${time_str}" | grep -oE '[0-9]+m' | grep -oE '[0-9]+' 2>/dev/null || echo 0)
+        seconds=$(echo "${time_str}" | grep -oE '[0-9]+(\.[0-9]+)?s' | grep -oE '[0-9]+(\.[0-9]+)?' 2>/dev/null || echo 0)
+        # Compute total seconds
+        execution_time=$(echo "scale=6; (${hours} * 3600) + (${minutes} * 60) + ${seconds}" | bc -l)
+        simulated_hours=%MONARCH.NHOURS%
+        split_sdpd=$(echo "scale=4; (3600 * ${simulated_hours}) / ${execution_time}" | bc -l)
+        model_sdpd=$(echo "scale=4; ${model_sdpd} + ${split_sdpd}" | bc -l)
+        model_split_sdpd+=(${split_sdpd})
+    done
+    declare -a monarch_split_sdpd=("${model_split_sdpd[@]}")
+    model_sdpd=$(echo "scale=4; ${model_sdpd} / ${splits}" | bc -l)
+    model_nproc=${test_procs[$i]}
+    monarch_jnpes=${jnpes_list[$i]}
+    monarch_inpes=${inpes_list[$i]}
+    monarch_write_groups=${write_groups_list[$i]}
+    monarch_write_tasks=${write_tasks_list[$i]}
+    monarch_nproc=${model_nproc}
+    monarch_sdpd=${model_sdpd}
+    save_test_yaml "nproc sdpd" "nproc sdpd jnpes inpes write_groups write_tasks" "sdpd" > ${run_dir}/${test}-test_info.yaml
+}
+
 # Run postprocessing
 module purge
 . ${env_sources}
 
+current_member=$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS")
+current_member=${current_member,,}
+
 case "$current_member" in
-    "CompilationEfficiency")
-        member="compilation_efficiency"
+    "compilation_efficiency")
         test_names=($(bashify_array "%COMPILATION_EFFICIENCY.NAMES%"))
         test_tys=($(bashify_array "%COMPILATION_EFFICIENCY.TEST_NAMES%"))
         test_procs=($(bashify_array "%COMPILATION_EFFICIENCY.PROCESSORS%"))
+        if [ ${model} = "monarch" ]; then
+            inpes_list=($(bashify_array "%COMPILATION_EFFICIENCY.INPES%"))
+            jnpes_list=($(bashify_array "%COMPILATION_EFFICIENCY.JNPES%"))
+            write_groups_list=($(bashify_array "%COMPILATION_EFFICIENCY.WRITE_GROUPS%"))
+            write_tasks_list=($(bashify_array "%COMPILATION_EFFICIENCY.WRITE_TASKS%"))
+        fi
+        splits="%COMPILATION_EFFICIENCY.SPLITS%"
         ;;
-    "StrongScaling")
-        member="strong_scaling"
+    "strongscaling")
         test_names=($(bashify_array "%STRONGSCALING.NAMES%"))
         test_tys=($(bashify_array "%STRONGSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%STRONGSCALING.PROCESSORS%"))
+        splits="%STRONGSCALING.SPLITS%"
+        if [ ${model} = "monarch" ]; then
+            inpes_list=($(bashify_array "%STRONGSCALING.INPES%"))
+            jnpes_list=($(bashify_array "%STRONGSCALING.JNPES%"))
+            write_groups_list=($(bashify_array "%STRONGSCALING.WRITE_GROUPS%"))
+            write_tasks_list=($(bashify_array "%STRONGSCALING.WRITE_TASKS%"))
+        fi
         ;;
-    "WeakScaling")
-        member="weakscaling"
+    "weakscaling")
         test_names=($(bashify_array "%WEAKSCALING.NAMES%"))
         test_tys=($(bashify_array "%WEAKSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%WEAKSCALING.PROCESSORS%"))
+        if [ ${model} = "monarch" ]; then
+            inpes_list=($(bashify_array "%WEAKSCALING.INPES%"))
+            jnpes_list=($(bashify_array "%WEAKSCALING.JNPES%"))
+            write_groups_list=($(bashify_array "%WEAKSCALING.WRITE_GROUPS%"))
+            write_tasks_list=($(bashify_array "%WEAKSCALING.WRITE_TASKS%"))
+        fi
         ;;
-    "Tracing")
-        member="tracing"
+    "tracing")
         test_names=($(bashify_array "%TRACING.NAMES%"))
         test_tys=($(bashify_array "%TRACING.TEST_NAMES%"))
         test_procs=($(bashify_array "%TRACING.PROCESSORS%"))
+        if [ ${model} = "monarch" ]; then
+            inpes_list=($(bashify_array "%TRACING.INPES%"))
+            jnpes_list=($(bashify_array "%TRACING.JNPES%"))
+            write_groups_list=($(bashify_array "%TRACING.WRITE_GROUPS%"))
+            write_tasks_list=($(bashify_array "%TRACING.WRITE_TASKS%"))
+        fi
         ;;
-    "HardwareBenchmarks")
+    "HW_BENCHMARKS")
         post_hw_benchmarks
         ;;
 esac
 
 i=0
 for test in "${test_names[@]}"; do
-    run_dir=${run_root}/${member}/${test_tys[$i]}/run_${test}
-    test_dir=${run_root}/${member}/${test_tys[$i]}/
+    run_dir=${run_root}/${current_member}/${test_tys[$i]}/run_${test}
+    test_dir=${run_root}/${current_member}/${test_tys[$i]}/
     post_${model}
     i=$((i+1))
 done

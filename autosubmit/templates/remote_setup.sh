@@ -20,7 +20,6 @@ platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
 model_origin="%MODEL.ORIGIN%"
-refresh_git=%COMMON.REFRESH_GIT_REPO%
 
 function clone_nemo()
 {
@@ -83,27 +82,6 @@ function clone_ecearth4()
     return 0
 }
 
-function clone_hw_benchmarks() 
-{
-    cd ${compilation} || exit
-
-    osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
-    osu_enabled=${osu_enabled,,}
-    stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
-    stream_enabled=${stream_enabled,,}
-
-    if ${osu_enabled} && [ ! -d osu-micro-benchmarks ]; then
-        osu_source=%HW_BENCHMARKS.OSU.SOURCE%
-        wget -O osu-micro-benchmarks.tar.gz ${osu_source}
-        tar -xvf osu-micro-benchmarks.tar.gz --one-top-level --strip-components=1
-        rm osu-micro-benchmarks.tar.gz
-    fi
-
-    if ${stream_enabled} && [ ! -d STREAM ]; then
-        git clone https://github.com/jeffhammond/STREAM.git STREAM
-    fi
-}
-
 function clone_hpcw()
 {
     mkdir -p ${dest_dir}
@@ -113,7 +91,8 @@ function clone_hpcw()
     if [ ! -d hpcw_${branch} ]; then
         git clone ${model_origin} hpcw_${branch}
     fi
-    
+
+
     cd hpcw_${branch} || exit
     git checkout ${branch}
 }
@@ -147,12 +126,8 @@ if [ ! -d ${model}_${branch} ]; then
     clone_${model}
 fi
 
-# If hardware benchmarks are run, clone OSU and STREAM
-if echo "${members[@]}" | grep -q -w "HardwareBenchmarks"; then
-    clone_hw_benchmarks
-fi
+tracing_enabled="%EXPERIMENT.APP_TESTS.TRACING.ENABLED%"
+tracing_enabled=${tracing_enabled,,}
 
 # If tracing is enabled, clone MagicCut
-if echo "${members[@]}" | grep -q -w "Tracing"; then
-    clone_tracing
-fi
+${tracing_enabled} && clone_tracing

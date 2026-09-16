@@ -15,7 +15,6 @@ env_sources=${cfg}/env/${platform}/environment.env
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
-members="%EXPERIMENT.MEMBERS%"
 
 #####################################################################################################################
 # Path variables: TODO
@@ -74,24 +73,32 @@ source ${env_sources}
 mkdir -p ${inidata}
 cd ${inidata}
 
-for member in ${members}; do
+declare -A enabled_members=(
+    ["tracing"]="%EXPERIMENT.APP_TESTS.TRACING.ENABLED%"
+    ["strongscaling"]="%EXPERIMENT.APP_TESTS.STRONGSCALING.ENABLED%"
+    ["weakscaling"]="%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%"
+    ["compilation_efficiency"]="%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%"
+)
+
+for member in "${!enabled_members[@]}"; do
+    ! ${enabled_members[$member],,} && continue
     case "$member" in
-        "CompilationEfficiency")
+        "compilation_efficiency")
             folder="compilation_efficiency"
             tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
             test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
             ;;
-        "WeakScaling")
+        "weakscaling")
             folder="weakscaling"
             tests="%WEAKSCALING.TEST_NAMES%"
             test_config="%WEAKSCALING.TEST_CONFIG%"
             ;;
-        "StrongScaling")
+        "strongscaling")
             folder="strong_scaling"
             tests="%STRONGSCALING.TEST_NAMES%"
             test_config="%STRONGSCALING.TEST_CONFIG%"
             ;;
-        "Tracing")
+        "tracing")
             folder="tracing"
             tests="%TRACING.TEST_NAMES%"
             test_config="%TRACING.TEST_CONFIG%"

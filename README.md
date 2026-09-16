@@ -18,19 +18,12 @@ The tool is capable of running and reporting the following performance tests:
 
 ## Models and platforms support
 
-The tool currently supports the following climate models:
+The tool currently supports the following climate models and HPC platforms:
 
-- EC-Earth 4
-
-- NEMO 4.2.1
-
-- HPCW 3.0
-
-And it has been ported and tested in the following HPC platforms:
-
-- Marenostrum 5 (BSC)
-
-- HPC2020 (ECMWF)
+| Platform / Model | EC-Earth 4 | NEMO 4.2.1 | HPCW 3.0 | AUTO-MONARCH |
+|-|-|-|-|-|
+| MareNostrum 5 | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| HPC2020 | :white_check_mark: | :white_check_mark: | :x: | :x: |
 
 ##  Documentation
 

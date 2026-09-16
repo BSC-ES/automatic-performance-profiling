@@ -5,31 +5,30 @@ ReportGenerator usage
 Short guide on how to use the class:
 
 
-* To create a report object just call the class with the name you want and start adding a section
+* To create a report object, just call the class with the name you want and start adding a section.
   .. code-block:: python
 
       python ReportGenerator.py -O ../report.pkl --section-title Introduction --section-number 1 -T Introduction.txt
-  You can give a number for the section which for the moment is being ignored. And add some text you've stored somewhere.
+  You can give a number for the section, which is currently ignored. You can also add some text you've stored somewhere.
   .. code-block:: bash
 
      python ReportGenerator.py -O ../report.pkl --section-title "Hardware Benchmarks" --section-number 2
-  This will add another section to the same object. To add a subsection just give the -s option
+  This will add another section to the same object. To add a subsection, just give the -s option.
 * 
-  To add images or csv files use the appropriate flag, you can pass either a single file or a folder, the script will loop inside it and search for files with the .png or .csv extension respectively.
+  To add images or CSV files use the appropriate flag. You can pass either a single file or a folder; the script will loop through it and search for files with the .png or .csv extensions respectively.
 
   .. code-block:: bash
 
        python ReportGenerator.py -O ../report.pkl -S "Hardware Benchmarks" -s "OSU Benchmark" --add-img images/OSU
        python ReportGenerator.py -O ../report.pkl -S "Hardware Benchmarks" -s "STREAM Benchmark" --add-csv images/STREAM/stream_48_fmt.csv
 
-  If the file is a paramedir csv there is a small utility to format it (I don't assure in any way it works with files different from the one I tried). 
-  Passing --c option will do the trick
+  If the file is a Paramedir CSV there is a small utility to format it (I don't guarantee it works with files other than the one I tried). Passing the --c option will do the trick.
 
   .. code-block:: bash
 
        python ReportGenerator.py -O ../report.pkl -S "MPI Profile" --add-csv  ./48_MPI_call_profile.pm --c
 
-  For the images there is also the option to add a caption 
+  For the images there is also the option to add a caption.
 
   .. code-block:: bash
 
@@ -41,23 +40,23 @@ Short guide on how to use the class:
                                             -T cfg/latex/text/Scalability.txt
 
   ###### The new command 
-  In the caption you can use the same variable defined in the param.cfg file. For example, let's say you want to put as a caption
+  In the caption you can use the same variables defined in the param.cfg file. For example, let's say you want to put as a caption
 
   ..
 
      Scalability of ${model} model with ${configuration_name}.
 
 
-  You can do this adding the param file as a newcommand:
+  You can do this by adding the param file as a new command:
 
   .. code-block:: python
 
         python ${latex_folder}/ReportGenerator.py -O report.pkl --add-newcommand param.cfg
 
-  This ofc works also with custom variables files different from the param file.
+  This of course also works with custom variable files different from the param file.
 
 * 
-  When you're done adding sections and data you can specify title and authors
+  When you're done adding sections and data, you can specify title and authors
 
   .. code-block:: bash
 
@@ -65,24 +64,24 @@ Short guide on how to use the class:
      python ReportGenerator.py -O ../report.pkl --report-authors "O. Tinto Primis"
      python ReportGenerator.py -O ../report.pkl --report-authors "Stella V. Paronuzzi Ticco"
 
-  Authors can be added at once, but also as above.
+  Authors can be added all at once, or one at a time as above.
 
-* There is a small utility to printout what we have added so far to the report:
+* There is a small utility to print out what we have added so far to the report:
   .. code-block:: bash
 
       python ReportGenerator.py -O ../report.pkl -I
-  This will print to screen a sort of map of section/subsection and data added.
-* Now if you want to generate the .tex file just dump the object to file with -d option:
+  This will print to the screen a sort of map of section/subsection and data added.
+* Now if you want to generate the .tex file, just dump the object to a file with the -d option:
   .. code-block:: bash
 
      python ReportGenerator.py -O  ./report.pkl -d
-  If everything went fine, which I seriously doubt you should now have a .tex file, and 
+  If everything went fine (which I seriously doubt), you should now have a .tex file, and 
   .. code-block:: bash
 
      pdflatex file.tex && evince file.pdf
   should open your report.
 
-P.S.: In case you are using the script on MN4 facility, you have to 
+P.S.: In case you are using the script on the MN4 facility, you have to 
 
 .. code-block:: bash
 

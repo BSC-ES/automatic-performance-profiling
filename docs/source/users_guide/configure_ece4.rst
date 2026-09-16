@@ -1,21 +1,21 @@
 Configure ECE4
 ==============
 
-In order to configure ECE4 and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/common/model/ecearth4/proj.yml`` located in your experiment root.
+In order to configure ECE4 and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/user/model/ecearth4/proj.yml`` located in your experiment root.
 
 Automatic clone
 ---------------
 
-In order to configure the passwordless git clone follow this guide: `Auto ECE4 passwordles clone <https://earth.bsc.es/gitlab/es/auto-ecearth4/-/wikis/SMHI%20gitlab>`_.
+In order to configure the passwordless git clone, follow this guide: `Auto ECE4 passwordless clone <https://earth.bsc.es/gitlab/es/auto-ecearth4/-/wikis/SMHI%20gitlab>`_.
 
 Configure the model
 -------------------
 
 The main variables to update in this config file are:
 
-* ORIGIN: url with the git repository containing ECE4.
-* COMPONENTS: list of all needed components to run your specific configuration. Supported component ids: ``oifs``, ``nemo``, ``rnfm``, ``xios``, ``oasis`` and ``amipfr``.
-* REPORT_COMPONENTS: list of components that you want to get info in the report. Possible values, subset of MODEL.COMPONENTS.
+* ORIGIN: URL of the git repository containing ECE4.
+* COMPONENTS: list of all needed components to run your specific configuration. Supported component IDs: ``oifs``, ``nemo``, ``rnfm``, ``xios``, ``oasis`` and ``amipfr``.
+* REPORT_COMPONENTS: list of components that you want to get info from in the report. Possible values: a subset of MODEL.COMPONENTS.
 * BRANCH_LIST: tag of the version you want to run.
 * OUTPUT: enables or disables the output (true/false).
 * START_DATE: start date of the scalability experiments (YYYYMMDD date format string).
@@ -23,11 +23,11 @@ The main variables to update in this config file are:
 * FREQ: frequency of the model stopping (YEARLY/MONTHLY/DAILY).
 * INTERVAL: number of model stops.
 * TEST_STEPS: number of steps of the scalability jobs, used for the magiccut job.
-* ARCH_NAMES: list of arch files to compile. This arch files must be located in ``cfg/arch/PLATFORM/MODEL/`` and follow this pattern ``ARCH_NAME.yml``.
+* ARCH_NAMES: list of arch files to compile. These arch files must be located in ``cfg/arch/PLATFORM/MODEL/`` and follow this pattern ``ARCH_NAME.yml``.
 * RESOLUTION: Model resolution, not used.
 * OIFS_RESOLUTION: ECE4 supported OIFS resolution.
 * NEMO_RESOLUTION: ECE4 supported NEMO resolution.
-* INIDATA: Path to the ECE4 inidata directory
+* INIDATA: Path to the ECE4 inidata directory.
 
 .. code-block:: yaml
 
@@ -62,10 +62,10 @@ The main variables to update in this config file are:
   # Inidata path for hpc2020: /hpcperm/c3et/models/ecearth/v4-trunk
   INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-oifs48/inidata
 
-Configure the members
+Configure the tests
 ---------------------
 
-The members configuration only has to be present only if they are activated in the EXPERIMENT.MEMBERS variable at ``proj/auto-performance-profiling/autosubmit/configuration/common/expdef.yml``.
+The tests configuration only has to be present if they are activated by commenting/uncommenting the path to their jobs configuration file in the ``proj/auto-performance-profiling/autosubmit/configuration/bootstrap.yml`` file.
 
 Tracing
 ^^^^^^^
@@ -77,17 +77,17 @@ The possible variables to configure for Tracing are:
 * END_DATE: end date of the Tracing experiments to control the trace size (YYYYMMDD date format string).
 * FREQ: frequency of the model stopping to control the trace size (YEARLY/MONTHLY/DAILY).
 * INTERVAL: number of model stops.
-* TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by magiccut to cut the timestep trace right.
+* TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by MagicCut to cut the trace at the right timestep.
 * TRACE_STEPS: Number of steps the model should run when tracing it.
-* USER FUNCTIONS: Variables used by the User Functions sampling script.
+* USER_FUNCTIONS_*: Variables used by the User Functions sampling script.
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
 * TEST_NAMES: List of test names to run.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors used by each test.
 * THREADS: List of threads used by each test.
-* ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+* ARCH_NAME: Arch to be used to run the tracing model; it has to be defined in the MODEL.ARCH_NAMES list.
 
 .. code-block:: yaml
 
@@ -118,17 +118,17 @@ The next list variables have to be the same length:
     ARCH_NAME: O3_impi_trace
 
 Strong Scaling
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
 * TEST_NAMES: List of test names to run.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors used in each test.
 * [COMPONENT]_PROCS: List of COMPONENT processors used in each test. The workflow will only use the processors of the components set in MODEL.COMPONENTS, but you need to define the list for all of the components because of Autosubmit limitations.
 * THREADS: List of threads used by each test.
-* ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
-* COUPLING_REPORT.ENABLED: Enables/disables coupling report generated by the Lucia tool.
+* ARCH_NAME: Arch to be used to run the strong scaling model; it has to be defined in the MODEL.ARCH_NAMES list.
+* COUPLING_REPORT.ENABLED: Enables/disables the coupling report generated by the Lucia tool.
 * COUPLING_REPORT.LUCIA.IGNORE_INI_TS: Ignored initial steps for the Lucia coupling report.
 * COUPLING_REPORT.LUCIA.IGNORE_END_TS: Ignored end steps for the Lucia coupling report.
 
@@ -156,24 +156,24 @@ The next list variables have to be the same length:
         IGNORE_END_TS: 1
 
 Weak Scaling
-^^^^^^^^^^^
+^^^^^^^^^^^^
 
-The Weak Scaling configuration differs from the rest, since the test names indicate the resolution and the processors are computed in runtime:
+The Weak Scaling configuration differs from the rest, since the test names indicate the resolution and the processors are computed at runtime:
 
 
 * [COMPONENT]_BASE_PROCS: COMPONENT processors of the base case.
 * [COMPONENT]_BASE_RESOLUTION: ECE4 supported COMPONENT resolution of the base case.
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
 
 * TEST_NAMES: List of resolutions to run for each test.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors all equal to 1.
 * THREADS: List of threads used by each test.
-* [COMPONENT]_RESOLUTION: List of ECE4 supported COMPONENT resolution ran by each test. This is the setting that will be used to compute the number of processors based on the base case resolution.
+* [COMPONENT]_RESOLUTION: List of ECE4 supported COMPONENT resolutions run by each test. This is the setting that will be used to compute the number of processors based on the base case resolution.
 * [COMPONENT]_PROCS: List of COMPONENT processors used in each test. The workflow will only use the processors of the components set in MODEL.COMPONENTS, but you need to define the list for all of the components because of Autosubmit limitations.
-* ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+* ARCH_NAME: Arch to be used to run the weak scaling model; it has to be defined in the MODEL.ARCH_NAMES list.
 
 .. code-block:: yaml
 
@@ -200,13 +200,13 @@ The next list variables have to be the same length:
     ARCH_NAME: O3_impi_prod
 
 Compilation Efficiency
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
-The configuration of the Compilation Efficiency follows the same idea as the Weak Scaling, the test names define what arch should each test be run with:
+The configuration of the Compilation Efficiency test follows the same idea as the Weak Scaling; the test names define which arch each test should be run with:
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
-* TEST_NAMES: List of the arch configs to run for each test, they have to be defined in MODEL.ARCH_NAMES.
+* TEST_NAMES: List of the arch configs to run for each test; they have to be defined in MODEL.ARCH_NAMES.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors used in each test.
 * [COMPONENT]_PROCS: List of COMPONENT processors used in each test. The workflow will only use the processors of the components set in MODEL.COMPONENTS, but you need to define the list for all of the components because of Autosubmit limitations.

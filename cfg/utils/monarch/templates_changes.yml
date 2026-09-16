@@ -1,0 +1,125 @@
+# MATCH and REPLACE options:
+#  - MATCH: "string to match"
+#    REPLACE: "string to replace with"
+#    FULL_MATCH: True/False (optional, default: False)
+#    APPEND: True/False (optional, default: False)
+#    REPLACE_ONLY_MATCH: True/False (optional, default: False)
+TEMPLATES:
+  ALL:
+    - MATCH: "[[ \"%MEMBER%\" == \"None\" ]]"
+      REPLACE: | 
+        echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|TRACING|STRONGSCALING|WEAKSCALING" && MEMBER_STR="$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|TRACING|STRONGSCALING|WEAKSCALING")" && MEMBER_STR=${MEMBER_STR,,}
+        MEMBER=000
+      APPEND: True
+    - MATCH: "MEMBER=%MEMBER%"
+      REPLACE: | 
+        echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|TRACING|STRONGSCALING|WEAKSCALING" && MEMBER_STR="$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|TRACING|STRONGSCALING|WEAKSCALING")" && MEMBER_STR=${MEMBER_STR,,}
+        MEMBER=000
+      FULL_MATCH: True
+  LOCAL_SEND_SPINUP:
+    - MATCH: "SPINUP_ROOT_FOLDER=%MONARCH.SPINUP_FOLDER%/${MEMBER}"
+      REPLACE: "SPINUP_ROOT_FOLDER=%MONARCH.SPINUP_FOLDER%/000"
+    - MATCH: "MET_SPINUP_ROOT_FOLDER=${MET_SPINUP_ROOT_FOLDER:-%MONARCH.SPINUP_FOLDER%}/${MEMBER}"
+      REPLACE: "MET_SPINUP_ROOT_FOLDER=${MET_SPINUP_ROOT_FOLDER:-%MONARCH.SPINUP_FOLDER%}/000"
+  REMOTE_COMPILE:
+    - MATCH: ". ${EXP_ROOT}/platforms/${ARCH}/remoteconfig.${ARCH}.sh"
+      REPLACE: |
+        . ${EXP_ROOT}/auto-monarch/cfg/arch/mn5/monarch/%CURRENT_NAME%/remoteconfig.%CURRENT_NAME%.sh
+        cp ${EXP_ROOT}/auto-monarch/cfg/arch/mn5/monarch/%CURRENT_NAME%/compile.%CURRENT_NAME%.sh ${EXP_ROOT}/%CURRENT_NAME%/compile.sh
+        cp ${EXP_ROOT}/auto-monarch/cfg/arch/mn5/monarch/%CURRENT_NAME%/configure.nmmb.%CURRENT_NAME% ${EXP_ROOT}/%CURRENT_NAME%/MODEL/SRC/conf/configure.nmmb.${ARCH}
+    - MATCH: "TASKTYPE="
+      REPLACE: "TASKTYPE=REMOTE_COMPILE"
+    - MATCH: MODEL_ROOT=${EXP_ROOT}/nmmb-monarch
+      REPLACE: MODEL_ROOT=${EXP_ROOT}/%CURRENT_NAME%
+    - MATCH: "ARCH=$("
+      REPLACE: |
+        ARCH=$(echo '%CURRENT_ARCH%' | tr '[:upper:]' '[:lower:]')
+        CURRENT_ARCH_TYPE=%CURRENT_NAME%
+        BASE_MODEL_ROOT=${EXP_ROOT}/nmmb-monarch
+        mkdir -p ${MODEL_ROOT}
+        rsync -rvl ${BASE_MODEL_ROOT}/ ${MODEL_ROOT}/
+        cfg=${EXP_ROOT}/auto-monarch/cfg
+        cd ${MODEL_ROOT}
+        if ! git apply ${cfg}/trace/model/monarch/sentinel.diff; then
+          echo "[APP][WARNING] sentinel.diff could not be applied." > /dev/stderr
+        fi
+        cd -
+  PREPROCFIX:
+    - MATCH: "TASKTYPE="
+      REPLACE: "TASKTYPE=PREPROCFIX"
+    - MATCH: MODEL_ROOT=${EXP_ROOT}/nmmb-monarch
+      REPLACE: MODEL_ROOT=${EXP_ROOT}/%CURRENT_NAME%
+  PREPROCVAR:
+    - MATCH: "TASKTYPE="
+      REPLACE: "TASKTYPE=PREPROCVAR"
+    - MATCH: MODEL_ROOT=${EXP_ROOT}/nmmb-monarch
+      REPLACE: MODEL_ROOT=${EXP_ROOT}/%CURRENT_NAME%
+  SIM:
+    - MATCH: "UMO_OUT="
+      REPLACE: "UMO_OUT=${EXP_ROOT}/run/${MEMBER_STR}/%CURRENT_TEST_NAME%/run_%CURRENT_NAME%/%SPLIT%/"
+    - MATCH: "TASKTYPE="
+      REPLACE: "TASKTYPE=SIM"
+    - MATCH: "MODEL_ROOT=${EXP_ROOT}/nmmb-monarch"
+      REPLACE: |
+        case ${MEMBER_STR} in
+          compilation_efficiency)
+            CURRENT_ARCH_TYPE="%CURRENT_TEST_NAME%"
+          ;;
+          tracing)
+            CURRENT_ARCH_TYPE="%TRACING.ARCH_NAME%"
+            # Limit the tracing run to TRACE_STEPS model timesteps to keep the trace size bounded
+            NHOURS="%TRACING.NHOURS%"
+            jobname=%JOBNAME%
+            jobname=${jobname/%DEFAULT.EXPID%_}
+            . %HPCLOGDIR%/utils_${jobname}
+          ;;
+          strongscaling)
+            CURRENT_ARCH_TYPE="%STRONGSCALING.ARCH_NAME%"
+          ;;
+          weakscaling)
+            CURRENT_ARCH_TYPE="%WEAKSCALING.ARCH_NAME%"
+          ;;
+        esac
+        MODEL_ROOT=${EXP_ROOT}/${CURRENT_ARCH_TYPE}
+    - MATCH: ". ${EXP_ROOT}/platforms/${ARCH}/remoteconfig.${ARCH}.sh"
+      REPLACE: ". ${EXP_ROOT}/auto-monarch/cfg/arch/mn5/monarch/${CURRENT_ARCH_TYPE}/remoteconfig.${CURRENT_ARCH_TYPE}.sh"
+    - MATCH: INPES=
+      REPLACE: INPES=(%CURRENT_INPES%)
+    - MATCH: JNPES=
+      REPLACE: "JNPES=(%CURRENT_JNPES%)"
+    - MATCH: WRTSK=
+      REPLACE: "WRTSK=(%CURRENT_WRITE_TASKS%)"
+    - MATCH: WRITE_GROUPS=
+      REPLACE: "WRITE_GROUPS=%CURRENT_WRITE_GROUPS%"
+    - MATCH: WRITE_TASKS_PER_GROUP=
+      REPLACE: "WRITE_TASKS_PER_GROUP=%CURRENT_WRITE_TASKS%"
+    - MATCH: couple_dust_next_run
+      REPLACE: ""
+      FULL_MATCH: True
+    - MATCH: "${run_call} ${NUMPROC} ${MACHINEFILES} ${UMO_OUT}/NMMB.x 2>&1; then"
+      REPLACE: |
+        if [ "${MEMBER_STR}" = "tracing" ]; then
+          cfg=${EXP_ROOT}/auto-monarch/cfg
+          . ${cfg}/utils/bash/utils.sh
+          configure_extrae ${UMO_OUT}
+          create_trace_sh ${UMO_OUT}
+          uf_list=($(bashify_array "%TRACING.EXTRAE.USER_FUNCTIONS.LIST%" true))
+          if [ "${uf_list}" != "None" ]; then
+            echo -n > ${UMO_OUT}/extrae_functions.txt
+            echo "magiccut" >> ${UMO_OUT}/extrae_functions.txt
+            for user_function in "${uf_list[@]}"; do
+                echo "${user_function}" >> ${UMO_OUT}/extrae_functions.txt
+            done
+          else
+            cp ${cfg}/trace/model/monarch/extrae_functions.txt ${UMO_OUT}/extrae_functions.txt
+          fi
+          # Generate the function list file only when TRACING.EXTRAE.USER_FUNCTIONS.LIST is not set
+
+          chmod +x ${cfg}/trace/generate_function_list.sh
+          ${cfg}/trace/generate_function_list.sh ${UMO_OUT}/NMMB.x ${UMO_OUT}/extrae_functions.txt
+
+          model_cmd="${UMO_OUT}/trace.sh ${UMO_OUT}/NMMB.x"
+        else
+          model_cmd="${UMO_OUT}/NMMB.x"
+        fi
+        if ! { time ${run_call} ${NUMPROC} ${MACHINEFILES} ${model_cmd} 2>&1; } 2> ${UMO_OUT}/model_output.log; then

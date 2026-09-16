@@ -55,6 +55,6 @@ case ${hpc_type} in
     ;;
     "slurm")
         ignored_dirs=( --exclude={"docs/","autosubmit/",".git/"} )
-        rsync -avz "${ignored_dirs[@]}" ${local_proj}/ ${hpc_user}@${hpc_host}:${hpc_proj}
+        rsync -avzL "${ignored_dirs[@]}" ${local_proj}/ ${hpc_user}@${hpc_host}:${hpc_proj}
     ;;
 esac

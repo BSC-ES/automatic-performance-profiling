@@ -30,6 +30,7 @@ if __name__ == "__main__":
     lucia_files = []
     ifs_files = []
     test_info_files = []
+    test_info_yaml_files = []
 
     # Get arguments from command line
     args = get_command_line_arguments()
@@ -47,6 +48,8 @@ if __name__ == "__main__":
                 lucia_files.append(f)
             elif f.count("test_info.csv"):
                 test_info_files.append(f)
+            elif f.count("test_info.yaml"):
+                test_info_yaml_files.append(f)
             elif f.count("ifs.stat"):
                 ifs_files.append(f)
             else:
@@ -70,7 +73,8 @@ if __name__ == "__main__":
         lucia_files=lucia_files,
         components=components,
         ifs_files=ifs_files,
-        test_info_files=test_info_files
+        test_info_files=test_info_files,
+        test_info_yaml_files=test_info_yaml_files
     )
     # Save json file
     experiment_results.save_json(output_file)

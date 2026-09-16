@@ -1,14 +1,23 @@
 DEFAULT:
   CUSTOM_CONFIG:
     PRE:
-      # General configuration
-      - "%PROJDIR%/autosubmit/configuration/common/model/%DEFAULT.MODEL%/proj.yml"
-      - "%PROJDIR%/autosubmit/configuration/common/"
-      # Jobs configuration
-      - "%PROJDIR%/autosubmit/configuration/jobs/jobs.yml"
-      - "%PROJDIR%/autosubmit/configuration/jobs/model/%DEFAULT.MODEL%/"
-      - "%PROJDIR%/autosubmit/configuration/jobs/platform/%DEFAULT.HPCARCH%/"
-      - "%PROJDIR%/autosubmit/configuration/jobs/"
-      # Member specific configuration
-      - "%PROJDIR%/autosubmit/configuration/tracing/"
+    - '%PROJDIR%/autosubmit/configuration/core/defaults.yml'
+    - '%PROJDIR%/autosubmit/configuration/user/model/%DEFAULT.MODEL%/'
+    - '%PROJDIR%/autosubmit/configuration/user/'
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-execution.yml'
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs.yml'
+
+    # Disable/enable Hardware Benchmarks by commenting/uncommenting the following line
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-hwbenchmarks.yml'
+    # Disable/enable Strong Scaling by commenting/uncommenting the following line
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-strongscaling.yml'
+    # Disable/enable Compilation Efficiency by commenting/uncommenting the following line
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-compilationefficiency.yml'
+    # Disable/enable Tracing by commenting/uncommenting the following line
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-tracing.yml'
+    # Disable/enable Weak Scaling by commenting/uncommenting the following line
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-weakscaling.yml'
+
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-common.yml'
+    - '%PROJDIR%/autosubmit/configuration/core/platforms/%DEFAULT.HPCARCH%.yml'
     POST: "~/platforms_credentials.yml"

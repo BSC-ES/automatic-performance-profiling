@@ -1,0 +1,75 @@
+SHELL       = /bin/sh
+
+include     /apps/GPP/ESMF/8.0.1/INTEL/IMPI/lib/libO/Linux.intel.64.intelmpi.default/esmf.mk
+
+ESMF_INC    = $(ESMF_F90COMPILEPATHS)
+ESMF_LIB    = $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) $(ESMF_F90ESMFLINKLIBS)
+
+gfs=gsm
+gfsdir=atmos/$(gfs)
+
+NWPROD_LIB  = /gpfs/projects/bsc32/share/libs/MN5/monarch/nceplibs/
+
+NETCDF  =  $(NETCDF_ROOT)
+NETCDF_INC  = -I$(NETCDF)/include
+NETCDF_LIB  = -L$(NETCDF)/lib -lnetcdff -lnetcdf
+
+NEMSIO_INC   = -I/gpfs/projects/bsc32/share/libs/MN5/monarch/nceplibs/src/nemsio_v2.2.1
+NEMSIO_LIB   = -L/gpfs/projects/bsc32/share/libs/MN5/monarch/nceplibs/lib -lnemsio_v2.2.1
+
+CAMP_INC   = _CAMP_INC_MNR_
+CAMP_LIB   = _CAMP_LIB_MNR_
+CAMP_FLG   = _CAMP_FLG_MNR_
+
+W3_LIB       = -L/gpfs/projects/bsc32/share/libs/MN5/monarch/nceplibs/lib -lw3nco_v2.0.6_4
+BACIO_LIB    = -L/gpfs/projects/bsc32/share/libs/MN5/monarch/nceplibs/lib -lbacio_v2.0.1_4
+SP_LIB       = -L/gpfs/projects/bsc32/share/libs/MN5/monarch/nceplibs/lib -lsp_v2.0.2_4
+SYS_LIB      =  -fopenmp
+
+EXTLIBS     = $(NEMSIO_LIB) \
+              $(W3_LIB) \
+              $(BACIO_LIB) \
+              $(SP_LIB) \
+              $(ESMF_LIB) \
+              $(NETCDF_LIB) \
+              $(SYS_LIB) \
+              $(CAMP_LIB)
+
+FC          = mpiifort -g -traceback
+
+FREE        = -free
+FIXED       = -fixed -132
+R8          = -r8
+
+FINCS       = $(ESMF_INC) $(NEMSIO_INC) $(NETCDF_INC) $(CAMP_INC)
+
+ifeq ($(DEBUG),on)
+  TRAPS     = -ftrapuv -fno-inline -no-ip -fpe0 -ftz -fp-stack-check -check all -check noarg_temp_created
+  OPTS_NMM  = -O0
+  OPTS_GFS  = -O0
+  OPTS_GEN  = -O0
+  OPTS_FIM  = -O0
+else
+  TRAPS     =
+  OPTS_NMM  = -O3 -xHOST -ip
+  OPTS_GFS  = -O3 -xHOST -ip
+endif
+
+FFLAGS      = $(TRAPS) $(FINCS) -convert big_endian -assume byterecl -fp-model precise -g -finstrument-functions -rdynamic
+
+FFLAGS_NMM  = $(OPTS_NMM) $(FFLAGS)
+FFLAGS_GFS  = $(OPTS_GFS) $(FFLAGS) $(FREE)
+FFLAGS_GFSF = $(OPTS_GFS) $(FFLAGS) $(FIXED)
+
+FFLAGS_MONARCH_CMQ   = $(OPTS_NMM) $(FFLAGS)
+FFLAGS_MONARCH_SOA   = $(OPTS_NMM) $(FFLAGS) $(FREE)
+FFLAGS_MONARCH_AERO  = $(OPTS_NMM) $(FFLAGS)
+
+FPP         = -fpp
+CPP         = cpp -P -traditional
+CPPFLAGS    = -Dchnk_rrtm=8 $(CAMP_FLG)
+
+AR          = ar
+ARFLAGS     = -r
+
+RM          = rm

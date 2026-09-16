@@ -15,11 +15,13 @@ def get_command_line_instructions():
     # Read command line options
     parser.add_argument("-j", "--json-file", required=True, type=PathType(exists=True, type="file"),
                         help="Mandatory: the json file to be parsed")
-    parser.add_argument("-s", "--sypd-file", default=None,
-                        help="Produce a Simulation Years per Day csv file with the specified name")
+    parser.add_argument("-s", "--scalability-file", default=None,
+                        help="Produce a scalability csv file with the specified name")
 
-    parser.add_argument("-p", "--sypd-plot",  default=None,
-                        help="Produce a Simulation Years per Day plot and save to the specified png file")
+    parser.add_argument("-p", "--scalability-plot",  default=None,
+                        help="Produce a scalability plot and save to the specified png file")
+    parser.add_argument("-v", "--scalability-variable", default="sypd", required=False,
+                        help="Variable name to be used in the scalability plot. Default is 'sypd'.")
 
     parser.add_argument("-f", "--csv-folder", default=None,
                         help="folder to save csv files with functions' info ")
@@ -36,6 +38,8 @@ def get_command_line_instructions():
                         help="Produce tracking report")
     parser.add_argument("--coupling-folder", default=None,
                         help="Produce coupling report")
+    parser.add_argument("--cases-component-data", default="nproc", nargs='+',
+                        help="Produce a csv file with the cases and components data. Default is 'nproc'.")
     return parser.parse_args()
 
 
@@ -44,8 +48,9 @@ if __name__ == "__main__":
     arguments = get_command_line_instructions()
     # Deal with the arguments provided
     json_file = arguments.json_file
-    sypd_file = arguments.sypd_file
-    sypd_plot_file = arguments.sypd_plot
+    scalability_file = arguments.scalability_file
+    scalability_plot_file = arguments.scalability_plot
+    scalability_variable = arguments.scalability_variable
     csv_function_folder = arguments.csv_folder
     functions_file = arguments.functions_file
     most_expensive_function_summary = arguments.most_expensive_function_summary
@@ -61,10 +66,10 @@ if __name__ == "__main__":
     if csv_function_folder is not None:
         experiment_results.function_info_csv(csv_folder=csv_function_folder)
 
-    if sypd_file is not None:
-        experiment_results.simulated_years_per_day_summary(sypd_file)
-    if sypd_plot_file is not None:
-        experiment_results.simulated_years_per_day_plot(sypd_plot_file)
+    if scalability_file is not None:
+        experiment_results.scalability_summary(scalability_file, scalability_variable)
+    if scalability_plot_file is not None:
+        experiment_results.scalability_plot(scalability_plot_file, scalability_variable)
     if functions_file is not None:
         experiment_results.function_summary(functions_file)
     if most_expensive_function_summary is not None:
@@ -85,4 +90,4 @@ if __name__ == "__main__":
     if coupling_folder is not None:
         experiment_results.coupling_info(coupling_folder)
 
-    experiment_results.cases_component_data()
+    experiment_results.cases_component_data(arguments.cases_component_data)

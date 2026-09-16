@@ -20,10 +20,8 @@ branch=%MODEL.BRANCH%
 exp_root=%CURRENT_ROOTDIR%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-members="%EXPERIMENT.MEMBERS%"
 current_arch=%HPCARCH%
 arch_name=%CURRENT_TEST_NAME%
-current_member=%MEMBER%
 
 #####################################################################################################################
 # Brief: Compiles all arch FCM configurations for NEMO configured in the ARCH_NAMES AS variable
@@ -170,8 +168,4 @@ function compile_hw()
 mkdir -p $compilation
 mkdir -p $binaries
 
-compile_model=true
-echo "${members[@]}" | grep -qwE "CompilationEfficiency|WeakScaling|StrongScaling|Tracing" || compile_model=false
-
-if [ ${current_member} = "HardwareBenchmarks" ]; then compile_hw; 
-elif ${compile_model}; then compile_${model}; fi
+compile_${model}
