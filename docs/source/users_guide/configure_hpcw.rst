@@ -1,7 +1,7 @@
 Configure HPCW
 ==============
 
-In order to configure HPCW NEMO and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/common/hpcw/nemo/proj.yml`` located in your experiment root.
+In order to configure HPCW NEMO and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/user/model/hpcw/proj.yml`` located in your experiment root.
 
 Configure the model
 -------------------
@@ -40,28 +40,28 @@ Main variables to update in the proj.yml:
     OUTPUT: false
     RESOLUTION: "%EXPERIMENT.TEST_CONFIG%"
 
-Configure the members
+Configure the tests
 ---------------------
 
-The members configuration only has to be present only if they are activated in the EXPERIMENT.MEMBERS variable at ``proj/auto-performance-profiling/autosubmit/configuration/common/expdef.yml``.
+The tests configuration only has to be present if they are activated by commenting/uncommenting the path to their jobs configuration file in the ``proj/auto-performance-profiling/autosubmit/configuration/bootstrap.yml`` file.
 
 Tracing
 ^^^^^^^
 
 The possible variables to configure for Tracing are:
 
-* TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by magiccut to cut the timestep trace right.
+* TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by MagicCut to cut the trace at the right timestep.
 * TRACE_STEPS: Number of steps the model should run when tracing it.
 * USER_FUNCTIONS_*: Variables used by the User Functions sampling script.
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
 * TEST_NAMES: List of test names to run.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors used by each test.
 * THREADS: List of threads used by each test.
-* MODEL_RESOLUTION: Resolution with the test will run on.
-* ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+* MODEL_RESOLUTION: Resolution on which the test will run.
+* ARCH_NAME: Arch to be used to run the tracing model; it has to be defined in the MODEL.ARCH_NAMES list.
 
 Example:
 
@@ -106,11 +106,11 @@ Strong Scaling test lists must have matching lengths.
 Compilation Efficiency
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The test names of the Compilation Efficiency member define what arch should each test be run with:
+The test names of the Compilation Efficiency test define which arch each test should be run with:
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
-* TEST_NAMES: List of the arch configs to run for each test, they have to be defined in MODEL.ARCH_NAMES.
+* TEST_NAMES: List of the arch configs to run for each test; they have to be defined in MODEL.ARCH_NAMES.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors all equal to 1.
 * THREADS: List of threads used by each test.

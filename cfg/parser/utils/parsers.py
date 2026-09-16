@@ -9,10 +9,10 @@ import math
 import numpy as np
 from cfg.parser.utils.curation import function_curated_summary, \
     dimemas_curated_summary, \
-    simulated_years_per_day_summary, \
+    scalability_summary, \
     function_info_csv, \
     most_expensive_function_summary, \
-    simulated_years_per_day_plot, \
+    scalability_plot, \
     tracking, \
     cases_component_data, \
     coupling_info
@@ -366,7 +366,7 @@ class TimingInformation:
         AssertionError: If none of the timing_files, lucia_files, paramedir_files, json_file, or dimemas_files are provided.
     """
 
-    def __init__(self, timing_files: list=None, lucia_files: list=None, paramedir_files=None, dimemas_files=None, ifs_files=None, test_info_files=None,
+    def __init__(self, timing_files: list=None, lucia_files: list=None, paramedir_files=None, dimemas_files=None, ifs_files=None, test_info_files=None, test_info_yaml_files=None,
                  processes_per_node: int=48, json_file=None, param_file=None, components=None):
 
         # Init class variables
@@ -381,7 +381,7 @@ class TimingInformation:
         self.components = components
         self.components_cases = None
 
-        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files) and (not ifs_files) and (not test_info_files):
+        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files) and (not ifs_files) and (not test_info_files) and (not test_info_yaml_files):
             raise AssertionError("No files provided")
 
         # Update values with the provided files
@@ -389,6 +389,8 @@ class TimingInformation:
             self.load_json(json_file)
         if test_info_files:
             self.load_test_info(test_info_files)
+        if test_info_yaml_files:
+            self.load_test_info_yaml(test_info_yaml_files)
         if timing_files:
             self.load_timings(timing_files)
             self.function_info_src = "timing"
@@ -405,6 +407,46 @@ class TimingInformation:
 
     def __getitem__(self, item):
         return self.data[item]
+
+    def _ordered_cases(self, component: str=None):
+        """
+        Order the loaded cases by their number of processors.
+
+        Args:
+            component (str, optional): Name of the component to take the number of
+                processors from. If not provided, the total number of processors of the
+                case is used.
+
+        Returns:
+            list: Case names ordered by number of processors when every case reports it,
+                  otherwise the cases in the order in which they were loaded.
+        """
+        cases_nproc = []
+        for case, case_data in self.data.items():
+            if component is not None:
+                case_data = case_data.get("components", {}).get(component, {})
+            if "nproc" not in case_data:
+                # Any input file without the number of processors keeps the cases as they
+                # come in, so the experiment can still be reported
+                return list(self.data.keys())
+            cases_nproc.append((int(case_data["nproc"]), case))
+
+        return [case for _, case in sorted(cases_nproc)]
+
+    def _setup_cases(self):
+        """
+        Initialize the cases, base_case and components_cases attributes from the loaded data.
+
+        The cases are ordered by their number of processors, and kept in the order in which
+        they were loaded when any of them does not report it. Both attributes are recomputed
+        on every call, so a loader called later with more complete data can reorder them.
+        """
+        self.cases = self._ordered_cases()
+        if self.cases:
+            self.base_case = self.cases[0]
+
+        self.components_cases = {component: self._ordered_cases(component)
+                                 for component in self.components}
 
     def find_functions(self) -> list:
         """
@@ -468,6 +510,16 @@ class TimingInformation:
                         break
         return ret_val
 
+    def load_test_info_yaml(self, test_info_yaml_files: list):
+        import yaml
+
+        for test_info_yaml_fn in test_info_yaml_files:
+            with open(test_info_yaml_fn, mode="r", encoding="utf8") as test_info_yaml_f:
+                test_dict = yaml.safe_load(test_info_yaml_f)
+                self.data = merge_dictionaries(self.data, test_dict)
+        print(self.data.keys())
+        self._setup_cases()
+
     def load_test_info(self, test_info_files: list):
         """
         Load test information from a list of CSV files and update the internal data structure.
@@ -519,17 +571,7 @@ class TimingInformation:
                         test_dict[run_id]["components"][component_name].update(dict_line)
             self.data = merge_dictionaries(self.data, test_dict)
 
-        if self.cases is None:
-            self.cases = list(
-                sorted(self.data.keys(), key=lambda f: int(self.data[f]["nproc"])))
-            self.base_case = self.cases[0]
-
-        if self.components_cases is None:
-            self.components_cases = {}
-            for component in self.components:
-                self.components_cases[component] = sorted(
-                    self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
-
+        self._setup_cases()
 
     def load_param(self, param_file) -> dict:
         """
@@ -689,11 +731,11 @@ class TimingInformation:
     def function_info_csv(self, csv_folder):
         function_info_csv(self, csv_folder)
 
-    def simulated_years_per_day_summary(self, filename):
-        return simulated_years_per_day_summary(self, filename)
+    def scalability_summary(self, filename, scalability_variable="sypd"):
+        return scalability_summary(self, filename, scalability_variable=scalability_variable)
 
-    def simulated_years_per_day_plot(self, filename=None):
-        return simulated_years_per_day_plot(self, filename)
+    def scalability_plot(self, filename=None, scalability_variable="sypd"):
+        return scalability_plot(self, filename, scalability_variable=scalability_variable)
 
     def tracking(self, folder):
         return tracking(self, folder)
@@ -701,8 +743,8 @@ class TimingInformation:
     def coupling_info(self, folder):
         return coupling_info(self, folder)
 
-    def cases_component_data(self):
-        return cases_component_data(self)
+    def cases_component_data(self, variables_to_report: list[str]):
+        return cases_component_data(self, variables_to_report)
 
     def save_json(self, filename: str=None):
         """
@@ -848,17 +890,7 @@ class TimingInformation:
                     lucia_dict[id]["components"][component]["SYPD"] = lucia_dict[id]["components"][component]["sypd"]
 
         self.data = merge_dictionaries(self.data, lucia_dict)
-
-        if self.cases is None:
-            self.cases = list(
-                sorted(self.data, key=lambda f: int(self.data[f]["nproc"])))
-            self.base_case = self.cases[0]
-
-        if self.components_cases is None:
-            self.components_cases = {}
-            for component in self.components:
-                self.components_cases[component] = sorted(
-                    self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
+        self._setup_cases()
 
     def load_timings(self, timing_files: list):
         """
@@ -902,17 +934,7 @@ class TimingInformation:
             for case in self.data:
                 self.data[case] = merge_dictionaries(
                     self.data[case], list(self.data[case]["components"].values())[0])
-
-            if self.cases is None:
-                self.cases = list(
-                    sorted(self.data.keys(), key=lambda f: int(self.data[f]["nproc"])))
-                self.base_case = self.cases[0]
-
-            if self.components_cases is None:
-                self.components_cases = {}
-                for component in self.components:
-                    self.components_cases[component] = sorted(
-                        self.data, key=lambda f: int(self.data[f]["nproc"]))
+            self._setup_cases()
 
     def load_paramedir(self, files: list):
         """
@@ -934,11 +956,7 @@ class TimingInformation:
 
         paramedir_info = parse_paramedir_files(files)
         self.data = merge_dictionaries(self.data, paramedir_info)
-
-        if self.cases is None:
-            self.cases = list(
-                sorted(self.data.keys(), key=lambda f: int(self.data[f]["nproc"])))
-            self.base_case = self.cases[0]
+        self._setup_cases()
 
         self.functions = self.find_functions()
 
@@ -957,12 +975,6 @@ class TimingInformation:
                 for function_name in component_dict["counters"]["Time"]:
                     component_function_info[function_name] = component_dict["counters"]["Time"][function_name]["Average"][0] / 1e3
                 component_dict["fastest_ts_functions_time"] = component_function_info
-
-        if self.components_cases is None:
-            self.components_cases = {}
-            for component in self.components:
-                self.components_cases[component] = sorted(
-                    self.data, key=lambda f: int(self.data[f]["components"][component]["nproc"]))
 
     def load_ifs(self, files: list):
         """

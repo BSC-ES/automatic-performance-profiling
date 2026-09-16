@@ -1,5 +1,5 @@
 Automatic Performance Profiling documentation
-==============
+=============================================
 
 .. toctree::
    :maxdepth: 2

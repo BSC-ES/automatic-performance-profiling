@@ -1,0 +1,56 @@
+# This file defines the jobs used by the HW benchmarks
+JOBS:
+  HW_REMOTE_SETUP:
+    FILE: autosubmit/templates/hw_remote_setup.sh
+    DEPENDENCIES:
+      SYNCHRONIZE:
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  HW_COMPILATION:
+    FILE: autosubmit/templates/compilation.sh
+    DEPENDENCIES: 
+      HW_REMOTE_SETUP:
+    WALLCLOCK: 02:00
+    NOTIFY_ON: FAILED
+  PREPARE_TESTS:
+    FILE: autosubmit/templates/tests.sh
+    DEPENDENCIES:
+      HW_COMPILATION:
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  OSU_RUN:
+    FOR:
+      NAME: "%HW_BENCHMARKS.OSU.NAMES%"
+      PROCESSORS: "%HW_BENCHMARKS.OSU.PROCESSORS%"
+    FILE: autosubmit/templates/osu_run.sh
+    DEPENDENCIES:
+      PREPARE_TESTS:
+    WALLCLOCK: 01:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  STREAM:
+    FOR:
+      NAME: "%HW_BENCHMARKS.STREAM.NAMES%"
+      PROCESSORS: "%HW_BENCHMARKS.STREAM.PROCESSORS%"
+    FILE: autosubmit/templates/stream.sh
+    DEPENDENCIES:
+      PREPARE_TESTS:
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  POST_HW_BENCHMARKS:
+    FILE: autosubmit/templates/post.sh
+    DEPENDENCIES:
+      OSU_RUN:
+        FOR:
+          NAME: "%HW_BENCHMARKS.OSU.NAMES%"
+          PROCESSORS: "%HW_BENCHMARKS.OSU.PROCESSORS%"
+      STREAM:
+        FOR:
+          NAME: "%HW_BENCHMARKS.STREAM.NAMES%"
+          PROCESSORS: "%HW_BENCHMARKS.STREAM.PROCESSORS%"
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    NOTIFY_ON: FAILED

@@ -1,16 +1,16 @@
 Configure NEMO
-=============
+==============
 
-In order to configure NEMO and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/common/model/nemo/proj.yml`` located in your experiment root.
+In order to configure NEMO and the tests the workflow will run, you have to update the configuration file ``proj/auto-performance-profiling/autosubmit/configuration/user/model/nemo/proj.yml`` located in your experiment root.
 
 Configure the model
 -------------------
 
 The main variables to update in this config file are:
 
-* ORIGIN: url with the git repository containing NEMO.
+* ORIGIN: URL of the git repository containing NEMO.
 * BRANCH_LIST: tag of the version you want to run.
-* ARCH_NAMES: list of arch files to compile. This arch files must be located in ``cfg/arch/PLATFORM/MODEL/`` and follow this pattern ``arch-ARCH_NAME.fcm``.
+* ARCH_NAMES: list of arch files to compile. These arch files must be located in ``cfg/arch/PLATFORM/MODEL/`` and follow this pattern ``arch-ARCH_NAME.fcm``.
 * TEST_STEPS: number of steps to run in the different scalability jobs.
 * OUTPUT: enables or disables the output (TRUE/FALSE).
 * RESOLUTION: resolution of the model.
@@ -35,28 +35,28 @@ The main variables to update in this config file are:
     TEST_STEPS: 960
     OUTPUT: false
 
-Configure the members
+Configure the tests
 ---------------------
 
-The members configuration only has to be present only if they are activated in ``proj/auto-performance-profiling/autosubmit/configuration/common/expdef.yml``.
+The tests configuration only has to be present if they are activated by commenting/uncommenting the path to their jobs configuration file in the ``proj/auto-performance-profiling/autosubmit/configuration/bootstrap.yml`` file.
 
 Tracing
 ^^^^^^^
 
 The possible variables to configure for Tracing are:
 
-* TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by magiccut to cut the timestep trace right.
+* TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by MagicCut to cut the trace at the right timestep.
 * TRACE_STEPS: Number of steps the model should run when tracing it.
 * USER_FUNCTIONS_*: Variables used by the User Functions sampling script.
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
 * TEST_NAMES: List of test names to run.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors used by each test.
 * THREADS: List of threads used by each test.
-* MODEL_RESOLUTION: Resolution with the test will run on.
-* ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+* MODEL_RESOLUTION: Resolution on which the test will run.
+* ARCH_NAME: Arch to be used to run the tracing model; it has to be defined in the MODEL.ARCH_NAMES list.
 
 .. code-block:: yaml
 
@@ -78,7 +78,7 @@ The next list variables have to be the same length:
 
 
 Strong Scaling
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 The possible variables to configure for Strong Scaling are:
 
@@ -99,22 +99,22 @@ The possible variables to configure for Strong Scaling are:
     TEST_CONFIG: BENCH
     ARCH_NAME: O3_prod
 
-Weaks Scaling
-^^^^^^^^^^^^^
+Weak Scaling
+^^^^^^^^^^^^
 
-The Weaks Scaling configuration differs from the rest, since the test names indicate the resolution and the processors are computed in runtime:
+The Weak Scaling configuration differs from the rest, since the test names indicate the resolution and the processors are computed at runtime:
 
 * BASE_PROCS: Processors of the base case.
 * BASE_RESOLUTION: Resolution of the base case.
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
 * TEST_NAMES: List of resolutions to run for each test.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors all equal to 1.
 * THREADS: List of threads used by each test.
-* RESOLUTION: List of NEMO supported resolution ran by each test. This is the setting that will be used to compute the number of processors based on the base case resolution.
-* ARCH_NAME: Arch to be used to run the tracing model, it has to be defined in MODEL.ARCH_NAMES list.
+* RESOLUTION: List of NEMO supported resolutions run by each test. This is the setting that will be used to compute the number of processors based on the base case resolution.
+* ARCH_NAME: Arch to be used to run the weak scaling model; it has to be defined in the MODEL.ARCH_NAMES list.
 * TEST_CONFIG: NEMO test configuration to use.
 
 .. code-block:: yaml
@@ -132,13 +132,13 @@ The next list variables have to be the same length:
     ARCH_NAME: O3_prod
 
 Compilation Efficiency
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
-The configuration of the Compilation Efficiency member follows the same idea as the Weak Scaling, the test names define what arch should each test be run with:
+The configuration of the Compilation Efficiency test follows the same idea as the Weak Scaling; the test names define which arch each test should be run with:
 
-The next list variables have to be the same length:
+The following list variables have to be the same length:
 
-* TEST_NAMES: List of the arch configs to run for each test, they have to be defined in MODEL.ARCH_NAMES.
+* TEST_NAMES: List of the arch configs to run for each test; they have to be defined in MODEL.ARCH_NAMES.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors all equal to 1.
 * THREADS: List of threads used by each test.

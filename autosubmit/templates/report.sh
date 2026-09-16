@@ -15,7 +15,6 @@ env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 latex_folder=${cfg}/latex/
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
-members="%EXPERIMENT.MEMBERS%"
 configuration_name=%STRONGSCALING.TEST_CONFIG%
 root_dir=%CURRENT_ROOTDIR%
 
@@ -31,8 +30,8 @@ components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 #   - Other: None
 # Param: None
 #####################################################################################################################
-function add_HardwareBenchmarks() {
-    local hardware_benchmarks_root=$run_root/hardware_benchmarks
+function add_hw_benchmarks() {
+    local hardware_benchmarks_root=$run_root/hw_benchmarks
     local osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
     osu_enabled=${osu_enabled,,}
     local stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
@@ -72,14 +71,13 @@ function add_HardwareBenchmarks() {
 #   - Other: components
 # Param: None
 #####################################################################################################################
-function add_StrongScaling() {
-    local member="strong_scaling"
+function add_strongscaling() {
     local tests="%STRONGSCALING.TEST_NAMES%"
     tests=${tests//[\[,\]]/}
     tests=$(for v in $tests; do echo "$v"; done | sort | uniq | xargs)
 
     for test in $tests; do
-        test_name=${member}/$(basename $test)
+        test_name=${current_member}/$(basename $test)
         test_root=$run_root/$test_name
 
         cd ${test_root} || exit
@@ -188,10 +186,9 @@ function add_user_functions() {
         done
 
         # Add user functions time/PAPI/MPI scalability
-        functions=$(find ${test_root}/function_csv/* | grep ${component})
-        for func in ${functions}; do
-            file_name=${func##*function_csv/}
-            file_name=${file_name##tracking/MPI/}
+        function_csv_functions=$(find ${test_root}/function_csv/ -type f ! -empty | { grep "${component}" || true; })
+        for file_path in ${function_csv_functions}; do
+            file_name=$(basename ${file_path})
             func_name=${file_name%.csv}
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
@@ -200,6 +197,12 @@ function add_user_functions() {
                 -ss "${func_name}" \
                 --add-csv "function_csv/${file_name}" \
                 --add-caption "$func_name scalability." --silent
+        done
+
+        tracking_mpi_functions=$(find ${test_root}/tracking/MPI/ -type f ! -empty | { grep "${component}" || true; })
+        for file_path in ${tracking_mpi_functions}; do
+            file_name=$(basename ${file_path})
+            func_name=${file_name%.csv}
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "Tracing" \
@@ -207,6 +210,12 @@ function add_user_functions() {
                 -ss "${func_name}" \
                 --add-csv "tracking/MPI/${file_name}" \
                 --add-caption "$func_name MPI scalability." -p --silent
+        done
+
+        tracking_counters_functions=$(find ${test_root}/tracking/counters/ -type f ! -empty | { grep "${component}" || true; })
+        for file_path in ${tracking_counters_functions}; do
+            file_name=$(basename ${file_path})
+            func_name=${file_name%.csv}
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "Tracing" \
@@ -315,8 +324,7 @@ function add_mpi() {
 #   - Other: components
 # Param: None
 #####################################################################################################################
-function add_Tracing() {
-    local member="tracing"
+function add_tracing() {
     local tests="%TRACING.TEST_NAMES%"
     tracing_names="%TRACING.NAMES%"
     tracing_names=(${tracing_names//[\[,\]\']/})
@@ -333,7 +341,7 @@ function add_Tracing() {
     mpi_enabled=${mpi_enabled,,}
 
     for test in $tests; do
-        test_name=${member}/$(basename $test)
+        test_name=${current_member}/$(basename $test)
         test_root=$run_root/$test_name
 
         cd ${test_root} || exit
@@ -376,51 +384,56 @@ function add_Tracing() {
 # Global: None
 # Param: None
 #####################################################################################################################
-function add_CompilationEfficiency() {
-    local member="compilation_efficiency"
+function add_compilation_efficiency() {
     local ce_names="%COMPILATION_EFFICIENCY.TEST_NAMES%"
     ce_names=($(bashify_array "${ce_names}" true))
-    local flag=-s
+    local flags="-s"
+
+    if [ "${model}" == "monarch" ]; then
+        flags+=" --scalability-variable sdpd"
+    fi
 
     json_files=""
     multiexperiment_id=""
     for ce_name in "${ce_names[@]}"; do
-        json_files+="${run_root}/${member}/${ce_name}/${ce_name}.json "
+        json_files+="${run_root}/${current_member}/${ce_name}/${ce_name}.json "
         multiexperiment_id+="${ce_name}-"
     done
 
     # Generate tests comparisson csv
     python3 ${cfg}/parser/comparator.py \
         --json-files ${json_files}  \
-        ${flag} \
-        --out-dir ${run_root}/${member}/
+        ${flags} \
+        --out-dir ${run_root}/${current_member}/
 
-    member_title=${member//_/ }
+    member_title=${current_member//_/ }
     member_title=${member_title^}
 
     # Add cases info table
-    test_folders=($run_root/$member/*/)
-    python3 ${cfg}/latex/ReportGenerator.py \
-        -O ${report_full_path}.pkl \
-        -S "Multi Experiment" \
-        -s "${member_title}" \
-        --add-csv ${test_folders[0]}/cases_info.csv \
-        --add-caption "${member_title} cases info." 
+    test_folders=($run_root/$current_member/*/)
+    for test_folder in "${test_folders[@]}"; do
+        python3 ${cfg}/latex/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Multi Experiment" \
+            -s "${member_title}" \
+            --add-csv ${test_folder}/cases_info.csv \
+            --add-caption "$(basename ${test_folder}) cases info." 
+    done
 
     # Add model's case comparisson table and section's text
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
         -s "${member_title}" \
-        --add-csv ${run_root}/${member}/${multiexperiment_id}scaling.csv \
+        --add-csv ${run_root}/${current_member}/${multiexperiment_id}scaling.csv \
         --add-caption "${member_title} case comparison scalability table." \
-        -T ${cfg}/latex/text/${current_member}.txt
+        -T ${cfg}/latex/text/${current_member,,}.txt
 
     python3 ${latex_folder}/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
         -s "${member_title}" \
-        --add-img ${run_root}/${member}/${multiexperiment_id}scaling.png \
+        --add-img ${run_root}/${current_member}/${multiexperiment_id}scaling.png \
         --add-caption "${member_title} case comparison scalability plot."
 }
 
@@ -429,27 +442,26 @@ function add_CompilationEfficiency() {
 # Global: None
 # Param: None
 #####################################################################################################################
-function add_WeakScaling() {
-    local member="weakscaling"
+function add_weakscaling() {
     local flag=-w
 
     # Generate tests comparisson csv
     python3 ${cfg}/parser/comparator.py \
-        --json-files $run_root/$member/*/*.json \
+        --json-files $run_root/$current_member/*/*.json \
         ${flag} \
-        --file-out ${run_root}/${member}/${member}.csv
+        --file-out ${run_root}/${current_member}/${current_member}.csv
 
-    member_title=${member//_/ }
-    member_title=${member^}
+    member_title=${current_member//_/ }
+    member_title=${member_title^}
 
     # Add model's case comparisson table and section's text
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
         -s $member_title \
-        --add-csv ${run_root}/${member}/${member}.csv \
+        --add-csv ${run_root}/${current_member}/${current_member}.csv \
         --add-caption "${member_title} case comparison scalability." \
-        -T ${cfg}/latex/text/${current_member}.txt
+        -T ${cfg}/latex/text/${current_member,,}.txt
 
     # Add models case comparisson table
     for component in "${components[@]}"; do
@@ -458,7 +470,7 @@ function add_WeakScaling() {
             -S "Multi Experiment" \
             -s $member_title \
             -ss "${component^^} ${member_title}" \
-            --add-csv ${run_root}/${member}/${component}_${member}.csv \
+            --add-csv ${run_root}/${current_member}/${component}_${current_member}.csv \
             --add-caption "${component^^} ${member_title} case comparison scalability."
     done
 }
@@ -487,13 +499,17 @@ python3 ${cfg}/latex/ReportGenerator.py \
 # Create and add test configuration info
 {   
     echo "Configuration,Value";
-    echo "Resolution, %EXPERIMENT.RESOLUTION%";
+    [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "Resolution, %EXPERIMENT.RESOLUTION%";
+    [ "%EXPERIMENT.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
+    [ "%EXPERIMENT.OUTPUT%" != "" ] && echo "OUTPUT,%EXPERIMENT.OUTPUT%";
     [ ${model} = "ecearth4" ] && echo "NEMO resolution,%EXPERIMENT.NEMO_RESOLUTION%";
     [ ${model} = "ecearth4" ] && echo "OIFS resolution,%EXPERIMENT.OIFS_RESOLUTION%";
     [ ${model} = "ecearth4" ] && echo "START DATE,%EXPERIMENT.START_DATE%";
     [ ${model} = "ecearth4" ] && echo "END DATE,%EXPERIMENT.END_DATE%";
-    echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
-    echo "OUTPUT,%EXPERIMENT.OUTPUT%";
+    [ ${model} = "monarch" ] && echo "DATELIST,%EXPERIMENT.DATELIST%";
+    [ ${model} = "monarch" ] && echo "START_HOUR,%MONARCH.HOUR%";
+    [ ${model} = "monarch" ] && echo "SPINUP_HOURS,%MONARCH.SPINUP%";
+    [ ${model} = "monarch" ] && echo "FORECAST_HOURS,%MONARCH.NHOURS%";
     echo "PLATFORM,%DEFAULT.HPCARCH%";
 } > test_info.csv
 
@@ -504,9 +520,18 @@ python3 ${latex_folder}/ReportGenerator.py \
     --add-csv test_info.csv \
     -T ${cfg}/latex/text/ExperimentConfiguration.txt
 
+
+declare -A enabled_members=(
+    ["tracing"]="%EXPERIMENT.APP_TESTS.TRACING.ENABLED%"
+    ["strongscaling"]="%EXPERIMENT.APP_TESTS.STRONGSCALING.ENABLED%"
+    ["weakscaling"]="%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%"
+    ["compilation_efficiency"]="%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%"
+)
 # Add all members
-for current_member in ${members}; do
-    add_${current_member}
+for current_member in "${!enabled_members[@]}"; do
+    if ${enabled_members[$current_member],,}; then
+        add_${current_member,,}
+    fi
 done
 
 python3 ${cfg}/latex/ReportGenerator.py \
@@ -532,5 +557,5 @@ if ! command -v pdflatex &> /dev/null; then
     echo pdflatex cmd not available, you can find the tex file ${report_full_path}.tex;
 else
     # Compile the report
-    pdflatex report.tex && pdflatex report.tex
+    pdflatex --shell-escape report.tex && pdflatex report.tex
 fi

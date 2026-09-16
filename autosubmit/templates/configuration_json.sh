@@ -8,7 +8,6 @@
 ###################
 # AS variables
 ###################
-current_member=%MEMBER%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
@@ -28,9 +27,14 @@ components=$(bashify_array "%MODEL.REPORT_COMPONENTS%" true)
 # Set the input files depending on the model
 reporter_params=""
 input_files="run_*/*test_info.csv "
+cases_variables="nproc"
 case "${model}" in
+    "monarch")
+        cases_variables+=" jnpes inpes write_groups write_tasks"
+        input_files+=" run_*/*test_info.yaml" 
+    ;;
     "nemo"|"hpcw")
-        input_files+="run_*/*-timing.output"
+        input_files+=" run_*/*-timing.output"
     ;;
     "ecearth4")
         coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
@@ -46,12 +50,17 @@ case "${model}" in
 esac
 
 # Set the member variables and the extra reporter params for Tracing
+current_member=$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS")
+current_member=${current_member,,}
 case "$current_member" in
-    "StrongScaling")
-        member="strong_scaling"
+    "strongscaling")
         tests="%STRONGSCALING.TEST_NAMES%"
+
+        if [ "${model}" == "monarch" ]; then
+            reporter_params+=" --scalability-variable sdpd"
+        fi
     ;;
-    "Tracing")
+    "tracing")
         uf_enabled="%TRACING.USER_FUNCTIONS.ENABLED%"
         uf_enabled=${uf_enabled,,}
         pc_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
@@ -67,16 +76,17 @@ case "$current_member" in
             ${pc_enabled} && reporter_params+=" --scatter-plots ${pc_plots// /:}"
         fi
 
-        member="tracing"
         tests="%TRACING.TEST_NAMES%"
         input_files+=" paramedir/*pm"
     ;;
-    "CompilationEfficiency")
-        member="compilation_efficiency"
+    "compilation_efficiency")
         tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+
+        if [ "${model}" == "monarch" ]; then
+            reporter_params+=" --scalability-variable sdpd"
+        fi
     ;;
-    "WeakScaling")
-        member="weakscaling"
+    "weakscaling")
         tests="%WEAKSCALING.TEST_NAMES%"
     ;;
 esac
@@ -90,15 +100,15 @@ set -u
 
 for test in "${tests[@]}"
 do
-    test_folder=${run_root}/${member}/${test}
+    test_folder=${run_root}/${current_member}/${test}
     cd ${test_folder} || exit
     
-    tmp_reporter_params="${reporter_params} -j ${test}.json"
+    tmp_reporter_params="${reporter_params} -j ${test}.json --cases-component-data ${cases_variables}"
     # Generate scaling report only if not Tracing
-    if [ "${current_member}" != "Tracing" ]; then
+    if [ "${current_member}" != "tracing" ]; then
         tmp_reporter_params="${tmp_reporter_params} \
-        --sypd-file ${test}_scaling.csv \
-        --sypd-plot ${test}_scaling.png"
+        --scalability-file ${test}_scaling.csv \
+        --scalability-plot ${test}_scaling.png"
     fi
     
     # Create param file for the python script

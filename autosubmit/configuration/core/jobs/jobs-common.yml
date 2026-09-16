@@ -1,0 +1,30 @@
+# This file defines the workflow jobs used by all models (Autosubmit based and not based)
+JOBS:
+  CLEAN:
+    FILE: autosubmit/templates/clean.sh
+    RUNNING: once
+    WALLCLOCK: 00:10
+    CHECK: "true"
+    RERUN_ONLY: true
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  SYNCHRONIZE:
+    FILE: autosubmit/templates/synchronize.sh
+    RUNNING: once
+    WALLCLOCK: 00:10
+    CHECK: "true"
+    PLATFORM: local
+    DEPENDENCIES: CLEAN
+  REPORT:
+    FILE: autosubmit/templates/report.sh
+    DEPENDENCIES:
+      PARAVER:
+      DIMEMAS_IMAGES:
+      MODELFACTORS:
+      CONFIGURATION_JSON_COMPILATION_EFFICIENCY:
+      CONFIGURATION_JSON_STRONGSCALING:
+      CONFIGURATION_JSON_TRACING:
+      POST_HW_BENCHMARKS:
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    NOTIFY_ON: FAILED

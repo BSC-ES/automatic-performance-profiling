@@ -1,0 +1,95 @@
+JOBS:
+  SIM_TRACING:
+    FILE: templates/sim.sh cfg/trace/utils.sh
+    FOR:
+      TEST_NAME: "%TRACING.TEST_NAMES%"
+      NAME: "%TRACING.NAMES%"
+      PROCESSORS: "%TRACING.PROCESSORS%"
+      JNPES: "%TRACING.JNPES%"
+      INPES: "%TRACING.INPES%"
+      WRITE_GROUPS: "%TRACING.WRITE_GROUPS%"
+      WRITE_TASKS: "%TRACING.WRITE_TASKS%"
+    SPLITS: 1
+    WALLCLOCK: 01:30
+    NOTIFY_ON: FAILED
+    CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
+    DEPENDENCIES:
+      LOCAL_SEND_SPINUP:
+      PREPROCVAR_READY:
+      HERMES_GR:
+    RUNNING: chunk
+  POST_TRACING:
+    FILE: autosubmit/templates/post.sh
+    DEPENDENCIES:
+      SIM_TRACING:
+        FOR:
+          NAME: "%TRACING.NAMES%"
+    WALLCLOCK: 00:30
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  TRACE_CUT:
+    FILE: autosubmit/templates/trace_cut.sh
+    DEPENDENCIES: POST_TRACING
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PROCESSORS: 4
+  DIMEMAS_TRACES:
+    FILE: autosubmit/templates/dimemas_traces.sh
+    DEPENDENCIES: TRACE_CUT
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  DIMEMAS_IMAGES:
+    FILE: autosubmit/templates/dimemas_images.sh
+    DEPENDENCIES: DIMEMAS_TRACES
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+    NOTIFY_ON: FAILED
+  PARAMEDIR:
+    FILE: autosubmit/templates/paramedir.sh
+    DEPENDENCIES: TRACE_CUT
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  PARADIM:
+    FILE: autosubmit/templates/paradim.sh
+    DEPENDENCIES:
+      DIMEMAS_TRACES:
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  PARAVER:
+    FILE: autosubmit/templates/paraver.sh
+    DEPENDENCIES: TRACE_CUT
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  MODELFACTORS:
+    FILE: autosubmit/templates/modelfactors.sh
+    DEPENDENCIES: TRACE_CUT
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+  CONFIGURATION_JSON_TRACING:
+    FILE: autosubmit/templates/configuration_json.sh
+    DEPENDENCIES: 
+      POST_TRACING:
+      PARAMEDIR:
+      PARADIM:
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
+    WALLCLOCK: 02:00
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+
+EXPERIMENT:
+  APP_TESTS:
+    TRACING:
+      ENABLED: "TRUE"

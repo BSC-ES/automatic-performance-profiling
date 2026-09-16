@@ -1,0 +1,34 @@
+diff --git a/MODEL/SRC/module_NMM_INTEGRATE.F90 b/MODEL/SRC/module_NMM_INTEGRATE.F90
+index 33702d9..7d1acca 100644
+--- a/MODEL/SRC/module_NMM_INTEGRATE.F90
++++ b/MODEL/SRC/module_NMM_INTEGRATE.F90
+@@ -1178,6 +1178,7 @@ contains
+         write(0, 25) ntimestep - 1, my_domain_id, ntimestep * dt / 3600., phase1_tim
+ 25      format(' Finished Timestep ', i6, ' for domain ', i3, ' ending at ', &
+                f7.3, ' hours: elapsed integration time ', f9.5)
++        call magiccut
+       end if
+ 
+       !-----------------------------------------------------------------------
+@@ -1891,6 +1892,21 @@ contains
+   !#######################################################################
+   !-----------------------------------------------------------------------
+ 
++  subroutine magiccut
++  
++    !-----------------------------------------------------------------------
++    !***  This subroutine is used to create a magic cut for the NMM
++    !***  integration.  The magic cut is used to determine if the
++    !***  integration should be stopped.
++    !-----------------------------------------------------------------------
++
++    !-----------------------------------------------------------------------
++    !***********************************************************************
++    !-----------------------------------------------------------------------
++    write(0, '(A)') 'Called Magic Cut'
++
++  end subroutine magiccut
++
+ end module module_nmm_integrate
+ 
+ !-----------------------------------------------------------------------

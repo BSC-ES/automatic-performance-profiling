@@ -12,7 +12,6 @@ cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-current_member=%MEMBER%
 inidata=%COMMON_PATH_LOCATIONS.INIDATA_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
@@ -24,73 +23,11 @@ test="%CURRENT_TEST_NAME%"
 
 report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
-#####################################################################################################################
-# Brief: Creates the extrae configuration file using the AS variables
-# Parameters:
-#   $1 - Directory where to store the extrae.xml
-# Global:
-#   - Paths: cfg
-#####################################################################################################################
-function configure_extrae()
-{
-    local run_directory=$1
-    local extrae_xml=${run_directory}/extrae.xml
-    cp ${cfg}/trace/extrae.xml.tmpl ${extrae_xml}
-
-    local sed_extrae_home=%EXTRAE.HOME%
-    if ! [ -d ${sed_extrae_home} ]; then
-        sed_extrae_home=$EXTRAE_HOME
-    fi
-    sed_extrae_home=${sed_extrae_home//\//\\\/}
-    local sed_user_functions_list=%EXTRAE.USER_FUNCTIONS.LIST%
-    sed_user_functions_list=${sed_user_functions_list//\//\\\/}
-
-    sed -i "s/HOME/${sed_extrae_home}/"                                     ${extrae_xml}
-    sed -i "s/TRACE_NAME/%EXTRAE.TRACE_NAME%/"                              ${extrae_xml}
-
-    sed -i "s/CALLERS_ENABLED/%EXTRAE.CALLERS.ENABLED%/"                    ${extrae_xml}
-    sed -i "s/CALLERS_MPI_ENABLED/%EXTRAE.CALLERS.MPI.ENABLED%/"            ${extrae_xml}
-    sed -i "s/CALLERS_MPI_LEVELS/%EXTRAE.CALLERS.MPI.LEVELS%/"              ${extrae_xml}
-    sed -i "s/CALLERS_SAMPLING_ENABLED/%EXTRAE.CALLERS.SAMPLING.ENABLED%/"  ${extrae_xml}
-    sed -i "s/CALLERS_SAMPLING_LEVELS/%EXTRAE.CALLERS.SAMPLING.LEVELS%/"    ${extrae_xml}
-
-    sed -i "s/MPI_ENABLED/%EXTRAE.MPI.ENABLED%/"                            ${extrae_xml}
-    sed -i "s/MPI_COUNTERS_ENABLED/%EXTRAE.MPI.COUNTERS.ENABLED%/"          ${extrae_xml}
-
-    sed -i "s/OPENMP_ENABLED/%EXTRAE.OPENMP.ENABLED%/"                      ${extrae_xml}
-
-    sed -i "s/USER_FUNCTIONS_ENABLED/%EXTRAE.USER_FUNCTIONS.ENABLED%/"      ${extrae_xml}
-    sed -i "s/USER_FUNCTIONS_LIST/${sed_user_functions_list}/"              ${extrae_xml}
-
-    sed -i "s/PAPI_COUNTERS_ENABLED/%EXTRAE.PAPI_COUNTERS.ENABLED%/"        ${extrae_xml}
-    sed -i "s/PAPI_COUNTERS_LIST/%EXTRAE.PAPI_COUNTERS.LIST%/"              ${extrae_xml}
-}
-
-#####################################################################################################################
-# Brief: Creates the extrae launch script trace.sh in the provided directory
-# Parameters:
-#   $1 - Directory where to store the trace.sh
-#####################################################################################################################
-function create_trace_sh()
-{
-    local run_directory=$1
-    local trace=${run_directory}/trace.sh
-    local extrae_lib="%EXTRAE.TRACING_LIB%"
-    local extrae_home="%EXTRAE.HOME%"
-    cat << EOF > $trace
-#!/bin/bash
-
-export EXTRAE_CONFIG_FILE=${run_directory}/extrae.xml
-export EXTRAE_SKIP_AUTO_LIBRARY_INITIALIZE=1
-source ${extrae_home}/etc/extrae.sh
-
-export LD_PRELOAD=${extrae_home}/lib/${extrae_lib}
-export LD_LIBRARY_PATH=${extrae_home}/lib/:\$LD_LIBRARY_PATH
-
-\$*
-EOF
-    chmod +x ${trace}
-}
+# Source the tracing utils script copied by Autosubmit to the LOG_expid dir.
+# It provides configure_extrae, create_trace_sh and generate_extrae_user_functions.
+jobname=%JOBNAME%
+jobname=${jobname/%DEFAULT.EXPID%_}
+. %HPCLOGDIR%/utils_${jobname}
 
 #####################################################################################################################
 # Biref: Updates the namelists with the AS member configuration and runs NEMO
@@ -111,8 +48,8 @@ function run_nemo()
     local run_dir=${run_root}/${test_name}/run_${run_id}
     local model_sources=${compilation}/${model}_${branch}
     local configuration_folder=tests
-    [ ${current_member} = "WeakScaling" ] && nemo_resolution="%CURRENT_RESOLUTION%"
-    [ ${current_member} = "Tracing" ] && test_steps="%TRACING.TRACE_STEPS%"
+    [ ${current_member} = "weakscaling" ] && nemo_resolution="%CURRENT_RESOLUTION%"
+    [ ${current_member} = "tracing" ] && test_steps="%TRACING.TRACE_STEPS%"
 
     chmod +w -R ${run_dir}
     rm -rf ${run_dir:?}/*
@@ -143,7 +80,7 @@ function run_nemo()
     # If it is Weak Scaling that is being run compute the current procs based on the
     # base procs and resolution
     case "$current_member" in
-        "WeakScaling")
+        "weakscaling")
             . ${project}/configurations/model/${model}/resolutions.sh 
             local base_nproc="%WEAKSCALING.BASE_PROCS%"
             local base_resolution="%WEAKSCALING.BASE_RESOLUTION%"
@@ -155,19 +92,26 @@ function run_nemo()
 
             time srun -A ${proj} -q ${queue} -n $nemo_nproc ./nemo
         ;;
-        "Tracing")
+        "tracing")
             configure_extrae ${run_dir}
             create_trace_sh  ${run_dir}
-            cp ${cfg}/trace/generate_function_list.sh ${run_dir}
             # Copy function.txt
-            fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=%TRACING.EXTRAE.USER_FUNCTIONS.SAMPLING.ENABLED%
             fd_enabled=${fd_enabled,,}
             if ${fd_enabled}; then
                 cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
             else
-                cp $cfg/trace/model/nemo/extrae_functions.txt ${run_dir}/
+                uf_list=($(bashify_array "%TRACING.EXTRAE.USER_FUNCTIONS.LIST%" true))
+                if [ "${uf_list}" != "None" ]; then
+                    echo -n > ${run_dir}/extrae_functions.txt
+                    for user_function in "${uf_list[@]}"; do
+                        echo "${user_function}" >> ${run_dir}/extrae_functions.txt
+                    done
+                else
+                    cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}/extrae_functions.txt
+                fi
             fi
-            ./generate_function_list.sh ./nemo extrae_functions.txt
+            generate_function_list.sh ./nemo extrae_functions.txt
 
             time srun -n ${nemo_nproc} ./trace.sh ./nemo || true
             ! [ -f nemo.pcf ] && exit
@@ -193,7 +137,7 @@ function get_vars_ecearth4()
 
     # If it is Weak Scaling that is being run compute the current procs based on the
     # base procs and resolution
-    if [ ${current_member} = "Tracing" ]; then
+    if [ ${current_member} = "tracing" ]; then
         start_date="%TRACING.START_DATE%"
         end_date="%TRACING.END_DATE%"
         freq="%TRACING.FREQ%"
@@ -205,7 +149,7 @@ function get_vars_ecearth4()
         interval="%EXPERIMENT.INTERVAL%"
     fi 
 
-    if [ ${current_member} = "WeakScaling" ]; then
+    if [ ${current_member} = "weak_scaling" ]; then
         #shellcheck source=proj/auto-performance-profiling/configurations/model/nemo/resolutions.sh
         . ${project}/configurations/model/nemo/resolutions.sh 
         # Overwrite resolution var with the current test resolution
@@ -284,7 +228,7 @@ function run_ecearth4()
     local config_file=experiment_config-${test}-${run_id}.yml
     cp ${project}/configurations/model/${model}/experiment_config.yml.tmpl ${config_file}
 
-    if [ ${current_member} = "Tracing" ]; then
+    if [ ${current_member} = "tracing" ]; then
         local sed_run_dir=${run_dir}/run
     else
         local sed_run_dir=${run_dir}
@@ -319,7 +263,7 @@ function run_ecearth4()
 
     # Specific members config
     case ${current_member} in
-        "Tracing")
+        "tracing")
             # Change launch script to the trace script
             sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
 
@@ -329,7 +273,15 @@ function run_ecearth4()
             if ${fd_enabled}; then
                 cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
             else
-                cp $cfg/trace/model/ecearth4/extrae_functions.txt ${run_dir}/
+                uf_list=($(bashify_array "%TRACING.EXTRAE.USER_FUNCTIONS.LIST%" true))
+                if [ "${uf_list}" != "None" ]; then
+                    echo -n > ${run_dir}/extrae_functions.txt
+                    for user_function in "${uf_list[@]}"; do
+                        echo "${user_function}" >> ${run_dir}/extrae_functions.txt
+                    done
+                else
+                    cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}/extrae_functions.txt
+                fi
             fi
 
             # Create and copy Extrae necessary files
@@ -340,7 +292,7 @@ function run_ecearth4()
             cp ${cfg}/trace/generate_function_list.sh ${run_dir}
             chmod +x ${run_dir}/generate_function_list.sh
         ;;
-        "WeakScaling")
+        "weak_scaling")
             # Set the queue and project only for weakscaling since it is run intercatively 
             # and it is not taking the AS platform configuration
             local queue="%HPCQUEUE%"
@@ -439,7 +391,7 @@ function run_hpcw()
     TIME_FORMAT="@hpcw-time: %C: %Uuser %Ssystem %eelapsed %PCPU (%Xtext+%Ddata %Mmax)k"
 
     case "${current_member}" in
-        "Tracing")
+        "tracing")
             trace_steps="%TRACING.TRACE_STEPS%"
             set_namelist namelist_cfg nn_itend ${trace_steps}
 
@@ -449,10 +401,20 @@ function run_hpcw()
             if ${fd_enabled}; then
                 cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
             else
-                cp $cfg/trace/model/${model}/extrae_functions.txt ${run_dir}/
+                uf_list=($(bashify_array "%TRACING.EXTRAE.USER_FUNCTIONS.LIST%" true))
+                if [ "${uf_list}" != "None" ]; then
+                    echo -n > ${run_dir}/extrae_functions.txt
+                    for user_function in "${uf_list[@]}"; do
+                        echo "${user_function}" >> ${run_dir}/extrae_functions.txt
+                    done
+                else
+                    cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}/extrae_functions.txt
+                fi
             fi
+            # Generate the function list file only when TRACING.EXTRAE.USER_FUNCTIONS.LIST is not set
             chmod +x ${cfg}/trace/generate_function_list.sh
             ${cfg}/trace/generate_function_list.sh ./nemo extrae_functions.txt
+
 
             # Create and copy Extrae necessary files
             create_trace_sh ${run_dir}
@@ -476,25 +438,24 @@ function run_hpcw()
 # Start script
 ###################
 
+current_member=$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS")
+current_member=${current_member,,}
+
 case "$current_member" in
-    "CompilationEfficiency")
-        member="compilation_efficiency"
-        test_name=${member}/${test}
+    "compilation_efficiency")
+        test_name=${current_member}/${test}
         arch_name=${test}
         ;;
-    "StrongScaling")
-        member="strong_scaling"
-        test_name=${member}/${test}
+    "strongscaling")
+        test_name=${current_member}/${test}
         arch_name=%STRONGSCALING.ARCH_NAME%
         ;;
-    "WeakScaling")
-        member="weakscaling"
-        test_name=${member}/${test}
+    "weakscaling")
+        test_name=${current_member}/${test}
         arch_name=%WEAKSCALING.ARCH_NAME%
         ;;
-    "Tracing")
-        member="tracing"
-        test_name=${member}/${test}
+    "tracing")
+        test_name=${current_member}/${test}
         arch_name=%TRACING.ARCH_NAME%
         ;;
 esac

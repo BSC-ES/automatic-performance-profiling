@@ -5,22 +5,23 @@
 #####################################################################################################################
 
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-member=%MEMBER%
+current_member=$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS")
+current_member=${current_member,,}
 
-case "$member" in 
-    "HardwareBenchmarks")
+case "$current_member" in 
+    "hw_benchmarks")
         mkdir -p $run_root/hardware_benchmarks/STREAM_RUN
         ;;
-    "CompilationEfficiency")
+    "compilation_efficiency")
         mkdir -p $run_root/compilation_efficiency
         ;;
-     "WeakScaling")
+     "weakscaling")
         mkdir -p $run_root/weakscaling
         ;;
-    "StrongScaling")
+    "strongscaling")
         mkdir -p $run_root/strong_scaling
         ;;
-    "Tracing")
+    "tracing")
         mkdir -p $run_root/tracing
         ;;
 esac

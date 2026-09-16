@@ -15,7 +15,7 @@ platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 numproc=%NUMPROC%
-current_member=%MEMBER%
+current_member=tracing
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 branch=%MODEL.BRANCH%
@@ -222,7 +222,7 @@ run_functions_dir() {
 # Start script
 ###################
 
-fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+fd_enabled=%TRACING.EXTRAE.USER_FUNCTIONS.SAMPLING.ENABLED%
 fd_enabled=${fd_enabled,,}
 
 ${fd_enabled} && run_functions_dir
