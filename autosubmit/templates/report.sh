@@ -349,9 +349,13 @@ function add_tracing() {
         # Create and add test configuration
         {   
             echo "Configuration,Value";
-            echo "START DATE,%TRACING.START_DATE%";
-            echo "END DATE,%TRACING.END_DATE%"; 
-            echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
+            if [ ${model} != "monarch" ]; then
+                echo "START DATE,%TRACING.START_DATE%";
+                echo "END DATE,%TRACING.END_DATE%";
+                echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
+            else
+                echo "NHOURS,%TRACING.NHOURS%";
+            fi
         } > test_info.csv
     
         python3 ${latex_folder}/ReportGenerator.py \
