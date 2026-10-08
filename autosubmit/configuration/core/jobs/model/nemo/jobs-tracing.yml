@@ -1,44 +1,42 @@
 JOBS:
-  trace:
+  FUNCTIONS_DIR:
+    FILE: autosubmit/templates/functions_dir.sh
+    DEPENDENCIES: PREPARE_TESTS
+    THREADS: "%TRACING.USER_FUNCTIONS_THREADS%"
+    RUNNING: member
+    WALLCLOCK: 02:00
+    PROCESSORS: "%TRACING.USER_FUNCTIONS_PROC%"
+    CHECK: "true"
+    NOTIFY_ON: FAILED
+  TRACE:
     FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh
     FOR:
       TEST_NAME: "%TRACING.TEST_NAMES%"
       NAME: "%TRACING.NAMES%"
       PROCESSORS: "%TRACING.PROCESSORS%"
       THREADS: "%TRACING.THREADS%"
-    DEPENDENCIES:
-      functions_dir:
-        MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, HardwareBenchmarks, StrongScaling:
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-            DATES_TO: None
+    DEPENDENCIES: functions_dir
     RUNNING: member
     WALLCLOCK: 02:00
     CHECK: "true"
     CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
     NOTIFY_ON: FAILED
-  post:
+  POST_TRACING:
     FILE: autosubmit/templates/post.sh
     DEPENDENCIES:
-      trace:
+      TRACE:
         FOR:
           TEST_NAME: "%TRACING.TEST_NAMES%"
           NAME: "%TRACING.NAMES%"
           PROCESSORS: "%TRACING.PROCESSORS%"
           THREADS: "%TRACING.THREADS%"
-        MEMBERS_FROM:
-          CompilationEfficiency, WeakScaling, HardwareBenchmarks, StrongScaling:
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-            DATES_TO: None
     RUNNING: member
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED
   TRACE_CUT:
     FILE: autosubmit/templates/trace_cut.sh
-    DEPENDENCIES: post
+    DEPENDENCIES: POST_TRACING
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
@@ -89,10 +87,15 @@ JOBS:
   CONFIGURATION_JSON_TRACING:
     FILE: autosubmit/templates/configuration_json.sh
     DEPENDENCIES:
-      post:
+      POST_TRACING:
       PARAMEDIR:
       PARADIM:
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
+
+EXPERIMENT:
+  APP_TESTS:
+    TRACING:
+      ENABLED: "TRUE"

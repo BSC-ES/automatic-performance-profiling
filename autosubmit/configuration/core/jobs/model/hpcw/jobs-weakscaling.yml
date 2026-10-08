@@ -1,5 +1,5 @@
 JOBS:
-  Scalability:
+  SCALABILITY_WEAKSCALING:
     FILE: autosubmit/templates/scalability.sh
     FOR:
       TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
@@ -7,39 +7,28 @@ JOBS:
       PROCESSORS: "%WEAKSCALING.PROCESSORS%"
       THREADS: "%WEAKSCALING.THREADS%"
       RESOLUTION: "%WEAKSCALING.RESOLUTION%"
-    DEPENDENCIES:
-      PREPARE_TESTS:
-        MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, HardwareBenchmarks, Tracing:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
+    DEPENDENCIES: PREPARE_TESTS
     RUNNING: member
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
-  post:
+  POST_WEAKSCALING:
     FILE: autosubmit/templates/post.sh
-    DEPENDENCIES:
-      Scalability:
-        FOR:
-          TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
-          NAME: "%WEAKSCALING.NAMES%"
-          PROCESSORS: "%WEAKSCALING.PROCESSORS%"
-        MEMBERS_FROM:
-          StrongScaling, CompilationEfficiency, HardwareBenchmarks, Tracing:
-            DATES_TO: None
-            MEMBERS_TO: None
-            CHUNKS_TO: None
+    DEPENDENCIES: SCALABILITY_WEAKSCALING
     RUNNING: member
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED
   CONFIGURATION_JSON_WEAKSCALING:
     FILE: autosubmit/templates/configuration_json.sh
-    DEPENDENCIES: post
+    DEPENDENCIES: POST_WEAKSCALING
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
     WALLCLOCK: 02:00
     CHECK: "true"
     NOTIFY_ON: FAILED
+
+EXPERIMENT:
+  APP_TESTS:
+    WEAKSCALING:
+      ENABLED: "TRUE"

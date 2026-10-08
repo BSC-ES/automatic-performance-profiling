@@ -7,6 +7,7 @@ JOBS:
     RUNNING: once
     WALLCLOCK: 00:30
     CHECK: "true"
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
   # Creates the folder "inidata" with the param_bash.cfg specific to each test, it requires connection to the internet due HW tests
   REMOTE_INIDATA:
     FILE: autosubmit/templates/ini.sh
@@ -14,6 +15,7 @@ JOBS:
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
   # Compiles all the tests, it requires connection to the internet due HW
   REMOTE_COMPILATION:
     FILE: autosubmit/templates/compilation.sh
@@ -31,24 +33,4 @@ JOBS:
         FOR:
           NAME: "%MODEL.ARCH_NAMES%"
           TEST_NAME: "%MODEL.ARCH_NAMES%"
-        MEMBERS_FROM:
-          HardwareBenchmarks:
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-            DATES_TO: None
-  # Selects the functions to be traced
-  FUNCTIONS_DIR:
-    FILE: autosubmit/templates/functions_dir.sh
-    DEPENDENCIES:
-      PREPARE_TESTS:
-        MEMBERS_FROM:
-          HardwareBenchmarks, WeakScaling, CompilationEfficiency, StrongScaling:
-            MEMBERS_TO: None
-            CHUNKS_TO: None
-            DATES_TO: None
-    THREADS: "%TRACING.USER_FUNCTIONS_THREADS%"
-    RUNNING: member
-    WALLCLOCK: 02:00
-    PROCESSORS: "%TRACING.USER_FUNCTIONS_PROC%"
-    CHECK: "true"
-    NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
