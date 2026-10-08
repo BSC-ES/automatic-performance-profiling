@@ -14,7 +14,6 @@ project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 run_folder=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 root_dir=%CURRENT_ROOTDIR%
-members="%EXPERIMENT.MEMBERS%"
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
@@ -38,7 +37,9 @@ function clone_nemo()
 
     if [ ! -d ${root_dir}/xios ]; then
         cd ${root_dir} || exit
-        svn co https://forge.ipsl.jussieu.fr/ioserver/svn/XIOS/trunk xios
+        xios_origin="%MODEL.XIOS.ORIGIN%"
+        xios_branch="%MODEL.XIOS.BRANCH%"
+        git clone ${xios_origin} --branch ${xios_branch} xios
 
         cp ${project}/cfg/arch/${platform}/xios/* ${root_dir}/xios/arch
     fi

@@ -9,7 +9,12 @@ Configure the model
 The main variables to update in this config file are:
 
 * ORIGIN: URL of the git repository containing NEMO.
-* BRANCH_LIST: tag of the version you want to run.
+* BRANCH: tag of the version you want to run.
+* XIOS: configuration of the XIOS source that is cloned and compiled together with NEMO:
+
+    * XIOS.ORIGIN: URL of the git repository containing XIOS.
+    * XIOS.BRANCH: branch or tag of XIOS to check out; it must be compatible with the NEMO version selected above.
+
 * ARCH_NAMES: list of arch files to compile. These arch files must be located in ``cfg/arch/PLATFORM/MODEL/`` and follow this pattern ``arch-ARCH_NAME.fcm``.
 * TEST_STEPS: number of steps to run in the different scalability jobs.
 * OUTPUT: enables or disables the output (TRUE/FALSE).
@@ -22,7 +27,11 @@ The main variables to update in this config file are:
     NAME: nemo
     COMPONENTS: [nemo]
     ORIGIN: https://forge.nemo-ocean.eu/nemo/nemo.git
-    BRANCH_LIST: 4.2.1
+    BRANCH: 4.2.1
+
+    XIOS:
+      ORIGIN: https://gitlab.in2p3.fr/ipsl/projets/xios-projects/xios.git
+      BRANCH: xios-2.5.x
 
     # Arch files prefixes to compile
     # The arch file has to be located in cfg/arch/PLATFORM/MODEL/

@@ -6,6 +6,10 @@ MODEL:
   ORIGIN: https://forge.nemo-ocean.eu/nemo/nemo.git
   BRANCH: 4.2.1
 
+  XIOS: 
+    ORIGIN: https://gitlab.in2p3.fr/ipsl/projets/xios-projects/xios.git
+    BRANCH: xios-2.5.x
+
   # Arch files prefixes to compile
   # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
   # - For ecearth4: ARCH_NAME.yml
