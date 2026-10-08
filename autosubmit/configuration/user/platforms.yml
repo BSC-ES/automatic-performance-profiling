@@ -32,7 +32,7 @@ PLATFORMS:
     TEMP_DIR: ''
   mn5-login:
     TYPE: ps
-    HOST: glogin1.bsc.es
+    HOST: glogin4.bsc.es
     PROJECT: bsc32
     USER: bsc032333
     SCRATCH_DIR: /gpfs/scratch
