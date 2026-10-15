@@ -41,7 +41,6 @@ do
         ;;
     esac
     
-    # Iterate over all run_* folders
     for name in "${names[@]}"
     do
         trace_folder=${run_root}/${test_name}/run_${name}
@@ -55,7 +54,6 @@ do
             if [ "${timestep_zero^^}" != "TRUE" ] && [ "${component}" = "oifs" ]; then
                 curr_mc_steps=$((magiccut_steps+1))
             fi
-            # Run magiccut and save component's fastest step
             ${magiccut} $component.prv $curr_mc_steps | tee ${component}_magiccut.log
             grep "Worst / best" ${component}_magiccut.log | awk -F ' ' '{print $8}' > ${component}_fastest_ts.txt
             

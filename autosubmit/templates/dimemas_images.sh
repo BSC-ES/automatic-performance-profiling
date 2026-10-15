@@ -29,9 +29,6 @@ function run_dimemas_images() {
         do
             n_cores=$(echo $trace_folder | sed 's/.*run_//')
             
-            # dimemas.target
-            ##################
-            # Remove path and extension
             for config in $dimemas_configurations
             do
                 trace_name=${config##*/}
@@ -40,7 +37,6 @@ function run_dimemas_images() {
                 echo  ${analysis_tools}/paraver -i ../dimemeas_traces/${trace_name} ${paraver_cfg}
                 # ${analysis_tools}/paraver -i ../dimemas_traces/${trace_name} ${paraver_cfg} && rm -f *.code.png &&  mv *${image_name} ${image_name} &
             done
-            ##################
         done
     done
 }

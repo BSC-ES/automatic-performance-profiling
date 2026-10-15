@@ -30,7 +30,6 @@ function functions_dir_nemo()
     cd ${run_dir}
     model_exec=${run_dir}/$model
     
-    # Copy function and extrae configuration 
     cp --remove-destination $compilation/${model_sources}/${configuration_folder}/${arch_name}_trace/EXP00/* ${run_dir}
     cp ${run_dir}/namelist_cfg_${model_resolution}_like ${run_dir}/namelist_cfg
 
@@ -53,10 +52,8 @@ EOF
     
     chmod +x ${trace}
     
-    # List of function not to trace
     function_to_avoid=$project/cfg/generate_func_list/model/$model/list_of_func_notto_trace.txt
     
-    # Generate function list for xml
     function_file=extrae_functions.txt
     function_avg_dur_file=function_avg_dur.txt
     cat /dev/null > ${function_file}
@@ -64,33 +61,25 @@ EOF
     
     ulimit -c unlimited
     executable=${model_exec}
-    # Spinup run
     time srun -n ${numproc} ${trace} ${executable}
    
     paramedir ${executable}.prv sampling_user_function.cfg
-    # Create list extrae_functions.txt
     set +xuve
     histo_file=sampling_user_function
     
-    # Take function names
     read -ra func_name < <(head -1 ${histo_file} | sed 's/\w*[..]\w*//g'| sed 's/\]//g' | sed 's/\[//g')
-    # Take function average duration
     read -ra func_avg_dur < <(grep -E "Average.*([0-9]+\.[0-9]+)+" ${histo_file} | sed 's/Average//g')
     
-    # Save info to a file
     for i_func_name in $(seq 0 $((${#func_name[@]}-1)))
     do
         echo ${func_name[${i_func_name}]} ${func_avg_dur[$i_func_name]} >> ${function_avg_dur_file}
     done
     
-    # Order data in decreasing order of average time
     cat ${function_avg_dur_file} > ${function_avg_dur_file}_tmp
     cat ${function_avg_dur_file}_tmp | sort -k 2 -nr  | column -t >  ${function_avg_dur_file}
     
-    # Output first $n_function names
     awk '{print $1}' ${function_avg_dur_file} | grep '_mp_' | grep -v -f ${function_to_avoid} | head -${n_functions}> ${function_file}
     
-    #rm ${function_avg_dur_file}_tmp
     rm -rf *nc
 }
 

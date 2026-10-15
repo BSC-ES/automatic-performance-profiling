@@ -31,8 +31,6 @@ function run_paradim() {
             trace=${trace_folder}/${model}.best_cut.prv
             trace_id=${trace_folder//*run_/}
             
-            # paramdim.target
-            ##################
             dimemas_traces=( dimemas_traces/${trace_id}*.prv )
             for trace in "${dimemas_traces[@]}"
             do

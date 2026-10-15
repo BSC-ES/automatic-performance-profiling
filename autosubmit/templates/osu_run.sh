@@ -19,7 +19,6 @@ function run_osu() {
     # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
     . ${cfg}/utils/bash/utils.sh
 
-    # Load necessary modules
     . ${env_sources}
 
     osu_tests=($(bashify_array "%HW_BENCHMARKS.OSU.TESTS%" true))

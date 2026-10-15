@@ -36,7 +36,6 @@ do
     test_folder=${run_root}/${member}/${test}
     mkdir -p  ${test_folder}/paramedir
 
-    # WORKING DIRECTORY: paramedir folder in test's root folder
     cd "${test_folder}/paramedir" || exit
     rm -f *.pm
 
@@ -53,8 +52,6 @@ do
             threads_to_ignore=""
             ! [ -z ${job_geometry[@]} ] && create_threads_to_ignore ${component}
 
-            # paramedir.target
-            ##################
             for cfg in $paramedir_configurations 
             do
                 cp ${cfg} .
@@ -63,22 +60,16 @@ do
                 [ "${threads_to_ignore}" != "" ] && sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${mod_cfg}
 
                 paramedir ${trace} ${mod_cfg} 
-                # Get the extension
                 cfg_extension=${cfg#*.}
-                # Remove path
                 cfg_name=${cfg##*/}
-                # Remove the extension
                 cfg_name=${cfg_name%.${cfg_extension}}
-                # This is a 3D with function view
                 if [[ ${cfg_extension} == "pm.cfg" ]] 
                 then
                     mv ${cfg_name}.pm ${component}-${trace_id}-${cfg_name}.pm
-                # This is a normal csv which can be directly put in report
                 else
                     mv ${cfg_name} ${component}-${trace_id}-${cfg_name}.csv
                 fi
             done
-            ##################
         done
     done
 done

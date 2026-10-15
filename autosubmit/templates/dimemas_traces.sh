@@ -31,7 +31,6 @@ function run_dimemas() {
     do
         test_name=${member}/${test}
         
-        # WORKING DIR: test's root folder
         cd $run_root/$test_name || exit
         mkdir -p dimemas_traces
         for trace_folder in run_*
@@ -43,14 +42,10 @@ function run_dimemas() {
                 
                 prv2dim ${trace} ${dim_trace}
                 
-                # dimemas.target
-                ##################
-                # Remove path and extension
                 dim_trace_name=${dim_trace##*/}
                 dim_trace_name=${dim_trace_name%.*}
                 for cfg in $dimemas_configurations 
                 do
-                    # Remove the path and extension
                     cfg_name=${cfg##*/}
                     cfg_name=${cfg_name%.*}
 

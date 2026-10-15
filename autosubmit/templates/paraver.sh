@@ -39,21 +39,17 @@ function create_paraver_legend()
         return
     fi
 
-    # Is a picture with gradient
     if ls ${current_picture_name}.w_legend.png 1>/dev/null 2>&1; then
         mv ${current_picture_name}.w_legend.png ${current_picture_name}.png
-    # Is a graph with discrete legend
     elif ls ${current_picture_name}.code_legend.png 1>/dev/null 2>&1; then
         local image_to_append=${current_picture_name}.code_legend.png
         convert ${current_picture_name}.png ${image_to_append} -append ${current_picture_name}.png
     fi
-    # Remove the rest
     rm -f ./*_legend.png
 }
 
 run_paraver()
 {
-    # Check available X11 "fake" servers
     if which xvfb-run &> /dev/null; then
         paraver_cmd="xvfb-run -d wxparaver"
     elif which vncserver &> /dev/null; then
@@ -109,14 +105,11 @@ run_paraver()
                     cp ${og_paraver_cfg_path} ${paraver_cfg_path}
                     
                     if echo ${compare_cfgs} | grep -w ${paraver_cfg} &> /dev/null; then
-                        # Set time to the slowest timestep of the different tests
                         ts_ratio=$(echo $slowest_ts / $cur_ts | bc -l)
                         sed -i "s/window_end_time_relative.*/window_end_time_relative ${ts_ratio}/" ${paraver_cfg_path}
                     fi
-                    # Remove other-component tasks from the paraver view
                     [ "${threads_to_ignore}" != "" ] && sed -i "s/window_object appl { 1, { All } }/${threads_to_ignore}/" ${paraver_cfg_path}
 
-                    # Generate the paraver view image
                     if  ${paraver_cmd} -i ${trace} ${paraver_cfg_path}; then
                         local cfg_name=$(basename ${og_paraver_cfg_path})
                         cfg_name=${cfg_name%.cfg}
