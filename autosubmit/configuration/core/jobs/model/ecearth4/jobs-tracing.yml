@@ -6,10 +6,12 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 02:00
     PROCESSORS: "%TRACING.USER_FUNCTIONS_PROC%"
+    OIFS_PROCS: "%TRACING.USER_FUNCTIONS_OIFS_PROCS%" 
+    NEMO_PROCS: "%TRACING.USER_FUNCTIONS_NEMO_PROCS%"
     CHECK: "true"
     NOTIFY_ON: FAILED
   TRACE:
-    FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh
+    FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh
     FOR:
       TEST_NAME: "%TRACING.TEST_NAMES%"
       NAME: "%TRACING.NAMES%"
@@ -37,6 +39,7 @@ JOBS:
     WALLCLOCK: 00:30
     CHECK: "true"
     NOTIFY_ON: FAILED
+    PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
   TRACE_CUT:
     FILE: autosubmit/templates/trace_cut.sh
     DEPENDENCIES: POST_TRACING
