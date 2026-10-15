@@ -1,7 +1,6 @@
-# This file includes shared workflow configurations by all the models
+# Shared workflow configuration for all models
 
 
-# REPORT CONFIGURATION
 REPORT:
   TITLE: "%DEFAULT.MODEL% performance report"
   AUTHORS: "Roc Salvador Andreazini"
@@ -51,12 +50,10 @@ TRACING:
     USER_FUNCTIONS: 
       ENABLED: yes
 
-      # If the sampling job is disabled TRACING.EXTRAE.USER_FUNCTIONS.LIST will be used to trace the user functions
       SAMPLING:
         ENABLED: false
 
-      # List of user functions to be traced, if empty the default list located
-      # in cfg/trace/model/MODEL/extrae_functions.txt will be used
+      # If empty, falls back to cfg/trace/model/MODEL/extrae_functions.txt
       LIST:
         # - module_bsc_chemistry_mp_chem_driver_
         # - module_bsc_aero_mechanism_mp_aero_bsc_driver_
@@ -74,35 +71,26 @@ TRACING:
     OPENMP:
       ENABLED: no
 
-  # PARAVER OPTIONS
   PARAVER:
-    # Enables Paraver views in the report
     ENABLED: true
-
-    # Paraver cfg, for all PV views see cfg/trace_analysis/paraver_configurations
+    # See cfg/trace_analysis/paraver_configurations/ for available views
     CFGS: MPI_call p2p_size Average_IPC affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
-
-    # Subset of Paraver cfgs
     COMPARE_CFGS:  MPI_call UserFunctions
 
   DIMEMAS:
     ENABLED: false
-
-    # Paraver cfg, for all PV views see cfg/trace_analysis/dimemas_configurations
+    # See cfg/trace_analysis/dimemas_configurations/ for available views
     CFGS: MPI_call p2p_size
 
   USER_FUNCTIONS:
     ENABLED: true
     PAPI_COUNTERS:
-      # Space separated list where the elements are PC_id_1-PC_id_2,
-      # you can get the ids from the papi_avail command
+      # Format: PC_id_1-PC_id_2 (ids from papi_avail)
       PLOTS: PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC
       ENABLED: true
 
-  # Enable/Disable Modelfactors images in the report
   MODELFACTORS:
     ENABLED: true
 
-  # Enable/Disable MPI profiling results in the report
   MPI:
     ENABLED: true

@@ -7,10 +7,7 @@ MODEL:
   # Project branch/commit
   BRANCH: 7eded8868b263ffeda38f3bac5f63b06c2526295
 
-  # Arch files prefixes to compile
-  # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
-  # - For ecearth4: ARCH_NAME.yml
-  # - For nemo: arch-ARCH_NAME.fcm
+  # Arch file prefixes in cfg/arch/PLATFORM/MODEL/ (e.g. O3_ompi_prod.yml)
   ARCH_NAMES: [O3_ompi_trace, O3_ompi_prod, O3_impi_prod]
 
 # EXPERIMENT CONFIG
@@ -26,8 +23,6 @@ EXPERIMENT:
   TEST_STEPS: 32
   OUTPUT: FALSE
 
-  # Inidata path for mn5:     /gpfs/projects/bsc32/models/ecearth/ece4-trunk/inidata
-  # Inidata path for hpc2020: /hpcperm/c3et/models/ecearth/v4-trunk
   INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-oifs48/inidata
 
 # TRACE CONFIG
@@ -40,14 +35,12 @@ TRACING:
   TRACE_STEPS: 32
   OUTPUT: FALSE
 
-  # CONFIG FOR USER FUNCTIONS SAMPLING
   USER_FUNCTIONS_PROC: 112
   USER_FUNCTIONS_THREADS: 4
   TRACE_N_FUNCTIONS: 40
 
   TEST_NAMES: [BENCH,   BENCH  , BENCH  ]
   NAMES:      [trace_1, trace_2, trace_3]
-  # Total processor count of the job
   PROCESSORS: [112,     224    , 336    ]
   OIFS_PROCS: [55,      111    , 167    ]
   NEMO_PROCS: [55,      111    , 167    ]
@@ -85,14 +78,12 @@ STRONGSCALING:
 
 # WEAKSCALING CONFIG
 WEAKSCALING:
-  # Base case configuration, meaning the resolution and processors configuration
   NEMO_BASE_PROCS: 111
   OIFS_BASE_PROCS: 333
   NEMO_BASE_RESOLUTION: eORCA1L75
   OIFS_BASE_RESOLUTION: TL255L91
 
-  # Processors must be set to 1, since processors count is computed during runtime
-  # based on the base processors and resolution
+  # Processors computed at runtime from base values; set to 1 here
   TEST_NAMES:      [ws_1,      ws_1,      ws_1,      ws_1     ]
   NAMES:           [ws_1_1,    ws_1_2,    ws_1_3,    ws_1_4   ]
   PROCESSORS:      [1,         1,         1,         1,       ]
@@ -107,7 +98,6 @@ WEAKSCALING:
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
-  # For compilation efficiency the arch name is taken from the test name
   TEST_NAMES: [O3_ompi_prod, O3_ompi_prod, O3_ompi_prod, O3_impi_prod, O3_impi_prod, O3_impi_prod]
   NAMES:      [ompi_1,       ompi_2,       ompi_3,       impi_1,       impi_2,       impi_3      ]
   PROCESSORS: [112,          224,          336,          112,          224,          336         ]

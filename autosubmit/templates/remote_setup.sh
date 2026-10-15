@@ -40,7 +40,6 @@ function clone_nemo()
         xios_origin="%MODEL.XIOS.ORIGIN%"
         xios_branch="%MODEL.XIOS.BRANCH%"
         git clone ${xios_origin} --branch ${xios_branch} xios
-
         cp ${project}/cfg/arch/${platform}/xios/* ${root_dir}/xios/arch
     fi
 

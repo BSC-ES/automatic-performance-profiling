@@ -35,14 +35,11 @@ function ini_nemo()
         test=${folder##*/}
         if [ "${test_config}" = "BENCH" ]
         then
-            # It is BENCH, copy the namelist into the configuration namelist_cfg
             cp $project/cfg/utils/${model}/iodef.xml  $inidata/$folder
             cp $project/cfg/utils/${model}/context_${model}.xml  $inidata/$folder
         else
-            # Link inidata to each model
             ln -rsf ${inidata}/original/* $inidata/$folder
             rsync -rv --exclude=.nc ${inidata}/original/ $inidata/$folder
-            #touch $@
         fi
     done
 }

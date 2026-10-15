@@ -1,24 +1,16 @@
-# Autosubmit general stuff
 CONFIG:
-  # Tune the amount of jobs that are able to be submitted
   MAXWAITINGJOBS: "4"
   TOTALJOBS: "20"
-  # Sleeptime between iterations
   SAFETYSLEEPTIME: "10"
-  # Default retrial for all jobs
   RETRIALS: "0"
   OUTPUT: pdf
-  # This should be off always as it is disabled in slurm scheduler from early this year
   PRESUBMISSION: "FALSE"
 MAIL:
-  # To recieve mail notifications
   NOTIFICATIONS: False
   TO: ""
 COMMUNICATIONS:
-  # Only paramiko is supported now
   API: paramiko
 STORAGE:
-  # May change, due issues in scalability see #1025 issue in autosubmit for details
   TYPE: pkl
   COPY_REMOTE_LOGS: "True"
 MIGRATE:

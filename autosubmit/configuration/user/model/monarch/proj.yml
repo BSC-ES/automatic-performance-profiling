@@ -10,10 +10,7 @@ MODEL:
   ORIGIN: https://gitlab.earth.bsc.es/es/auto-monarch.git
   BRANCH: master
 
-  # Arch files prefixes to compile
-  # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
-  # - For ecearth4: ARCH_NAME.yml
-  # - For nemo: arch-ARCH_NAME.fcm
+  # Arch file prefixes in cfg/arch/PLATFORM/MODEL/ (e.g. impi_O3_prod.yml)
   ARCH_NAMES: [impi_O3_trace, impi_O3_prod, impi_O2_prod]
 
 # TRACE CONFIG
@@ -21,7 +18,6 @@ TRACING:
   TIMESTEP_ZERO: false
   NHOURS: 1
 
-  # CONFIG FOR USER FUNCTIONS SAMPLING
   USER_FUNCTIONS_PROC: 112
   USER_FUNCTIONS_THREADS: 4
   TRACE_N_FUNCTIONS: 40
@@ -53,7 +49,6 @@ STRONGSCALING:
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
-  # For compilation efficiency the arch name is taken from the test name
   TEST_NAMES:   [impi_O2_prod, impi_O2_prod, impi_O2_prod, impi_O2_prod, impi_O2_prod, impi_O2_prod, impi_O3_prod, impi_O3_prod, impi_O3_prod, impi_O3_prod, impi_O3_prod, impi_O3_prod]
   NAMES:        [O2_112,  O2_224,  O2_260,  O2_448,  O2_560,  O2_672,  O3_112,  O3_224,  O3_260,  O3_448,  O3_560,  O3_672]
   PROCESSORS:   [112,     224,     260,     448,     560,     672,     112,     224,     260,     448,     560,     672   ]
