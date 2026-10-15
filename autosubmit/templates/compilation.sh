@@ -41,7 +41,8 @@ function compile_nemo()
 
     cd ${exp_root}/xios || exit
     cp $project/cfg/arch/${platform}/xios/arch-* arch
-    ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
+    # Use GCC/OpenMPI for XIOS (ICC has shared_ptr ambiguity with C++11)
+    ./make_xios --dev --arch gcc_${platform} --job ${ntasks}
     
     model_sources=${compilation}/${model}_${branch}
     cd ${model_sources} || exit
