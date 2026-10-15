@@ -310,7 +310,7 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
 
     * ``tests.sh``\ :
 
-  **Brief**\ : Runs the model once in a specific processor configuration to get its performance (SYPD).
+  **Brief**\ : Runs the model once in a specific processor configuration to get its performance (SYPD). The per-model implementation lives in ``autosubmit/templates/models/MODEL/run.sh``, which is declared in the job ``FILE`` list and sourced as ``run_<jobname>``.
 
     * **ECE4**\ : Gets the SYPD from the Lucia logs.
     * **NEMO**\ : Gets the SYPD from the timing.log file.
@@ -760,7 +760,7 @@ Now you must add all the necessary functions to the following scripts:
 * ``compilation.sh``\ : Add a function called ``compile_model`` to compile the model.
 * ``configuration_json.sh``\ : Add the model-dependent input files to the ``input_files`` variable.
 * ``functions_dir.sh``\ : Add a function called ``functions_dir_model`` to generate a list of user functions.
-* ``scalability.sh``\ : Add a function called ``run_model`` to run the model to get its scalability.
+* ``autosubmit/templates/models/MODEL/run.sh``\ : Add a function called ``run_model`` to run the model to get its scalability. Declare the file in the ``FILE`` list of every scalability job of the model (``jobs-*.yml``) so Autosubmit stages it as ``run_<jobname>``.
 
 See the `Autosubmit scripts`_ section for the exact pre- and post-conditions of these scripts.
 

@@ -13,7 +13,8 @@ Main variables to update in the proj.yml:
 * MODEL.REPORT_COMPONENTS: subset of components to include in reports.
 * MODEL.ORIGIN: repository URL to clone the model from.
 * MODEL.BRANCH: branch or tag to use.
-* MODEL.ARCH_NAMES: list of architecture build presets (used to pick arch files in ``cfg/arch/PLATFORM/MODEL/``).
+* MODEL.ARCH_NAMES: list of architecture build presets (used to pick arch files in ``cfg/arch/PLATFORM/MODEL/COMPONENT/``).
+* MODEL.STORE: shared CMake ``ExternalData`` object cache (see `Model inputs`_).
 * EXPERIMENT.TEST_CONFIG: predefined test configuration (e.g. orca025-medium).
 * EXPERIMENT.TEST_STEPS: number of model steps for short tests.
 * EXPERIMENT.OUTPUT: enable or disable model output (true/false).
@@ -39,6 +40,71 @@ Main variables to update in the proj.yml:
     TEST_STEPS: 32
     OUTPUT: false
     RESOLUTION: "%EXPERIMENT.TEST_CONFIG%"
+
+Model inputs
+------------
+
+HPCW stages the model inputs with CMake's ``ExternalData`` module. HPCW appends its own store
+(``${CMAKE_SOURCE_DIR}/hpcw-store``) to the module, so the ``ExternalData_OBJECT_STORES``
+environment variable is ignored and the inputs would be downloaded again by every compilation job
+of every arch (several tens of GB from the DKRZ Swift store, individual files up to 25 GB).
+
+To avoid this, set ``MODEL.STORE`` in
+``proj/auto-performance-profiling/autosubmit/configuration/user/model/hpcw/proj.yml`` to a directory that
+survives across experiments. The compilation job then links the store of the compilation directory
+to it and reuses the cached inputs:
+
+.. code-block:: yaml
+
+  MODEL:
+    # ...
+    STORE: /gpfs/scratch/<group>/<user>/hpcw-store
+
+The first compilation still has to download the inputs. To do it outside the workflow (recommended,
+several GB of downloads are slow on login nodes), pre-populate the cache with:
+
+.. code-block:: bash
+
+  cfg/utils/hpcw/populate_store.sh -s /gpfs/scratch/<group>/<user>/hpcw-store \
+      <experiment>/compilation/<ARCH>
+
+Leave ``MODEL.STORE`` empty to keep the inputs inside each compilation directory.
+
+Model environment
+-----------------
+
+The environment used to build and run HPCW on each platform lives in
+``proj/auto-performance-profiling/cfg/arch/PLATFORM/MODEL/<COMPONENT>/<ARCH>.env``, with one folder
+per ``MODEL.COMPONENTS`` entry (``nemo`` and ``icon``). It mirrors the default
+environment of the model (``toolchains/<PLATFORM>/bsc-intel.env.sh``) and adds the deviations the
+tool needs, marked with ``[APP]`` comments:
+
+* the MPI compiler wrappers (``CC=mpicc``, ``CXX=mpicxx``, ``FC=mpif90``), so that the
+  ``netcdf-fortran`` built from the model and ICON itself use the same Fortran MPI bindings;
+* ``szip/2.1.1``, needed by the HDF5 libraries of the modules at run time;
+* the compiler flags accepted by the version of the compiler installed on the platform.
+
+The model takes its compilation flags from ``FCFLAGS`` (it ignores the ``CMAKE_Fortran_FLAGS`` of
+``<ARCH>.cmake``), so the optimization level that distinguishes the arch presets has to be in this
+file: ``O1_prod`` builds with ``-O1`` and ``O3_prod``/``O3_trace`` with ``-O3``. Without it every
+arch builds the model with the same flags and the compilation efficiency test compares two
+identical builds.
+
+Only the ISA flag, the optimization/debug flags and the tracing flags go in ``FCFLAGS``. The rest
+of the ``<ARCH>.cmake`` preset (``-i4 -r8 -align array64byte -fp-model precise -fno-alias``) is for
+the CMake built components and cannot be used to build the model: with ``-r8`` the ``REAL4`` and
+``REAL8`` kinds are the same and the ``REAL2STRING`` generic interface of the model becomes
+ambiguous (``error #5286``).
+
+Keep this file in sync with the model environment when the model is updated.
+
+Compilation
+-----------
+
+The compilation job builds the arch configurations listed in ``MODEL.ARCH_NAMES``. Because the model
+inputs are already in the shared ``ExternalData`` cache (see `Model inputs`_), the job runs on a
+compute node using all the cores of a node (``PROCESSORS`` in
+``core/jobs/model/hpcw/jobs.yml``), instead of the login node.
 
 Configure the tests
 ---------------------
