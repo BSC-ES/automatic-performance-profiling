@@ -73,7 +73,6 @@ function post_nemo()
         ;;
     esac
 
-    # Rename timing output
     cp ${run_dir}/timing.output ${run_dir}/nemo-${test}-timing.output
 
     variables_to_report="nproc resolution"
@@ -117,8 +116,6 @@ function post_ecearth4()
 
     case ${current_member} in
         "tracing")
-            # Moce and cut the trace by the model's components
-
             mv run/*prv run/*pcf run/*row .
 
             cut_trace job_geometry.sh "${model}.prv"
@@ -128,9 +125,7 @@ function post_ecearth4()
         *)
             local coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
             coupling_enabled=${coupling_enabled,,}
-            # If enabled, run lucia to get the coupling report
             if ${coupling_enabled}; then
-                # Get test timesteps
                 if ${nemo_on}; then
                     lucia_ts=$(cat time.step)
                 else 
@@ -157,7 +152,6 @@ function post_ecearth4()
                     cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
                 fi
             else
-                # Get sypd from the logs since lucia is not enabled
                 if ${oifs_on}; then
                     oifs_sypd=$(grep "FORECAST DAYS PER DAY" log/001/NODE.001_01 |  grep -oE "[0-9.]+" )
                     oifs_sypd=$(echo ${oifs_sypd} / 365 | bc -l)
@@ -176,7 +170,6 @@ function post_ecearth4()
 
     case ${current_member} in
         "weakscaling")
-            # Get the grid points from the nemo timing output
             if ${oifs_on}; then
                 oifs_ws_resolutions=($(bashify_array "%WEAKSCALING.OIFS_RESOLUTION%"))
                 oifs_resolution=${oifs_ws_resolutions[$i]}
@@ -207,13 +200,35 @@ function post_ecearth4()
     return 0
 }
 
+function post_hpcw_icon()
+{
+    cd ${run_dir} || exit
+
+    local icon_nproc=${test_procs[$i]}
+    model_nproc=${icon_nproc}
+
+    cp ${run_dir}/timing.output ${run_dir}/icon-${test}-timing.output
+
+    local variables_to_report="nproc"
+    report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
+}
+
 function post_hpcw()
 {
+    local component
+    # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+    component=$(bashify_array "%MODEL.COMPONENTS%" true)
+    component=$(echo "${component%% *}" | tr '[:upper:]' '[:lower:]')
+
+    if [ "${component}" == "icon" ]; then
+        post_hpcw_icon
+        return $?
+    fi
+
     post_nemo
 
     case ${current_member} in
         "tracing")
-            # Remove unneeded files
             cp ${run_dir}/${model}.prv ${run_dir}/nemo.prv
             cp ${run_dir}/${model}.pcf ${run_dir}/nemo.pcf
             cp ${run_dir}/${model}.row ${run_dir}/nemo.row
@@ -224,7 +239,6 @@ function post_hpcw()
 function post_monarch()
 {
     if [ ${current_member} = "tracing" ]; then
-        # Remove unneeded files
         cp ${run_dir}/1/${model}.prv ${run_dir}/
         cp ${run_dir}/1/${model}.pcf ${run_dir}/
         cp ${run_dir}/1/${model}.row ${run_dir}/
@@ -235,13 +249,10 @@ function post_monarch()
     model_sdpd=0
     for split in $(seq 1 ${splits}); do
         split_run_dir=${run_dir}/${split}
-        # Extract the time string from the `time` output (e.g. "11m21.224s", "1h2m3.456s", "21.224s")
         time_str=$(grep "real" ${split_run_dir}/model_output.log | awk '{print $2}')
-        # Parse hours, minutes, seconds (seconds may be fractional)
         hours=$(echo "${time_str}" | grep -oE '[0-9]+h' | grep -oE '[0-9]+' 2>/dev/null || echo 0)
         minutes=$(echo "${time_str}" | grep -oE '[0-9]+m' | grep -oE '[0-9]+' 2>/dev/null || echo 0)
         seconds=$(echo "${time_str}" | grep -oE '[0-9]+(\.[0-9]+)?s' | grep -oE '[0-9]+(\.[0-9]+)?' 2>/dev/null || echo 0)
-        # Compute total seconds
         execution_time=$(echo "scale=6; (${hours} * 3600) + (${minutes} * 60) + ${seconds}" | bc -l)
         simulated_hours=%MONARCH.NHOURS%
         split_sdpd=$(echo "scale=4; (3600 * ${simulated_hours}) / ${execution_time}" | bc -l)

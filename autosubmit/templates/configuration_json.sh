@@ -23,6 +23,7 @@ ppn=%PROCESSORS_PER_NODE%
 
 # Load array variables
 components=$(bashify_array "%MODEL.REPORT_COMPONENTS%" true)
+component=$(echo "${components%% *}" | tr '[:upper:]' '[:lower:]')
 
 # Set the input files depending on the model
 reporter_params=""
@@ -59,6 +60,10 @@ case "$current_member" in
         if [ "${model}" == "monarch" ]; then
             reporter_params+=" --scalability-variable sdpd"
         fi
+
+        if [ "${model}" == "hpcw" ] && [ "${component}" == "icon" ]; then
+            reporter_params+=" --scalability-variable time"
+        fi
     ;;
     "tracing")
         uf_enabled="%TRACING.USER_FUNCTIONS.ENABLED%"
@@ -85,6 +90,10 @@ case "$current_member" in
         if [ "${model}" == "monarch" ]; then
             reporter_params+=" --scalability-variable sdpd"
         fi
+
+        if [ "${model}" == "hpcw" ] && [ "${component}" == "icon" ]; then
+            reporter_params+=" --scalability-variable time"
+        fi
     ;;
     "weakscaling")
         tests="%WEAKSCALING.TEST_NAMES%"
@@ -104,14 +113,12 @@ do
     cd ${test_folder} || exit
     
     tmp_reporter_params="${reporter_params} -j ${test}.json --cases-component-data ${cases_variables}"
-    # Generate scaling report only if not Tracing
     if [ "${current_member}" != "tracing" ]; then
         tmp_reporter_params="${tmp_reporter_params} \
         --scalability-file ${test}_scaling.csv \
         --scalability-plot ${test}_scaling.png"
     fi
     
-    # Create param file for the python script
     {
         echo processes_per_node=${ppn} 
         echo configuration_name=${test}

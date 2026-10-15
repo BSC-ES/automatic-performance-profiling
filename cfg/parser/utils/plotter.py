@@ -46,19 +46,12 @@ def detect_outliers(nproc, sypd):
 
     sypd_residuals = sypd - sypd_expected
 
-    # Calculate IQR for residuals
-    sypd_q1, sypd_q3 = np.percentile(
-        sypd_residuals, [25, 75]
-    )  # [25, 75] interquartile range
+    sypd_q1, sypd_q3 = np.percentile(sypd_residuals, [25, 75])
     sypd_iqr = sypd_q3 - sypd_q1
 
-    # Dynamic IQR multiplier (more tolerant for larger nproc)
     tolerance = 1.0
-
-    # Outlier thresholds (SYPD: low values, CHSY: high values)
     sypd_lower = sypd_expected + (sypd_q1 - tolerance * sypd_iqr)
 
-    # Identify outliers
     sypd_outliers = sypd < sypd_lower
     sypd_inliers = sypd >= sypd_lower
 
@@ -92,7 +85,6 @@ def plotter(
 
         x_max_length = 0
 
-        # Initialize arrays for x, y, and y_err
         x, y, y_err = np.array([]), np.array([]), np.array([])
         for case in cases:
             if component == "":
@@ -129,7 +121,6 @@ def plotter(
             plt.scatter(x, y, marker=".")
 
         if error_bars and len(y_err) == len(cases):
-            # Match the plot's line color, but darker
             line_color = plt.gca().lines[-1].get_color()
             line_color_rgb = np.array(mcolors.to_rgb(line_color))
             darker_color = mcolors.to_hex(line_color_rgb * 0.6)
@@ -145,8 +136,8 @@ def plotter(
 
         x_min, x_max = min(x), max(x)
         y_min, y_max = min(y), max(y)
-        x_range = abs(x_max - x_min)
-        y_range = abs(y_max - y_min)
+        x_range = abs(float(x_max) - float(x_min))
+        y_range = abs(float(y_max) - float(y_min))
         if plot_ideal:
 
             def ideal_speed(cores):

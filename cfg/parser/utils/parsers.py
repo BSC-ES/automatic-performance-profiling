@@ -121,7 +121,6 @@ def parse_paramedir_files(files):
     """
     results = {}
     for filename in files:
-        # Get core count and information type from filename
         component, id, information_type = parse_paramedir_filename(filename)
 
         nproc = 0
@@ -136,8 +135,6 @@ def parse_paramedir_files(files):
             nproc += int(split_id[i + 1])
             i += 2
         results[id]["nproc"] = nproc
-        # Initialize dictionary in case it does not exists
-        # Retrieve the section to store the data
         address = (id,
                    "components",
                    component,
@@ -145,7 +142,6 @@ def parse_paramedir_files(files):
                    information_type,
                    )
         dictionary_section = dictionary_pointer(results, address)
-        # Open the file and process the contents
         with open(filename, encoding="utf8") as f:
             text = f.read()
             histograms = split_3d_histogram(text)
@@ -280,6 +276,41 @@ def parse_nemo_timing(timing_fn: str):
 
     return data
 
+def parse_icon_timing(timing_fn: str) -> dict:
+    """
+    Parse an ICON timing file produced by the \\time command with the @hpcw-time: format.
+
+    The expected format is: @hpcw-time: COMMAND: Xuser Ysystem eelapsed PCPU (Ztext+Wdata Mmax)k
+
+    Only the elapsed wall-clock time (e) is extracted; all other metrics are set to defaults
+    since ICON does not report timestep or SYPD information directly.
+
+    Args:
+        timing_fn (str): Path to the ICON timing output file.
+
+    Returns:
+        dict: A dictionary with keys:
+            - "time" (float): Elapsed wall-clock time in seconds.
+            - "ts_per_second" (float): Defaults to 1.0 (no timestep data).
+            - "sypd" (float): Defaults to 0.0 (no SYPD data).
+            - "nproc" (int): Defaults to 0 (not available from timing output alone).
+    """
+    data = {
+        "time": 0.0,
+        "ts_per_second": 1.0,
+        "sypd": 0.0,
+        "nproc": 0
+    }
+    pattern = r"@hpcw-time:.*?(\d+\.\d+)elapsed"
+    with open(timing_fn, "r", encoding="utf8") as f:
+        for line in f:
+            match = re.search(pattern, line)
+            if match:
+                data["time"] = float(match.group(1))
+                break
+    return data
+
+
 def parse_ifs_file(file):
     """Parse an IFS (Input File System) statistics file to calculate timestamps per second.
 
@@ -324,11 +355,9 @@ def parse_dimemas_files(files):
     """
     results = {}
     for filename in files:
-        # Get core count and information type from filename
         cores, simulation_type, information_type = parse_dimemas_filename(
             filename)
         cores = int(cores)
-        # Retrieve the section to store the data
         address = (cores,
                    "Dimemas",
                    simulation_type,
@@ -369,7 +398,6 @@ class TimingInformation:
     def __init__(self, timing_files: list=None, lucia_files: list=None, paramedir_files=None, dimemas_files=None, ifs_files=None, test_info_files=None, test_info_yaml_files=None,
                  processes_per_node: int=48, json_file=None, param_file=None, components=None):
 
-        # Init class variables
         self.experiment_name = None
         self.cases = None
         self.base_case = None
@@ -384,7 +412,6 @@ class TimingInformation:
         if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files) and (not ifs_files) and (not test_info_files) and (not test_info_yaml_files):
             raise AssertionError("No files provided")
 
-        # Update values with the provided files
         if json_file:
             self.load_json(json_file)
         if test_info_files:
@@ -502,10 +529,8 @@ class TimingInformation:
                     ret_val[function][case] = {
                         "nproc": nproc, "elapsed_time": 0}
                     try:
-                        # Store results in dictionary if present
                         ret_val[function][case]["elapsed_time"] = self[case]["components"][component_name]["fastest_ts_functions_info"][function]
                     except KeyError:
-                        # Remove the entry and pass to the next function
                         del ret_val[function]
                         break
         return ret_val
@@ -561,6 +586,13 @@ class TimingInformation:
                 for dict_line in reader:
                     component_name = dict_line["component"]
                     dict_line.pop("component")
+                    # csv.DictReader returns all values as strings; convert known numeric fields
+                    for numeric_key in ("nproc", "sypd", "grid_points"):
+                        if numeric_key in dict_line and dict_line[numeric_key] not in (None, ""):
+                            try:
+                                dict_line[numeric_key] = int(dict_line[numeric_key]) if numeric_key == "nproc" else float(dict_line[numeric_key])
+                            except ValueError:
+                                pass  # leave as-is if conversion fails
                     if component_name == "experiment":
                         test_dict.update(dict_line)
                     elif component_name == "model":
@@ -612,14 +644,12 @@ class TimingInformation:
                 val = val[1:-1]
             param_dictionary[key.strip()] = val.strip().split(" ")
 
-        # Set the real number of processes used
         try:
             ppn = param_dictionary['processes_per_node'][0]
             self.processes_per_node = ppn
         except KeyError:
             pass
 
-        # If name for the experiment was not passed load it from param file
         if self.experiment_name is None:
             try:
                 self.experiment_name = param_dictionary['configuration_name'][0]
@@ -654,7 +684,6 @@ class TimingInformation:
         cases where function names might not be present in the trace data by skipping those functions.
         """
         import re
-        # Function plot L3 cache misses vs IPC
         import matplotlib.pyplot as plt
         import numpy as np
 
@@ -664,27 +693,22 @@ class TimingInformation:
         for component in self.components:
             function_info[component] = {}
             for f_name in self.functions:
-                # Track just the first Nth function
                 if n_function == length_summary:
                     break
                 function_info[component][f_name] = {'x': [], 'y': []}
                 n_function += 1
                 for case in self.components_cases[component]:
                     try:
-                        # Function name's are taken from timings, so it is possible they are not present in the trace
                         x_data = self.data[case]["components"][component]["counters"][x_axis][f_name]['Average']
                         y_data = self.data[case]["components"][component]["counters"][y_axis][f_name]['Average']
                     except KeyError:
-                        # If the function was not tracked delete dictionary entry and skip to next function
                         del function_info[component][f_name]
                         n_function -= 1
                         break
 
-                    # Add the data to the dictionary
                     function_info[component][f_name]['x'] += x_data
                     function_info[component][f_name]['y'] += y_data
 
-        # Create the plot
         for component_name, component_function_info in function_info.items():
             output_name = component_name + "-" + x_axis + "-" + y_axis + ".png"
 
@@ -700,7 +724,6 @@ class TimingInformation:
             ax.set_ylabel(y_axis)
             for i, f_name in enumerate(component_function_info):
                 if f_name[0] == "_":
-                    # Remove leading underscores that python does not know how to render
                     legend_name = re.sub('^_+', "", f_name)
                 else:
                     legend_name = f_name
@@ -771,13 +794,11 @@ class TimingInformation:
         The method will ensure that the filename has a .json extension before saving.
         """
         import json
-        # Check if file name has been passed, if not use experiment name
         if filename is None:
             if self.experiment_name is not None:
                 filename = self.experiment_name + ".json"
             else:
                 filename = "experiment.json"
-        # add extension if not there
         if not filename.count(".json"):
             filename = filename + ".json"
         dictionary_to_save = {
@@ -921,7 +942,10 @@ class TimingInformation:
             component, id = parse_filename(timing_fn, pattern)
             address = (id, "components")
             dictionary_section = dictionary_pointer(timing_dict, address)
-            dictionary_section[component] = parse_nemo_timing(timing_fn)
+            if component == "icon":
+                dictionary_section[component] = parse_icon_timing(timing_fn)
+            else:
+                dictionary_section[component] = parse_nemo_timing(timing_fn)
             if "ts_per_second" in timing_dict[id]:
                 timing_dict[id]["ts_per_second"] = min(
                     dictionary_section[component]["ts_per_second"], timing_dict[id]["ts_per_second"])

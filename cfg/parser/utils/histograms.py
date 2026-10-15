@@ -4,7 +4,6 @@
 from os.path import join
 import re
 
-# List of different accumulated results given by paramedir
 paramedir_labels = ("Total",
                     "Average",
                     "Maximum",
@@ -19,31 +18,25 @@ def split_3d_histogram(text3d):
     count = 0
     starts, ends = [], []
 
-    # Find starts and ends of each histogram assuming that last line will be "Avg/Max"
     starts.append(0)
     for index, line in enumerate(lines):
         if line.count("Avg/Max"):
             ends.append(index)
             starts.append(index + 1)
             count += 1
-    # Remove last start
     starts.pop(-1)
 
     histograms = {}
     # For each histogram
     for s, e in zip(starts, ends):
         case_lines = [l for l in lines[s:e + 1] if l.strip()]
-        # with extended flags long names are stored btw square brackets
         name = case_lines[0].split("[")[-1]
-        # Replace closing bracket if present
         name = name.replace("]", "")
         name = name.lower().split("_mp_")[-1]
         if name[-1] == "_":
             name = name[:-1]
-        # name = case_lines[0].strip()
         histogram = "\n".join(case_lines[1:])
         histograms[name] = histogram
-    # In case of having a single histogram, fix it
     if len(histograms) == 1:
         for key in histograms.keys():
             histograms = {"data": key + "\n" + histograms[key]}
@@ -51,8 +44,6 @@ def split_3d_histogram(text3d):
 
 
 def process_time_histogram(histogram):
-    # Returning a single value
-    # Read header line with function aliases and add index to the dictionary
     lines = histogram.split("\n")
     index_line = lines[0]
     indexes = index_line.split()
@@ -71,17 +62,13 @@ def process_time_histogram(histogram):
 
 def process_category_histogram(histogram):
     lines = [l for l in histogram.split("\n") if l.strip()]
-    # Read header line with category labels
     category_labels = lines[0]
-    # Fix problem with unnamed values
     pattern = "value [0-9]+"
     m = re.findall(pattern=pattern, string=category_labels)
     for match in m:
         replacement = match.replace(" ", "_")
         category_labels = category_labels.replace(match, replacement)
-    # TODO: Solve this hardcoded fix with a more general solution to deal with (non-)csv paramedir outputs.
     category_labels = category_labels.replace("Outside MPI", "Outside_MPI")
-    # Get list of funciont names
     categories = category_labels.split()
 
     to_return = {"names": categories}
@@ -94,7 +81,6 @@ def process_category_histogram(histogram):
         if label in paramedir_labels:
             to_return[label] = [float(_x) for _x in split_line[1:]]
 
-    # We'll filter out all the unnamed values
     indices_to_keep = [index for index, value in enumerate(
         categories) if value.count("value_") == 0]
     for key in to_return.keys():

@@ -10,33 +10,25 @@ from cfg.latex.csv_formatter import converter
 
 
 def get_files_from_path(file_path, extension=None):
-    # Manage input parameter passed with the nargs='+' option set
     if isinstance(file_path, list):
-        # A folder or a file has been passed
         if len(file_path):
             file_path = file_path[0]
         elif len(file_path) == 0:
             raise AttributeError("The path %s is empty", file_path)
-        # A list of files have been passed
         else:
             return file_path
 
-    # If a wildcard has been passed as input
     if file_path.count("*"):
         return glob(file_path)
     try:
-        # Single image
         assert os.path.isfile(file_path)
         return [file_path]
-        # A folder have been passed
     except AssertionError:
         try:
             assert os.path.isdir(file_path)
-            # This way order of the files will be the same on every platform
+            # Use sorted for consistent ordering across platforms
             files = [file_path + "/" + f for f in sorted(os.listdir(file_path))]
-            # Stores the absolute path
             files = [os.path.abspath(f) for f in files]
-            # Filters out other file's type
             if extension is not None:
                 files = [f for f in files if f.count(extension)]
             return files
@@ -83,7 +75,6 @@ class CsvFile:
         n_col = len(self.csv_data[0])
         n_row = len(self.csv_data[1:])
 
-        # Reverse otherwise removing data will end in an out of range error
         for col in reversed(range(n_col)):
             try:
                 col_val = [int(data[col]) for data in self.csv_data[1:]]
@@ -95,7 +86,6 @@ class CsvFile:
                 except ValueError:
                     continue
             if col_val == check_list:
-                # Now we want to remove entries also from the header
                 for row in range(n_row + 1):
                     self.csv_data[row].remove(self.csv_data[row][col])
 
@@ -106,15 +96,12 @@ class CsvFile:
             else:
                 with open(self.path, newline="") as csv_file:
                     self.csv_data = list(csv.reader(csv_file))
-                    # Remove rows if they're empty
                     self.csv_data = [d for d in self.csv_data if d != []]
-            # If specified, remove empty columns from csv file
             if csv_purge:
                 self.purge_csv_data()
         else:
             self.csv_data = text
 
-        # Path where the file data will be dumped
         self.store_path = "csv/" + self.section
         if self.subsection is not None:
             self.store_path = self.store_path + "/" + self.subsection
@@ -125,7 +112,6 @@ class CsvFile:
         n_col = len(self.csv_data[0])
         n_row = len(self.csv_data[1:])
 
-        # Reverse otherwise removing data will end in an out of range error
         for col in reversed(range(n_col)):
             try:
                 col_val = [int(data[col]) for data in self.csv_data[1:]]
@@ -137,11 +123,9 @@ class CsvFile:
                 except ValueError:
                     continue
             if col_val == check_list:
-                # Now we want to remove entries also from the header
                 for row in range(n_row + 1):
                     self.csv_data[row].remove(self.csv_data[row][col])
 
-    # Writes csv data to file
     def dump2disk(self, absolute_path):
         if os.path.exists(absolute_path + self.store_path + "/" + self.name):
             import hashlib
@@ -188,19 +172,16 @@ class ImgFile:
             self.caption = self.name
         self.caption = self.caption.replace("_", "\\_")
 
-    # Stores the image in an obj
     def store(self):
         with open(self.path, "rb") as img:
             self.pic = io.BytesIO(img.read())
 
-        # Path where the img will be saved
         self.store_path = "image/" + self.section
         if self.subsection is not None:
             self.store_path = self.store_path + "/" + self.subsection
             if self.subsubsection is not None:
                 self.store_path = self.store_path + "/" + self.subsubsection
 
-    # Dumps the image to  the location specified in path
     def dump2disk(self, absolute_path):
         image_absolute_path = os.path.join(absolute_path, self.store_path, self.name)
         with open(image_absolute_path, "wb") as f:
@@ -237,14 +218,12 @@ class Section:
             img_obj = ImgFile(
                 img, self.section_name, subsection_name, subsubsection_name, caption
             )
-            # Avoid adding item more than once ... useful in case of make target's failure
             for s_img in self.images:
                 if img_obj.path == s_img.path:
                     warnings.warn(
                         "Image " + img_obj.path + " already present", stacklevel=4
                     )
                     return
-            # Save the actual picture in the img_obj
             img_obj.store()
             self.images.append(img_obj)
 
@@ -281,7 +260,6 @@ class Section:
                 _rotate=rotate,
                 _fit_margins=fit_margins,
             )
-            # Avoid adding item more than once ... useful in case of make target's failure
             for s_csv in self.csv_files:
                 if csv_obj.path == s_csv.path:
                     warnings.warn(
@@ -290,7 +268,6 @@ class Section:
                     return
             self.csv_files.append(csv_obj)
 
-    # Some text, produced by some python script in csv format will be added to the report
     def add_text_as_csv(
         self,
         csv_format_text,
@@ -305,9 +282,7 @@ class Section:
             _subsubsection_name=subsubsection_name,
             _caption=computed_quantity,
         )
-        # Save the data in the csv_obj
         csv_obj.store(csv_format_text)
-        # Add to report obj
         self.csv_files.append(csv_obj)
 
     def get_subsection(self, subsection_title):
@@ -320,7 +295,6 @@ class Section:
         subsection = Subsection(self.section_title, subsection_title)
         self.subsections.append(subsection)
 
-    # Save into a variable the text we will put into the section
     def add_text(self, section_text):
         try:
             assert os.path.isfile(section_text)
@@ -338,13 +312,11 @@ class Subsection(Section):
         self.subsubsections = []
         self.subsection_number = 0
 
-    # Overwrites method adding images subsection info
     def add_image(self, file_path, subsubsection_name=None, caption=None):
         super(Subsection, self).add_image(
             file_path, self.subsection_name, subsubsection_name, caption
         )
 
-    # Overwrites method adding csv subsection info
     def add_csv(
         self,
         file_path,
@@ -368,7 +340,6 @@ class Subsection(Section):
             fit_margins,
         )
 
-    # Overwrites method adding csv subsection info
     def add_text_as_csv(
         self, csv_format_text, computed_quantity, subsubsection_name=None
     ):
@@ -399,13 +370,11 @@ class Subsubsection(Subsection):
         self.subsubsection_name = self.subsection_title.lower().replace(" ", "_")
         self.subsubsection_number = 0
 
-    # Overwrites method adding images subsection info
     def add_image(self, file_path, caption=None):
         super(Subsubsection, self).add_image(
             file_path, self.subsubsection_name, caption
         )
 
-    # Overwrites method adding csv subsection info
     def add_csv(
         self,
         file_path,
@@ -427,7 +396,6 @@ class Subsubsection(Subsection):
             fit_margins,
         )
 
-    # Overwrites method adding csv subsection info
     def add_text_as_csv(self, csv_format_text, computed_quantity):
         super(Subsubsection, self).add_text_as_csv(
             csv_format_text, computed_quantity, self.subsubsection_name
@@ -476,7 +444,6 @@ class LatexText:
             self.add_text(subsubsection.text)
 
     def add_image2tex(self, image: ImgFile, absolute_path: str) -> None:
-        # Create img dir if it doesn't exist
         image_store_dir_abs_path = os.path.join(absolute_path, image.store_path)
         image_store_relative_path = os.path.join(image.store_path, image.name)
         os.makedirs(image_store_dir_abs_path, exist_ok=True)
@@ -493,9 +460,7 @@ class LatexText:
         self.new_line()
 
     def add_csv2tex(self, csv_file: CsvFile, absolute_path: str) -> None:
-        # Update path
         csv_file.store_path = csv_file.store_path
-        # Create img dir if it doesn't exist
         os.makedirs(absolute_path + csv_file.store_path, exist_ok=True)
         csv_file.dump2disk(absolute_path)
 
@@ -533,7 +498,6 @@ class LatexText:
 
 class Report:
     def __init__(self, _name: str):
-        # Name that will be used for the latex doc, without path
         self.name = _name.replace(".pkl", "").split("/")[-1]
         self.absolute_path = None
         self.obj_name = _name
@@ -579,7 +543,6 @@ class Report:
         self.authors = authors
 
     def __set_absolute_path(self):
-        # Update patterns
         absolute_path = os.path.abspath(self.obj_name).rsplit("/", 1)[0] + "/"
         self.absolute_path = absolute_path
 
@@ -611,13 +574,10 @@ class Report:
         self.image_folder = os.path.join(self.absolute_path, "image")
         self.csv_folder = os.path.join(self.absolute_path, "csv")
         self.name = os.path.join(self.absolute_path, self.name)
-        # Create root folder for images and csv
         os.makedirs(self.image_folder, exist_ok=True)
         os.makedirs(self.csv_folder, exist_ok=True)
 
-        # Add bsc logo to the report
         self.__set_logo()
-        # Crete latex text object
         report_text = LatexText()
         report_text.add_text(self.preamble)
         report_text.add_text("\\begin {document}")
@@ -642,17 +602,10 @@ class Report:
         f_ncf.close()
 
     def write_to_txt(self):
-        # Set first page
         self.__set_authors()
         self.__set_title()
-
-        # Define where to create report
         self.__set_absolute_path()
-
-        # Now that absolute path has been set we can start dumping to disk
         self.__create_newcommand_file()
-
-        # Initialize text member of the class and add preamble
         self.__begin_doc()
 
         for section in self.sections:
@@ -686,7 +639,6 @@ class Report:
 
         file_name = self.name + ".tex"
         report_file = open(file_name, "w")
-        # Actually writes the text to file
         report_file.write(self.text.text)
         report_file.close()
         return file_name

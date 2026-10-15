@@ -23,6 +23,13 @@ root_dir=%CURRENT_ROOTDIR%
 
 components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
+scalability_variable=""
+if [ "${model}" == "monarch" ]; then
+    scalability_variable="sdpd"
+elif [ "${model}" == "hpcw" ] && [ "${components[0],,}" == "icon" ]; then
+    scalability_variable="time"
+fi
+
 #####################################################################################################################
 # Brief: Adds STREAM and OSU images to the report
 # Global:
@@ -89,8 +96,7 @@ function add_strongscaling() {
             --add-caption "Cases processors configuration" \
             -T ${cfg}/latex/text/Scalability.txt
 
-        # Add full model scaling only if there is more than one component
-        if [ ${#components[@]} -gt 1 ]; then
+            if [ ${#components[@]} -gt 1 ]; then
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "Scalability" \
@@ -118,7 +124,6 @@ function add_strongscaling() {
                 --add-csv ${component}_${test}_scaling.csv
         done
 
-        # Coupling info (ECE4 only)
         coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
         coupling_enabled=${coupling_enabled,,}
         if ${coupling_enabled} && [ ${model} = "ecearth4" ]; then
@@ -143,7 +148,6 @@ function add_strongscaling() {
 }
 
 function add_user_functions() {
-    # Add whole model info only if it has more than 2 components
     if [ ${#components[@]} -gt 1 ]; then
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
@@ -160,7 +164,6 @@ function add_user_functions() {
     fi
 
     for component in "${components[@]}"; do
-        # Add component most time consuming functions table
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Tracing" \
@@ -169,7 +172,6 @@ function add_user_functions() {
             --add-csv ${component}_most_expensive_function_summary.csv \
             --add-caption "Most time-consuming functions for ${component^^}." -f
 
-        # Add papi counters plots plots
         local papi_counters_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
         for papi_counter_plot in ${papi_counters_plots}; do
             local img_file=${component}-${papi_counter_plot}.png
@@ -185,7 +187,6 @@ function add_user_functions() {
                 --add-caption "${papi_caption}"
         done
 
-        # Add user functions time/PAPI/MPI scalability
         function_csv_functions=$(find ${test_root}/function_csv/ -type f ! -empty | { grep "${component}" || true; })
         for file_path in ${function_csv_functions}; do
             file_name=$(basename ${file_path})
@@ -231,7 +232,6 @@ function add_paraver() {
     local case_comparison_cfgs="%TRACING.PARAVER.COMPARE_CFGS%"
     local paraver_cfgs="%TRACING.PARAVER.CFGS%"
     for component in "${components[@]}"; do
-        # Create and add case comparison Paraver views
         for case_comparison_cfg in ${case_comparison_cfgs}; do
             local img_caption="${case_comparison_cfg} for the fastest timestep of the cases (top to bottom): "
             local case_comparison_imgs=""
@@ -253,7 +253,6 @@ function add_paraver() {
                 --add-caption "$img_caption."
         done
         
-        # Add other Paraver views
         for case in "${tracing_names[@]}"; do                    
             for paraver_cfg in $paraver_cfgs; do
                 case_paraver_folder=${test_root}/paraver_images/${case}
@@ -346,7 +345,6 @@ function add_tracing() {
 
         cd ${test_root} || exit
 
-        # Create and add test configuration
         {   
             echo "Configuration,Value";
             if [ ${model} != "monarch" ]; then
@@ -393,9 +391,7 @@ function add_compilation_efficiency() {
     ce_names=($(bashify_array "${ce_names}" true))
     local flags="-s"
 
-    if [ "${model}" == "monarch" ]; then
-        flags+=" --scalability-variable sdpd"
-    fi
+    [ -n "${scalability_variable}" ] && flags+=" --scalability-variable ${scalability_variable}"
 
     json_files=""
     multiexperiment_id=""
@@ -404,7 +400,6 @@ function add_compilation_efficiency() {
         multiexperiment_id+="${ce_name}-"
     done
 
-    # Generate tests comparisson csv
     python3 ${cfg}/parser/comparator.py \
         --json-files ${json_files}  \
         ${flags} \
@@ -413,7 +408,6 @@ function add_compilation_efficiency() {
     member_title=${current_member//_/ }
     member_title=${member_title^}
 
-    # Add cases info table
     test_folders=($run_root/$current_member/*/)
     for test_folder in "${test_folders[@]}"; do
         python3 ${cfg}/latex/ReportGenerator.py \
@@ -424,7 +418,6 @@ function add_compilation_efficiency() {
             --add-caption "$(basename ${test_folder}) cases info." 
     done
 
-    # Add model's case comparisson table and section's text
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
@@ -449,7 +442,8 @@ function add_compilation_efficiency() {
 function add_weakscaling() {
     local flag=-w
 
-    # Generate tests comparisson csv
+    [ -n "${scalability_variable}" ] && flag+=" --scalability-variable ${scalability_variable}"
+
     python3 ${cfg}/parser/comparator.py \
         --json-files $run_root/$current_member/*/*.json \
         ${flag} \
@@ -458,7 +452,6 @@ function add_weakscaling() {
     member_title=${current_member//_/ }
     member_title=${member_title^}
 
-    # Add model's case comparisson table and section's text
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
@@ -467,7 +460,6 @@ function add_weakscaling() {
         --add-caption "${member_title} case comparison scalability." \
         -T ${cfg}/latex/text/${current_member,,}.txt
 
-    # Add models case comparisson table
     for component in "${components[@]}"; do
         python3 ${cfg}/latex/ReportGenerator.py \
             -O ${report_full_path}.pkl \
@@ -493,14 +485,12 @@ report_full_path=${report_folder}/report
 rm -rf ${report_folder}
 mkdir -p ${report_folder}
 
-# Add the introduction to the report
 python3 ${cfg}/latex/ReportGenerator.py \
     -O ${report_full_path}.pkl \
     --section-title "Introduction" \
     --section-number 1 \
     -T ${cfg}/latex/Introduction.txt
 
-# Create and add test configuration info
 {   
     echo "Configuration,Value";
     [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "Resolution, %EXPERIMENT.RESOLUTION%";
@@ -531,7 +521,6 @@ declare -A enabled_members=(
     ["weakscaling"]="%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%"
     ["compilation_efficiency"]="%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%"
 )
-# Add all members
 for current_member in "${!enabled_members[@]}"; do
     if ${enabled_members[$current_member],,}; then
         add_${current_member,,}
@@ -554,12 +543,10 @@ python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-titl
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --report-authors "${authors}"
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --logo-path "${logo_path}"
 
-# Create the tex file
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path} --dump-to-file
 
 if ! command -v pdflatex &> /dev/null; then 
     echo pdflatex cmd not available, you can find the tex file ${report_full_path}.tex;
 else
-    # Compile the report
     pdflatex --shell-escape report.tex && pdflatex report.tex
 fi

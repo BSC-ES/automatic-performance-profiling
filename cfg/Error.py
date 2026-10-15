@@ -21,7 +21,6 @@ class PathType(object):
 
     def __call__(self, string):
         if string == '-':
-            # the special argument "-" means sys.std{in,out}
             if self._type == 'dir':
                 raise err('standard input/output (-) not allowed as directory path')
             elif self._type == 'symlink':

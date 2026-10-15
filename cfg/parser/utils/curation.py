@@ -198,7 +198,6 @@ def function_curated_summary(experiment_data: dict, filename: str):
         - Efficiency: The efficiency of resource usage in each case.
     """
     log = Log()
-    # Get the dictionary of function
 
     for component in experiment_data.components:
         fun_results = experiment_data.get_function_info(component)
@@ -215,7 +214,6 @@ def function_curated_summary(experiment_data: dict, filename: str):
                 case_speed = float(fun_results[k][case]["elapsed_time"])
                 resource_increase = case_nproc / base_nproc
                 resources += " %.2f" % case_nproc
-                # Avoid dividing by zero
                 speedup += " %.2f" % (base_result / (case_speed + 1e-10))
                 efficiency += " %.2f" % (
                     (base_result / (case_speed + 1e-10)) / resource_increase
@@ -474,19 +472,16 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
     from os import mkdir
     from os.path import isdir
 
-    # Create results folder
     if not isdir(csv_folder):
         mkdir(csv_folder)
 
     log = Log()
 
-    # Get a dictionary with function info ordered by elapsed Time
     for component in experiment_data.components:
         fun_results = experiment_data.get_function_info(component)
 
         for k in fun_results:
 
-            # List to store data
             resources = []
             speedup = []
             efficiency = []
@@ -494,12 +489,10 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
             base_case = next(iter(fun_results[k]))
             base_case_nprocs = int(fun_results[k][base_case]["nproc"])
             base_result = fun_results[k][base_case]["elapsed_time"]
-            # Fill list with formatted data
             for case in fun_results[k].keys():
                 nproc = int(fun_results[k][case]["nproc"])
                 resource_increase = nproc / base_case_nprocs
                 resources.append(f"{nproc}")
-                # Avoid division by zero
                 case_speedup = base_result / (
                     fun_results[k][case]["elapsed_time"] + 1e-10
                 )
@@ -509,7 +502,6 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
                 speedup.append(f"{case_speedup:.2f}")
                 efficiency.append(f"{case_efficiency:.2f}")
 
-            # Declare array to be saved in csv
             header = np.array(["resources (nproc)", "speedup", "efficiency"], dtype=str)
 
             data = np.empty((3, len(resources)))
@@ -636,12 +628,10 @@ def tracking(experiment_data, folder, threshold=0.01):
     from os import makedirs
     from os.path import abspath
 
-    # Keep only the functions that represent more time than the defined threshold
     MPI_folder = folder + "/MPI"
     counters_folder = folder + "/counters"
     makedirs(MPI_folder, exist_ok=True)
     makedirs(counters_folder, exist_ok=True)
-    # Joint log
     full_log = Log()
     for component in experiment_data.components:
         total_time, functions_time = function_information_from_paramedir_outputs(
@@ -673,7 +663,6 @@ def tracking(experiment_data, folder, threshold=0.01):
                 counters_log.save(f"{counters_folder}/{component}_{function}.csv")
                 full_log += counters_log
 
-    # full_log.print()
 
 
 def tracking_mpi_profile_per_function(
@@ -702,21 +691,6 @@ def tracking_mpi_profile_per_function(
     )
     mpi_dictionary = go_to_dictionary_address(experiment_data, address)
     mpi_fields = list(mpi_dictionary[function]["names"])
-    # All MPI fields that can be found in a NEMO trace (Probably should find a more generic way
-    #                 0 Outside_MPI
-    #                 1 MPI_Recv
-    #                 2 MPI_Isend
-    #                 3 MPI_Wait
-    #                 4 MPI_Bcast
-    #                 5 MPI_Barrier
-    #                 6 MPI_Allreduce
-    #                 7 MPI_Comm_rank
-    #                 8 MPI_Comm_size
-    #                 9 MPI_Comm_dup
-    #                 10 MPI_Init
-    #                 11 MPI_Finalize
-    #                 12 MPI_Iallreduce
-
     mpi_fields_to_keep = (
         "Outside_MPI",
         "MPI_Recv",
@@ -734,7 +708,6 @@ def tracking_mpi_profile_per_function(
     cases = experiment_data.cases
 
     log = Log()
-    # log_txt = "\n%s\n" % function
     log_txt = "Cores"
     for index, field in enumerate(mpi_fields):
         if index not in mpi_indices_to_keep:
@@ -787,7 +760,6 @@ def tracking_counters_per_function(
     available_counters = ["Instructions", "Cycles", "IPC", "Time"]
     labels = ["Instructions", "Cycles", "IPC", "Time(ms)"]
 
-    # Header
     log_text = "Processes"
     for index, counter in enumerate(available_counters):
         log_text += f",{labels[index]}"
@@ -1063,7 +1035,6 @@ def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
     base_case = min(cases_to_compare)
     log = Log()
 
-    # Simulated Years per Day
     exp1_base_case_speed = experiment1[base_case]["sypd"]
     exp2_base_case_speed = experiment2[base_case]["sypd"]
     ratio = exp2_base_case_speed / exp1_base_case_speed
@@ -1096,7 +1067,6 @@ def experiment_comparison(experiment1: dict, experiment2: dict) -> Log:
                 ratio,
             )
         )
-    # Time-step length
     exp1_base_length = experiment1[base_case]["avg_ts_time"]
     exp2_base_length = experiment2[base_case]["avg_ts_time"]
     log.add("_" * 30)
@@ -1152,7 +1122,6 @@ def multiexperiment_comparison(
     Notes:
         - Cases are considered matching if they use the same number of processors
     """
-    # Initialize results printout
     log = Log()
 
     corresponding_cases = [["" for _ in experiments] for _ in experiments[0].cases]
@@ -1165,7 +1134,6 @@ def multiexperiment_comparison(
                     corresponding_cases[i][j + 1] = case
                     break
 
-    # Add data
     header = "Nproc"
     for i, experiment in enumerate(experiments):
         header += f", {experiment.experiment_name} {scalability_variable}"
@@ -1270,14 +1238,12 @@ def weakscaling_compute(experiments: list, file_out: str) -> None:
 
 
 def find_common_cases_and_functions(experiments):
-    # Find cases that are common in all the experiments
     common_cases = set(experiments[0].cases)
     for experiment in experiments[1:]:
         common_cases.intersection_update(experiment.cases)
     common_cases = list(common_cases)
     base_case = min(common_cases)
 
-    # Search common functions
     common_functions = set(experiments[0][base_case]["total_sim_functions_time"].keys())
     for experiment in experiments[1:]:
         common_functions.intersection_update(
@@ -1311,7 +1277,6 @@ def fit_step_time_to_model(experiments):
 def my_model(individual, data):
     import numpy as np
 
-    # define a fitness function
     def time_model(parameter_set, nn, nc):
         A, B, C, D, E = parameter_set
         return A / nn + B / nc + C * np.log(nn) + D * np.log(nc) + E
@@ -1348,7 +1313,7 @@ def genetic_optimizer(data, model):
         generations=400,
         crossover_probability=0.4,
         mutation_probability=0.5,
-    )  # initialise the GA with data
+    )
     max_time = max([x[2] for x in data])
 
     def create_individual(data):
@@ -1370,13 +1335,13 @@ def genetic_optimizer(data, model):
         individual[index] += np.random.normal(0.05)
         return individual
 
-    ga.fitness_function = model  # set the GA's fitness function
+    ga.fitness_function = model
     ga.create_individual = create_individual
     ga.crossover_function = crossover
     ga.mutate_function = mutate
 
-    ga.run()  # run the GA
-    return ga.best_individual()  # print the GA's best solution
+    ga.run()
+    return ga.best_individual()
 
 
 def custom_optimizer(data, model):
