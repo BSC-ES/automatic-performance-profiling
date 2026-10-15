@@ -1,4 +1,4 @@
-%CCOMPILER           mpicc
+%CCOMPILER           mpicxx
 %FCOMPILER           mpif90
 %LINKER              mpif90 -nofor-main
 
