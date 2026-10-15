@@ -1,24 +1,27 @@
 # MODEL CONFIG
 MODEL:
   NAME: hpcw
-  COMPONENTS: [nemo]
-  REPORT_COMPONENTS: [nemo]
+  COMPONENTS: [icon]
+  REPORT_COMPONENTS: [icon]
   ORIGIN: https://gitlab.dkrz.de/hpcw/hpcw.git
   BRANCH: v3.0
 
-  # Arch files prefixes to compile
-  # The arch file has to be located in cfg/arch/PLATFORM/MODEL/
-  # - For ecearth4: ARCH_NAME.yml
-  # - For nemo: arch-ARCH_NAME.fcm
-  ARCH_NAMES: [O1_prod, O3_prod, O3_trace]
+  # Arch file prefixes in cfg/arch/PLATFORM/MODEL/ (e.g. arch-O1_prod.fcm for nemo)
+  ARCH_NAMES: [O1_prod, O3_prod]
+
+  # Shared ExternalData cache (avoids re-downloading ICON/NEMO inputs per arch).
+  # Must be on a filesystem shared by the compilation platform.
+  # Leave empty for a throwaway store; populate with cfg/utils/hpcw/populate_store.sh
+  STORE: "/gpfs/scratch/bsc32/bsc032333/hpcw-store"
 
 # EXPERIMENT CONFIG
 EXPERIMENT:
-  # Current available HPCW test configurations: 
-  #   - orca025-medium
-  #   - orca1-like-small
-  TEST_CONFIG: orca025-medium
-  TEST_STEPS: 32
+  # Model test case: NEMO test case or ICON input package (see <src>/doc/icon_tests.md)
+  # nemo: orca025-medium, orca1-like-small
+  # icon (by size): test_nwp_R02B04N06multi (small), NextGEMS_R2B8_2020 (medium), LAM (large)
+  COMPONENT: icon
+  TEST_CONFIG: NextGEMS_R2B8_2020
+  TEST_STEPS: 10
   OUTPUT: false
   RESOLUTION: "%EXPERIMENT.TEST_CONFIG%"
 
@@ -27,7 +30,6 @@ TRACING:
   TIMESTEP_ZERO: false
   TRACE_STEPS: 32
 
-  # CONFIG FOR USER FUNCTIONS SAMPLING
   USER_FUNCTIONS_PROC: 112
   USER_FUNCTIONS_THREADS: 4
   TRACE_N_FUNCTIONS: 40
@@ -36,23 +38,22 @@ TRACING:
   NAMES:      [trace_1, trace_2]
   PROCESSORS: [112,     224,   ]
   THREADS:    [4,       4,     ]
-  TEST_CONFIG: BENCH
+  TEST_CONFIG: test_nwp_R02B04N06multi
   ARCH_NAME: O3_trace
 
 # STRONG SCALING CONFIG
 STRONGSCALING:
-  TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
-  NAMES:      [bench_1, bench_2, bench_3]
-  PROCESSORS: [112,     224,     336    ]
-  THREADS:    [1,       1,       1      ]
-  TEST_CONFIG: BENCH
+  TEST_NAMES: [BENCH, BENCH, BENCH, BENCH]
+  NAMES:      [bench_1, bench_2, bench_3, bench_4]
+  PROCESSORS: [448, 672, 896, 1120]
+  THREADS:    [1, 1, 1, 1]
+  TEST_CONFIG: NextGEMS_R2B8_2020
   ARCH_NAME: O3_prod
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
-  # For compilation efficiency the arch name is taken from the test name
-  TEST_NAMES: [O1_prod, O1_prod, O3_prod, O3_prod]
-  NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
-  PROCESSORS: [112,     224,     112,     224    ]
-  THREADS:    [1,       1,       1,       1      ]
-  TEST_CONFIG: BENCH
+  TEST_NAMES: [O1_prod]
+  NAMES:      [O1_112 ]
+  PROCESSORS: [112    ]
+  THREADS:    [1      ]
+  TEST_CONFIG: test_nwp_R02B04N06multi

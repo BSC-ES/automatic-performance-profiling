@@ -7,16 +7,12 @@ DEFAULT:
     - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-execution.yml'
     - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs.yml'
 
-    # Disable/enable Hardware Benchmarks by commenting/uncommenting the following line
-    - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-hwbenchmarks.yml'
-    # Disable/enable Strong Scaling by commenting/uncommenting the following line
+    # Enable a test by uncommenting its line, disable by commenting it out
+    # - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-hwbenchmarks.yml'
     - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-strongscaling.yml'
-    # Disable/enable Compilation Efficiency by commenting/uncommenting the following line
     - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-compilationefficiency.yml'
-    # Disable/enable Tracing by commenting/uncommenting the following line
-    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-tracing.yml'
-    # Disable/enable Weak Scaling by commenting/uncommenting the following line
-    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-weakscaling.yml'
+    # - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-tracing.yml'
+    # - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-weakscaling.yml'
 
     - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-common.yml'
     - '%PROJDIR%/autosubmit/configuration/core/platforms/%DEFAULT.HPCARCH%.yml'

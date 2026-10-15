@@ -1,5 +1,4 @@
 EXPERIMENT:
-  # DO NOT CHANGE THIS, it is used by Autosubmit to know which tests to run
   APP_TESTS:
     STRONGSCALING:
       ENABLED: "FALSE"
@@ -10,16 +9,11 @@ EXPERIMENT:
     COMPILATION_EFFICIENCY:
       ENABLED: "FALSE"
 
-  # Can be any date, it is not used by the experiment but Autosubmit needs it
+  # Placeholders required by Autosubmit; not used by the experiment
   DATELIST: "20210811"
-  # You can disable some tests to be run by Autosubmit if you delete them from the list
-  # This can be done in your $expid/conf to don't change the proj configuration
   MEMBERS: "000"
-  # Irevelant
   CHUNKSIZEUNIT: month
-  # Irrelevant
   CHUNKSIZE: "1"
-  # Irrelevant because the lowest level of the workflow is member
   NUMCHUNKS: "1"
   CALENDAR: standard
 
@@ -36,6 +30,11 @@ COMMON_PATH_LOCATIONS:
   COMPILATION_ROOT: "%CURRENT_ROOTDIR%/compilation"
   PROVIDED_TRACES_PATH: ""
   CFG: "%COMMON_PATH_LOCATIONS.PROJECT_ROOT%/cfg"
+MODEL:
+  # Shared HPCW ExternalData cache (ICON/NEMO inputs). Set in model proj.yml;
+  # empty default creates a throwaway store per compilation directory.
+  # Populate with cfg/utils/hpcw/populate_store.sh
+  STORE: ""
 PARAMETERS_ENV_CONFIG:
   CONVERT_PARAM_FILE: "%COMMON_PATH_LOCATIONS.PROJECT_ROOT%/cfg/target/ConvertParamFile.py"
   CONFIG_FOLDER: "%COMMON_PATH_LOCATIONS.PROJECT_ROOT%/configurations"

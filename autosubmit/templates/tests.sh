@@ -5,23 +5,19 @@
 #####################################################################################################################
 
 run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
-current_member=$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS")
-current_member=${current_member,,}
 
-case "$current_member" in 
-    "hw_benchmarks")
-        mkdir -p $run_root/hardware_benchmarks/STREAM_RUN
-        ;;
-    "compilation_efficiency")
-        mkdir -p $run_root/compilation_efficiency
-        ;;
-     "weakscaling")
-        mkdir -p $run_root/weakscaling
-        ;;
-    "strongscaling")
-        mkdir -p $run_root/strong_scaling
-        ;;
-    "tracing")
-        mkdir -p $run_root/tracing
-        ;;
-esac
+if [ "%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%" == "TRUE" ]; then
+    mkdir -p $run_root/weakscaling
+fi
+if [ "%EXPERIMENT.APP_TESTS.STRONGSCALING.ENABLED%" == "TRUE" ]; then
+    mkdir -p $run_root/strong_scaling
+fi
+if [ "%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%" == "TRUE" ]; then
+    mkdir -p $run_root/compilation_efficiency
+fi
+if [ "%EXPERIMENT.APP_TESTS.TRACING.ENABLED%" == "TRUE" ]; then
+    mkdir -p $run_root/tracing
+fi
+if [ "%EXPERIMENT.APP_TESTS.HARDWARE_BENCHMARKS.ENABLED%" == "TRUE" ]; then
+    mkdir -p $run_root/hardware_benchmarks
+fi

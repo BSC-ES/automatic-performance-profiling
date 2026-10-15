@@ -23,6 +23,7 @@ JOBS:
     FOR: 
       NAME: "%MODEL.ARCH_NAMES%"
       TEST_NAME: "%MODEL.ARCH_NAMES%"
+    PROCESSORS: "%DEFAULT.PROCESSORS_PER_NODE%"
     WALLCLOCK: 02:00
     NOTIFY_ON: FAILED
   # Mainly generates the folder structure of the runs
