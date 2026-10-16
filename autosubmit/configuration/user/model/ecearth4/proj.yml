@@ -23,7 +23,7 @@ EXPERIMENT:
   TEST_STEPS: 32
   OUTPUT: FALSE
 
-  INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-oifs48/inidata
+  INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-app/inidata
 
 # TRACE CONFIG
 TRACING:

@@ -58,9 +58,9 @@ The main variables to update in this config file are:
     TEST_STEPS: 32
     OUTPUT: FALSE
 
-  # Inidata path for mn5:     /gpfs/projects/bsc32/models/ecearth/ece4-trunk/inidata
+  # Inidata path for mn5:     /gpfs/projects/bsc32/models/ecearth/ece4-app/inidata
   # Inidata path for hpc2020: /hpcperm/c3et/models/ecearth/v4-trunk
-  INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-oifs48/inidata
+  INIDATA: /gpfs/projects/bsc32/models/ecearth/ece4-app/inidata
 
 Configure the tests
 ---------------------
