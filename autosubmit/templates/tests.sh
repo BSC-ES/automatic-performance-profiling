@@ -10,7 +10,7 @@ if [ "%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%" == "TRUE" ]; then
     mkdir -p $run_root/weakscaling
 fi
 if [ "%EXPERIMENT.APP_TESTS.STRONGSCALING.ENABLED%" == "TRUE" ]; then
-    mkdir -p $run_root/strong_scaling
+    mkdir -p $run_root/strongscaling
 fi
 if [ "%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%" == "TRUE" ]; then
     mkdir -p $run_root/compilation_efficiency

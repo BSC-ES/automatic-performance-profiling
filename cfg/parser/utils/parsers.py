@@ -221,7 +221,7 @@ def parse_nemo5_timing(timing_fn: str):
 def parse_nemo4_timing(timing_fn: str):
     step_length_ptrn = "timing step *([0-9]+) *: *(.*)"
     functions_ptrn = "([0-9a-zA-Z_]+) +" + "([0-9\.E\+\-]+) +" * 7 + "([0-9\.E\+\-]+)"
-    total_time_ptrn = "Total *time : +{[0-9\.E\+]+} +\(SYPD: +([0-9\.E\+]+) +\) on +MPI +rank +: +{[0-9\.E\+}+)"
+    total_time_ptrn = r"Total *time : +([0-9\.E\+]+) +\(SYPD: +([0-9\.E\+]+) +\) on +MPI +rank +: +([0-9]+)"
 
     data = {"total_sim_functions_time": {}, "avg_ts_time": 0,
             "number_ts": 0, "ts_per_second": 0, "sypd": 0}

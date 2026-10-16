@@ -91,7 +91,7 @@ for member in "${!enabled_members[@]}"; do
             test_config="%WEAKSCALING.TEST_CONFIG%"
             ;;
         "strongscaling")
-            folder="strong_scaling"
+            folder="strongscaling"
             tests="%STRONGSCALING.TEST_NAMES%"
             test_config="%STRONGSCALING.TEST_CONFIG%"
             ;;

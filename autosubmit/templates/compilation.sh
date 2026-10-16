@@ -40,6 +40,8 @@ function compile_nemo()
     . ${env_file}
 
     cd ${exp_root}/xios || exit
+
+    git checkout -- bld.cfg
     cp $project/cfg/arch/${platform}/xios/arch-* arch
     ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
     

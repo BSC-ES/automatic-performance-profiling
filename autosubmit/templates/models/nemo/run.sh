@@ -31,9 +31,9 @@ function run_nemo()
     [ ${current_member} = "weakscaling" ] && nemo_resolution="%CURRENT_RESOLUTION%"
     [ ${current_member} = "tracing" ] && test_steps="%TRACING.TRACE_STEPS%"
 
+    mkdir -p ${run_dir}
     chmod +w -R ${run_dir}
     rm -rf ${run_dir:?}/*
-    mkdir -p ${run_dir}
     cd ${run_dir} || exit
 
     cp ${inidata}/$test_name/* ${run_dir}

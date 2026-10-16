@@ -2,8 +2,8 @@
 %FCOMPILER           mpif90
 %LINKER              mpif90 -nofor-main
 
-%BASE_CFLAGS    -fPIC -std=c++11
-%PROD_CFLAGS    -O3 -D BOOST_DISABLE_ASSERTS -DBOOST_NO_CXX11_SMART_PTR
+%BASE_CFLAGS    -fPIC -std=gnu++98
+%PROD_CFLAGS    -O3 -D BOOST_DISABLE_ASSERTS
 %DEV_CFLAGS     -g -traceback
 %DEBUG_CFLAGS   -DBZ_DEBUG -g -traceback -fno-inline
 
