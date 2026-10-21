@@ -73,10 +73,9 @@ The following list variables have to be the same length:
     TIMESTEP_ZERO: false
     TRACE_STEPS: 32
 
-    # CONFIG FOR USER FUNCTIONS SAMPLING
+    # CONFIG FOR USER FUNCTIONS
     USER_FUNCTIONS_PROC: 112
     USER_FUNCTIONS_THREADS: 4
-    TRACE_N_FUNCTIONS: 40
 
     TEST_NAMES: [BENCH,   BENCH,   BENCH  ]
     NAMES:      [trace_1, trace_2, trace_3]
@@ -96,6 +95,7 @@ The possible variables to configure for Strong Scaling are:
 * PROCESSORS: List of processors used by each test.
 * THREADS: List of threads used by each test.
 * TEST_CONFIG: NEMO test configuration to use.
+* SPLITS: Number of repetitions of the same test to run (defaults to 1).
 
 .. code-block:: yaml
 
@@ -105,6 +105,7 @@ The possible variables to configure for Strong Scaling are:
     NAMES:      [bench_1, bench_2, bench_3]
     PROCESSORS: [112,     224,     336    ]
     THREADS:    [1,       1,       1      ]
+    SPLITS: 1
     TEST_CONFIG: BENCH
     ARCH_NAME: O3_prod
 
@@ -125,6 +126,7 @@ The following list variables have to be the same length:
 * RESOLUTION: List of NEMO supported resolutions run by each test. This is the setting that will be used to compute the number of processors based on the base case resolution.
 * ARCH_NAME: Arch to be used to run the weak scaling model; it has to be defined in the MODEL.ARCH_NAMES list.
 * TEST_CONFIG: NEMO test configuration to use.
+* SPLITS: Number of repetitions of the same test to run (defaults to 1).
 
 .. code-block:: yaml
 
@@ -152,6 +154,7 @@ The following list variables have to be the same length:
 * PROCESSORS: List of processors all equal to 1.
 * THREADS: List of threads used by each test.
 * TEST_CONFIG: NEMO test configuration to use.
+* SPLITS: Number of repetitions of the same test to run (defaults to 1).
 
 .. code-block:: yaml
 
@@ -162,4 +165,5 @@ The following list variables have to be the same length:
     NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
     PROCESSORS: [112,     224,     112,     224    ]
     THREADS:    [1,       1,       1,       1      ]
+    SPLITS: 1
     TEST_CONFIG: BENCH

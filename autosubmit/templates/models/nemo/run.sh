@@ -7,6 +7,7 @@
 # Global (set by scalability.sh):
 #   - Paths: compilation, cfg, platform, run_root, inidata, project
 #   - Other: model, branch, test, test_name, arch_name, test_config, current_member
+#   - Other: split (set by Autosubmit)
 #####################################################################################################################
 
 #####################################################################################################################
@@ -25,7 +26,8 @@ function run_nemo()
     local run_id="%CURRENT_NAME%"
     local nemo_nproc="%NUMPROC%"
     local output="%EXPERIMENT.OUTPUT%"
-    local run_dir=${run_root}/${test_name}/run_${run_id}
+    local split="%SPLIT%"
+    local run_dir=${run_root}/${test_name}/run_${run_id}/${split}
     local model_sources=${compilation}/${model}_${branch}
     local configuration_folder=tests
     [ ${current_member} = "weakscaling" ] && nemo_resolution="%CURRENT_RESOLUTION%"
@@ -69,7 +71,7 @@ function run_nemo()
         "tracing")
             configure_extrae ${run_dir}
             create_trace_sh  ${run_dir}
-            fd_enabled=%TRACING.EXTRAE.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=%TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED%
             fd_enabled=${fd_enabled,,}
             if ${fd_enabled}; then
                 cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
