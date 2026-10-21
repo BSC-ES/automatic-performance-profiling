@@ -8,13 +8,14 @@ JOBS:
     PROCESSORS: "%TRACING.USER_FUNCTIONS_PROC%"
     CHECK: "true"
     NOTIFY_ON: FAILED
-  TRACE:
+  SCALABILITY_TRACING:
     FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh
     FOR:
       TEST_NAME: "%TRACING.TEST_NAMES%"
       NAME: "%TRACING.NAMES%"
       PROCESSORS: "%TRACING.PROCESSORS%"
       THREADS: "%TRACING.THREADS%"
+    SPLITS: 1
     DEPENDENCIES: functions_dir
     RUNNING: member
     WALLCLOCK: 02:00
@@ -23,7 +24,12 @@ JOBS:
     NOTIFY_ON: FAILED
   POST_TRACING:
     FILE: autosubmit/templates/post.sh
-    DEPENDENCIES: TRACE
+    DEPENDENCIES: 
+      SCALABILITY_TRACING:
+        FOR:
+          TEST_NAME: "%TRACING.TEST_NAMES%"
+          NAME: "%TRACING.NAMES%"
+          PROCESSORS: "%TRACING.PROCESSORS%"
     RUNNING: member
     WALLCLOCK: 00:30
     CHECK: "true"
@@ -82,7 +88,7 @@ JOBS:
   CONFIGURATION_JSON_TRACING:
     FILE: autosubmit/templates/configuration_json.sh
     DEPENDENCIES:
-      post:
+      POST_TRACING:
       PARAMEDIR:
       PARADIM:
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"

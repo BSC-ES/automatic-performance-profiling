@@ -7,16 +7,20 @@
 # Global (set by scalability.sh):
 #   - Paths: compilation, cfg, platform, run_root, project
 #   - Other: model, branch, test, test_name, arch_name, test_config, current_member
+# Global (set by Autosubmit):
+#   - split: current split of the job (see SPLITS in the job definition)
 #####################################################################################################################
 
 function run_hpcw_icon()
 {
     local test_dir=${run_root}/${test_name}
     local run_id="%CURRENT_NAME%"
-    local run_dir=${test_dir}/run_${run_id}
+    local split="%SPLIT%"
+    local run_dir=${test_dir}/run_${run_id}/${split}
     local src_dir=${compilation}/${arch_name}
     local icon_nproc="%NUMPROC%"
     local icon_threads="%THREADS%"
+    icon_threads=${icon_threads:-1}
     local input_pkg="icon-${test_config}"
 
     rm -rf ${run_dir}
@@ -25,6 +29,14 @@ function run_hpcw_icon()
 
     HPCW_SOURCE_DIR=${src_dir} HPCW_INSTALL=${src_dir}/build/icon/install \
         source ${cfg}/arch/${platform}/${model}/icon/${arch_name}.env
+
+    # The arch env pins OMP_NUM_THREADS=1, so re-apply the test thread count for hybrid runs
+    export OMP_NUM_THREADS=${icon_threads}
+    export ICON_THREADS=${icon_threads}
+    if [ "${icon_threads}" -gt 1 ]; then
+        # Give each MPI rank its own set of threads instead of a single pinned core
+        export I_MPI_PIN_DOMAIN=omp
+    fi
 
     local icon_base=${src_dir}/build/icon
     local staged_inputs=${icon_base}/install/inputs/${input_pkg}
@@ -40,11 +52,7 @@ function run_hpcw_icon()
 
     TIME_FORMAT="@hpcw-time: %C: %Uuser %Ssystem %eelapsed %PCPU (%Xtext+%Ddata %Mmax)k"
 
-    # ICON reads its timestep count from the namelist, and the input packages rely on the master
-    # namelist experimentStopDate instead, so set nsteps explicitly from the test configuration.
-    # The master namelist declares one model per component (atmosphere + jsbach); run_nml belongs
-    # to the atmosphere one, which is always the first model_namelist_filename entry.
-    local steps="%EXPERIMENT.TEST_STEPS%"
+    local steps="${test_steps}"
     local atmo_nml
     atmo_nml=$(grep -m1 "model_namelist_filename" icon_master.namelist 2>/dev/null | \
         sed "s/.*['\"]\([^'\"]*\)['\"].*/\1/")
@@ -56,8 +64,6 @@ function run_hpcw_icon()
         fi
     fi
 
-    # Disable model output when configured to reduce I/O during performance tests
-    local output="%EXPERIMENT.OUTPUT%"
     if [ "${output,,}" = "false" ] && [ -f "${atmo_nml}" ]; then
         # Comment out all &output_nml blocks so ICON writes no output files
         sed -i '/^[[:space:]]*&output_nml/,/^[[:space:]]*\//s/^[[:space:]]*/&!/' "${atmo_nml}"
@@ -66,9 +72,29 @@ function run_hpcw_icon()
 
     case "${current_member}" in
         "tracing")
-            # TODO: Add ICON tracing support when needed
-            echo "[WARNING] Tracing not yet implemented for ICON, running without tracing"
-            \time -o timing.output -f "${TIME_FORMAT}" srun -n ${icon_nproc} --hint=nomultithread --cpus-per-task=${icon_threads} ${icon_base}/install/bin/icon
+            fd_enabled=%TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED%
+            fd_enabled=${fd_enabled,,}
+            if ${fd_enabled}; then
+                cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
+            else
+                uf_list=($(bashify_array "%TRACING.EXTRAE.USER_FUNCTIONS.LIST%" true))
+                if [ "${uf_list}" != "None" ]; then
+                    echo -n > ${run_dir}/extrae_functions.txt
+                    for user_function in "${uf_list[@]}"; do
+                        echo "${user_function}" >> ${run_dir}/extrae_functions.txt
+                    done
+                else
+                    cp ${cfg}/trace/model/${model}/${component}/extrae_functions.txt ${run_dir}/extrae_functions.txt
+                fi
+            fi
+            chmod +x ${cfg}/trace/generate_function_list.sh
+            ${cfg}/trace/generate_function_list.sh ${icon_base}/install/bin/icon extrae_functions.txt
+
+            create_trace_sh ${run_dir}
+
+            configure_extrae ${run_dir}
+
+            \time -o timing.output -f "${TIME_FORMAT}" srun -n ${icon_nproc} --hint=nomultithread --cpus-per-task=${icon_threads} ${run_dir}/trace.sh ${icon_base}/install/bin/icon
             ;;
         *)
             \time -o timing.output -f "${TIME_FORMAT}" srun -n ${icon_nproc} --hint=nomultithread --cpus-per-task=${icon_threads} ${icon_base}/install/bin/icon
@@ -78,21 +104,12 @@ function run_hpcw_icon()
     scontrol show JobId="${SLURM_JOB_ID}"
 }
 
-function run_hpcw()
+function run_hpcw_nemo()
 {
-    local component
-    # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
-    component=$(bashify_array "%MODEL.COMPONENTS%" true)
-    component=$(echo "${component%% *}" | tr '[:upper:]' '[:lower:]')
-
-    if [ "${component}" == "icon" ]; then
-        run_hpcw_icon
-        return $?
-    fi
-
     local test_dir=${run_root}/${test_name}
     local run_id="%CURRENT_NAME%"
-    local run_dir=${test_dir}/run_${run_id}
+    local split="%SPLIT%"
+    local run_dir=${test_dir}/run_${run_id}/${split}
     local src_dir=${compilation}/${arch_name}
     local nemo_nproc="%NUMPROC%"
 
@@ -173,7 +190,7 @@ function run_hpcw()
             trace_steps="%TRACING.TRACE_STEPS%"
             set_namelist namelist_cfg nn_itend ${trace_steps}
 
-            fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=%TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED%
             fd_enabled=${fd_enabled,,}
             if ${fd_enabled}; then
                 cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/
@@ -185,7 +202,7 @@ function run_hpcw()
                         echo "${user_function}" >> ${run_dir}/extrae_functions.txt
                     done
                 else
-                    cp ${cfg}/trace/model/${model}/extrae_functions.txt ${run_dir}/extrae_functions.txt
+                    cp ${cfg}/trace/model/${model}/${component}/extrae_functions.txt ${run_dir}/extrae_functions.txt
                 fi
             fi
             chmod +x ${cfg}/trace/generate_function_list.sh
@@ -199,7 +216,7 @@ function run_hpcw()
             \time -f "$TIME_FORMAT" srun -n ${nemo_nproc} ./trace.sh ./nemo
             ;;
         *)
-            steps="%EXPERIMENT.TEST_STEPS%"
+            steps="${test_steps}"
             set_namelist namelist_cfg nn_itend ${steps}
 
             \time -f "$TIME_FORMAT" srun -n ${nemo_nproc} ./nemo
@@ -207,4 +224,14 @@ function run_hpcw()
     esac
 
     scontrol show JobId="${SLURM_JOB_ID}"
+}
+
+function run_hpcw()
+{
+    local component
+    # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
+    component=$(bashify_array "%MODEL.COMPONENTS%" true)
+    component=$(echo "${component%% *}" | tr '[:upper:]' '[:lower:]')
+
+    run_hpcw_${component}
 }

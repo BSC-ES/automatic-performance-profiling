@@ -15,10 +15,11 @@ Main variables to update in the proj.yml:
 * MODEL.BRANCH: branch or tag to use.
 * MODEL.ARCH_NAMES: list of architecture build presets (used to pick arch files in ``cfg/arch/PLATFORM/MODEL/COMPONENT/``).
 * MODEL.STORE: shared CMake ``ExternalData`` object cache (see `Model inputs`_).
-* EXPERIMENT.TEST_CONFIG: predefined test configuration (e.g. orca025-medium).
-* EXPERIMENT.TEST_STEPS: number of model steps for short tests.
-* EXPERIMENT.OUTPUT: enable or disable model output (true/false).
-* EXPERIMENT.RESOLUTION: same as TEST_CONFIG in this model.
+
+The model test case, the number of steps and the output switch are per-test settings: each test
+section defines its own ``TEST_CONFIG``, ``TEST_STEPS`` and ``OUTPUT``. Other models take the number
+of steps from ``EXPERIMENT.TEST_STEPS`` (``TRACING.TRACE_STEPS`` while tracing, model hours for
+monarch).
 
 .. code-block:: yaml
 
@@ -30,16 +31,13 @@ Main variables to update in the proj.yml:
     ORIGIN: https://gitlab.dkrz.de/hpcw/hpcw.git
     BRANCH: v3.0
     ARCH_NAMES: [O1_prod, O3_prod, O3_trace]
-  
-  # EXPERIMENT CONFIG
-  EXPERIMENT:
-    # Current available HPCW test configurations: 
-    #   - orca025-medium
-    #   - orca1-like-small
+
+  # STRONG SCALING CONFIG
+  STRONGSCALING:
+    # ...
     TEST_CONFIG: orca025-medium
     TEST_STEPS: 32
     OUTPUT: false
-    RESOLUTION: "%EXPERIMENT.TEST_CONFIG%"
 
 Model inputs
 ------------
@@ -111,6 +109,17 @@ Configure the tests
 
 The tests configuration only has to be present if they are activated by commenting/uncommenting the path to their jobs configuration file in the ``proj/auto-performance-profiling/autosubmit/configuration/bootstrap.yml`` file.
 
+Model test cases
+^^^^^^^^^^^^^^^^
+
+``TEST_CONFIG`` selects the test case each test runs, and is defined per test:
+
+* NEMO: ``orca025-medium``, ``orca1-like-small``.
+* ICON, by size: ``test_nwp_R02B04N06multi`` (small), ``NextGEMS_R2B8_2020`` (medium), ``LAM`` (large).
+
+The ICON packages are the input packages of the model (``<src>/doc/icon_tests.md``); a package can
+only be used by tests that fit its size, e.g. the small packages do not scale to many nodes.
+
 Tracing
 ^^^^^^^
 
@@ -118,7 +127,12 @@ The possible variables to configure for Tracing are:
 
 * TIMESTEP_ZERO: TRUE/FALSE, true if the model runs a timestep 0, false otherwise. Used by MagicCut to cut the trace at the right timestep.
 * TRACE_STEPS: Number of steps the model should run when tracing it.
+* TEST_CONFIG: Test case to run (see `Model test cases`_).
+* TEST_STEPS: Number of steps the model should run.
 * USER_FUNCTIONS_*: Variables used by the User Functions sampling script.
+
+Tracing always runs a single repetition of each test, so its number of splits is fixed in the
+tracing job definition instead of being configurable.
 
 The following list variables have to be the same length:
 
@@ -138,15 +152,16 @@ Example:
     TIMESTEP_ZERO: false
     TRACE_STEPS: 32
 
-    # CONFIG FOR USER FUNCTIONS SAMPLING
+    # CONFIG FOR USER FUNCTIONS
     USER_FUNCTIONS_PROC: 112
     USER_FUNCTIONS_THREADS: 4
-    TRACE_N_FUNCTIONS: 40
 
     TEST_NAMES: [BENCH,   BENCH]
     NAMES:      [trace_1, trace_2]
     PROCESSORS: [112,     224]
     THREADS:    [4,       4]
+    TEST_CONFIG: test_nwp_R02B04N06multi
+    TEST_STEPS: 32
     ARCH_NAME: O3_trace
 
 Strong Scaling
@@ -158,6 +173,9 @@ Strong Scaling test lists must have matching lengths.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors used by each test.
 * THREADS: List of threads used by each test.
+* TEST_CONFIG: Test case to run (see `Model test cases`_).
+* TEST_STEPS: Number of steps the model should run.
+* SPLITS: Number of repetitions of the same test to run.
 
 .. code-block:: yaml
 
@@ -167,6 +185,9 @@ Strong Scaling test lists must have matching lengths.
     NAMES:      [bench_1, bench_2, bench_3]
     PROCESSORS: [112,     224,     336]
     THREADS:    [1,       1,       1]
+    SPLITS: 1
+    TEST_CONFIG: NextGEMS_R2B8_2020
+    TEST_STEPS: 32
     ARCH_NAME: O3_prod
 
 Compilation Efficiency
@@ -180,6 +201,7 @@ The following list variables have to be the same length:
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors all equal to 1.
 * THREADS: List of threads used by each test.
+* SPLITS: Number of repetitions of the same test to run.
 
 .. code-block:: yaml
 
@@ -189,3 +211,6 @@ The following list variables have to be the same length:
     NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
     PROCESSORS: [112,     224,     112,     224    ]
     THREADS:    [1,       1,       1,       1      ]
+    SPLITS: 1
+    TEST_CONFIG: test_nwp_R02B04N06multi
+    TEST_STEPS: 32

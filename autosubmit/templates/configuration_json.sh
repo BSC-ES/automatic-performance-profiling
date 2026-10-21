@@ -34,8 +34,11 @@ case "${model}" in
         cases_variables+=" jnpes inpes write_groups write_tasks"
         input_files+=" run_*/*test_info.yaml" 
     ;;
-    "nemo"|"hpcw")
+    "nemo")
         input_files+=" run_*/*-timing.output"
+    ;;
+    "hpcw")
+        input_files+=" run_*/*-timing.output run_*/*test_info.yaml"
     ;;
     "ecearth4")
         coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
