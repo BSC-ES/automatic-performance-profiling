@@ -69,16 +69,44 @@ function post_nemo()
         ;;
         *)
             model_resolution=%EXPERIMENT.RESOLUTION%
+            [[ "${model_resolution}" =~ ^% || -z "${model_resolution}" ]] && model_resolution=${test_config}
             nemo_resolution=${model_resolution}
         ;;
     esac
 
-    cp ${run_dir}/timing.output ${run_dir}/nemo-${test}-timing.output
+    local split split_dir split_sypd
+    local -a model_split_sypd=()
+    rm -f ${run_dir}/nemo-${test}-timing.output
+    for split in $(seq 1 ${splits}); do
+        split_dir=${run_dir}/${split}
+        if [ ! -f ${split_dir}/timing.output ]; then
+            echo "[WARN] ${split_dir}/timing.output not found, skipping split ${split}" >&2
+            model_split_sypd+=(0)
+            continue
+        fi
+        cat ${split_dir}/timing.output >> ${run_dir}/nemo-${test}-timing.output
+        split_sypd=$(grep -oE "SYPD: +[0-9.E+-]+" ${split_dir}/timing.output | grep -oE "[0-9.E+-]+" | awk '{sum += $1; count++} END {if (count) printf "%.4f", sum / count}')
+        model_split_sypd+=(${split_sypd:-0})
+    done
+    model_sypd=$(printf '%s\n' "${model_split_sypd[@]}" | awk '{sum += $1} END {printf "%.4f", sum / NR}')
+    nemo_sypd=${model_sypd}
+    declare -a nemo_split_sypd=("${model_split_sypd[@]}")
+
+    case ${current_member} in
+        "tracing")
+            cp ${run_dir}/1/${model}.prv ${run_dir}/nemo.prv
+            cp ${run_dir}/1/${model}.pcf ${run_dir}/nemo.pcf
+            cp ${run_dir}/1/${model}.row ${run_dir}/nemo.row
+        ;;
+    esac
 
     variables_to_report="nproc resolution"
     [ ${current_member} = "weakscaling" ] && variables_to_report+=" grid_points"
 
     report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
+    if [ "${splits}" -gt 1 ]; then
+        save_test_yaml "${variables_to_report} sypd" "${variables_to_report} sypd" "sypd" > ${run_dir}/${test}-test_info.yaml
+    fi
 }
 
 function post_ecearth4()
@@ -202,15 +230,51 @@ function post_ecearth4()
 
 function post_hpcw_icon()
 {
-    cd ${run_dir} || exit
-
     local icon_nproc=${test_procs[$i]}
+    local split split_dir split_time total_time=0
+    local -a model_split_time=()
+
+    for split in $(seq 1 ${splits}); do
+        split_dir=${run_dir}/${split}
+        if [ ! -f ${split_dir}/timing.output ]; then
+            echo "[WARN] ${split_dir}/timing.output not found, skipping split ${split}" >&2
+            model_split_time+=(0)
+            continue
+        fi
+        split_time=$(sed -n 's/.*[[:space:]]\([0-9][0-9.]*\)elapsed.*/\1/p' ${split_dir}/timing.output 2>/dev/null | head -1)
+        split_time=${split_time:-0}
+        model_split_time+=(${split_time})
+        total_time=$(awk -v total="${total_time}" -v t="${split_time}" 'BEGIN { printf "%.4f", total + t }')
+    done
+
+    if [ "${total_time}" = "0" ] || [ "${total_time}" = "0.0000" ]; then
+        echo "[WARN] No timing data found for ${test} in ${run_dir}, skipping" >&2
+        return 0
+    fi
+
     model_nproc=${icon_nproc}
+    model_time=$(awk -v total="${total_time}" -v n="${splits}" 'BEGIN { printf "%.4f", total / n }')
+    icon_time=${model_time}
+    # Read by save_test_yaml through indirect expansion (<component>_split_<var>[i])
+    declare -a icon_split_time=("${model_split_time[@]}")
 
-    cp ${run_dir}/timing.output ${run_dir}/icon-${test}-timing.output
+    printf '%s\n' "@hpcw-time: icon: 0.00user 0.00system ${model_time}elapsed 0%CPU (0text+0data 0max)k" > ${run_dir}/icon-${test}-timing.output
 
-    local variables_to_report="nproc"
-    report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
+    report_test_cfg "nproc" > ${run_dir}/${test}-test_info.csv
+    save_test_yaml "nproc time" "nproc time" "time" > ${run_dir}/${test}-test_info.yaml
+
+    case ${current_member} in
+        "tracing")
+            cp ${run_dir}/1/${model}.prv ${run_dir}/icon.prv
+            cp ${run_dir}/1/${model}.pcf ${run_dir}/icon.pcf
+            cp ${run_dir}/1/${model}.row ${run_dir}/icon.row
+        ;;
+    esac
+}
+
+function post_hpcw_nemo()
+{
+    post_nemo
 }
 
 function post_hpcw()
@@ -220,20 +284,7 @@ function post_hpcw()
     component=$(bashify_array "%MODEL.COMPONENTS%" true)
     component=$(echo "${component%% *}" | tr '[:upper:]' '[:lower:]')
 
-    if [ "${component}" == "icon" ]; then
-        post_hpcw_icon
-        return $?
-    fi
-
-    post_nemo
-
-    case ${current_member} in
-        "tracing")
-            cp ${run_dir}/${model}.prv ${run_dir}/nemo.prv
-            cp ${run_dir}/${model}.pcf ${run_dir}/nemo.pcf
-            cp ${run_dir}/${model}.row ${run_dir}/nemo.row
-        ;;
-    esac
+    post_hpcw_${component}
 }
 
 function post_monarch()
@@ -278,11 +329,13 @@ module purge
 current_member=$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS")
 current_member=${current_member,,}
 
+splits=1
 case "$current_member" in
     "compilation_efficiency")
         test_names=($(bashify_array "%COMPILATION_EFFICIENCY.NAMES%"))
         test_tys=($(bashify_array "%COMPILATION_EFFICIENCY.TEST_NAMES%"))
         test_procs=($(bashify_array "%COMPILATION_EFFICIENCY.PROCESSORS%"))
+        test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
         if [ ${model} = "monarch" ]; then
             inpes_list=($(bashify_array "%COMPILATION_EFFICIENCY.INPES%"))
             jnpes_list=($(bashify_array "%COMPILATION_EFFICIENCY.JNPES%"))
@@ -295,6 +348,7 @@ case "$current_member" in
         test_names=($(bashify_array "%STRONGSCALING.NAMES%"))
         test_tys=($(bashify_array "%STRONGSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%STRONGSCALING.PROCESSORS%"))
+        test_config="%STRONGSCALING.TEST_CONFIG%"
         splits="%STRONGSCALING.SPLITS%"
         if [ ${model} = "monarch" ]; then
             inpes_list=($(bashify_array "%STRONGSCALING.INPES%"))
@@ -307,6 +361,8 @@ case "$current_member" in
         test_names=($(bashify_array "%WEAKSCALING.NAMES%"))
         test_tys=($(bashify_array "%WEAKSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%WEAKSCALING.PROCESSORS%"))
+        test_config="%WEAKSCALING.TEST_CONFIG%"
+        splits="%WEAKSCALING.SPLITS%"
         if [ ${model} = "monarch" ]; then
             inpes_list=($(bashify_array "%WEAKSCALING.INPES%"))
             jnpes_list=($(bashify_array "%WEAKSCALING.JNPES%"))
@@ -318,6 +374,8 @@ case "$current_member" in
         test_names=($(bashify_array "%TRACING.NAMES%"))
         test_tys=($(bashify_array "%TRACING.TEST_NAMES%"))
         test_procs=($(bashify_array "%TRACING.PROCESSORS%"))
+        test_config="%TRACING.TEST_CONFIG%"
+        splits=1
         if [ ${model} = "monarch" ]; then
             inpes_list=($(bashify_array "%TRACING.INPES%"))
             jnpes_list=($(bashify_array "%TRACING.JNPES%"))
@@ -329,6 +387,9 @@ case "$current_member" in
         post_hw_benchmarks
         ;;
 esac
+
+[[ "${splits}" =~ ^[0-9]+$ ]] || splits=1
+[ "${splits}" -gt 0 ] || splits=1
 
 i=0
 for test in "${test_names[@]}"; do

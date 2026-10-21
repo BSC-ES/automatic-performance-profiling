@@ -10,7 +10,7 @@ JOBS:
     NEMO_PROCS: "%TRACING.USER_FUNCTIONS_NEMO_PROCS%"
     CHECK: "true"
     NOTIFY_ON: FAILED
-  TRACE:
+  SCALABILITY_TRACING:
     FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh
     FOR:
       TEST_NAME: "%TRACING.TEST_NAMES%"
@@ -30,7 +30,7 @@ JOBS:
   POST_TRACING:
     FILE: autosubmit/templates/post.sh
     DEPENDENCIES:
-      TRACE:
+      SCALABILITY_TRACING:
         FOR:
           TEST_NAME: "%TRACING.TEST_NAMES%"
           NAME: "%TRACING.NAMES%"

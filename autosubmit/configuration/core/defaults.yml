@@ -17,6 +17,14 @@ EXPERIMENT:
   NUMCHUNKS: "1"
   CALENDAR: standard
 
+# Repetitions of each test; the model proj.yml can override them
+STRONGSCALING:
+  SPLITS: 1
+WEAKSCALING:
+  SPLITS: 1
+COMPILATION_EFFICIENCY:
+  SPLITS: 1
+
 COMMON:
   GIT_REPO: "%PROJECT.PROJECT_DESTINATION%"
   REFRESH_GIT_REPO: "false"

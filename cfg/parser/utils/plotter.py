@@ -7,6 +7,14 @@ matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 from matplotlib import pyplot as plt
 
+IDEAL_SCALING = {
+    "sypd": lambda base_value, base_nproc, nproc: base_value * nproc / base_nproc,
+    "sdpd": lambda base_value, base_nproc, nproc: base_value * nproc / base_nproc,
+    "time": lambda base_value, base_nproc, nproc: base_value * base_nproc / nproc,
+}
+
+DEFAULT_IDEAL_SCALING = IDEAL_SCALING["sypd"]
+
 
 def go_to_dictionary_address(dictionary: dict, address: tuple[str]) -> dict:
     """
@@ -139,15 +147,12 @@ def plotter(
         x_range = abs(float(x_max) - float(x_min))
         y_range = abs(float(y_max) - float(y_min))
         if plot_ideal:
-
-            def ideal_speed(cores):
-                return y[0] / x[0] * cores
-
+            ideal_fn = IDEAL_SCALING.get(y_label, DEFAULT_IDEAL_SCALING)
             ideal_range = np.arange(x_min, x_max, 1)
-            ideal_speed = [ideal_speed(_x) for _x in ideal_range]
+            ideal_values = [ideal_fn(y[0], x[0], _x) for _x in ideal_range]
             plt.plot(
                 ideal_range,
-                ideal_speed,
+                ideal_values,
                 ":",
                 alpha=0.25,
                 color="k",

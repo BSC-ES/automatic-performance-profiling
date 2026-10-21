@@ -27,10 +27,22 @@ HW_BENCHMARKS:
 
 # TRACING COMMON OPTIONS
 TRACING:
+  # Generate the user functions list by sampling the traced run
+  # If disabled, the list is taken from TRACING.EXTRAE.USER_FUNCTIONS.LIST
+  AUTOMATIC_USER_FUNCTIONS:
+    ENABLED: false
+    MAX_FUNCTIONS: 40
+
+  MODELFACTORS:
+    ENABLED: true
+
+  MPI:
+    ENABLED: true
+
   # EXTRAE XML OPTIONS
   EXTRAE:
-    HOME: /apps/GPP/BSCTOOLS/extrae/4.2.13/openmpi_4_1_5/
-    TRACING_LIB: libmpitracef.so
+    HOME: /apps/GPP/BSCTOOLS/extrae/4.3.3/impi_2021_13
+    TRACING_LIB: libompitracef.so
     TRACE_NAME: "%MODEL.NAME%.prv"
 
     MPI: 
@@ -50,10 +62,9 @@ TRACING:
     USER_FUNCTIONS: 
       ENABLED: yes
 
-      SAMPLING:
-        ENABLED: false
-
-      # If empty, falls back to cfg/trace/model/MODEL/extrae_functions.txt
+      # If empty, falls back to cfg/trace/model/MODEL/COMPONENT/extrae_functions.txt
+      # If TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED is true, this setting is ignored
+      # and the list is generated automatically
       LIST:
         # - module_bsc_chemistry_mp_chem_driver_
         # - module_bsc_aero_mechanism_mp_aero_bsc_driver_
@@ -88,9 +99,3 @@ TRACING:
       # Format: PC_id_1-PC_id_2 (ids from papi_avail)
       PLOTS: PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC
       ENABLED: true
-
-  MODELFACTORS:
-    ENABLED: true
-
-  MPI:
-    ENABLED: true

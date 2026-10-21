@@ -471,6 +471,57 @@ function add_weakscaling() {
     done
 }
 
+#####################################################################################################################
+# Brief: Writes the experiment configuration table of the report
+# Global:
+#   - Other: model, enabled_members
+# Param: None
+#####################################################################################################################
+function test_info()
+{
+    echo "Configuration,Value";
+    test_info_${model}
+    [ "${enabled_members[strongscaling],,}" = "true" ] && [ "%STRONGSCALING.TEST_CONFIG%" != "" ] && echo "StrongScaling test config,%STRONGSCALING.TEST_CONFIG%";
+    [ "${enabled_members[weakscaling],,}" = "true" ] && [ "%WEAKSCALING.TEST_CONFIG%" != "" ] && echo "WeakScaling test config,%WEAKSCALING.TEST_CONFIG%";
+    [ "${enabled_members[tracing],,}" = "true" ] && [ "%TRACING.TEST_CONFIG%" != "" ] && echo "Tracing test config,%TRACING.TEST_CONFIG%";
+    [ "${enabled_members[compilation_efficiency],,}" = "true" ] && [ "%COMPILATION_EFFICIENCY.TEST_CONFIG%" != "" ] && echo "CompilationEfficiency test config,%COMPILATION_EFFICIENCY.TEST_CONFIG%";
+    echo "PLATFORM,%DEFAULT.HPCARCH%";
+}
+
+function test_info_ecearth4()
+{
+    [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "Resolution, %EXPERIMENT.RESOLUTION%";
+    [ "%EXPERIMENT.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
+    [ "%EXPERIMENT.OUTPUT%" != "" ] && echo "OUTPUT,%EXPERIMENT.OUTPUT%";
+    echo "NEMO resolution,%EXPERIMENT.NEMO_RESOLUTION%";
+    echo "OIFS resolution,%EXPERIMENT.OIFS_RESOLUTION%";
+    echo "START DATE,%EXPERIMENT.START_DATE%";
+    echo "END DATE,%EXPERIMENT.END_DATE%";
+}
+
+function test_info_hpcw()
+{
+    [ "${enabled_members[strongscaling],,}" = "true" ] && [ "%STRONGSCALING.TEST_STEPS%" != "" ] && echo "StrongScaling timesteps,%STRONGSCALING.TEST_STEPS%";
+    [ "${enabled_members[weakscaling],,}" = "true" ] && [ "%WEAKSCALING.TEST_STEPS%" != "" ] && echo "WeakScaling timesteps,%WEAKSCALING.TEST_STEPS%";
+    [ "${enabled_members[tracing],,}" = "true" ] && [ "%TRACING.TEST_STEPS%" != "" ] && echo "Tracing timesteps,%TRACING.TEST_STEPS%";
+    [ "${enabled_members[compilation_efficiency],,}" = "true" ] && [ "%COMPILATION_EFFICIENCY.TEST_STEPS%" != "" ] && echo "CompilationEfficiency timesteps,%COMPILATION_EFFICIENCY.TEST_STEPS%";
+}
+
+function test_info_monarch()
+{
+    echo "DATELIST,%EXPERIMENT.DATELIST%";
+    echo "START_HOUR,%MONARCH.HOUR%";
+    echo "SPINUP_HOURS,%MONARCH.SPINUP%";
+    echo "FORECAST_HOURS,%MONARCH.NHOURS%";
+}
+
+function test_info_nemo()
+{
+    [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "Resolution, %EXPERIMENT.RESOLUTION%";
+    [ "%EXPERIMENT.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
+    [ "%EXPERIMENT.OUTPUT%" != "" ] && echo "OUTPUT,%EXPERIMENT.OUTPUT%";
+}
+
 ###################
 # Start script
 ###################
@@ -485,27 +536,20 @@ report_full_path=${report_folder}/report
 rm -rf ${report_folder}
 mkdir -p ${report_folder}
 
+declare -A enabled_members=(
+    ["tracing"]="%EXPERIMENT.APP_TESTS.TRACING.ENABLED%"
+    ["strongscaling"]="%EXPERIMENT.APP_TESTS.STRONGSCALING.ENABLED%"
+    ["weakscaling"]="%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%"
+    ["compilation_efficiency"]="%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%"
+)
+
 python3 ${cfg}/latex/ReportGenerator.py \
     -O ${report_full_path}.pkl \
     --section-title "Introduction" \
     --section-number 1 \
     -T ${cfg}/latex/Introduction.txt
 
-{   
-    echo "Configuration,Value";
-    [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "Resolution, %EXPERIMENT.RESOLUTION%";
-    [ "%EXPERIMENT.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
-    [ "%EXPERIMENT.OUTPUT%" != "" ] && echo "OUTPUT,%EXPERIMENT.OUTPUT%";
-    [ ${model} = "ecearth4" ] && echo "NEMO resolution,%EXPERIMENT.NEMO_RESOLUTION%";
-    [ ${model} = "ecearth4" ] && echo "OIFS resolution,%EXPERIMENT.OIFS_RESOLUTION%";
-    [ ${model} = "ecearth4" ] && echo "START DATE,%EXPERIMENT.START_DATE%";
-    [ ${model} = "ecearth4" ] && echo "END DATE,%EXPERIMENT.END_DATE%";
-    [ ${model} = "monarch" ] && echo "DATELIST,%EXPERIMENT.DATELIST%";
-    [ ${model} = "monarch" ] && echo "START_HOUR,%MONARCH.HOUR%";
-    [ ${model} = "monarch" ] && echo "SPINUP_HOURS,%MONARCH.SPINUP%";
-    [ ${model} = "monarch" ] && echo "FORECAST_HOURS,%MONARCH.NHOURS%";
-    echo "PLATFORM,%DEFAULT.HPCARCH%";
-} > test_info.csv
+test_info > test_info.csv
 
 python3 ${latex_folder}/ReportGenerator.py \
     -O ${report_full_path}.pkl \
@@ -514,13 +558,6 @@ python3 ${latex_folder}/ReportGenerator.py \
     --add-csv test_info.csv \
     -T ${cfg}/latex/text/ExperimentConfiguration.txt
 
-
-declare -A enabled_members=(
-    ["tracing"]="%EXPERIMENT.APP_TESTS.TRACING.ENABLED%"
-    ["strongscaling"]="%EXPERIMENT.APP_TESTS.STRONGSCALING.ENABLED%"
-    ["weakscaling"]="%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%"
-    ["compilation_efficiency"]="%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%"
-)
 for current_member in "${!enabled_members[@]}"; do
     if ${enabled_members[$current_member],,}; then
         add_${current_member,,}

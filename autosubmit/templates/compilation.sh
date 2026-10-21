@@ -15,7 +15,6 @@ platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
-ntasks=%THREADS%
 build_tasks=%PROCESSORS%
 branch=%MODEL.BRANCH%
 exp_root=%CURRENT_ROOTDIR%
@@ -31,7 +30,7 @@ arch_name=%CURRENT_TEST_NAME%
 # Brief: Compiles all arch FCM configurations for NEMO configured in the ARCH_NAMES AS variable
 # Global:
 #   - Paths: exp_root, project, binaries, compilation
-#   - Other: platform, ntasks, model, branch, arch_name
+#   - Other: platform, build_tasks, model, branch, arch_name
 # Param: None
 #####################################################################################################################
 function compile_nemo()
@@ -43,7 +42,7 @@ function compile_nemo()
 
     git checkout -- bld.cfg
     cp $project/cfg/arch/${platform}/xios/arch-* arch
-    ./make_xios --dev --arch ifort_${platform} --job ${ntasks}
+    ./make_xios --dev --arch ifort_${platform} --job ${build_tasks}
     
     model_sources=${compilation}/${model}_${branch}
     cd ${model_sources} || exit
@@ -59,7 +58,7 @@ function compile_nemo()
     sed_exp_root=${exp_root//\//\\\/}
     sed -i "0,/%XIOS_LIB/ s/%XIOS_LIB.*/%XIOS_LIB            -L${sed_exp_root}\/xios\/lib -lxios/g" ${fcm}
     sed -i "0,/%XIOS_INC/ s/%XIOS_INC.*/%XIOS_INC            -I${sed_exp_root}\/xios\/inc/g"        ${fcm}
-    compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name} -n ${arch_name} -a BENCH -j ${ntasks})
+    compilation_command=$(echo ${model_sources}/makenemo -m ${arch_name} -n ${arch_name} -a BENCH -j ${build_tasks})
     eval ${compilation_command}
     cp ${model_sources}/${configuration_folder}/${arch_name}/EXP00/nemo ${bin_folder}/${target_exe}
 
@@ -70,7 +69,7 @@ function compile_nemo()
 # Brief: Compiles all arch YML configurations for ECEARTH 4 stated in the ARCH_NAMES AS variable
 # Global:
 #   - Paths: compilation, project, cfg
-#   - Other: model, branch, arch_name, platform, ntasks
+#   - Other: model, branch, arch_name, platform, build_tasks
 # Param: None
 #####################################################################################################################
 function compile_ecearth4()
@@ -85,7 +84,7 @@ function compile_ecearth4()
     set +u
 
     cp ${project}/configurations/model/${model}/user-settings-${current_arch,,}.yml ${model_sources}/scripts/build/user-settings.yml
-    sed -i "s/JOBS/${ntasks}/" ${model_sources}/scripts/build/user-settings.yml
+    sed -i "s/JOBS/${build_tasks}/" ${model_sources}/scripts/build/user-settings.yml
 
     se_env_${current_arch,,} trunk
 

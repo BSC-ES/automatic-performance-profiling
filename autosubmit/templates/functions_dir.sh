@@ -19,7 +19,7 @@ current_member=tracing
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
 branch=%MODEL.BRANCH%
-n_functions=%TRACING.TRACE_N_FUNCTIONS%
+n_functions=%TRACING.AUTOMATIC_USER_FUNCTIONS.MAX_FUNCTIONS%
 
 source $env_sources
 
@@ -211,7 +211,7 @@ run_functions_dir() {
 # Start script
 ###################
 
-fd_enabled=%TRACING.EXTRAE.USER_FUNCTIONS.SAMPLING.ENABLED%
+fd_enabled=%TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED%
 fd_enabled=${fd_enabled,,}
 
 ${fd_enabled} && run_functions_dir

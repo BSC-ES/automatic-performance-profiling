@@ -143,7 +143,7 @@ function run_ecearth4()
         "tracing")
             sed -i "s/run-srun-multiprog.sh/trace-run.sh/" ${config_file}
 
-            fd_enabled=%TRACING.USER_FUNCTIONS.SAMPLING.ENABLED%
+            fd_enabled=%TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED%
             fd_enabled=${fd_enabled,,}
             if ${fd_enabled}; then
                 cp $run_root/$test_name/functions_dir/extrae_functions.txt ${run_dir}/

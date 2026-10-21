@@ -101,10 +101,9 @@ The following list variables have to be the same length:
     TRACE_STEPS: 32
     OUTPUT: FALSE
 
-    # CONFIG FOR USER FUNCTIONS SAMPLING
+    # CONFIG FOR USER FUNCTIONS
     USER_FUNCTIONS_PROC: 112
     USER_FUNCTIONS_THREADS: 4
-    TRACE_N_FUNCTIONS: 40
 
     TEST_NAMES: [BENCH,   BENCH  , BENCH  ]
     NAMES:      [trace_1, trace_2, trace_3]

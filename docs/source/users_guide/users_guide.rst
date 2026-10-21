@@ -282,7 +282,7 @@ Extrae configuration
 
 The extrae.xml used by Tracing is configured through the ``TRACING.EXTRAE`` section of ``proj/auto-performance-profiling/autosubmit/configuration/user/common.yml``.
 
-The fields are named as in the Extrae XML file; you can check its documentation `here <https://tools.bsc.es/doc/html/extrae/xml.html>`_. Each instrumentation block (``MPI``, ``CALLERS``, ``USER_FUNCTIONS``, ``PAPI_COUNTERS`` and ``OPENMP``) has an ``ENABLED`` flag and, where needed, extra sub-options such as ``LEVELS`` or ``LIST``. For example, ``TRACING.EXTRAE.USER_FUNCTIONS.LIST`` points to the file with the list of user functions instrumented by Extrae, by default ``./extrae_functions_for_xml.txt``, which is created by the tracing job template. This is the list used when ``TRACING.USER_FUNCTIONS.SAMPLING.ENABLED`` is ``false``.
+The fields are named as in the Extrae XML file; you can check its documentation `here <https://tools.bsc.es/doc/html/extrae/xml.html>`_. Each instrumentation block (``MPI``, ``CALLERS``, ``USER_FUNCTIONS``, ``PAPI_COUNTERS`` and ``OPENMP``) has an ``ENABLED`` flag and, where needed, extra sub-options such as ``LEVELS`` or ``LIST``. For example, ``TRACING.EXTRAE.USER_FUNCTIONS.LIST`` points to the file with the list of user functions instrumented by Extrae, by default ``./extrae_functions_for_xml.txt``, which is created by the tracing job template. This is the list used when ``TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED`` is ``false``.
 
 It is important that you replace the HOME variable with the path to the Extrae installation you will use. You can get the path of your Extrae installation by loading the Extrae module in the HPC platform and then running the following command:
 
@@ -339,8 +339,11 @@ The ``TRACING`` section selects which tracing analysis results are included in t
 ``TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS``
   Space-separated list of plots to generate for the user functions. Each element is a pair of PAPI counters separated by ``-``, e.g. ``PAPI_TOT_INS-PAPI_L1_DCM``. You can get the available PAPI counter IDs with the ``papi_avail`` command.
 
-``TRACING.USER_FUNCTIONS.SAMPLING.ENABLED``
+``TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED``
   Enable/Disable generating the user functions list by sampling the traced run. When disabled, Extrae takes the list from ``TRACING.EXTRAE.USER_FUNCTIONS.LIST`` (see :ref:`Extrae configuration`).
+
+``TRACING.AUTOMATIC_USER_FUNCTIONS.MAX_FUNCTIONS``
+  Number of functions kept in the generated list, sorted by average duration.
 
 ``TRACING.MODELFACTORS.ENABLED``
   Enable/Disable Modelfactors images in the report (``true``/``false``).
