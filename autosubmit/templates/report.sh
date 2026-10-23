@@ -1,7 +1,7 @@
 #!/bin/bash
 #####################################################################################################################
 # report.sh
-# Brief: This script generates the different members sections of the report and generates the pdf 
+# Brief: This script generates the different members sections of the report and generates the pdf
 #####################################################################################################################
 
 ###################
@@ -79,6 +79,8 @@ function add_hw_benchmarks() {
 # Param: None
 #####################################################################################################################
 function add_strongscaling() {
+    add_test_info strongscaling "StrongScaling" "Scalability" "Test configuration"
+
     local tests="%STRONGSCALING.TEST_NAMES%"
     tests=${tests//[\[,\]]/}
     tests=$(for v in $tests; do echo "$v"; done | sort | uniq | xargs)
@@ -223,7 +225,7 @@ function add_user_functions() {
                 -s "${component^^} Functions detailed report" \
                 -ss "${func_name}" \
                 --add-csv "tracking/counters/${file_name}" \
-                --add-caption "$func_name counters scalability." -p --silent 
+                --add-caption "$func_name counters scalability." -p --silent
         done
     done
 }
@@ -252,8 +254,8 @@ function add_paraver() {
                 --add-img $img_name \
                 --add-caption "$img_caption."
         done
-        
-        for case in "${tracing_names[@]}"; do                    
+
+        for case in "${tracing_names[@]}"; do
             for paraver_cfg in $paraver_cfgs; do
                 case_paraver_folder=${test_root}/paraver_images/${case}
                 echo $case_comparison_cfgs | grep -w $paraver_cfg &> /dev/null && continue
@@ -287,7 +289,7 @@ function add_modelfactors() {
             modelfactors_caption=${modelfactors_caption//-/ }
             if [[ $modelfactors_caption == "modelfactors"* ]]; then
                 modelfactors_caption="${component^} $modelfactors_caption"
-            else 
+            else
                 modelfactors_caption="${component^} modelfactors $modelfactors_caption"
             fi
 
@@ -324,6 +326,8 @@ function add_mpi() {
 # Param: None
 #####################################################################################################################
 function add_tracing() {
+    add_test_info tracing "Tracing" "Tracing" "Test configuration"
+
     local tests="%TRACING.TEST_NAMES%"
     tracing_names="%TRACING.NAMES%"
     tracing_names=(${tracing_names//[\[,\]\']/})
@@ -345,29 +349,12 @@ function add_tracing() {
 
         cd ${test_root} || exit
 
-        {   
-            echo "Configuration,Value";
-            if [ ${model} != "monarch" ]; then
-                echo "START DATE,%TRACING.START_DATE%";
-                echo "END DATE,%TRACING.END_DATE%";
-                echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
-            else
-                echo "NHOURS,%TRACING.NHOURS%";
-            fi
-        } > test_info.csv
-    
-        python3 ${latex_folder}/ReportGenerator.py \
-            -O ${report_full_path}.pkl \
-            -S "Tracing" \
-            --add-caption "Test configuration." \
-            --add-csv test_info.csv
-
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Tracing" \
             -s "Functions detailed report" \
             --add-csv cases_info.csv \
-            --add-caption "Cases processors configuration."  
+            --add-caption "Cases processors configuration."
 
         ${modelfactors_enabled} && add_modelfactors
 
@@ -408,6 +395,8 @@ function add_compilation_efficiency() {
     member_title=${current_member//_/ }
     member_title=${member_title^}
 
+    add_test_info compilation_efficiency "CompilationEfficiency" "Multi Experiment" "${member_title}" "Test configuration"
+
     test_folders=($run_root/$current_member/*/)
     for test_folder in "${test_folders[@]}"; do
         python3 ${cfg}/latex/ReportGenerator.py \
@@ -415,7 +404,7 @@ function add_compilation_efficiency() {
             -S "Multi Experiment" \
             -s "${member_title}" \
             --add-csv ${test_folder}/cases_info.csv \
-            --add-caption "$(basename ${test_folder}) cases info." 
+            --add-caption "$(basename ${test_folder}) cases info."
     done
 
     python3 ${cfg}/latex/ReportGenerator.py \
@@ -452,6 +441,8 @@ function add_weakscaling() {
     member_title=${current_member//_/ }
     member_title=${member_title^}
 
+    add_test_info weakscaling "WeakScaling" "Multi Experiment" "${member_title}" "Test configuration"
+
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
@@ -472,19 +463,15 @@ function add_weakscaling() {
 }
 
 #####################################################################################################################
-# Brief: Writes the experiment configuration table of the report
+# Brief: Writes the experiment-wide configuration table of the report
 # Global:
-#   - Other: model, enabled_members
+#   - Other: model
 # Param: None
 #####################################################################################################################
 function test_info()
 {
     echo "Configuration,Value";
     test_info_${model}
-    [ "${enabled_members[strongscaling],,}" = "true" ] && [ "%STRONGSCALING.TEST_CONFIG%" != "" ] && echo "StrongScaling test config,%STRONGSCALING.TEST_CONFIG%";
-    [ "${enabled_members[weakscaling],,}" = "true" ] && [ "%WEAKSCALING.TEST_CONFIG%" != "" ] && echo "WeakScaling test config,%WEAKSCALING.TEST_CONFIG%";
-    [ "${enabled_members[tracing],,}" = "true" ] && [ "%TRACING.TEST_CONFIG%" != "" ] && echo "Tracing test config,%TRACING.TEST_CONFIG%";
-    [ "${enabled_members[compilation_efficiency],,}" = "true" ] && [ "%COMPILATION_EFFICIENCY.TEST_CONFIG%" != "" ] && echo "CompilationEfficiency test config,%COMPILATION_EFFICIENCY.TEST_CONFIG%";
     echo "PLATFORM,%DEFAULT.HPCARCH%";
 }
 
@@ -501,10 +488,7 @@ function test_info_ecearth4()
 
 function test_info_hpcw()
 {
-    [ "${enabled_members[strongscaling],,}" = "true" ] && [ "%STRONGSCALING.TEST_STEPS%" != "" ] && echo "StrongScaling timesteps,%STRONGSCALING.TEST_STEPS%";
-    [ "${enabled_members[weakscaling],,}" = "true" ] && [ "%WEAKSCALING.TEST_STEPS%" != "" ] && echo "WeakScaling timesteps,%WEAKSCALING.TEST_STEPS%";
-    [ "${enabled_members[tracing],,}" = "true" ] && [ "%TRACING.TEST_STEPS%" != "" ] && echo "Tracing timesteps,%TRACING.TEST_STEPS%";
-    [ "${enabled_members[compilation_efficiency],,}" = "true" ] && [ "%COMPILATION_EFFICIENCY.TEST_STEPS%" != "" ] && echo "CompilationEfficiency timesteps,%COMPILATION_EFFICIENCY.TEST_STEPS%";
+    :
 }
 
 function test_info_monarch()
@@ -517,9 +501,72 @@ function test_info_monarch()
 
 function test_info_nemo()
 {
-    [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "Resolution, %EXPERIMENT.RESOLUTION%";
+    [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "RESOLUTION, %EXPERIMENT.RESOLUTION%";
     [ "%EXPERIMENT.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
     [ "%EXPERIMENT.OUTPUT%" != "" ] && echo "OUTPUT,%EXPERIMENT.OUTPUT%";
+}
+
+function test_info_strongscaling()
+{
+    [ "%STRONGSCALING.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%STRONGSCALING.TEST_CONFIG%";
+    [ "%STRONGSCALING.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%STRONGSCALING.TEST_STEPS%";
+    [ "%STRONGSCALING.OUTPUT%" != "" ] && echo "OUTPUT,%STRONGSCALING.OUTPUT%";
+}
+
+function test_info_weakscaling()
+{
+    [ "%WEAKSCALING.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%WEAKSCALING.TEST_CONFIG%";
+    [ "%WEAKSCALING.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%WEAKSCALING.TEST_STEPS%";
+    [ "%WEAKSCALING.OUTPUT%" != "" ] && echo "OUTPUT,%WEAKSCALING.OUTPUT%";
+}
+
+function test_info_tracing()
+{
+    [ "%TRACING.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%TRACING.TEST_CONFIG%";
+    [ "%TRACING.START_DATE%" != "" ] && echo "START DATE,%TRACING.START_DATE%";
+    [ "%TRACING.END_DATE%" != "" ] && echo "END DATE,%TRACING.END_DATE%";
+    [ "%TRACING.NHOURS%" != "" ] && echo "NHOURS,%TRACING.NHOURS%";
+    [ "%TRACING.TRACE_STEPS%" != "" ] && echo "TIMESTEPS,%TRACING.TRACE_STEPS%";
+    [ "%TRACING.OUTPUT%" != "" ] && echo "OUTPUT,%TRACING.OUTPUT%";
+}
+
+function test_info_compilation_efficiency()
+{
+    [ "%COMPILATION_EFFICIENCY.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%COMPILATION_EFFICIENCY.TEST_CONFIG%";
+    [ "%COMPILATION_EFFICIENCY.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%COMPILATION_EFFICIENCY.TEST_STEPS%";
+    [ "%COMPILATION_EFFICIENCY.OUTPUT%" != "" ] && echo "OUTPUT,%COMPILATION_EFFICIENCY.OUTPUT%";
+}
+
+#####################################################################################################################
+# Brief: Writes the configuration table of a test and adds it to the end of its section, or
+#        to its subsection/subsubsection when one is given
+# Global:
+#   - Paths: report_folder, report_full_path, latex_folder
+# Param:
+#   - 1: test name, selects test_info_<test>
+#   - 2: test label used in the table caption
+#   - 3: section title
+#   - 4: subsection title (optional)
+#####################################################################################################################
+function add_test_info()
+{
+    local test=$1
+    local label=$2
+    local section=$3
+    local subsection=${4:-""}
+    local subsubsection=${5:-""}
+    local csv_file=${report_folder}/test_info_${test}.csv
+
+    { echo "Configuration,Value"; test_info_${test} || true; } > ${csv_file}
+
+    local context=(-S "${section}")
+    [ -n "${subsection}" ] && context+=(-s "${subsection}")
+    [ -n "${subsubsection}" ] && context+=(-ss "${subsubsection}")
+    python3 ${latex_folder}/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        "${context[@]}" \
+        --add-csv ${csv_file} \
+        --add-caption "${label} test configuration."
 }
 
 ###################
@@ -582,7 +629,7 @@ python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --logo-path "
 
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path} --dump-to-file
 
-if ! command -v pdflatex &> /dev/null; then 
+if ! command -v pdflatex &> /dev/null; then
     echo pdflatex cmd not available, you can find the tex file ${report_full_path}.tex;
 else
     pdflatex --shell-escape report.tex && pdflatex report.tex
