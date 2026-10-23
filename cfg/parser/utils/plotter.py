@@ -7,13 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 from matplotlib import pyplot as plt
 
-IDEAL_SCALING = {
-    "sypd": lambda base_value, base_nproc, nproc: base_value * nproc / base_nproc,
-    "sdpd": lambda base_value, base_nproc, nproc: base_value * nproc / base_nproc,
-    "time": lambda base_value, base_nproc, nproc: base_value * base_nproc / nproc,
-}
-
-DEFAULT_IDEAL_SCALING = IDEAL_SCALING["sypd"]
+from cfg.parser.utils.scalability import ideal_value
 
 
 def go_to_dictionary_address(dictionary: dict, address: tuple[str]) -> dict:
@@ -94,6 +88,7 @@ def plotter(
         x_max_length = 0
 
         x, y, y_err = np.array([]), np.array([]), np.array([])
+        plotted_cases = []
         for case in cases:
             if component == "":
                 case_data = experiment.data[case]
@@ -101,14 +96,27 @@ def plotter(
                 address = (case, "components", component)
                 case_data = go_to_dictionary_address(experiment.data, address)
 
+            if y_label not in case_data:
+                print(
+                    f"[WARNING] {case} has no {y_label} value, "
+                    "it is left out of the scalability plot"
+                )
+                continue
             x = np.append(x, case_data[x_label])
             y = np.append(y, case_data[y_label])
+            plotted_cases.append(case)
 
             if error_bars and "splits" in case_data:
-                case_y_err = np.std(
-                    [x[y_label] for x in case_data["splits"]], axis=0
-                )
-                y_err = np.append(y_err, case_y_err)
+                split_values = [
+                    split[y_label]
+                    for split in case_data["splits"]
+                    if y_label in split
+                ]
+                if split_values:
+                    y_err = np.append(y_err, np.std(split_values, axis=0))
+
+        if x.size == 0:
+            continue
 
         plt.plot(x, y, "-", alpha=0.5, label=f"{experiment_name} real speed")
 
@@ -128,7 +136,7 @@ def plotter(
         else:
             plt.scatter(x, y, marker=".")
 
-        if error_bars and len(y_err) == len(cases):
+        if error_bars and len(y_err) == len(y):
             line_color = plt.gca().lines[-1].get_color()
             line_color_rgb = np.array(mcolors.to_rgb(line_color))
             darker_color = mcolors.to_hex(line_color_rgb * 0.6)
@@ -147,9 +155,10 @@ def plotter(
         x_range = abs(float(x_max) - float(x_min))
         y_range = abs(float(y_max) - float(y_min))
         if plot_ideal:
-            ideal_fn = IDEAL_SCALING.get(y_label, DEFAULT_IDEAL_SCALING)
             ideal_range = np.arange(x_min, x_max, 1)
-            ideal_values = [ideal_fn(y[0], x[0], _x) for _x in ideal_range]
+            ideal_values = [
+                ideal_value(y[0], x[0], _x, y_label) for _x in ideal_range
+            ]
             plt.plot(
                 ideal_range,
                 ideal_values,
@@ -167,11 +176,7 @@ def plotter(
             x_max_length = len(x)
 
         if scatter_labels:
-            if component == "":
-                experiment_cases = experiment.cases
-            else:
-                experiment_cases = experiment.components_cases[component]
-            for i, label in enumerate(experiment_cases):
+            for i, label in enumerate(plotted_cases):
                 plt.annotate(label, (x[i] + x_range * 0.03, y[i] - y_range * 0.05))
 
     if filename is None:

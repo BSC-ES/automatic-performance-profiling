@@ -59,6 +59,7 @@ The module focuses on performance analysis of HPC applications, providing tools 
 
 import numpy as np
 from cfg.parser.utils.plotter import plotter
+from cfg.parser.utils.scalability import higher_is_better
 
 
 class Log:
@@ -808,9 +809,15 @@ def generate_scalability_summary(
         The summary includes:
         - Case: The name of the case.
         - Processes: The number of processes used in the case.
-        - {scalability_variable.capitalize()}: The {scalability_variable} value for the case.
-        - SpeedUp: The speedup factor compared to the base case.
+        - {scalability_variable.capitalize()}: The {scalability_variable} value for the case,
+          followed by its standard deviation across splits when the case reports them.
+        - SpeedUp: The speedup factor compared to the base case. Derived from the direction of
+          the metric: base/case when lower is better (e.g. "time"), case/base otherwise
+          (e.g. "sypd", "sdpd").
         - Efficiency: The efficiency of the case, calculated as speedup divided by the increase in resources.
+
+        Cases without a positive value (a run that produced no timing data) are left out of the
+        summary, and so are all of them when the base case has no value to compare against.
     """
     log = Log()
 
@@ -825,7 +832,7 @@ def generate_scalability_summary(
         base_case_data = go_to_dictionary_address(experiment_data.data, address)
 
     base_case_procs = int(base_case_data["nproc"])
-    base_case_speed = float(base_case_data[scalability_variable])
+    base_case_speed = float(base_case_data.get(scalability_variable, 0.0))
 
     log.add(
         "Case, Processes, "
@@ -838,12 +845,31 @@ def generate_scalability_summary(
         else:
             address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
-        speed = float(case_data[scalability_variable])
-        speedup = speed / base_case_speed
+        speed = float(case_data.get(scalability_variable, 0.0))
+        if speed <= 0 or base_case_speed <= 0:
+            print(
+                f"[WARNING] {case} has no {scalability_variable} value, "
+                "it is left out of the scalability summary"
+            )
+            continue
         case_procs = int(case_data["nproc"])
         resource_increase = case_procs / base_case_procs
+        if higher_is_better(scalability_variable):
+            speedup = speed / base_case_speed
+        else:
+            speedup = base_case_speed / speed
         efficiency = speedup / resource_increase
-        log.add(f"{case}, {case_procs}, {speed:.1f}, {speedup:.1f}, {efficiency:.2f}")
+
+        speed_str = f"{speed:.1f}"
+        split_values = [
+            float(split[scalability_variable])
+            for split in case_data.get("splits", [])
+            if scalability_variable in split
+        ]
+        if split_values:
+            speed_str += f" ± {np.std(split_values):.2f}"
+
+        log.add(f"{case}, {case_procs}, {speed_str}, {speedup:.1f}, {efficiency:.2f}")
 
     return log
 
