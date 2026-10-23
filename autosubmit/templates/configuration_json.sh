@@ -25,35 +25,37 @@ ppn=%PROCESSORS_PER_NODE%
 components=$(bashify_array "%MODEL.REPORT_COMPONENTS%" true)
 component=$(echo "${components%% *}" | tr '[:upper:]' '[:lower:]')
 
-# Set the input files depending on the model
+# Set the input files depending on the model. Patterns are relative to a single run directory
+# and are expanded later for the run directories declared in <TEST>.NAMES
 reporter_params=""
-input_files="run_*/*test_info.csv "
+extra_input_files=""
+input_patterns="*test_info.csv"
 cases_variables="nproc"
 case "${model}" in
     "monarch")
         cases_variables+=" jnpes inpes write_groups write_tasks"
-        input_files+=" run_*/*test_info.yaml" 
+        input_patterns+=" *test_info.yaml"
     ;;
     "nemo")
-        input_files+=" run_*/*-timing.output"
+        input_patterns+=" *-timing.output"
     ;;
     "hpcw")
         if [ "${component}" == "icon" ]; then
-            input_files+=" run_*/*-timer.log run_*/*test_info.yaml"
+            input_patterns+=" *-timer.log *test_info.yaml"
         else
-            input_files+=" run_*/*-timing.output run_*/*test_info.yaml"
+            input_patterns+=" *-timing.output *test_info.yaml"
         fi
     ;;
     "ecearth4")
         coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
         coupling_enabled=${coupling_enabled,,}
         if ${coupling_enabled}; then
-            input_files+=" run_*/lucia_lite_results/table.csv"
+            input_patterns+=" lucia_lite_results/table.csv"
             reporter_params="--coupling-folder coupling"
         fi
 
-        echo "${components[@]}" | grep -w "oifs" && input_files+=" run_*/*-ifs.stat"
-        echo "${components[@]}" | grep -w "nemo" && input_files+=" run_*/*-timing.output"
+        echo "${components[@]}" | grep -w "oifs" && input_patterns+=" *-ifs.stat"
+        echo "${components[@]}" | grep -w "nemo" && input_patterns+=" *-timing.output"
     ;;
 esac
 
@@ -63,6 +65,7 @@ current_member=${current_member,,}
 case "$current_member" in
     "strongscaling")
         tests="%STRONGSCALING.TEST_NAMES%"
+        names="%STRONGSCALING.NAMES%"
 
         if [ "${model}" == "monarch" ]; then
             reporter_params+=" --scalability-variable sdpd"
@@ -89,10 +92,12 @@ case "$current_member" in
         fi
 
         tests="%TRACING.TEST_NAMES%"
-        input_files+=" paramedir/*pm"
+        names="%TRACING.NAMES%"
+        extra_input_files=" paramedir/*pm"
     ;;
     "compilation_efficiency")
         tests="%COMPILATION_EFFICIENCY.TEST_NAMES%"
+        names="%COMPILATION_EFFICIENCY.NAMES%"
 
         if [ "${model}" == "monarch" ]; then
             reporter_params+=" --scalability-variable sdpd"
@@ -104,10 +109,23 @@ case "$current_member" in
     ;;
     "weakscaling")
         tests="%WEAKSCALING.TEST_NAMES%"
+        names="%WEAKSCALING.NAMES%"
     ;;
 esac
 
 tests=($(bashify_array "${tests}" true))
+names=($(bashify_array "${names}"))
+
+# Only collect the run directories declared in <TEST>.NAMES
+input_files="${extra_input_files}"
+read -ra input_pattern_array <<< "${input_patterns}"
+for name in "${names[@]}"
+do
+    for pattern in "${input_pattern_array[@]}"
+    do
+        input_files+=" run_${name}/${pattern}"
+    done
+done
 
 source ${env_sources}
 set +u
