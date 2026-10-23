@@ -94,10 +94,10 @@ function run_hpcw_icon()
 
             configure_extrae ${run_dir}
 
-            \time -o timing.output -f "${TIME_FORMAT}" srun -n ${icon_nproc} --hint=nomultithread --cpus-per-task=${icon_threads} ${run_dir}/trace.sh ${icon_base}/install/bin/icon
+            \time -o timing.output -f "${TIME_FORMAT}" srun -n ${icon_nproc} --hint=nomultithread --cpus-per-task=${icon_threads} ${run_dir}/trace.sh ${icon_base}/install/bin/icon 2> >(tee icon_timer.log >&2)
             ;;
         *)
-            \time -o timing.output -f "${TIME_FORMAT}" srun -n ${icon_nproc} --hint=nomultithread --cpus-per-task=${icon_threads} ${icon_base}/install/bin/icon
+            \time -o timing.output -f "${TIME_FORMAT}" srun -n ${icon_nproc} --hint=nomultithread --cpus-per-task=${icon_threads} ${icon_base}/install/bin/icon 2> >(tee icon_timer.log >&2)
             ;;
     esac
 

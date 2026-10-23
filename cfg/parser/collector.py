@@ -31,6 +31,7 @@ if __name__ == "__main__":
     ifs_files = []
     test_info_files = []
     test_info_yaml_files = []
+    icon_timer_files = []
 
     # Get arguments from command line
     args = get_command_line_arguments()
@@ -40,6 +41,8 @@ if __name__ == "__main__":
         for f in files:
             if f.count("timing.output"):
                 timing_files.append(f)
+            elif f.count("-timer.log"):
+                icon_timer_files.append(f)
             elif f.count(".pm"):
                 paramedir_files.append(f)
             elif f.count(".dm"):
@@ -74,7 +77,8 @@ if __name__ == "__main__":
         components=components,
         ifs_files=ifs_files,
         test_info_files=test_info_files,
-        test_info_yaml_files=test_info_yaml_files
+        test_info_yaml_files=test_info_yaml_files,
+        icon_timer_files=icon_timer_files
     )
     # Save json file
     experiment_results.save_json(output_file)

@@ -230,38 +230,18 @@ function post_ecearth4()
 
 function post_hpcw_icon()
 {
-    local icon_nproc=${test_procs[$i]}
-    local split split_dir split_time total_time=0
-    local -a model_split_time=()
+    local split
+    model_nproc=${test_procs[$i]}
+    icon_nproc=${test_procs[$i]}
 
+    local icon_timer_log=${run_dir}/icon-${test}-timer.log
+    rm -f "${icon_timer_log}"
     for split in $(seq 1 ${splits}); do
-        split_dir=${run_dir}/${split}
-        if [ ! -f ${split_dir}/timing.output ]; then
-            echo "[WARN] ${split_dir}/timing.output not found, skipping split ${split}" >&2
-            model_split_time+=(0)
-            continue
-        fi
-        split_time=$(sed -n 's/.*[[:space:]]\([0-9][0-9.]*\)elapsed.*/\1/p' ${split_dir}/timing.output 2>/dev/null | head -1)
-        split_time=${split_time:-0}
-        model_split_time+=(${split_time})
-        total_time=$(awk -v total="${total_time}" -v t="${split_time}" 'BEGIN { printf "%.4f", total + t }')
+        [ -f ${run_dir}/${split}/icon_timer.log ] && cat ${run_dir}/${split}/icon_timer.log >> "${icon_timer_log}"
     done
 
-    if [ "${total_time}" = "0" ] || [ "${total_time}" = "0.0000" ]; then
-        echo "[WARN] No timing data found for ${test} in ${run_dir}, skipping" >&2
-        return 0
-    fi
-
-    model_nproc=${icon_nproc}
-    model_time=$(awk -v total="${total_time}" -v n="${splits}" 'BEGIN { printf "%.4f", total / n }')
-    icon_time=${model_time}
-    # Read by save_test_yaml through indirect expansion (<component>_split_<var>[i])
-    declare -a icon_split_time=("${model_split_time[@]}")
-
-    printf '%s\n' "@hpcw-time: icon: 0.00user 0.00system ${model_time}elapsed 0%CPU (0text+0data 0max)k" > ${run_dir}/icon-${test}-timing.output
-
     report_test_cfg "nproc" > ${run_dir}/${test}-test_info.csv
-    save_test_yaml "nproc time" "nproc time" "time" > ${run_dir}/${test}-test_info.yaml
+    save_test_yaml "nproc" "nproc" "" > ${run_dir}/${test}-test_info.yaml
 
     case ${current_member} in
         "tracing")

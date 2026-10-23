@@ -38,7 +38,11 @@ case "${model}" in
         input_files+=" run_*/*-timing.output"
     ;;
     "hpcw")
-        input_files+=" run_*/*-timing.output run_*/*test_info.yaml"
+        if [ "${component}" == "icon" ]; then
+            input_files+=" run_*/*-timer.log run_*/*test_info.yaml"
+        else
+            input_files+=" run_*/*-timing.output run_*/*test_info.yaml"
+        fi
     ;;
     "ecearth4")
         coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"

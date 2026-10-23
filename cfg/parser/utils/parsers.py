@@ -311,6 +311,106 @@ def parse_icon_timing(timing_fn: str) -> dict:
     return data
 
 
+# A timer row starts with its label, optionally prefixed by the "L " level marker,
+# followed by the number of calls
+ICON_TIMER_ROW = re.compile(r"^\s+(?:L\s+)?([A-Za-z_][\w.:]*)\s+\d+\s")
+
+
+def _icon_timer_rows(block: str) -> dict:
+    """
+    Split one ICON timer table into rows of whitespace-separated tokens.
+
+    ICON wraps the table at about 80 columns, so a logical row spans several physical
+    lines: the label and the call count come first, and the remaining columns continue on
+    lines that start with a number or a rank marker (`[12]`).
+
+    Args:
+        block (str): Text that follows a ``Timer report`` header line.
+
+    Returns:
+        dict: Timer label mapped to the full token list of its row.
+    """
+    rows = {}
+    current = None
+    for line in block.splitlines():
+        match = ICON_TIMER_ROW.match(line)
+        if match:
+            current = match.group(1)
+            rows[current] = line.split()
+        elif current is not None and re.match(r"^\s*[\[\d.]", line):
+            rows[current].extend(line.split())
+    return rows
+
+
+def _icon_timer_total_avg(tokens: list) -> tuple:
+    """
+    Read the ``total avg (s)`` column of an ICON timer row.
+
+    Every row ends with ``<total max rank> <total avg (s)> <# PEs>``, so taking the last
+    two tokens yields the column regardless of how the message layer wrapped the line.
+
+    Args:
+        tokens (list): Tokens of one row, as returned by ``_icon_timer_rows``.
+
+    Returns:
+        tuple: ``(total_avg_seconds, number_of_pes)``, both ``0`` when not parseable.
+    """
+    if len(tokens) < 2:
+        return 0.0, 0
+    try:
+        return float(tokens[-2]), int(tokens[-1])
+    except ValueError:
+        return 0.0, 0
+
+
+def parse_icon_timer_report(timer_fn: str) -> dict:
+    """
+    Parse the ICON ``Timer report`` table and return the integration time per PE.
+
+    The ``\\time`` elapsed reported in ``timing.output`` covers the whole process, so it
+    also contains the start-up and the initialisation phase. ICON's ``timer_total`` is
+    started at the beginning of ``integrate`` and stopped after the timestep loop, while
+    ``model_init`` runs before it, so the ``total`` row of the timer report is the model
+    integration time with the initialisation excluded.
+
+    Args:
+        timer_fn (str): Path to a file holding one or more ICON ``Timer report`` tables,
+            for instance an ``icon_timer.log`` or a concatenation of them.
+
+    Returns:
+        dict: A dictionary with keys:
+            - "time" (float): Mean over all reports of the ``total`` row's
+              ``total avg (s)``, i.e. the integration time per PE in seconds.
+            - "nproc" (int): Number of PEs reported in the ``total`` row.
+            - "splits" (list): Per-report ``{"time": <seconds>}`` entries, present only when
+              the file holds more than one report, so the summary can show their spread.
+    """
+    data = {"time": 0.0, "nproc": 0}
+    with open(timer_fn, "r", encoding="utf8", errors="replace") as timer_f:
+        text = timer_f.read()
+    if "Timer report" not in text:
+        print(f"[WARNING][{timer_fn}] No Timer report found")
+        return data
+
+    split_times = []
+    for block in text.split("Timer report")[1:]:
+        rows = _icon_timer_rows(block)
+        if "total" not in rows:
+            continue
+        total_avg, npes = _icon_timer_total_avg(rows["total"])
+        if total_avg > 0:
+            split_times.append(total_avg)
+        if npes > 0:
+            data["nproc"] = npes
+
+    if split_times:
+        data["time"] = sum(split_times) / len(split_times)
+    if len(split_times) > 1:
+        data["splits"] = [{"time": split_time} for split_time in split_times]
+
+    return data
+
+
 def parse_ifs_file(file):
     """Parse an IFS (Input File System) statistics file to calculate timestamps per second.
 
@@ -386,6 +486,7 @@ class TimingInformation:
         dimemas_files (list, optional): List of Dimemas files to load.
         ifs_files (list, optional): List of IFS files to load.
         test_info_files (list, optional): List of test info files to load.
+        icon_timer_files (list, optional): List of ICON timer report files to load.
         processes_per_node (int, optional): Number of processes per node. Default is 48.
         json_file (str, optional): Path to a JSON file to load.
         param_file (str, optional): Path to a parameter file to load.
@@ -396,7 +497,7 @@ class TimingInformation:
     """
 
     def __init__(self, timing_files: list=None, lucia_files: list=None, paramedir_files=None, dimemas_files=None, ifs_files=None, test_info_files=None, test_info_yaml_files=None,
-                 processes_per_node: int=48, json_file=None, param_file=None, components=None):
+                 icon_timer_files=None, processes_per_node: int=48, json_file=None, param_file=None, components=None):
 
         self.experiment_name = None
         self.cases = None
@@ -409,7 +510,7 @@ class TimingInformation:
         self.components = components
         self.components_cases = None
 
-        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files) and (not ifs_files) and (not test_info_files) and (not test_info_yaml_files):
+        if (not timing_files) and (not lucia_files) and (not paramedir_files) and (not json_file) and (not dimemas_files) and (not ifs_files) and (not test_info_files) and (not test_info_yaml_files) and (not icon_timer_files):
             raise AssertionError("No files provided")
 
         if json_file:
@@ -418,8 +519,8 @@ class TimingInformation:
             self.load_test_info(test_info_files)
         if test_info_yaml_files:
             self.load_test_info_yaml(test_info_yaml_files)
-        if timing_files:
-            self.load_timings(timing_files)
+        if timing_files or icon_timer_files:
+            self.load_timings(timing_files, icon_timer_files)
             self.function_info_src = "timing"
         else:
             self.function_info_src = "paramedir"
@@ -913,13 +1014,16 @@ class TimingInformation:
         self.data = merge_dictionaries(self.data, lucia_dict)
         self._setup_cases()
 
-    def load_timings(self, timing_files: list):
+    def load_timings(self, timing_files: list, icon_timer_files: list=None):
         """
         Load timing data from a list of timing files and update the internal data structure.
 
         Args:
             timing_files (list of str): List of file paths to timing files. Each file name should follow the pattern
                         "component-run_id-timing.output".
+            icon_timer_files (list of str, optional): List of ICON timer report files, named
+                        "component-run_id-timer.log". They provide the component time, which
+                        excludes the initialisation phase (see ``parse_icon_timer_report``).
 
         Raises:
             ValueError: If the file name does not match the expected pattern.
@@ -937,8 +1041,9 @@ class TimingInformation:
         """
         # component-run_id-timing.output
         pattern = "([a-z]+)-([0-9a-zA-Z_]+)-timing.output"
+        timer_pattern = "([a-z]+)-([0-9a-zA-Z_]+)-timer.log"
         timing_dict = {}
-        for timing_fn in timing_files:
+        for timing_fn in timing_files or []:
             component, id = parse_filename(timing_fn, pattern)
             address = (id, "components")
             dictionary_section = dictionary_pointer(timing_dict, address)
@@ -951,6 +1056,11 @@ class TimingInformation:
                     dictionary_section[component]["ts_per_second"], timing_dict[id]["ts_per_second"])
             else:
                 timing_dict[id]["ts_per_second"] = dictionary_section[component]["ts_per_second"]
+
+        for timer_fn in icon_timer_files or []:
+            component, id = parse_filename(timer_fn, timer_pattern)
+            address = (id, "components", component)
+            dictionary_pointer(timing_dict, address).update(parse_icon_timer_report(timer_fn))
 
         self.data = merge_dictionaries(self.data, timing_dict)
 
