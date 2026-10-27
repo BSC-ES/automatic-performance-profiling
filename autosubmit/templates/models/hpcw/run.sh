@@ -10,6 +10,25 @@
 # Global (set by Autosubmit):
 #   - split: current split of the job (see SPLITS in the job definition)
 #####################################################################################################################
+# Brief: Forces key = value inside the &run_nml block of an ICON namelist, appending it when absent
+# Parameters:
+#   - $1: namelist file
+#   - $2: key
+#   - $3: value
+# Note: plain sed, so the value must not contain '&' or '/'
+#####################################################################################################################
+function set_nml_key()
+{
+    local file=$1
+    local key=$2
+    local value=$3
+
+    if grep -q "^[[:space:]]*${key}[[:space:]]*=" "${file}"; then
+        sed -i -E "s/^[[:space:]]*${key}[[:space:]]*=.*/ ${key} = ${value}/" "${file}"
+    else
+        sed -i "/^[[:space:]]*&run_nml/a\ ${key} = ${value}" "${file}"
+    fi
+}
 
 function run_hpcw_icon()
 {
@@ -41,31 +60,49 @@ function run_hpcw_icon()
     local icon_base=${src_dir}/build/icon
     local staged_inputs=${icon_base}/install/inputs/${input_pkg}
     local downloaded_inputs=${icon_base}/inputs/icon/experiments/${test_config}
+    local input_root
     if [ -d "${staged_inputs}" ]; then
-        rsync -av ${staged_inputs}/ ${run_dir}/
+        input_root=${staged_inputs}
     elif [ -d "${downloaded_inputs}" ]; then
-        rsync -av --copy-links ${downloaded_inputs}/ ${run_dir}/
+        input_root=${downloaded_inputs}
     else
         echo "[ERROR] ICON inputs not found at ${staged_inputs} nor ${downloaded_inputs}" >&2
         exit 1
     fi
 
+    cp -al "${input_root}/." "${run_dir}/"
+
     TIME_FORMAT="@hpcw-time: %C: %Uuser %Ssystem %eelapsed %PCPU (%Xtext+%Ddata %Mmax)k"
 
     local steps="${test_steps}"
-    local atmo_nml
-    atmo_nml=$(grep -m1 "model_namelist_filename" icon_master.namelist 2>/dev/null | \
-        sed "s/.*['\"]\([^'\"]*\)['\"].*/\1/")
-    [ -z "${atmo_nml}" ] && atmo_nml="NAMELIST_${test_config}"
-
-    if [ -n "${steps}" ] && [ "${steps}" -gt 0 ] 2>/dev/null; then
-        if [ -f "${atmo_nml}" ] && ! grep -q "^[[:space:]]*nsteps" "${atmo_nml}"; then
-            sed -i "/^[[:space:]]*&run_nml/a\ nsteps = ${steps}" "${atmo_nml}"
+    local atmo_nml=""
+    local nml_candidate
+    for nml_candidate in $(grep "model_namelist_filename" icon_master.namelist 2>/dev/null | \
+            sed "s/.*['\"]\([^'\"]*\)['\"].*/\1/"); do
+        if [ -f "${nml_candidate}" ] && grep -q "^[[:space:]]*&run_nml" "${nml_candidate}"; then
+            atmo_nml=${nml_candidate}
+            break
         fi
+    done
+    [ -z "${atmo_nml}" ] && atmo_nml="NAMELIST_${test_config}"
+    if [ ! -f "${atmo_nml}" ] || ! grep -q "^[[:space:]]*&run_nml" "${atmo_nml}"; then
+        echo "[ERROR] ICON namelist with &run_nml not found for ${test_config} (tried ${atmo_nml})" >&2
+        exit 1
     fi
 
-    if [ "${output,,}" = "false" ] && [ -f "${atmo_nml}" ]; then
-        # Comment out all &output_nml blocks so ICON writes no output files
+    for nml in "${run_dir}"/NAMELIST* "${run_dir}/${atmo_nml}"; do
+        rm -f "${nml}"
+        cp -L "${input_root}/$(basename "${nml}")" "${nml}"
+    done
+
+    if [ -n "${steps}" ] && [ "${steps}" -gt 0 ] 2>/dev/null; then
+        set_nml_key "${atmo_nml}" nsteps "${steps}"
+    fi
+
+    set_nml_key "${atmo_nml}" ltimer .TRUE.
+    set_nml_key "${atmo_nml}" timers_level 10
+
+    if [ "${output,,}" = "false" ]; then
         sed -i '/^[[:space:]]*&output_nml/,/^[[:space:]]*\//s/^[[:space:]]*/&!/' "${atmo_nml}"
         echo "[INFO] Model output disabled in ${atmo_nml}"
     fi
