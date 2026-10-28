@@ -17,7 +17,7 @@ JOBS:
     NOTIFY_ON: FAILED
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
   POST_WEAKSCALING:
-    FILE: autosubmit/templates/post.sh
+    FILE: autosubmit/templates/post.sh autosubmit/templates/models/%DEFAULT.MODEL%/post.sh
     DEPENDENCIES:
       SCALABILITY_WEAKSCALING:
         FOR:

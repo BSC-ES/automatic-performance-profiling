@@ -17,7 +17,7 @@ MODEL:
 # TRACE CONFIG
 TRACING:
   TIMESTEP_ZERO: false
-  TRACE_STEPS: 32
+  TRACE_STEPS: 10
 
   USER_FUNCTIONS_PROC: 112
   USER_FUNCTIONS_THREADS: 4
@@ -25,17 +25,18 @@ TRACING:
   TEST_NAMES: [BENCH,   BENCH, ]
   NAMES:      [trace_1, trace_2]
   PROCESSORS: [112,     224,   ]
-  THREADS:    [4,       4,     ]
+  THREADS:    [1,       1,     ]
   TEST_CONFIG: test_nwp_R02B04N06multi
   ARCH_NAME: O3_trace
   OUTPUT: false
 
 # STRONG SCALING CONFIG
 STRONGSCALING:
-  TEST_NAMES: [BENCH, BENCH, BENCH, BENCH]
-  NAMES:      [bench_1, bench_2, bench_3, bench_4]
-  PROCESSORS: [448, 672, 896, 1120]
-  THREADS:    [1, 1, 1, 1]
+  TEST_NAMES: [BENCH, BENCH, BENCH, BENCH, BENCH, BENCH, BENCH]
+  NAMES:      [bench_1, bench_2, bench_3, bench_4, bench_5, bench_6, bench_7]
+  PROCESSORS: [896, 1344, 1792, 2240, 2688, 3136, 3584]
+  THREADS:    [1, 1, 1, 1, 1, 1, 1]
+  SPLITS: 3
   TEST_CONFIG: NextGEMS_R2B8_2020
   TEST_STEPS: 10
   ARCH_NAME: O3_prod
@@ -43,10 +44,11 @@ STRONGSCALING:
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
-  TEST_NAMES: [O1_prod]
-  NAMES:      [O1_112 ]
-  PROCESSORS: [112    ]
-  THREADS:    [1      ]
-  TEST_CONFIG: test_nwp_R02B04N06multi
+  TEST_NAMES: [O1_prod, O1_prod, O1_prod, O1_prod, O3_prod, O3_prod, O3_prod, O3_prod]
+  NAMES:      [O1_896,  O1_1344, O1_1792, O1_2240, O3_896,  O3_1344, O3_1792, O3_2240 ]
+  PROCESSORS: [896,     1344,    1792,    2240,    896,     1344,    1792,    2240    ]
+  THREADS:    [1,       1,       1,       1,       1,       1,       1,       1       ]
+  SPLITS: 1
+  TEST_CONFIG: NextGEMS_R2B8_2020
   TEST_STEPS: 10
   OUTPUT: false

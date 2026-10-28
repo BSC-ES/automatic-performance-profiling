@@ -193,7 +193,7 @@ The four supported performance tests IDs are:
   * PAPI counters
   * MPI calls
   * Paraver images
-  * Dimemas images
+  * Dimemas simulations (wallclock table and images)
 
 Each test is enabled/disabled by commenting or uncommenting the path to its jobs configuration file in the ``proj/auto-performance-profiling/autosubmit/configuration/bootstrap.yml`` file. Each test corresponds to one of the ``jobs-*.yml`` files loaded by Autosubmit.
 
@@ -325,10 +325,15 @@ The ``TRACING`` section selects which tracing analysis results are included in t
   Subset of ``CFGS`` used to generate comparison views, e.g. ``MPI_call UserFunctions``.
 
 ``TRACING.DIMEMAS.ENABLED``
-  Enable/Disable Dimemas images in the report (``true``/``false``).
+  Enable/Disable the Dimemas simulations and their report section (``true``/``false``, default ``false``).
+  Dimemas needs a trace with consistent MPI send/receive matching, which the timestep cut produced by the
+  tracing test does not provide (``prv2dim`` warns about communications wrapped with not matching blocks and
+  the simulation stalls, giving the same wallclock for every case), so it is disabled by default.
 
 ``TRACING.DIMEMAS.CFGS``
-  Space-separated list of Dimemas views to include in the report. The available views can be checked in ``cfg/trace_analysis/dimemas_configurations``.
+  Space-separated list of Paraver views rendered on the Dimemas simulated traces, e.g. ``MPI_call p2p_size``.
+  The available views can be checked in ``cfg/trace_analysis/paraver_configurations``. The Dimemas models
+  themselves are the configurations of ``cfg/trace_analysis/dimemas_configurations/platform`` and are all used.
 
 ``TRACING.USER_FUNCTIONS.ENABLED``
   Enable/Disable the user functions analysis in the report (``true``/``false``).

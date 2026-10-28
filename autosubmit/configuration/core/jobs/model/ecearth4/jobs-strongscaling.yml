@@ -17,7 +17,7 @@ JOBS:
     CHECK: "true"
     NOTIFY_ON: FAILED
   POST_STRONGSCALING:
-    FILE: autosubmit/templates/post.sh
+    FILE: autosubmit/templates/post.sh autosubmit/templates/models/%DEFAULT.MODEL%/post.sh
     DEPENDENCIES:
       SCALABILITY_STRONGSCALING:
         FOR:

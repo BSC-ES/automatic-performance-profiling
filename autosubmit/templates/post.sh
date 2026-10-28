@@ -1,26 +1,37 @@
 #!/bin/bash
+#####################################################################################################################
+# post.sh
+# Brief: Gathers the raw outputs of a test member into the curated files the report consumes.
+#        Generic wrapper: it resolves which runs belong to the member and hands each one to the model template
+#        in autosubmit/templates/models/<MODEL>/post.sh, staged by Autosubmit, which provides post_<model>.
+#####################################################################################################################
 
 ###################
 # AS variables
 ###################
-compilation=%COMMON_PATH_LOCATIONS.COMPILATION_ROOT%
 cfg=%COMMON_PATH_LOCATIONS.CFG%
 platform=%DEFAULT.HPCARCH%
 platform=${platform,,}
 env_sources=${cfg}/env/${platform}/environment.env
-run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 project=%COMMON_PATH_LOCATIONS.PROJECT_ROOT%
 model=%MODEL.NAME%
-test="%CURRENT_TEST_NAME%"
-platform="%DEFAULT.HPCARCH%"
+run_root=%COMMON_PATH_LOCATIONS.RUN_ROOT%
 
 # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
 . ${cfg}/utils/bash/utils.sh
 
+jobname=%JOBNAME%
+jobname=${jobname/%DEFAULT.EXPID%_}
+
 components=($(bashify_array "%MODEL.COMPONENTS%" true))
 report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
-
+#####################################################################################################################
+# Brief: Curates the hardware benchmark outputs; model independent, so it lives in this wrapper
+# Global:
+#   - Paths: cfg, run_root, project
+#   - Other: model
+#####################################################################################################################
 function post_hw_benchmarks()
 {
     osu_enabled=%HW_BENCHMARKS.OSU.ENABLED%
@@ -51,257 +62,6 @@ function post_hw_benchmarks()
     fi
 }
 
-function post_nemo()
-{
-    cd ${run_dir} || exit
-
-    nemo_nproc=${test_procs[$i]}
-    model_nproc=${nemo_nproc}
-
-    case ${current_member} in
-        "weakscaling")
-            nemo_ws_resolutions=($(bashify_array "%WEAKSCALING.RESOLUTION%"))
-            nemo_resolution=${nemo_ws_resolutions[$i]}
-            model_resolution=${nemo_resolution}
-            . ${project}/configurations/model/nemo/resolutions.sh 
-            nemo_grid_points=${nemo_resolutions[${nemo_resolution^^}]}
-            model_grid_points=${nemo_grid_points}
-        ;;
-        *)
-            model_resolution=%EXPERIMENT.RESOLUTION%
-            [[ "${model_resolution}" =~ ^% || -z "${model_resolution}" ]] && model_resolution=${test_config}
-            nemo_resolution=${model_resolution}
-        ;;
-    esac
-
-    local split split_dir split_sypd
-    local -a model_split_sypd=()
-    rm -f ${run_dir}/nemo-${test}-timing.output
-    for split in $(seq 1 ${splits}); do
-        split_dir=${run_dir}/${split}
-        if [ ! -f ${split_dir}/timing.output ]; then
-            echo "[WARN] ${split_dir}/timing.output not found, skipping split ${split}" >&2
-            model_split_sypd+=(0)
-            continue
-        fi
-        cat ${split_dir}/timing.output >> ${run_dir}/nemo-${test}-timing.output
-        split_sypd=$(grep -oE "SYPD: +[0-9.E+-]+" ${split_dir}/timing.output | grep -oE "[0-9.E+-]+" | awk '{sum += $1; count++} END {if (count) printf "%.4f", sum / count}')
-        model_split_sypd+=(${split_sypd:-0})
-    done
-    model_sypd=$(printf '%s\n' "${model_split_sypd[@]}" | awk '{sum += $1} END {printf "%.4f", sum / NR}')
-    nemo_sypd=${model_sypd}
-    declare -a nemo_split_sypd=("${model_split_sypd[@]}")
-
-    case ${current_member} in
-        "tracing")
-            cp ${run_dir}/1/${model}.prv ${run_dir}/nemo.prv
-            cp ${run_dir}/1/${model}.pcf ${run_dir}/nemo.pcf
-            cp ${run_dir}/1/${model}.row ${run_dir}/nemo.row
-        ;;
-    esac
-
-    variables_to_report="nproc resolution"
-    [ ${current_member} = "weakscaling" ] && variables_to_report+=" grid_points"
-
-    report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
-    if [ "${splits}" -gt 1 ]; then
-        save_test_yaml "${variables_to_report} sypd" "${variables_to_report} sypd" "sypd" > ${run_dir}/${test}-test_info.yaml
-    fi
-}
-
-function post_ecearth4()
-{
-    oifs_on=false
-    echo "${components[@]}" | grep -w "oifs" && oifs_on=true
-    nemo_on=false
-    echo "${components[@]}" | grep -w "nemo" && nemo_on=true
-
-    cd ${run_dir} || exit
-
-    if [ ${current_member} = "tracing" ]; then
-        multiprog_fn=${run_dir}/run/multiprog.conf
-    else
-        multiprog_fn=${run_dir}/multiprog.conf
-    fi
-
-    save_job_geometry multiprog ${multiprog_fn} > job_geometry.sh
-    . ./job_geometry.sh
-
-    for component in ${!job_geometry[@]}; do
-        component_geometry=${job_geometry[${component}]}
-        component_geometry=${component_geometry//,/ }
-        component_nproc=${component}_nproc
-        declare ${component_nproc}=0
-        for procs_range in ${component_geometry}; do
-            first_proc=$(echo ${procs_range} | cut -d'-' -f1)
-            last_proc=$(echo ${procs_range} | cut -d'-' -f2)
-            curr_sypd=${!component_nproc}
-            declare ${component_nproc}=$((curr_sypd + (last_proc - first_proc + 1)))
-        done
-    done
-
-    model_nproc=$((last_proc + 1))
-
-    case ${current_member} in
-        "tracing")
-            mv run/*prv run/*pcf run/*row .
-
-            cut_trace job_geometry.sh "${model}.prv"
-
-            rm -rf set-* ./*.nc
-        ;;
-        *)
-            local coupling_enabled="%STRONGSCALING.COUPLING_REPORT.ENABLED%"
-            coupling_enabled=${coupling_enabled,,}
-            if ${coupling_enabled}; then
-                if ${nemo_on}; then
-                    lucia_ts=$(cat time.step)
-                else 
-                    # If nemo is not present, it means that oifs is running coupled with amipfr
-                    sim_length=$(cat namelist.amip | grep -oE "RunLengthSec = [0-9]+" | awk -F ' ' '{print $3}')
-                    amip_coupling_period=$(cat namelist.amip | grep -oE "TimeStepSec = [0-9]+" | awk -F ' ' '{print $3}')
-                    lucia_ts=$((sim_length/amip_coupling_period))
-                fi
-
-                local ignore_ini_ts="%STRONGSCALING.COUPLING_REPORT.LUCIA.IGNORE_INI_TS%"
-                local ignore_end_ts="%STRONGSCALING.COUPLING_REPORT.LUCIA.IGNORE_END_TS%"
-                local ignored_ts=$((ignore_ini_ts+ignore_end_ts))
-                while ! python3 ${compilation}/lucia-alternative/lucia_lite_v2.py average ${ignore_ini_ts} ${ignore_end_ts} ${lucia_ts} --generate_plots true > lucia.log && [ ${lucia_ts} -gt ${ignored_ts} ]; do
-                    lucia_ts=$((lucia_ts-1))
-                done
-
-                if [ ${lucia_ts} -le ${ignored_ts} ]; then
-                    echo "[ERROR] Could not generate coupling report using lucia, check the logs or disable the coupling report in the AS settings." >&2 
-                    return 1
-                else
-                    coupling_dir=${test_dir}/coupling/${test}
-                    mkdir -p ${coupling_dir}
-                    cp ${run_dir}/lucia_lite_plots/*    ${coupling_dir}
-                    cp ${run_dir}/lucia_lite_results/*  ${coupling_dir}
-                fi
-            else
-                if ${oifs_on}; then
-                    oifs_sypd=$(grep "FORECAST DAYS PER DAY" log/001/NODE.001_01 |  grep -oE "[0-9.]+" )
-                    oifs_sypd=$(echo ${oifs_sypd} / 365 | bc -l)
-                fi
-                                
-                ${nemo_on} && nemo_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
-
-                model_sypd=$(grep "Model speed excl overhead:" log/001/timing.log |  grep -oE "[0-9.]+" )
-            fi
-
-            ${oifs_on} && cp ${run_dir}/log/001/ifs.stat ${run_dir}/oifs-${test}-ifs.stat
-            ${nemo_on} && cp ${run_dir}/timing.output ${run_dir}/nemo-${test}-timing.output
-        ;;
-    esac
-
-
-    case ${current_member} in
-        "weakscaling")
-            if ${oifs_on}; then
-                oifs_ws_resolutions=($(bashify_array "%WEAKSCALING.OIFS_RESOLUTION%"))
-                oifs_resolution=${oifs_ws_resolutions[$i]}
-                . ${project}/configurations/model/oifs/resolutions.sh 
-                oifs_grid_points=${oifs_resolutions[${oifs_resolution}]}
-            fi
-
-            if ${nemo_on}; then
-                nemo_ws_resolutions=($(bashify_array "%WEAKSCALING.NEMO_RESOLUTION%"))
-                nemo_resolution=${nemo_ws_resolutions[$i]}
-                . ${project}/configurations/model/nemo/resolutions.sh 
-                nemo_grid_points=${nemo_resolutions[${nemo_resolution}]}
-            fi
-        ;;
-        *)
-            model_resolution=%EXPERIMENT.RESOLUTION%
-            ${oifs_on} && oifs_resolution=%EXPERIMENT.OIFS_RESOLUTION%
-            ${nemo_on} && nemo_resolution=%EXPERIMENT.NEMO_RESOLUTION%
-        ;;
-    esac
-
-    variables_to_report="nproc resolution"
-    [ ${current_member} = "weakscaling" ] && variables_to_report+=" grid_points"
-    [ ${current_member} != "tracing" ] && ! ${coupling_enabled} && variables_to_report+=" sypd"
-    
-    report_test_cfg ${variables_to_report} > ${run_dir}/${test}-test_info.csv
-
-    return 0
-}
-
-function post_hpcw_icon()
-{
-    local split
-    model_nproc=${test_procs[$i]}
-    icon_nproc=${test_procs[$i]}
-
-    local icon_timer_log=${run_dir}/icon-${test}-timer.log
-    rm -f "${icon_timer_log}"
-    for split in $(seq 1 ${splits}); do
-        [ -f ${run_dir}/${split}/icon_timer.log ] && cat ${run_dir}/${split}/icon_timer.log >> "${icon_timer_log}"
-    done
-
-    report_test_cfg "nproc" > ${run_dir}/${test}-test_info.csv
-    save_test_yaml "nproc" "nproc" "" > ${run_dir}/${test}-test_info.yaml
-
-    case ${current_member} in
-        "tracing")
-            cp ${run_dir}/1/${model}.prv ${run_dir}/icon.prv
-            cp ${run_dir}/1/${model}.pcf ${run_dir}/icon.pcf
-            cp ${run_dir}/1/${model}.row ${run_dir}/icon.row
-        ;;
-    esac
-}
-
-function post_hpcw_nemo()
-{
-    post_nemo
-}
-
-function post_hpcw()
-{
-    local component
-    # shellcheck source=proj/auto-performance-profiling/cfg/utils/bash/utils.sh
-    component=$(bashify_array "%MODEL.COMPONENTS%" true)
-    component=$(echo "${component%% *}" | tr '[:upper:]' '[:lower:]')
-
-    post_hpcw_${component}
-}
-
-function post_monarch()
-{
-    if [ ${current_member} = "tracing" ]; then
-        cp ${run_dir}/1/${model}.prv ${run_dir}/
-        cp ${run_dir}/1/${model}.pcf ${run_dir}/
-        cp ${run_dir}/1/${model}.row ${run_dir}/
-        splits=1
-    fi
-    
-    declare -a model_split_sdpd
-    model_sdpd=0
-    for split in $(seq 1 ${splits}); do
-        split_run_dir=${run_dir}/${split}
-        time_str=$(grep "real" ${split_run_dir}/model_output.log | awk '{print $2}')
-        hours=$(echo "${time_str}" | grep -oE '[0-9]+h' | grep -oE '[0-9]+' 2>/dev/null || echo 0)
-        minutes=$(echo "${time_str}" | grep -oE '[0-9]+m' | grep -oE '[0-9]+' 2>/dev/null || echo 0)
-        seconds=$(echo "${time_str}" | grep -oE '[0-9]+(\.[0-9]+)?s' | grep -oE '[0-9]+(\.[0-9]+)?' 2>/dev/null || echo 0)
-        execution_time=$(echo "scale=6; (${hours} * 3600) + (${minutes} * 60) + ${seconds}" | bc -l)
-        simulated_hours=%MONARCH.NHOURS%
-        split_sdpd=$(echo "scale=4; (3600 * ${simulated_hours}) / ${execution_time}" | bc -l)
-        model_sdpd=$(echo "scale=4; ${model_sdpd} + ${split_sdpd}" | bc -l)
-        model_split_sdpd+=(${split_sdpd})
-    done
-    declare -a monarch_split_sdpd=("${model_split_sdpd[@]}")
-    model_sdpd=$(echo "scale=4; ${model_sdpd} / ${splits}" | bc -l)
-    model_nproc=${test_procs[$i]}
-    monarch_jnpes=${jnpes_list[$i]}
-    monarch_inpes=${inpes_list[$i]}
-    monarch_write_groups=${write_groups_list[$i]}
-    monarch_write_tasks=${write_tasks_list[$i]}
-    monarch_nproc=${model_nproc}
-    monarch_sdpd=${model_sdpd}
-    save_test_yaml "nproc sdpd" "nproc sdpd jnpes inpes write_groups write_tasks" "sdpd" > ${run_dir}/${test}-test_info.yaml
-}
-
 # Run postprocessing
 module purge
 . ${env_sources}
@@ -316,12 +76,6 @@ case "$current_member" in
         test_tys=($(bashify_array "%COMPILATION_EFFICIENCY.TEST_NAMES%"))
         test_procs=($(bashify_array "%COMPILATION_EFFICIENCY.PROCESSORS%"))
         test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
-        if [ ${model} = "monarch" ]; then
-            inpes_list=($(bashify_array "%COMPILATION_EFFICIENCY.INPES%"))
-            jnpes_list=($(bashify_array "%COMPILATION_EFFICIENCY.JNPES%"))
-            write_groups_list=($(bashify_array "%COMPILATION_EFFICIENCY.WRITE_GROUPS%"))
-            write_tasks_list=($(bashify_array "%COMPILATION_EFFICIENCY.WRITE_TASKS%"))
-        fi
         splits="%COMPILATION_EFFICIENCY.SPLITS%"
         ;;
     "strongscaling")
@@ -330,12 +84,6 @@ case "$current_member" in
         test_procs=($(bashify_array "%STRONGSCALING.PROCESSORS%"))
         test_config="%STRONGSCALING.TEST_CONFIG%"
         splits="%STRONGSCALING.SPLITS%"
-        if [ ${model} = "monarch" ]; then
-            inpes_list=($(bashify_array "%STRONGSCALING.INPES%"))
-            jnpes_list=($(bashify_array "%STRONGSCALING.JNPES%"))
-            write_groups_list=($(bashify_array "%STRONGSCALING.WRITE_GROUPS%"))
-            write_tasks_list=($(bashify_array "%STRONGSCALING.WRITE_TASKS%"))
-        fi
         ;;
     "weakscaling")
         test_names=($(bashify_array "%WEAKSCALING.NAMES%"))
@@ -343,12 +91,6 @@ case "$current_member" in
         test_procs=($(bashify_array "%WEAKSCALING.PROCESSORS%"))
         test_config="%WEAKSCALING.TEST_CONFIG%"
         splits="%WEAKSCALING.SPLITS%"
-        if [ ${model} = "monarch" ]; then
-            inpes_list=($(bashify_array "%WEAKSCALING.INPES%"))
-            jnpes_list=($(bashify_array "%WEAKSCALING.JNPES%"))
-            write_groups_list=($(bashify_array "%WEAKSCALING.WRITE_GROUPS%"))
-            write_tasks_list=($(bashify_array "%WEAKSCALING.WRITE_TASKS%"))
-        fi
         ;;
     "tracing")
         test_names=($(bashify_array "%TRACING.NAMES%"))
@@ -356,25 +98,35 @@ case "$current_member" in
         test_procs=($(bashify_array "%TRACING.PROCESSORS%"))
         test_config="%TRACING.TEST_CONFIG%"
         splits=1
-        if [ ${model} = "monarch" ]; then
-            inpes_list=($(bashify_array "%TRACING.INPES%"))
-            jnpes_list=($(bashify_array "%TRACING.JNPES%"))
-            write_groups_list=($(bashify_array "%TRACING.WRITE_GROUPS%"))
-            write_tasks_list=($(bashify_array "%TRACING.WRITE_TASKS%"))
-        fi
-        ;;
-    "HW_BENCHMARKS")
-        post_hw_benchmarks
         ;;
 esac
 
-[[ "${splits}" =~ ^[0-9]+$ ]] || splits=1
-[ "${splits}" -gt 0 ] || splits=1
+if [ "${current_member}" = "hw_benchmarks" ]; then
+    post_hw_benchmarks
+else
+    # Source the model post template staged by Autosubmit
+model_post=%HPCLOGDIR%/post_${jobname}
 
-i=0
-for test in "${test_names[@]}"; do
-    run_dir=${run_root}/${current_member}/${test_tys[$i]}/run_${test}
-    test_dir=${run_root}/${current_member}/${test_tys[$i]}/
-    post_${model}
-    i=$((i+1))
-done
+# AS stages each FILE entry as <stem>_<jobname>, so two entries with the same stem swap silently
+if ! grep -q "models/${model}/" "${model_post}"; then
+    echo "[ERROR] ${model_post} is not the ${model} template (check the job FILE list)." >&2
+    exit 1
+fi
+
+. "${model_post}"
+    if ! declare -F "post_${model}" >/dev/null; then
+        echo "[ERROR] post_${model} is not defined." >&2
+        echo "        Add autosubmit/templates/models/${model}/post.sh to the job FILE list." >&2
+        exit 1
+    fi
+
+    [[ "${splits}" =~ ^[0-9]+$ ]] || splits=1
+    [ "${splits}" -gt 0 ] || splits=1
+
+    i=0
+    for test in "${test_names[@]}"; do
+        set_run_paths "${test_tys[$i]}" "${test}"
+        post_${model}
+        i=$((i+1))
+    done
+fi

@@ -17,7 +17,7 @@ JOBS:
     CHECK: "true"
     NOTIFY_ON: FAILED
   POST_COMPILATION_EFFICIENCY:
-    FILE: autosubmit/templates/post.sh
+    FILE: autosubmit/templates/post.sh autosubmit/templates/models/%DEFAULT.MODEL%/post.sh
     DEPENDENCIES:
       SCALABILITY_COMPILATION_EFFICIENCY:
         FOR:

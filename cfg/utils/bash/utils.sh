@@ -21,6 +21,29 @@ function bashify_array() {
 }
 
 #####################################################################################################################
+# Brief: Sets the run directory tree shared by the scalability and the post-processing jobs
+#        <run_root>/<current_member>/<test_type>/run_<run_name>[/<split>]
+# Parameters:
+#   - $1: test type, e.g. TCE127L91 (the TEST_NAMES entry)
+#   - $2 (optional): run name, e.g. 4n (the NAMES entry); omit it to get only test_dir
+# Global:
+#   - run_root, current_member
+# Sets:
+#   - test_dir: test root, shared by every run of the test type
+#   - run_dir: stable per-run root; everything the post-processing reads lives here
+#####################################################################################################################
+function set_run_paths()
+{
+    local test_type=$1
+    local run_name=${2:-}
+
+    test_dir=${run_root}/${current_member}/${test_type}
+    [ -n "${run_name}" ] || return 0
+
+    run_dir=${test_dir}/run_${run_name}
+}
+
+#####################################################################################################################
 # Biref: Creates a csv file run_id-test_info.csv that contains the configuration of the test
 # Arguments:
 #   - List of the names of variables to report

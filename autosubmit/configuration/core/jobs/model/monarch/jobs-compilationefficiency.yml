@@ -18,7 +18,7 @@ JOBS:
       PREPROCVAR_READY:
       HERMES_GR:
   POST_COMPILATION_EFFICIENCY:
-    FILE: autosubmit/templates/post.sh
+    FILE: autosubmit/templates/post.sh autosubmit/templates/models/%DEFAULT.MODEL%/post.sh
     DEPENDENCIES:
       SIM_COMPILATION_EFFICIENCY:
         FOR:

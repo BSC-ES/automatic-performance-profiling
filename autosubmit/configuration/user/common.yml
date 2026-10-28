@@ -39,6 +39,24 @@ TRACING:
   MPI:
     ENABLED: true
 
+  PARAVER:
+    ENABLED: true
+    # See cfg/trace_analysis/paraver_configurations/ for available views
+    CFGS: MPI_call p2p_size Average_IPC affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
+    COMPARE_CFGS:  MPI_call UserFunctions
+
+  DIMEMAS:
+    ENABLED: false
+    # See cfg/trace_analysis/dimemas_configurations/ for available views
+    CFGS: MPI_call p2p_size
+
+  USER_FUNCTIONS:
+    ENABLED: true
+    PAPI_COUNTERS:
+      # Format: PC_id_1-PC_id_2 (ids from papi_avail)
+      PLOTS: PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC
+      ENABLED: true
+
   # EXTRAE XML OPTIONS
   EXTRAE:
     HOME: /apps/GPP/BSCTOOLS/extrae/4.3.3/impi_2021_13
@@ -81,21 +99,3 @@ TRACING:
     
     OPENMP:
       ENABLED: no
-
-  PARAVER:
-    ENABLED: true
-    # See cfg/trace_analysis/paraver_configurations/ for available views
-    CFGS: MPI_call p2p_size Average_IPC affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
-    COMPARE_CFGS:  MPI_call UserFunctions
-
-  DIMEMAS:
-    ENABLED: false
-    # See cfg/trace_analysis/dimemas_configurations/ for available views
-    CFGS: MPI_call p2p_size
-
-  USER_FUNCTIONS:
-    ENABLED: true
-    PAPI_COUNTERS:
-      # Format: PC_id_1-PC_id_2 (ids from papi_avail)
-      PLOTS: PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC
-      ENABLED: true

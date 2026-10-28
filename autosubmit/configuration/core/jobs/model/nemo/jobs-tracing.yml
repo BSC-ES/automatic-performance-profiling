@@ -23,7 +23,7 @@ JOBS:
     CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"
     NOTIFY_ON: FAILED
   POST_TRACING:
-    FILE: autosubmit/templates/post.sh
+    FILE: autosubmit/templates/post.sh autosubmit/templates/models/%DEFAULT.MODEL%/post.sh autosubmit/templates/models/nemo/post_nemo.sh
     DEPENDENCIES:
       SCALABILITY_TRACING:
         FOR:
