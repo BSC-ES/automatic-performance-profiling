@@ -1,7 +1,7 @@
 curation module
 ===============
 
-.. automodule:: cfg.parser.utils.curation
+.. automodule:: src.curation
    :members:
    :show-inheritance:
    :undoc-members:

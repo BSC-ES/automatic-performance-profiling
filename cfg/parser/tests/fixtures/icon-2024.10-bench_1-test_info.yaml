@@ -1,0 +1,5 @@
+"bench_1":
+  nproc: 896
+  components:
+    icon:
+      nproc: 896

@@ -1,0 +1,1217 @@
+
+ ICON MPI interface runtime information:
+ mo_mpi::start_mpi Used MPI version: 4.1
+ mo_mpi::start_mpi ICON: Globally run on 896 mpi processes.
+ mo_mpi::start_mpi: Running globally hybrid OpenMP-MPI mode.
+ mo_mpi::start_mpi global_no_of_threads is 1
+
+ ICON runs on 896 mpi processes.
+
+ executable: /gpfs/scratch/bsc32/bsc032333/absd/compilation/O3_prod/build/icon/install/bin/icon
+ date: 20261023
+ time: 172404
+ user: Roc Salvador Andreazini (bsc032333)
+ host: gs01r1b11 (Linux 5.14.0-687.25.1.el9_8.x86_64 x86_64)
+ version: 2024.10
+ revision: unknown
+ repository: unknown
+ local branch: unknown
+ model components:
+   JSBACH: unknown
+ application libraries:
+   ECRAD: unknown
+   RTE-RRTMGP: unknown
+ infrastructure and support libraries:
+   MATH-INTERPOLATION: unknown
+   MATH-SUPPORT: unknown
+   FORTRAN-SUPPORT: unknown
+   YAC:
+     version: 3.4.0
+     revision: unknown
+   MTIME: unknown
+   CDI:
+     version: 2.4.0
+     revision: unknown
+   YAXT: unknown
+ other libraries:
+   ECCODES: 2.31.0
+   NetCDF-C: 4.9.3
+   MPI: Intel(R) MPI Library 2021.16 for Linux* OS...
+ compilers:
+   Fortran: Intel 2025.2.0 (Intel(R) Fortran Compiler for applications running on Intel(R) 64, Version 2025.2.0 Build 20250605)
+   C: Intel 2025.2.0 (GNU 4.2.1)
+ probtest metadata:
+   Revision: unknown
+   Branch: unknown
+ 
+ master_control: start model initialization.
+
+ atm runs on 896 mpi processes.
+
+ set_nproma_nblocks: Using namelist nproma=     32
+ set_nproma_nblocks_sub: Using namelist nproma_sub=     32
+ mo_name_list_output_init::read_name_list_output_namelists: No output definition found; disabling output.
+ mo_dbg_nml/read_dbg_namelist:: read debug namelist dbg_index_nml
+ 
+ mo_advection_nml: read_transport_nml: Evaluate the number of names in transport_nml/tracer_names
+ ---                                  tracer name hus in position :         1
+ ---                                  tracer name clw in position :         2
+ ---                                  tracer name cli in position :         3
+ ---                                   tracer name qr in position :         4
+ ---                                   tracer name qs in position :         5
+ ---                                   tracer name qg in position :         6
+ ---                                      number of named tracers :         6
+ ---                                    ntracer changed from 0 to :         6
+ 
+ 
+ Model time step          : PT60.000S
+ 
+ 
+ Checkpoint interval      : P5D
+ Restart interval         : P10D
+ 
+ This is not a RESTART run ...
+ IAU time shift: PT00.000S
+ 
+ Calendar: Proleptic Gregorian
+ 
+ Experiment reference date: 2020-01-20T00:00:00Z
+ Experiment start date    : 2020-01-20T00:00:00Z
+ Experiment stop date     : 2020-01-20T01:00:00.000
+ 
+ Experiment stop date     : 2020-01-20T01:00:00.000
+ Start date    : 2020-01-20T00:00:00Z
+ Stop date     : 2020-01-20T00:10:00.000
+ 
+ mo_nml_crosscheck::atm_crosscheck:  WARNING! num_prefetch_proc reset to 0 !
+ mo_nml_crosscheck::atm_crosscheck: NetCDF output of floating point variables will be in 32-bit accuracy
+ mo_nml_crosscheck::land_crosscheck: Setting llake = .FALSE. since using tmx (lakes are treated inside JSBACH)
+ set_mpi_work_communicators: num_io_procs_radar has no effect if there are no radar-active domains!
+ set_mpi_work_communicators: --> num_io_procs_radar set to 0
+ set_mpi_work_communicators: Number of procs for test: 0, work: 891, I/O: 5, Restart: 0, Prefetching: 0
+ set_mpi_work_communicators:  0 <=            0  test procs <            0  <=          891  work procs <          891  <=            5  io procs <          896  <=            0  restart procs <          896  <=            0  pref procs <          896  <=            0  radario procs <          896
+ mo_jsb_base:jsbach_setup_models: starting basic setup
+ 
+ 
+ ===========================================================
+ 
+   JSBACH - Version 4.20p9
+   Copyright by Max-Planck-Institute for Meteorology, 2015
+ 
+ ===========================================================
+ 
+ 
+ mo_jsb_model_class:new_model: starting construction of new JSBACH model instance.
+ mo_jsb_model_class:new_model: construction of JSBACH model completed.
+ mo_jsb_config_class:new_model_config: Starting model configuration from NAMELIST_NextGEMS_R2B8_2020_lnd
+ mo_jsb_config_class:new_model_config: Use model_scheme JSBACH
+ mo_jsb_config_class:new_model_config: WARNING: Land surface water balance will not be checked during simulation (unless set differently in hydro or hd config).
+ mo_jsb_base:jsbach_setup_models: starting init of JSBACH process parameters
+ mo_jsb_base:jsbach_setup_models: New jsbach model: jsb
+ ... ID: 1
+ ... Usecase: jsbach_lite
+ ... Using configuration from namelist: NAMELIST_NextGEMS_R2B8_2020_lnd
+ ... Using tile fractions from: bc_land_frac.nc
+ mo_jsb_time:init_time: Initializing JSBACH time
+ mo_jsb_time:init_time:  Not using Asselin time filter for surface temperature
+ mo_jsb_grid:Register_vgrid: Registered new vgrid: name, ID, length= surface          1  1
+ mo_sse_config_class:Init_sse_config: Using 5 snow layers.
+ mo_sse_config_class:Init_sse_config: Using soil texture to derive heat capacity and heat conductivity
+ mo_sse_config_class:Init_sse_config: Assuming uniform snow cover for soil temperature computation
+ mo_sse_config_class:Init_sse_config: Critical water/ice content in upper soil layer for correction of surface temperature for freezing/melting: 0.5850E-02
+ mo_jsb_grid:Register_vgrid: Registered new vgrid: name, ID, length= soil_depth_energy         43  5
+ mo_sse_config_class:Init_sse_config:  Soil levels in soil energy (upper) [m]:   0.000000000000000E+000  6.500000000000000E-002  0.319000000000000        1.23200000000000        4.13400000000000
+ mo_sse_config_class:Init_sse_config:  Soil levels in soil energy (mid)   [m]:   3.250000000000000E-002  0.192000000000000       0.775500000000000        2.68300000000000        6.98400000000000
+ mo_sse_config_class:Init_sse_config:  Soil levels in soil energy (lower) [m]:   6.500000000000000E-002  0.319000000000000        1.23200000000000        4.13400000000000        9.83400000000000
+ mo_sse_config_class:Init_sse_config:  Soil level depths in soil energy   [m]:   6.500000000000000E-002  0.254000000000000       0.913000000000000        2.90200000000000        5.70000000000000
+ mo_jsb_grid:Register_vgrid: Registered new vgrid: name, ID, length= snow_depth_energy         44  5
+ mo_sse_config_class:Init_sse_config:  Snow levels in soil energy (upper) [m]:   0.000000000000000E+000  5.000000000000000E-002  0.100000000000000       0.150000000000000       0.200000000000000
+ mo_sse_config_class:Init_sse_config:  Snow levels in soil energy (mid)   [m]:   2.500000000000000E-002  7.500000000000001E-002  0.125000000000000       0.175000000000000       0.225000000000000
+ mo_sse_config_class:Init_sse_config:  Snow levels in soil energy (lower) [m]:   5.000000000000000E-002  0.100000000000000       0.150000000000000       0.200000000000000       0.250000000000000
+ mo_sse_config_class:Init_sse_config:  Snow level depths in soil energy   [m]:   5.000000000000000E-002  5.000000000000000E-002  5.000000000000002E-002  4.999999999999999E-002  4.999999999999999E-002
+ mo_hydro_config_class:Init_hydro_config: Maximum water holding capacity of soil or canopy skin: 0.2000E-03
+ mo_hydro_config_class:Init_hydro_config: Upper limit for maximum soil moisture content: -.1000E+01
+ mo_hydro_config_class:Init_hydro_config: Fraction of field capacity at critical point: 0.7500E+00
+ mo_hydro_config_class:Init_hydro_config: Fraction of field capacity at permanent wilting point: 0.3500E+00
+ mo_hydro_config_class:Init_hydro_config: Calculate hydrological parameters for mineral soils from soil texture.
+ mo_hydro_config_class:Init_hydro_config: WARNING: l_organic=.F. and l_soil_texture=.T. => Hydrological soil parameters represent purely mineral soils!
+ mo_hydro_config_class:Init_hydro_config: Allow infiltration at sub-zero temperatures
+ mo_hydro_config_class:Init_hydro_config: Experimental pond scheme is disabled.
+ mo_hydro_config_class:Init_hydro_config: Soil hydrology uses the Van Genuchten model
+ mo_hydro_config_class:Init_hydro_config: Soil diffusivity/conductivity interpolation uses upstream means
+ mo_hydro_config_class:Init_hydro_config: Pond dynamics scheme uses tanh scaling
+ mo_hydro_config_class:Init_hydro_config: Using semi-distributed scale parametrization (ARNO scheme) for soil hydrological fluxes
+ mo_jsb_grid:Register_vgrid: Registered new vgrid: name, ID, length= soil_depth_water         45  5
+ mo_hydro_config_class:Init_hydro_config:  Soil levels in hydrology (upper) [m]:   0.000000000000000E+000  6.500000000000000E-002  0.319000000000000        1.23200000000000        4.13400000000000
+ mo_hydro_config_class:Init_hydro_config:  Soil levels in hydrology (mid)   [m]:   3.250000000000000E-002  0.192000000000000       0.775500000000000        2.68300000000000        6.98400000000000
+ mo_hydro_config_class:Init_hydro_config:  Soil levels in hydrology (lower) [m]:   6.500000000000000E-002  0.319000000000000        1.23200000000000        4.13400000000000        9.83400000000000
+ mo_hydro_config_class:Init_hydro_config:  Soil level depths in hydrology   [m]:   6.500000000000000E-002  0.254000000000000       0.913000000000000        2.90200000000000        5.70000000000000
+ mo_jsb_grid:Register_vgrid: Registered new vgrid: name, ID, length= canopy_layer         46  3
+ mo_pheno_config_class:Init_pheno_config: Starting phenology configuration
+ mo_carbon_config_class:Init_carbon_config: Starting carbon configuration
+ mo_disturb_config_class:Init_disturb_config: Starting disturb configuration
+ mo_pplcc_config_class:Init_pplcc_config: Starting pplcc configuration
+ mo_fage_config_class:Init_fage_config: Starting fage configuration
+ mo_alcc_config_class:Init_alcc_config: Starting alcc configuration
+ mo_alcc_config_class:Init_alcc_config: Reading land use data from maps.
+ mo_alcc_config_class:Init_alcc_config: ... land use change will be applied on a daily basis.
+ mo_jsb_grid:Register_vgrid: Registered new vgrid: name, ID, length= pfts         47 11
+ mo_nlcc_config_class:Init_nlcc_config: Starting nlcc configuration
+ mo_jsb_grid:Register_vgrid: Registered new vgrid: name, ID, length= pfts         48 11
+ mo_jsb_base:jsbach_setup_models: Initialize JSBACH from IFS analysis file ifs2icon.nc
+ mo_jsb_base:jsbach_setup_models: Using canopy albedo from ini file bc_land_phys.nc ... therefore no influence of vegetation on albedo
+ mo_jsb_base:jsbach_setup_models: done basic setup (models, process configs, QUINCY process constants init)
+ mo_model_domimp_patches:import_pre_patches: start to import patches
+ mo_model_domimp_patches:read_pre_patch: start to init patch_pre
+ Read grid file icon_grid_0033_R02B08_G.nc
+ mo_model_domimp_patches:read_pre_patch: warning: falling back to serial semantics for opening netcdf file icon_grid_0033_R02B08_G.nc
+ mo_model_domimp_patches:read_pre_patch: grid uuid: 5aff0578-9bd9-11e8-8e4a-af3d880818e6
+ mo_model_domimp_patches:read_pre_patch: generating center of patch    1:  252
+ mo_model_domimp_patches:read_pre_patch: generating subcenter of patch    1:    1
+ mo_model_domimp_patches:read_pre_patch: number_of_grid_used of patch    1:   33
+ mo_model_domimp_patches:read_pre_patch: URI of patch    1: http://icon-downloads.mpimet.mpg.de/grids/public/mpim/0033/icon_grid_0033_R02B08_G.nc
+ mo_model_domimp_patches:read_pre_patch: read_patches finished
+ mo_subdivision:decompose_domain: start of domain decomposition
+ mo_subdivision:decompose_domain: Is this taking a long time? Consider adding macro definition HAVE_SLOW_PASSIVE_TARGET_ONESIDED to compile time settings.
+ No splitting of processor grid
+ divide_patch: Using geometric area subdivision (normal)
+ mo_setup_subdivision::divide_patch: dividing patch
+ Secondary nproma (nproma_sub)::      32
+ mo_setup_subdivision: divide_patch: erase negative refin_ctrl flags in patch 1
+ mo_model_domimp_patches:read_remaining_patch: Read gridmap file icon_grid_0033_R02B08_G.nc
+ mo_read_netcdf_distributed::distrib_nf_open: icon_grid_0033_R02B08_G.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file icon_grid_0033_R02B08_G.nc
+ mo_model_domimp_patches:read_remaining_patch: read finished
+ Information on domain decomposition: grid    1
+ Number of compute PEs used for this grid:    891
+ #   lateral boundary cells: max/min/avg       0      0      0.00
+ #         prognostic cells: max/min/avg    5885   5884   5884.26
+ # cells up to halo level 1: max/min/avg    6274   6100   6114.08
+ # cells up to halo level 2: max/min/avg    6669   6321   6350.86
+ #              cells total: max/min/avg    6669   6321   6350.86
+ #   lateral boundary edges: max/min/avg       0      0      0.00
+ #         prognostic edges: max/min/avg    9021   8934   8941.80
+ # edges up to halo level 1: max/min/avg    9021   8934   8941.80
+ # edges up to halo level 2: max/min/avg    9806   9371   9408.39
+ # edges up to halo level 3: max/min/avg   10201   9592   9644.18
+ #   lateral boundary verts: max/min/avg       0      0      0.00
+ #         prognostic verts: max/min/avg    3086   2782   2942.13
+ # verts up to halo level 1: max/min/avg    3138   3051   3058.53
+ # verts up to halo level 2: max/min/avg    3533   3272   3294.33
+ 
+ # send PEs (cells): max/min/avg      14      3      6.41
+ # recv PEs (cells): max/min/avg      14      3      6.41
+ # send PEs (edges): max/min/avg      16      4      6.53
+ # recv PEs (edges): max/min/avg      14      3      6.53
+ # send PEs (verts): max/min/avg      15      3      6.52
+ # recv PEs (verts): max/min/avg      13      4      6.52
+ 
+ build_decomposition: Done.
+ RBF scale factors for cells/edges/vertices, domain   1:  0.50000 0.50000 0.50000
+ RBF scale factors for velocity boundary interpolation   1:  0.50000
+ mo_intp_state:construct_2d_interpol_state: start to construct int_state
+ mo_intp_state:construct_2d_interpol_state: constructing int_state for patch 1
+ mo_intp_state:allocate_int_state: memory allocation finished
+ mo_intp_rbf_coeffs:rbf_vec_compute_coeff_cell: 
+ mo_intp_rbf_coeffs:rbf_vec_compute_coeff_vertex: 
+ mo_intp_rbf_coeffs:rbf_vec_compute_coeff_edge: 
+ mo_interpolation:tri_quadrature_pts: 
+ mo_intp_coeffs:calculate_tangent_plane_at_edge: 
+ mo_interpolation:init_tplane_c_sphere: 
+ mo_intp_coeffs_lsq_bln:lsq_stencil_create: 
+ mo_intp_coeffs_lsq_bln:create_stencil_c3: create 3-point stencil
+ mo_interpolation:lsq_compute_coeff_cell_sphere: 
+ mo_intp_coeffs_lsq_bln:lsq_stencil_create: 
+ mo_intp_coeffs_lsq_bln:create_stencil_c9: create 9-point stencil
+ mo_interpolation:lsq_compute_coeff_cell_sphere: 
+ mo_intp_state:construct_2d_interpol_state: construction of interpolation state finished
+ setup_phys_patches: Physical domain    1 belongs to logical domain    1
+ mo_dynamics_config:setup_dynamics_config: Set time level indices
+ ldynamics  =  .TRUE.: 2 time levels used for progn. dynamics  variables -> nnew /= nnow
+ ltransport =  .TRUE.: 2 time levels used for progn. transport variables -> nnew_rcf /= nnow_rcf
+ ---                                                 nnow    (01) :         1
+ ---                                                 nnew    (01) :         2
+ ---                                                 nold    (01) :         3
+ ---                                                 nnow_rcf(01) :         1
+ ---                                                 nnew_rcf(01) :         2
+ mo_ext_data_state:construct_ext_data: Construction of data structure for external data started
+ 
+ adding new var_list ext_data_atm_D01
+ 
+ adding new var_list ext_data_atm_td_D01
+ mo_ext_data_state:construct_ext_data: Construction of data structure for external data finished
+ mo_ext_data_init:init_ext_data: Start
+ mo_ext_data_init:init_ext_data: Start reading external data from file
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_sso.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_sso.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_ext_data_init:init_ext_data: Finished reading external data
+ SLEVE coord: Coordinate setup finished
+ flat coordinate surfaces starting at level  41
+ Nominal heights of coordinate half levels and layer thicknesses (m):
+ jk, vct_a, dvct:    1   75000.000    2545.415
+ jk, vct_a, dvct:    2   72454.585    2438.326
+ jk, vct_a, dvct:    3   70016.259    2404.331
+ jk, vct_a, dvct:    4   67611.928    2336.275
+ jk, vct_a, dvct:    5   65275.653    2270.077
+ jk, vct_a, dvct:    6   63005.576    2205.619
+ jk, vct_a, dvct:    7   60799.957    2142.792
+ jk, vct_a, dvct:    8   58657.165    2081.500
+ jk, vct_a, dvct:    9   56575.665    2030.561
+ jk, vct_a, dvct:   10   54545.104    1986.992
+ jk, vct_a, dvct:   11   52558.113    1938.008
+ jk, vct_a, dvct:   12   50620.105    1896.267
+ jk, vct_a, dvct:   13   48723.838    1840.087
+ jk, vct_a, dvct:   14   46883.751    1785.034
+ jk, vct_a, dvct:   15   45098.717    1731.052
+ jk, vct_a, dvct:   16   43367.665    1678.089
+ jk, vct_a, dvct:   17   41689.576    1626.096
+ jk, vct_a, dvct:   18   40063.480    1575.026
+ jk, vct_a, dvct:   19   38488.454    1524.837
+ jk, vct_a, dvct:   20   36963.617    1475.487
+ jk, vct_a, dvct:   21   35488.131    1426.938
+ jk, vct_a, dvct:   22   34061.192    1379.154
+ jk, vct_a, dvct:   23   32682.038    1332.099
+ jk, vct_a, dvct:   24   31349.939    1285.741
+ jk, vct_a, dvct:   25   30064.198    1240.048
+ jk, vct_a, dvct:   26   28824.149    1194.990
+ jk, vct_a, dvct:   27   27629.160    1150.537
+ jk, vct_a, dvct:   28   26478.623    1102.409
+ jk, vct_a, dvct:   29   25376.214    1049.479
+ jk, vct_a, dvct:   30   24326.735     994.393
+ jk, vct_a, dvct:   31   23332.342     935.933
+ jk, vct_a, dvct:   32   22396.409     880.910
+ jk, vct_a, dvct:   33   21515.499     829.121
+ jk, vct_a, dvct:   34   20686.378     780.377
+ jk, vct_a, dvct:   35   19906.001     734.499
+ jk, vct_a, dvct:   36   19171.503     691.318
+ jk, vct_a, dvct:   37   18480.185     650.675
+ jk, vct_a, dvct:   38   17829.510     612.422
+ jk, vct_a, dvct:   39   17217.088     576.418
+ jk, vct_a, dvct:   40   16640.670     542.530
+ jk, vct_a, dvct:   41   16098.140     510.635
+ jk, vct_a, dvct:   42   15587.505     480.615
+ jk, vct_a, dvct:   43   15106.891     452.359
+ jk, vct_a, dvct:   44   14654.532     425.765
+ jk, vct_a, dvct:   45   14228.766     412.492
+ jk, vct_a, dvct:   46   13816.274     400.000
+ jk, vct_a, dvct:   47   13416.274     400.000
+ jk, vct_a, dvct:   48   13016.274     400.000
+ jk, vct_a, dvct:   49   12616.274     400.000
+ jk, vct_a, dvct:   50   12216.274     400.000
+ jk, vct_a, dvct:   51   11816.274     400.000
+ jk, vct_a, dvct:   52   11416.274     400.000
+ jk, vct_a, dvct:   53   11016.274     400.000
+ jk, vct_a, dvct:   54   10616.274     400.000
+ jk, vct_a, dvct:   55   10216.274     400.000
+ jk, vct_a, dvct:   56    9816.274     400.000
+ jk, vct_a, dvct:   57    9416.274     400.000
+ jk, vct_a, dvct:   58    9016.274     400.000
+ jk, vct_a, dvct:   59    8616.274     400.000
+ jk, vct_a, dvct:   60    8216.274     400.000
+ jk, vct_a, dvct:   61    7816.274     400.000
+ jk, vct_a, dvct:   62    7416.274     400.000
+ jk, vct_a, dvct:   63    7016.274     400.000
+ jk, vct_a, dvct:   64    6616.274     400.000
+ jk, vct_a, dvct:   65    6216.274     400.000
+ jk, vct_a, dvct:   66    5816.274     400.000
+ jk, vct_a, dvct:   67    5416.274     391.684
+ jk, vct_a, dvct:   68    5024.590     377.873
+ jk, vct_a, dvct:   69    4646.717     364.093
+ jk, vct_a, dvct:   70    4282.624     350.333
+ jk, vct_a, dvct:   71    3932.291     336.579
+ jk, vct_a, dvct:   72    3595.712     322.819
+ jk, vct_a, dvct:   73    3272.894     309.037
+ jk, vct_a, dvct:   74    2963.856     295.219
+ jk, vct_a, dvct:   75    2668.637     281.345
+ jk, vct_a, dvct:   76    2387.292     267.397
+ jk, vct_a, dvct:   77    2119.895     253.349
+ jk, vct_a, dvct:   78    1866.546     239.177
+ jk, vct_a, dvct:   79    1627.369     224.848
+ jk, vct_a, dvct:   80    1402.521     210.325
+ jk, vct_a, dvct:   81    1192.196     195.563
+ jk, vct_a, dvct:   82     996.632     180.505
+ jk, vct_a, dvct:   83     816.127     165.079
+ jk, vct_a, dvct:   84     651.048     149.189
+ jk, vct_a, dvct:   85     501.859     132.705
+ jk, vct_a, dvct:   86     369.154     115.436
+ jk, vct_a, dvct:   87     253.718      97.087
+ jk, vct_a, dvct:   88     156.631      77.139
+ jk, vct_a, dvct:   89      79.492      54.492
+ jk, vct_a, dvct:   90      25.000      25.000
+ jk, vct_a, dvct:   91       0.000       0.000
+ parallel calculation of vgrid UUID. Generated UUID: 
+ 93901626-1f1b-a735-9685-4e3cbe782d80
+ mo_jsb_grid:Register_grid: registered new JSBACH grid instance
+ mo_jsb_base:jsbach_setup_tiles: Imported lctlib from lctlib_nlct21.def using the model scheme jsbach
+ mo_jsb_model_usecases:init_usecase: Initializing model usecase "jsbach_lite" with lakes
+ mo_nonhydrostatic_config:configure_nonhydrostatic: Domain   1; computation of moist physics processes starts in layer   32
+ mo_nonhydrostatic_config:configure_nonhydrostatic: Domain   1; high- and mid-level clouds in layers above   63  78
+ mo_aes_sfc_indices/init_sfc_indices: 
+ mo_aes_sfc_indices/init_sfc_indices:   3 surface type(s) activated.
+ mo_aes_sfc_indices/init_sfc_indices: Indices for water, ice, land, and grid-box mean are    1   2   3   0, respectively.
+ mo_aes_sfc_indices/init_sfc_indices: 
+ Melting temperature  :   273.15 [K]
+ Lower table bound    :    50.00 [K]
+ Upper table bound    :   400.00 [K]
+ Full table settings  :
+   Temperature delta  :        0.001 [K]
+   Inverse delta      :     1000.000 [1/K]
+   Indices [lb,ctr,ub]:    50000  273150  400000
+ Spline table settings:
+   Temperature delta  :        0.025 [K]
+   Inverse delta      :       40.000 [1/K]
+   Indices [lb,ctr,ub]:     2000   10926   16000
+   Table split indices:    10926   10925
+ added event group: aes_phy_events_group
+ 
+ ========================================================================
+ 
+ AES physics configuration
+ =========================
+ 
+ For domain 1
+ ------------
+ 
+ User controlled parameters
+ ..........................
+ 
+ dynamics physics coupling
+ treatment of negative tracer mass fractions:
+ ---                               aes_phy_config(1)% iqneg_d2p   :         2
+ ---                               aes_phy_config(1)% iqneg_p2d   :         2
+ 
+ time control parameters
+ 
+     aes_phy_config(1 )% dt_rad: PT20M
+     aes_phy_config(1 )% sd_rad: 2020-01-20T00:00:00Z
+     aes_phy_config(1 )% ed_rad: 2020-01-20T01:00:00Z
+ ---                                   aes_phy_config(1 )% fc_rad :         1
+ rad tendencies are used to update the model state
+ 
+     aes_phy_config(1 )% dt_vdf: PT60S
+     aes_phy_config(1 )% sd_vdf: 2020-01-20T00:00:00Z
+     aes_phy_config(1 )% ed_vdf: 2020-01-20T01:00:00Z
+ ---                                   aes_phy_config(1 )% fc_vdf :         1
+ vdf tendencies are used to update the model state
+ 
+     aes_phy_config(1 )% dt_mig: PT60S
+     aes_phy_config(1 )% sd_mig: 2020-01-20T00:00:00Z
+     aes_phy_config(1 )% ed_mig: 2020-01-20T01:00:00Z
+ ---                                   aes_phy_config(1 )% fc_mig :         1
+ mig tendencies are used to update the model state
+ 
+     aes_phy_config(1 )% dt_two: PT0S
+ 
+     aes_phy_config(1 )% dt_car: PT0S
+ 
+     aes_phy_config(1 )% dt_art: PT0S
+ 
+ logical switches
+ ---                                     aes_phy_config(1)% lmlo  : FALSE
+ ---                                 aes_phy_config(1)% l2moment  : FALSE
+ ---                                     aes_phy_config(1)% lice  : TRUE
+ ---                                     aes_phy_config(1)% ljsb  : TRUE
+ ---                                     aes_phy_config(1)% llake : FALSE
+ ---                                     aes_phy_config(1)% lamip : TRUE
+ ---                                  aes_phy_config(1)% lsstice  : FALSE
+ ---                     aes_phy_config(1)% use_shflx_adjustment  : FALSE
+ ---       aes_phy_config(1)% suppress_shflx_adjustment_over_ice  : FALSE
+ 
+ vertical ranges
+ ---                               aes_phy_config(1)% zmaxcloudy  :  33000.
+ ---                               aes_phy_config(1)% jks_cloudy  :        23
+ 
+ Derived time control
+ ....................
+ 
+     aes_phy_tc(1 )% dt_rad: PT20M
+     aes_phy_tc(1 )% sd_rad: 2020-01-20T00:00:00.000
+     aes_phy_tc(1 )% ed_rad: 2020-01-20T01:00:00.000
+     aes_phy_tc(1 )% dt_rad_sec: 1200.000 sec
+ 
+     aes_phy_tc(1 )% dt_vdf: PT60.000S
+     aes_phy_tc(1 )% sd_vdf: 2020-01-20T00:00:00.000
+     aes_phy_tc(1 )% ed_vdf: 2020-01-20T01:00:00.000
+     aes_phy_tc(1 )% dt_vdf_sec:   60.000 sec
+ 
+     aes_phy_tc(1 )% dt_mig: PT60.000S
+     aes_phy_tc(1 )% sd_mig: 2020-01-20T00:00:00.000
+     aes_phy_tc(1 )% ed_mig: 2020-01-20T01:00:00.000
+     aes_phy_tc(1 )% dt_mig_sec:   60.000 sec
+ 
+     aes_phy_tc(1 )% dt_two: PT00.000S
+ 
+     aes_phy_tc(1 )% dt_car: PT00.000S
+ 
+     aes_phy_tc(1 )% dt_art: PT00.000S
+ 
+ 
+ ------------------------------------------------------------------------
+ 
+ Events on all domains
+ .....................
+ 
+ Event list: aes_phy_events_group
+        1          rad_d1
+        2          vdf_d1
+        3          mig_d1
+ 
+ ========================================================================
+ 
+ Tracer configuration
+ ====================
+ 
+ total number of tracers
+ ---                                                      ntracer :         6
+ index variables defined for active tracers
+ ---                                      tracer "hus"  : iqv     :         1
+ ---                                      tracer "clw"  : iqc     :         2
+ ---                                      tracer "cli"  : iqi     :         3
+ ---                                      tracer "qr"   : iqr     :         4
+ ---                                      tracer "qs"   : iqs     :         5
+ ---                                      tracer "qg"   : iqg     :         6
+ last  index for tracers of mass fraction of water species in air
+ ---                                                      iqm_max :         6
+ first index for other tracers
+ ---                                                      iqt     :         7
+ number of other tracers
+ ---                                                      ntrac   :         0
+ 
+ ------------------------------------------------------------------------
+ 
+ Effective input to the radiation
+ ================================
+ 
+ For domain 1
+ ------------
+ 
+ Solar spectrum
+ --------------
+ 
+ Time dependent solar spectrum from file
+ ---                             Factor applied to solar spectrum :  1.0000
+ 
+ Earth orbit
+ -----------
+ The VSOP87 orbit is used
+ ---                 The VSOP87 orbit is perpetuated for the year :      2020
+ Earth cycles on orbit --> annual cycle in solar irradiation at TOA
+ 
+ Solar irradiation at the top of the atmosphere
+ ----------------------------------------------
+ 
+ Sources of volume/mass mixing ratios used in radiation
+ ------------------------------------------------------
+ H2O   (gas,liq,ice) mass mixing ratios from tracer fields
+ CO2   volume mixing ratio =  0.41439000E-03
+ CH4   tanh-profile with surface volume mixing ratio =  0.19110000E-05
+ N2O   tanh-profile with surface volume mixing ratio from aes_rad_config =  0.33207000E-06
+ CFC11 volume mixing ratio =  0.21823000E-09
+ CFC12 volume mixing ratio =  0.49502000E-09
+ O3    clim. annual cycle 3-dim. volume mixing ratio from file
+ O2    volume mixing ratio =  0.20946000E+00
+ only Kinne natural background aerosols are used
+ aerosol optical properties are not diagnosed, if you wish to diagnose, put aes_rad_config(jg)%lrad_aero_diag=.TRUE.
+ 
+ Multiplication factors applied in radiation to vol./mass mixing ratio sources
+ -----------------------------------------------------------------------------
+ ---                                 H2O(gas,liq,ice): frad_h2o = :  1.0000
+ ---                                 CO2             : frad_co2 = :  1.0000
+ ---                                 CH4             : frad_ch4 = :  1.0000
+ ---                                 N2O             : frad_n2o = :  1.0000
+ ---                                 O3              : frad_o3  = :  1.0000
+ ---                                 O2              : frad_o2  = :  1.0000
+ ---                               CFC11           : frad_cfc11 = :  1.0000
+ ---                               CFC12           : frad_cfc12 = :  1.0000
+ 
+ 
+ 
+ ========================================================================
+ 
+ AES radiation configuration
+ ===========================
+ 
+ For domain 1
+ ------------
+ 
+ ---                            aes_rad_config(1)% isolrad        :         1
+ ---                            aes_rad_config(1)% fsolrad        :  1.0000
+ 
+ ---                            aes_rad_config(1)% l_orbvsop87    : TRUE
+ ---                            aes_rad_config(1)% cecc           : 0.16715E-01
+ ---                            aes_rad_config(1)% cobld          :  23.441
+ ---                            aes_rad_config(1)% clonp          :  282.70
+ 
+ ---                            aes_rad_config(1)% lyr_perp       : TRUE
+ ---                            aes_rad_config(1)% yr_perp        :      2020
+ ---                            aes_rad_config(1)% nmonth         :         0
+ ---                            aes_rad_config(1)% ldiur          : TRUE
+ ---                            aes_rad_config(1)% l_sph_symm_irr : FALSE
+ 
+ ---                            aes_rad_config(1)% irad_h2o       :         1
+ ---                            aes_rad_config(1)% irad_co2       :         2
+ ---                            aes_rad_config(1)% irad_ch4       :        12
+ ---                            aes_rad_config(1)% irad_n2o       :        12
+ ---                            aes_rad_config(1)% irad_o3        :         6
+ ---                            aes_rad_config(1)% irad_o2        :         2
+ ---                            aes_rad_config(1)% irad_cfc11     :         2
+ ---                            aes_rad_config(1)% irad_cfc12     :         2
+ ---                            aes_rad_config(1)% irad_aero      :        12
+ ---                            aes_rad_config(1)% lrad_aero_diag : FALSE
+ 
+ ---                            aes_rad_config(1)% vmr_co2        : 0.41439E-03
+ ---                            aes_rad_config(1)% vmr_ch4        : 0.19110E-05
+ ---                            aes_rad_config(1)% vmr_n2o        : 0.33207E-06
+ ---                            aes_rad_config(1)% vmr_o2         : 0.20946
+ ---                            aes_rad_config(1)% vmr_cfc11      : 0.21823E-09
+ ---                            aes_rad_config(1)% vmr_cfc12      : 0.49502E-09
+ 
+ ---                            aes_rad_config(1)% frad_h2o       :  1.0000
+ ---                            aes_rad_config(1)% frad_co2       :  1.0000
+ ---                            aes_rad_config(1)% frad_ch4       :  1.0000
+ ---                            aes_rad_config(1)% frad_n2o       :  1.0000
+ ---                            aes_rad_config(1)% frad_o3        :  1.0000
+ ---                            aes_rad_config(1)% frad_o2        :  1.0000
+ ---                            aes_rad_config(1)% frad_cfc11     :  1.0000
+ ---                            aes_rad_config(1)% frad_cfc12     :  1.0000
+ 
+ 
+ ========================================================================
+ 
+ cloud optical properties configuration
+ ======================================
+ 
+ For domain 1
+ ------------
+ 
+ ---                                 aes_cop_config(1)% cn1lnd    :  50.000
+ ---                                 aes_cop_config(1)% cn2lnd    :  220.00
+ ---                                 aes_cop_config(1)% cn1sea    :  50.000
+ ---                                 aes_cop_config(1)% cn2sea    :  100.00
+ 
+ ---                                 aes_cop_config(1)% cinhomi   : 0.60000
+ ---                                 aes_cop_config(1)% cinhoms   : 0.60000
+ ---                                 aes_cop_config(1)% cinhoml   : 0.40000
+ 
+ ---                                 aes_cop_config(1)% cthomi    :  238.15
+ ---                                 aes_cop_config(1)% csecfrl   : 0.15000E-04
+ 
+ 
+ ========================================================================
+ 
+ AES vertical diffusion configuration
+ ======================================
+ 
+ For domain 1
+ ------------
+ 
+ ---                           aes_vdf_config(1)% lsfc_mom_flux   : TRUE
+ ---                           aes_vdf_config(1)% lsfc_heat_flux  : TRUE
+ 
+ ---                           aes_vdf_config(1)% pr0             : 0.70000
+ ---                           aes_vdf_config(1)% f_tau0          : 0.17000
+ ---                           aes_vdf_config(1)% f_theta0        :-0.14368
+ ---                           aes_vdf_config(1)% c_f             : 0.18500
+ ---                           aes_vdf_config(1)% c_n             :  2.0000
+ ---                           aes_vdf_config(1)% c_e             : 0.70093E-01
+ ---                           aes_vdf_config(1)% wmc             : 0.50000
+ ---                           aes_vdf_config(1)% fsl             : 0.40000
+ ---                           aes_vdf_config(1)% fbl             :  3.0000
+ ---                           aes_vdf_config(1)% lmix_max        :  150.00
+ ---                           aes_vdf_config(1)% z0m_min         : 0.15000E-04
+ ---                           aes_vdf_config(1)% z0m_ice         : 0.10000E-02
+ ---                           aes_vdf_config(1)% z0m_oce         : 0.10000E-02
+ ---                           aes_vdf_config(1)% turb            :         2
+ ---                           aes_vdf_config(1)% use_tmx         : TRUE
+ ---                           aes_vdf_config(1)% solver_type     :         2
+ ---                           aes_vdf_config(1)% energy_type     :         2
+ ---                        aes_vdf_config(1)% dissipation_factor :  1.3000
+ ---                            aes_vdf_config(1)% use_louis      : TRUE
+ ---                          aes_vdf_config(1)% louis_constant_b :  4.2000
+ ---                           aes_vdf_config(1)% smag_constant   : 0.23000
+ ---                           aes_vdf_config(1)% turb_prandtl    : 0.33333
+ ---                           aes_vdf_config(1)% rturb_prandtl   :  3.0000
+ ---                           aes_vdf_config(1)% km_min          : 0.10000E-02
+ ---                           aes_vdf_config(1)% max_turb_scale  :  300.00
+ ---                           aes_vdf_config(1)% min_sfc_wind    :  1.0000
+ 
+ mo_jsb_model_init:jsbach_init: Tile fractions are fixed over time
+ 
+ adding new var_list jsb_a2l
+ 
+ adding new var_list jsb_l2a
+ 
+ adding new var_list jsb_seb
+ 
+ adding new var_list jsb_turb
+ 
+ adding new var_list jsb_sse
+ 
+ adding new var_list jsb_hydro
+ 
+ adding new var_list jsb_rad
+ 
+ adding new var_list jsb_pheno
+ 
+ adding new var_list jsb
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_phys.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_phys.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_phys.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_phys.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_phys.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_phys.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_soil.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_soil.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_sso.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_sso.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_soil.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_soil.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file ifs2icon.nc
+ 
+ ========================================================================
+ 
+ Carbon cycle configuration
+ ==========================
+ 
+ For domain 1
+ ------------
+ 
+ ---                                  ccycle_config(1)% iccycle   :         0
+ ---                                  ccycle_config(1)% ico2conc  :         2
+ ---                                  ccycle_config(1)% vmr_co2   : 0.28430E-03
+ 
+ C-cycle is switched off
+ 
+ ========================================================================
+ 
+ AES cloud cover configuration
+ =============================
+ 
+ For domain 1
+ ------------
+ 
+ ---      0/1 cloud cover based on mass fraction of cloud water + cloud ice in air
+ ---                                 aes_cov_config(1)% cqx       : 0.10000E-05
+ 
+ 
+ ========================================================================
+ 
+ WMO tropopause configuration
+ ============================
+ 
+ For domain 1
+ ------------
+ 
+ ---                                  aes_wmo_config(1)% zmaxwmo  :  38000.
+ ---                                  aes_wmo_config(1)% zminwmo  :  5000.0
+ ---                                  aes_wmo_config(1)% jkswmo   :        19
+ ---                                  aes_wmo_config(1)% jkewmo   :        68
+ 
+ mo_nonhydro_state::construct_nh_state: Construction of NH state started
+ 
+ adding new var_list nh_state_prog_of_domain_01_and_timelev_01
+ 
+ adding new var_list nh_state_prog_of_domain_01_and_timelev_02
+ 
+ adding new var_list nh_state_diag_of_domain_01
+ 
+ adding new var_list nh_state_metrics_of_domain_01
+ mo_nonhydro_state::construct_nh_state: NH state construction completed
+ 
+ adding new var_list nh_state_opt_diag_of_domain_01
+ 
+ adding new var_list nh_state_opt_diag_z_of_domain_01
+ 
+ adding new var_list nh_state_opt_diag_p_of_domain_01
+ 
+ adding new var_list nh_state_opt_diag_i_of_domain_01
+ 
+ adding new var_list nh_accumulation_for_ProgAndDiag_of_domain_01
+ 
+ adding new var_list prepadv_of_domain_01
+ mo_prepadv_state:construct_prepadv_state: construction of prep_adv state finished
+ mo_aes_phy_memory: Construction of AES physics state started.
+ 
+ adding new var_list prm_field_D01
+ 
+ adding new var_list prm_tend_D01
+ mo_aes_phy_memory: Construction of AES physics state finished.
+ mo_cloud_mig_memory: Construction of cloud_mig_list, cloud_mig_input and cloud mig_output started.
+ construct_cloud_mig_list: create list and allocate memory for jg =01
+ 
+ adding new var_list cloud_mig_memory_D01
+ mo_cloud_mig_memory: Construction of cloud_mig_list, cloud_mig_input and cloud mig_output finished.
+ mo_cloud_two_memory: Construction of cloud_two_list, cloud_two_input and cloud two_output started.
+ mo_cloud_two_memory: Construction of cloud_two_list, cloud_two_input and cloud two_output finished.
+ mo_atm_energy_memory: Construction of atm_energy_config, atm_energy_list and atm_energy started.
+ construct_atm_energy_list: create list and allocate memory for jg =01
+ 
+ adding new var_list atm_energy_list_D01
+ mo_atm_energy_memory: Construction of atm_energy_config, atm_energy_list and atm_energy finished.
+ 
+ adding new var_list nh_state_tracer_of_domain_01_and_timelev_01
+ 
+ adding new var_list nh_state_tracer_of_domain_01_and_timelev_02
+ Tracer meta-information for patch            1
+ 
+ VarName | Tracer ID | feedback | in list trAdvect | in list trNotAdvect | in list trHydroMass | slev | substep range | nadv_substeps | 
+ 
+ ------- | --------- | -------- | ---------------- | ------------------- | ------------------- | ---- | ------------- | ------------- | 
+ 
+ 
+ hus.TL1 |   1       | X        | X                |                     |                     |   1  |   1/ 90       |   3           | 
+ 
+ clw.TL1 |   2       | X        | X                |                     | X                   |  32  |  32/ 90       |   3           | 
+ 
+ cli.TL1 |   3       | X        | X                |                     | X                   |  32  |  32/ 90       |   3           | 
+ 
+ qr.TL1  |   4       |          | X                |                     | X                   |  32  |  32/ 90       |   3           | 
+ 
+ qs.TL1  |   5       |          | X                |                     | X                   |  32  |  32/ 90       |   3           | 
+ 
+ qg.TL1  |   6       |          | X                |                     | X                   |  32  |  32/ 90       |   3           | 
+ 
+  
+ mo_vertical_grid:set_nh_metrics: Domain   1; end index of Rayleigh damping layer for w:   15
+ mo_vertical_grid: Damping coefficient for w; diffusion enhancement coefficient:
+ mo_vertical_grid: level    1, half-level height 75000.0  0.10000E+01  0.36000E+02
+ mo_vertical_grid: level    2, half-level height 72454.6  0.69773E+00  0.25214E+02
+ mo_vertical_grid: level    3, half-level height 70016.3  0.45523E+00  0.16515E+02
+ mo_vertical_grid: level    4, half-level height 67611.9  0.28097E+00  0.10412E+02
+ mo_vertical_grid: level    5, half-level height 65275.7  0.16880E+00  0.65561E+01
+ mo_vertical_grid: level    6, half-level height 63005.6  0.10037E+00  0.42477E+01
+ mo_vertical_grid: level    7, half-level height 60800.0  0.59698E-01  0.29005E+01
+ mo_vertical_grid: level    8, half-level height 58657.2  0.35739E-01  0.21202E+01
+ mo_vertical_grid: level    9, half-level height 56575.7  0.21609E-01  0.16666E+01
+ mo_vertical_grid: level   10, half-level height 54545.1  0.13191E-01  0.14004E+01
+ mo_vertical_grid: level   11, half-level height 52558.1  0.81250E-02  0.12430E+01
+ mo_vertical_grid: level   12, half-level height 50620.1  0.50600E-02  0.11490E+01
+ mo_vertical_grid: level   13, half-level height 48723.8  0.31817E-02  0.10925E+01
+ mo_vertical_grid: level   14, half-level height 46883.8  0.20276E-02  0.10582E+01
+ mo_vertical_grid: level   15, half-level height 45098.7  0.13095E-02  0.10372E+01
+ mo_vertical_grid:prepare_zdiffu: Number of z-diffusion points:    3659518
+ mo_vertical_grid:set_nh_metrics: Maximum vertical wind offcentering:   0.3667
+ mo_vertical_grid:set_nh_metrics: Maximum slope:   0.2591
+ mo_vertical_grid:set_nh_metrics: Maximum height difference between adjacent points:   2093.4
+ mo_initicon: MODE_IFS: perform initialization with IFS analysis
+ mo_read_netcdf_distributed::distrib_nf_open: ifs2icon.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file ifs2icon.nc
+ mo_initicon_io:read_extana_atm: surface pressure variable: LNPS
+ mo_initicon_io:read_extana_atm: Model-level surface geopotential: GEOP_ML
+ mo_initicon_io:read_extana_atm: Direct input of vn!
+ vert_interp_atm: Vertical interpolation of analysis data, domain    1
+ 
+input results for domain 1:
+ 
+ variable | FG read attempt | FG data found | ANA read attempt | ANA data found | ANA DATA required (ana_checklist) | data used from | 
+ 
+ -------- | --------------- | ------------- | ---------------- | -------------- | --------------------------------- | -------------- | 
+ 
+ 
+ alb_si   | no              |               | no               |                |                                   | none           | 
+ 
+ 
+ mo_aes_phy_init:init_aes_phy_external: Read notsea and glac from file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_frac.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_land_phys.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_land_phys.nc
+ mo_aes_phy_init:init_aes_phy_external: Read albedo           from file: bc_land_phys.nc
+ mo_aes_phy_init:init_aes_phy_external: Use default surface emissivity zemiss_def from mo_physical_constants
+ mo_bc_sst_sic:read_bc_sst_sic:  Allocating SST and SIC for months  1 to  2
+ Read SST from bc_sst.nc for 2020
+ Read sea ice from bc_sic.nc for 2020
+ mo_vdf:t_vdf_construct: Construct new vdf process: vdf
+ mo_vdf:t_vdf_construct:   Time step = 60.000000
+ mo_vdf:t_vdf_construct: Turbulence scheme = 2
+ mo_vdf_atmo:t_vdf_atmo_construct: 
+ mo_tmx_process_class:Add_process: Added sub-process vdf atmo to vdf
+ mo_tmx_process_class:Add_process: Added sub-process vdf sfc to vdf
+ mo_tmx_process_class:Add_state_r3d: New state: temperature for process vdf atmo
+ mo_tmx_process_class:Add_state_r3d: New state: water vapor for process vdf atmo
+ mo_tmx_process_class:Add_state_r3d: New state: cloud water for process vdf atmo
+ mo_tmx_process_class:Add_state_r3d: New state: cloud ice for process vdf atmo
+ mo_tmx_process_class:Add_state_r3d: New state: eastward wind for process vdf atmo
+ mo_tmx_process_class:Add_state_r3d: New state: northward wind for process vdf atmo
+ mo_tmx_process_class:Add_state_r3d: New state: vertical velocity for process vdf atmo
+ mo_tmx_process_class:Add_state_shape_real: New state: saturation specific humidity for process vdf sfc
+ mo_tmx_process_class:Add_state_r3d: New state: surface temperature for process vdf sfc
+ mo_vdf_atmo:Init: 
+ multifile restart writing selected, joint proc mode.
+ mo_nh_stepping:init_slowphysics: initial call of (slow) physics, domain  1
+ 
+ added event group: checkpointEventGroup
+ Event list: checkpointEventGroup
+        1          checkpoint
+        2          restart
+ 
+ Start date of this run: 2020-01-20T00:00:00.000
+ Stop date of this run:  2020-01-20T00:10:00.000
+ 
+ 
+ Time step:        1 model time 2020-01-20 00:01:00.000
+ MAXABS VN, W in domain  1:  0.1415584240E+03 at level  14,   0.5997915113E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1415452179E+03 at level  14,   0.5692715810E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1415746709E+03 at level  14,   0.5806346381E+01 at level  20,
+ MAXABS VN, W in domain  1:  0.1416177191E+03 at level  14,   0.6061388880E+01 at level  20,
+ MAXABS VN, W in domain  1:  0.1416692984E+03 at level  14,   0.6376162505E+01 at level  18,
+ mo_bc_solar_irradiance:read_bc_solar_irradiance: reading bc_solar_irradiance_sw_b14.nc (year 2020)
+ mo_bc_solar_irradiance:read_bc_solar_irradiance: reading bc_solar_irradiance_sw_b14.nc (year 2020)
+ mo_read_netcdf_distributed::distrib_nf_open: bc_ozone.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_ozone.nc
+ read_bc_ozone: Read clim. annual cycle of ozone for months 01:02 from file: bc_ozone.nc
+ read_bc_ozone: Alloc clim. annual cycle of ozone for months 01:02
+ mo_bc_aeropt_kinne:su_bc_aeropt_kinne:  Allocating Kinne aerosols for months  1 to  2
+ mo_bc_aeropt_kinne:read_months_bc_aeropt_kinne:  reading Kinne aerosols from imonth  1 to  2
+ mo_bc_aeropt_kinne:read_months_bc_aeropt_kinne:  reading from file bc_aeropt_kinne_sw_b14_coa.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_aeropt_kinne_sw_b14_coa.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_aeropt_kinne_sw_b14_coa.nc
+ mo_bc_aeropt_kinne:read_months_bc_aeropt_kinne:  reading Kinne aerosols from imonth  1 to  2
+ mo_bc_aeropt_kinne:read_months_bc_aeropt_kinne:  reading from file bc_aeropt_kinne_lw_b16_coa.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_aeropt_kinne_lw_b16_coa.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_aeropt_kinne_lw_b16_coa.nc
+ mo_bc_aeropt_kinne:read_months_bc_aeropt_kinne:  reading Kinne aerosols from imonth  1 to  2
+ mo_bc_aeropt_kinne:read_months_bc_aeropt_kinne:  reading from file bc_aeropt_kinne_sw_b14_fin.nc
+ mo_read_netcdf_distributed::distrib_nf_open: bc_aeropt_kinne_sw_b14_fin.nc
+ mo_read_netcdf_distributed::distrib_nf_open: warning: falling back to serial semantics for opening netcdf file bc_aeropt_kinne_sw_b14_fin.nc
+ 
+ Total solar constant [W/m^2] for 2020-01 = 1360.7
+ 
+    solar constant fraction: band  1 = 0.00884
+    solar constant fraction: band  2 = 0.01488
+    solar constant fraction: band  3 = 0.01742
+    solar constant fraction: band  4 = 0.01648
+    solar constant fraction: band  5 = 0.04110
+    solar constant fraction: band  6 = 0.07613
+    solar constant fraction: band  7 = 0.01798
+    solar constant fraction: band  8 = 0.25454
+    solar constant fraction: band  9 = 0.15960
+    solar constant fraction: band 10 = 0.25356
+    solar constant fraction: band 11 = 0.09385
+    solar constant fraction: band 12 = 0.03375
+    solar constant fraction: band 13 = 0.00216
+    solar constant fraction: band 14 = 0.00973
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: compute forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:        2 model time 2020-01-20 00:02:00.000
+ MAXABS VN, W in domain  1:  0.1417154444E+03 at level  14,   0.6200698132E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1417354954E+03 at level  14,   0.6216141227E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1417099806E+03 at level  14,   0.6244621857E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1416676807E+03 at level  14,   0.6254973886E+01 at level  18,
+ MAXABS VN, W in domain  1:  0.1416216640E+03 at level  14,   0.6262826974E+01 at level  18,
+ mo_advection_vflux:upwind_vflux_ppm: maximum vertical CFL =  0.17704336E+01
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ mo_hydro_interface:global_hydrology_diagnostics: Water balance issues detected. Consider rerun the simulation with enforce_water_budget = "logging" for more details.
+ 
+ Time step:        3 model time 2020-01-20 00:03:00.000
+ MAXABS VN, W in domain  1:  0.1416354191E+03 at level  14,   0.6156593604E+01 at level  18,
+ MAXABS VN, W in domain  1:  0.1416489688E+03 at level  14,   0.6050439013E+01 at level  18,
+ MAXABS VN, W in domain  1:  0.1416539152E+03 at level  14,   0.6062097054E+01 at level  18,
+ MAXABS VN, W in domain  1:  0.1416525086E+03 at level  14,   0.6447462092E+01 at level  18,
+ MAXABS VN, W in domain  1:  0.1416488384E+03 at level  14,   0.6679456674E+01 at level  18,
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:        4 model time 2020-01-20 00:04:00.000
+ MAXABS VN, W in domain  1:  0.1416422995E+03 at level  14,   0.6825744259E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1416370786E+03 at level  14,   0.7326286935E+01 at level  18,
+ MAXABS VN, W in domain  1:  0.1416274821E+03 at level  14,   0.7776475357E+01 at level  14,
+ MAXABS VN, W in domain  1:  0.1416186228E+03 at level  14,   0.8276534135E+01 at level  14,
+ MAXABS VN, W in domain  1:  0.1416115298E+03 at level  14,   0.7477472846E+01 at level  13,
+ mo_advection_vflux:upwind_vflux_ppm: maximum vertical CFL =  0.19359512E+01
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:        5 model time 2020-01-20 00:05:00.000
+ MAXABS VN, W in domain  1:  0.1416037557E+03 at level  14,   0.5985379496E+01 at level  14,
+ MAXABS VN, W in domain  1:  0.1415979108E+03 at level  14,   0.6184215717E+01 at level  14,
+ MAXABS VN, W in domain  1:  0.1415907061E+03 at level  14,   0.6847491337E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1415853129E+03 at level  14,   0.7076345362E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1415834844E+03 at level  14,   0.6901590991E+01 at level  13,
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:        6 model time 2020-01-20 00:06:00.000
+ MAXABS VN, W in domain  1:  0.1416005280E+03 at level  14,   0.6724446901E+01 at level  12,
+ MAXABS VN, W in domain  1:  0.1416514574E+03 at level  14,   0.6500472376E+01 at level  12,
+ MAXABS VN, W in domain  1:  0.1416996426E+03 at level  14,   0.6058857260E+01 at level  12,
+ MAXABS VN, W in domain  1:  0.1417418866E+03 at level  14,   0.5888960452E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1417770538E+03 at level  14,   0.5887784142E+01 at level  19,
+ mo_advection_vflux:upwind_vflux_ppm: maximum vertical CFL =  0.22355575E+01
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:        7 model time 2020-01-20 00:07:00.000
+ MAXABS VN, W in domain  1:  0.1418039124E+03 at level  14,   0.5878533000E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1418251032E+03 at level  14,   0.5862682829E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1418384037E+03 at level  14,   0.5842105155E+01 at level  19,
+ MAXABS VN, W in domain  1:  0.1418455401E+03 at level  14,   0.5835761289E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1418464419E+03 at level  14,   0.5924249023E+01 at level  13,
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:        8 model time 2020-01-20 00:08:00.000
+ MAXABS VN, W in domain  1:  0.1418678205E+03 at level  14,   0.6015273580E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1418956343E+03 at level  14,   0.6212822561E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1419182294E+03 at level  14,   0.6362903407E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1419355879E+03 at level  14,   0.6496041844E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1419470716E+03 at level  14,   0.6543747041E+01 at level  13,
+ mo_advection_vflux:upwind_vflux_ppm: maximum vertical CFL =  0.23757928E+01
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:        9 model time 2020-01-20 00:09:00.000
+ MAXABS VN, W in domain  1:  0.1419516397E+03 at level  14,   0.6506975988E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1419517871E+03 at level  14,   0.6559084736E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1419466898E+03 at level  14,   0.6637161101E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1419369990E+03 at level  14,   0.6636708093E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1419231735E+03 at level  14,   0.6550993791E+01 at level  13,
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ 
+ Time step:       10 model time 2020-01-20 00:10:00.000
+ MAXABS VN, W in domain  1:  0.1419047426E+03 at level  14,   0.6455250463E+01 at level  13,
+ MAXABS VN, W in domain  1:  0.1418846784E+03 at level  14,   0.6368385126E+01 at level  12,
+ MAXABS VN, W in domain  1:  0.1418610086E+03 at level  14,   0.6442349625E+01 at level  12,
+ MAXABS VN, W in domain  1:  0.1418348015E+03 at level  14,   0.6447302573E+01 at level  12,
+ MAXABS VN, W in domain  1:  0.1418056929E+03 at level  14,   0.6385800812E+01 at level  12,
+ mo_advection_vflux:upwind_vflux_ppm: maximum vertical CFL =  0.24527685E+01
+ aes_phy_main: compute forcing by graupel microphysics (mig)
+ aes_phy_main: recycle forcing by LW and SW radiation (rad:fluxes )
+ aes_phy_main: compute forcing by LW and SW radiation (rht:heating)
+ aes_phy_main: compute forcing by vertical diffusion (tmx)
+ destruct_atmo_nonhydrostatic: start to clean up
+ mo_pp_scheduler::pp_scheduler_finalize: 
+ mo_nonhydro_state::destruct_nh_state: Destruction of NH state started
+ mo_nonhydro_state::destruct_nh_state: NH state destruction completed
+ mo_prepadv_state:destruct_prepadv_state: destruction of prep_adv state finished
+ mo_cloud_mig_memory: Destruction of cloud_mig_list, cloud_mig_input and cloud_mig_output started.
+ mo_cloud_mig_memory: Destruction of cloud_mig_list, cloud_mig_input and cloud mig_output finished.
+ mo_atm_energy_memory: Destruction of atm_energy_config, atm_energy_list and atm_energy started.
+ mo_atm_energy_memory: Destruction of atm_energy_config, atm_energy_list and atm_energy finished.
+ mo_aes_phy_memory: Destruction of AES physics state started.
+ mo_aes_phy_memory: Destruction of AES physics state finished.
+ destruct_atmo_nonhydrostatic: clean-up finished
+ 
+ Timer report, ranks 0-890
+ 
+ ---------------------------------------   -------   ------------   --------   ------------   ------------   --------   -------------   --------------   -------------   --------------   -------------   -----   
+ 
+ name                                      # calls   t_min          min rank   t_avg          t_max          max rank   total min (s)   total min rank   total max (s)   total max rank   total avg (s)   # PEs   
+ 
+ ---------------------------------------   -------   ------------   --------   ------------   ------------   --------   -------------   --------------   -------------   --------------   -------------   -----   
+ 
+ 
+ total                                     891           54.0032s   [508]          54.0122s       54.0183s   [825]            54.003    [508]                  54.018    [825]                  54.012    891     
+ 
+  L integrate_nh                           8910           3.3599s   [535]           5.3576s       23.1307s   [825]            53.539    [0]                    53.601    [717]                  53.576    891     
+ 
+     L nh_solve                            44550         0.25408s   [791]          0.29811s       0.37719s   [737]            14.198    [133]                  15.001    [279]                  14.905    891     
+ 
+        L nh_solve.veltend                 53460         0.02793s   [877]          0.04330s       0.08236s   [0]               2.039    [843]                   3.023    [0]                     2.598    891     
+ 
+        L nh_solve.cellcomp                89100         0.00363s   [863]          0.01871s       0.03308s   [370]             1.049    [815]                   2.131    [509]                   1.871    891     
+ 
+        L nh_solve.edgecomp                89100         0.00963s   [823]          0.02930s       0.04856s   [105]             1.898    [855]                   3.372    [695]                   2.930    891     
+ 
+        L nh_solve.vnupd                   89100         0.00639s   [863]          0.03384s       0.07518s   [283]             2.700    [888]                   3.855    [779]                   3.384    891     
+ 
+        L nh_solve.vimpl                   89100         0.01366s   [863]          0.02677s       0.03864s   [326]             1.820    [888]                   2.967    [616]                   2.677    891     
+ 
+        L nh_solve.exch                    178200        0.00078s   [616]          0.00709s       0.04710s   [853]             0.456    [336]                   4.311    [869]                   1.419    891     
+ 
+     L nh_hdiff                            9801          0.05657s   [70]           0.06694s       0.11514s   [844]             0.656    [178]                   1.095    [844]                   0.736    891     
+ 
+     L transport                           8910          0.72442s   [878]          0.74426s       0.77169s   [844]             7.339    [878]                   7.516    [844]                   7.443    891     
+ 
+        L adv_horiz                        8910          0.61965s   [851]          0.64247s       0.66963s   [816]             6.331    [861]                   6.544    [816]                   6.425    891     
+ 
+           L adv_hflx                      8910          0.59441s   [851]          0.61436s       0.64513s   [816]             6.062    [336]                   6.275    [816]                   6.144    891     
+ 
+              L back_traj                  8910          0.00430s   [863]          0.01007s       0.01751s   [525]             0.081    [863]                   0.114    [286]                   0.101    891     
+ 
+        L adv_vert                         8910          0.04571s   [819]          0.06243s       0.08660s   [791]             0.515    [331]                   0.706    [791]                   0.624    891     
+ 
+           L adv_vflx                      8910          0.03493s   [808]          0.04386s       0.06624s   [112]             0.387    [808]                   0.534    [791]                   0.439    891     
+ 
+     L iconam_aes                          8910          0.91604s   [453]           2.9258s       20.6165s   [875]            29.122    [453]                  29.377    [863]                  29.258    891     
+ 
+        L dyn2phy                          8910          0.03667s   [446]          0.05810s       0.07950s   [803]             0.484    [222]                   0.655    [858]                   0.581    891     
+ 
+           L d2p_sync                      17820         0.00074s   [448]          0.00450s       0.02730s   [844]             0.045    [336]                   0.203    [858]                   0.090    891     
+ 
+        L aes_bcs                          8910          0.00020s   [474]          0.83128s        8.3299s   [816]             8.299    [696]                   8.333    [816]                   8.313    891     
+ 
+        L aes_phy                          8910          0.73590s   [662]           1.9214s       12.0925s   [293]            18.870    [663]                  19.377    [489]                  19.214    891     
+ 
+           L interface_aes_rad             1639440       0.00000s   [0]            0.00588s       0.09319s   [201]            10.242    [817]                  11.336    [692]                  10.813    891     
+ 
+              L rte_rrtmgp_rad             163944        0.02678s   [799]          0.05833s       0.09252s   [201]            10.176    [817]                  11.267    [692]                  10.733    891     
+ 
+                 L rte_rrtmgp_int          163944        0.02637s   [799]          0.05778s       0.09185s   [201]            10.076    [817]                  11.159    [692]                  10.631    891     
+ 
+                    L rte_rrtmgp_int_onb   163944        0.02599s   [799]          0.05685s       0.09091s   [201]             9.912    [817]                  10.975    [692]                  10.460    891     
+ 
+                       L gas_concs         163944        0.00004s   [799]          0.00011s       0.00161s   [416]             0.018    [850]                   0.023    [471]                   0.021    891     
+ 
+                       L clamp_pr_temp     163944        0.00001s   [799]          0.00003s       0.00355s   [608]             0.004    [238]                   0.009    [608]                   0.005    891     
+ 
+                       L source_lw         327888        0.00000s   [471]          0.00001s       0.00220s   [256]             0.004    [887]                   0.007    [632]                   0.005    891     
+ 
+                       L atmos_lw          327888        0.00000s   [0]            0.00000s       0.00077s   [192]             0.001    [232]                   0.002    [256]                   0.001    891     
+ 
+                       L k_dist_lw         163944        0.00820s   [406]          0.01835s       0.03706s   [525]             3.206    [839]                   3.645    [335]                   3.376    891     
+ 
+                       L aerosol_lw        491832        0.00000s   [0]            0.00025s       0.00394s   [496]             0.118    [462]                   0.160    [252]                   0.139    891     
+ 
+                       L clouds_bnd_lw     491832        0.00000s   [0]            0.00023s       0.00297s   [517]             0.111    [298]                   0.148    [252]                   0.128    891     
+ 
+                       L cloud_optics_lw   491832        0.00031s   [471]          0.00061s       0.00358s   [483]             0.302    [462]                   0.422    [316]                   0.334    891     
+ 
+                       L snow_bnd_lw       491832        0.00000s   [0]            0.00021s       0.00351s   [170]             0.101    [879]                   0.128    [252]                   0.115    891     
+ 
+                       L rte_lw_allsky     163944        0.00146s   [799]          0.00336s       0.00672s   [510]             0.539    [827]                   0.661    [411]                   0.618    891     
+ 
+                       L atmos_sw          163944        0.00000s   [799]          0.00001s       0.00207s   [328]             0.002    [851]                   0.005    [192]                   0.002    891     
+ 
+                       L k_dist_sw         163944        0.00629s   [799]          0.01218s       0.02678s   [765]             2.006    [859]                   2.476    [692]                   2.240    891     
+ 
+                       L aerosol_sw        491832        0.00000s   [0]            0.00054s       0.00483s   [863]             0.259    [813]                   0.374    [286]                   0.299    891     
+ 
+                       L clouds_bnd_sw     491832        0.00000s   [0]            0.00057s       0.00513s   [134]             0.286    [784]                   0.377    [238]                   0.313    891     
+ 
+                       L cloud_optics_sw   491832        0.00034s   [105]          0.00094s       0.00450s   [150]             0.452    [817]                   0.735    [288]                   0.521    891     
+ 
+                       L snow_bnd_sw       655776        0.00000s   [0]            0.00043s       0.00457s   [195]             0.272    [866]                   0.377    [332]                   0.314    891     
+ 
+                       L rte_sw_allsky     163944        0.00452s   [799]          0.01007s       0.01590s   [159]             1.591    [866]                   2.286    [649]                   1.853    891     
+ 
+           L interface_aes_rht             1639440       0.00002s   [119]          0.00003s       0.00197s   [641]             0.043    [245]                   0.064    [256]                   0.050    891     
+ 
+           L interface_aes_vdf             8910          0.59905s   [656]          0.74472s        1.7484s   [817]             6.617    [633]                   8.209    [819]                   7.447    891     
+ 
+              L ice_fast                   1639440       0.00000s   [0]            0.00000s       0.00014s   [354]             0.000    [310]                   0.001    [623]                   0.000    891     
+ 
+              L jsbach                     1803384       0.00026s   [342]          0.00033s       0.00487s   [308]             0.579    [870]                   0.785    [392]                   0.670    891     
+ 
+           L interface_cloud_mig           1639440       0.00011s   [132]          0.00043s       0.00465s   [224]             0.261    [565]                   1.609    [23]                    0.787    891     
+ 
+              L cloud_mig                  1639440       0.00010s   [268]          0.00041s       0.00463s   [224]             0.224    [565]                   1.572    [23]                    0.751    891     
+ 
+                 L satad                   3278880       0.00002s   [535]          0.00003s       0.00214s   [515]             0.093    [160]                   0.295    [23]                    0.115    891     
+ 
+                 L graupel                 1639440       0.00003s   [100]          0.00031s       0.00453s   [224]             0.070    [565]                   1.289    [62]                    0.576    891     
+ 
+           L interface_aes_wmo             1639440       0.00001s   [222]          0.00002s       0.00182s   [361]             0.028    [223]                   0.049    [760]                   0.037    891     
+ 
+           L diagnose_cov                  1639440       0.00000s   [1]            0.00002s       0.00194s   [629]             0.011    [446]                   0.050    [64]                    0.033    891     
+ 
+        L phy2dyn                          8910          0.05829s   [806]          0.07230s       0.12224s   [0]               0.631    [816]                   0.823    [695]                   0.723    891     
+ 
+           L p2d_sync                      17820         0.00121s   [272]          0.01186s       0.07470s   [0]               0.157    [844]                   0.337    [695]                   0.237    891     
+ 
+        L diagnose_qvi                     1639440       0.00000s   [0]            0.00000s       0.00001s   [85]              0.000    [707]                   0.000    [157]                   0.000    891     
+ 
+        L diagnose_uvi                     3278880       0.00003s   [814]          0.00005s       0.00288s   [850]             0.137    [816]                   0.214    [695]                   0.168    891     
+ 
+  L action                                 8910          0.00001s   [850]          0.00004s       0.00250s   [290]             0.000    [205]                   0.003    [224]                   0.000    891     
+ 
+ exch_data                                 3176415       0.00001s   [41]           0.00699s        2.4666s   [827]             4.708    [112]                  32.498    [805]                  24.936    891     
+ 
+  L exch_data.wait                         3176415       0.00000s   [0]            0.00643s        2.4638s   [827]             1.059    [0]                    31.471    [805]                  22.933    891     
+ 
+ ordglb_sum                                38313         0.00001s   [246]          0.00592s       0.11932s   [592]             0.052    [448]                   0.593    [847]                   0.255    891     
+ 
+ nh_diagnostics                            9801          0.02742s   [858]          0.03989s       0.05180s   [0]               0.355    [815]                   0.506    [0]                     0.439    891     
+ 
+ diagnose_pres_temp                        36531         0.00518s   [546]          0.01571s       0.02214s   [23]              0.473    [888]                   0.733    [397]                   0.644    891     
+ 
+ model_init                                2673          0.04827s   [821]          10.1488s       21.2076s   [665]            30.431    [184]                  30.461    [668]                  30.446    891     
+ 
+  L global_sum                             891           0.00004s   [836]          0.01948s       0.03668s   [397]             0.000    [836]                   0.037    [397]                   0.019    891     
+ 
+  L prep_aes_phy                           1782          0.91125s   [24]            3.2350s        5.7027s   [688]             6.404    [63]                    6.667    [816]                   6.470    891     
+ 
+  L compute_domain_decomp                  891            7.1167s   [399]           7.1243s        7.1482s   [28]              7.117    [399]                   7.148    [28]                    7.124    891     
+ 
+  L compute_intp_coeffs                    891            1.2604s   [200]           1.2655s        1.3012s   [720]             1.260    [200]                   1.301    [720]                   1.265    891     
+ 
+  L init_ext_data                          891           0.36942s   [720]          0.39473s       0.41175s   [576]             0.369    [720]                   0.412    [576]                   0.395    891     
+ 
+  L init_icon                              891           13.8190s   [819]          13.8634s       13.8888s   [43]             13.819    [819]                  13.889    [43]                   13.863    891     
+ 
+ upper_atmosphere                          3564          0.00000s   [10]           0.00006s       0.06111s   [695]             0.000    [808]                   0.061    [695]                   0.000    891     
+ 
+  L upatmo_construction                    1782          0.00002s   [824]          0.00004s       0.00013s   [508]             0.000    [160]                   0.000    [508]                   0.000    891     
+ 
+  L upatmo_destruction                     1782          0.00000s   [10]           0.00008s       0.06111s   [695]             0.000    [646]                   0.061    [695]                   0.000    891     
+ 
+ write_restart                             1782          0.00073s   [414]          0.06255s       0.13740s   [479]             0.117    [27]                    0.140    [479]                   0.125    891     
+ 
+  L write_restart_communication            881           0.00000s   [115]          0.00002s       0.00011s   [400]             0.000    [115]                   0.000    [400]                   0.000    881     
+ 
+  L write_restart_setup                    891           0.11545s   [27]           0.12282s       0.13701s   [479]             0.115    [27]                    0.137    [479]                   0.123    891     
+ 
+     L write_restart_collectors            392931        0.00000s   [0]            0.00003s       0.05144s   [685]             0.000    [626]                   0.051    [685]                   0.012    891     
+ 
+        L write_restart_indices            2673          0.00005s   [405]          0.00401s       0.04713s   [685]             0.000    [626]                   0.051    [685]                   0.012    891     
+ 
+ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------   
+ 
+ 
+ mo_ext_data_state:destruct_ext_data: Destruction of data structure for external data started
+ mo_ext_data_state:destruct_ext_data: Destruction of data structure for external data finished
+ mo_interpolation:destruct_int_state: start to destruct int state
+ mo_interpolation:destruct_int_state: destruction of interpolation state finished
+ mo_atmo_model:destruct_atmo_model: destruct_2d_interpol_state is done
+ mo_alloc_patches:destruct_comm_patterns: start
+ mo_alloc_patches:destruct_comm_patterns: destruct_comm_patterns finished
+ mo_alloc_patches:destruct_patches: start
+ mo_alloc_patches:destruct_patches: destruct_patches finished
+ mo_alloc_patches:destruct_patches: start
+ mo_alloc_patches:destruct_patches: destruct_patches finished
+ mo_atmo_model:destruct_atmo_model: destruct_patches is done
+ mo_atmo_model:destruct_atmo_model: clean-up finished

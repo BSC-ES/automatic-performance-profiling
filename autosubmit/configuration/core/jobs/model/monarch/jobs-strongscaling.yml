@@ -27,8 +27,8 @@ JOBS:
     CHECK: "true"
     NOTIFY_ON: FAILED
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
-  CONFIGURATION_JSON_STRONGSCALING:
-    FILE: autosubmit/templates/configuration_json.sh
+  ANALYSIS_STRONGSCALING:
+    FILE: autosubmit/templates/analysis.sh
     DEPENDENCIES: POST_STRONGSCALING
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
     WALLCLOCK: 02:00

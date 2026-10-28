@@ -1,0 +1,1 @@
+@hpcw-time: srun -n 112 --hint=nomultithread --cpus-per-task=1 /gpfs/scratch/bsc32/bsc032333/absd/compilation/O3_prod/build/icon/install/bin/icon: 0.02user 0.01system 20.94elapsed 0%CPU (0text+0data 8960max)k

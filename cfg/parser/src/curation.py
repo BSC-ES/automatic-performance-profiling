@@ -58,8 +58,8 @@ The module focuses on performance analysis of HPC applications, providing tools 
 """
 
 import numpy as np
-from cfg.parser.utils.plotter import plotter
-from cfg.parser.utils.scalability import higher_is_better
+from .plotting import plotter
+from .scaling import higher_is_better
 
 
 class Log:
@@ -249,6 +249,9 @@ def dimemas_curated_summary(experiment_data: dict) -> Log:
     log = Log()
     cases = experiment_data.cases
     base_case = experiment_data.base_case
+    if "Dimemas" not in experiment_data[base_case]:
+        print("[WARNING] No Dimemas data in the json; skipping the Dimemas summary")
+        return log
     dimemas_experiments = list(experiment_data[base_case]["Dimemas"])
     information_types = list(
         experiment_data[base_case]["Dimemas"][dimemas_experiments[0]].keys()
@@ -962,7 +965,7 @@ def scalability_plot(
 
     This function creates a plot for the overall experiment data and individual
     component data within the experiment. It uses the `plotter` function from
-    the `cfg.parser.utils.plotter` module to generate the plots.
+    the `src.plotting` module to generate the plots.
 
     Args:
         experiment_data (dict): An object containing the experiment data,
@@ -972,7 +975,7 @@ def scalability_plot(
     Returns:
         None
     """
-    from cfg.parser.utils.plotter import plotter
+    from .plotting import plotter
 
     plotter(
         data=[experiment_data],

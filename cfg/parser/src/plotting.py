@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 from matplotlib import pyplot as plt
 
-from cfg.parser.utils.scalability import ideal_value
+from .scaling import ideal_value
 
 
 def go_to_dictionary_address(dictionary: dict, address: tuple[str]) -> dict:

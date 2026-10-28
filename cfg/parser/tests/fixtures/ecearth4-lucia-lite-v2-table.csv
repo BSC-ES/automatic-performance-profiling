@@ -1,0 +1,5 @@
+component_name,nproc,number_ts,exec_time,waiting_time,interpo_time,sending_time,sypd,chsy,cpl_cost
+oceanx,26,31,20.949,33.450,0.071,0.003,10.593,58.905,14.415
+RNFMAP,1,16,0.140,54.139,0.149,0.045,1590.117,0.015,0.899
+OpenIFS,84,31,54.448,0.000,0.018,0.006,4.076,494.631,0.034
+Coupled,111,46,54.472,87.589,0.238,0.053,4.074,653.910,15.348

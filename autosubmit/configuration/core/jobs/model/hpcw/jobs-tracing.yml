@@ -85,8 +85,8 @@ JOBS:
     CHECK: "true"
     NOTIFY_ON: FAILED
     PLATFORM: "%DEFAULT.LOGIN_PLATFORM%"
-  CONFIGURATION_JSON_TRACING:
-    FILE: autosubmit/templates/configuration_json.sh
+  ANALYSIS_TRACING:
+    FILE: autosubmit/templates/analysis.sh
     DEPENDENCIES:
       POST_TRACING:
       PARAMEDIR:

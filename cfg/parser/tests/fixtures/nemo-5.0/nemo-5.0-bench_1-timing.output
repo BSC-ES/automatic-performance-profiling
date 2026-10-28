@@ -1,0 +1,6 @@
+NEMO version 5.0
+ Model timestep: Mean: 900.0 (seconds)
+ avg over all MPI processes = 3600.0s
+ Timing : AVG values over all MPI processes:
+ sbc_abl     |    12.5s
+ Section     |     3.0s

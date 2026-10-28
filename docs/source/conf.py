@@ -4,6 +4,8 @@ import os
 import sys
 # Add the package directory to sys.path
 sys.path.insert(0, os.path.abspath('../../'))
+# The parser package lives in cfg/parser/src
+sys.path.insert(0, os.path.abspath('../../cfg/parser'))
 
 
 # -- Project information

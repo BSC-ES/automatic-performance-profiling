@@ -1,7 +1,7 @@
 parsers module
 ==============
 
-.. automodule:: cfg.parser.utils.parsers
+.. automodule:: src.timing
    :members:
    :show-inheritance:
    :undoc-members:

@@ -1,7 +1,7 @@
 plotter module
 ==============
 
-.. automodule:: cfg.parser.utils.plotter
+.. automodule:: src.plotting
    :members:
    :show-inheritance:
    :undoc-members:
