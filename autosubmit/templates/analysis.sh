@@ -28,7 +28,7 @@ component=$(echo "${components[0]}" | tr '[:upper:]' '[:lower:]')
 # Declare which raw file feeds which case, component and format. Patterns are relative to a
 # single run directory; the mapping is written per test by write_input_mapping
 reporter_params=""
-cases_variables="nproc"
+cases_variables="tasks threads total_resources"
 component_specs=("")
 case_level_specs=("")
 test_info_patterns="*test_info.csv"
@@ -131,6 +131,8 @@ esac
 
 [[ "${splits}" =~ ^[0-9]+$ ]] || splits=1
 
+all_test_names=($(bashify_array "${tests}"))
+all_names=($(bashify_array "${names}"))
 tests=($(bashify_array "${tests}" true))
 names=($(bashify_array "${names}"))
 
@@ -150,7 +152,8 @@ function write_input_mapping()
     echo "cases:"
     for name in "${names[@]}"; do
         test_info_files=""
-        for pattern in ${test_info_patterns}; do
+        read -ra test_info_pattern_array <<< "${test_info_patterns}"
+        for pattern in "${test_info_pattern_array[@]}"; do
             test_info_files+="\"run_${name}/${pattern}\", "
         done
         echo "  ${name}:"
@@ -194,14 +197,24 @@ for test in "${tests[@]}"
 do
     test_folder=${run_root}/${current_member}/${test}
     cd ${test_folder} || exit
-    
+
+    # Filter names to only those that belong to this test group
+    filtered_names=()
+    for i in "${!all_test_names[@]}"; do
+        if [ "${all_test_names[$i]}" == "${test}" ]; then
+            filtered_names+=("${all_names[$i]}")
+        fi
+    done
+    saved_names=("${names[@]}")
+    names=("${filtered_names[@]}")
+
     tmp_reporter_params="${reporter_params} -j ${test}.json --cases-component-data ${cases_variables}"
     if [ "${current_member}" != "tracing" ]; then
         tmp_reporter_params="${tmp_reporter_params} \
         --scalability-file ${test}_scaling.csv \
         --scalability-plot ${test}_scaling.png"
     fi
-    
+
     {
         echo processes_per_node=${ppn}
         echo configuration_name=${test}
@@ -215,4 +228,6 @@ do
         --splits ${splits} \
         --components "${components[@]}"
     python3 ${cfg}/parser/reporter.py ${tmp_reporter_params}
+
+    names=("${saved_names[@]}")
 done
