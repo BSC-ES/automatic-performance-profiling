@@ -115,7 +115,7 @@ def parse_nemo4_timing(timing_fn: str):
         steps_length = []
         sypds = []
         number_ts = 1
-        nproc = 0
+        npes = 0
 
         for i, line in enumerate(timing_f):
             step_length_match = re.search(step_length_ptrn, line)
@@ -130,14 +130,14 @@ def parse_nemo4_timing(timing_fn: str):
                 values = [float(v) for v in functions_match.groups()[1:]]
                 data["total_sim_functions_time"][function_name] = values[1]
             elif total_time_match:
-                _, sypd, nproc = total_time_match.groups()
+                _, sypd, npes = total_time_match.groups()
                 sypds.append(float(sypd))
 
         data["avg_ts_time"] = np.average(steps_length)
         data["number_ts"] = number_ts
         data["ts_per_second"] = 1 / data["avg_ts_time"]
         data["sypd"] = np.average(sypds)
-        data["nproc"] = int(nproc)
+        data["tasks"] = int(npes)
 
     return data
 

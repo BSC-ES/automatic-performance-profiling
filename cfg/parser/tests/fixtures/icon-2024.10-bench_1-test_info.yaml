@@ -1,5 +1,5 @@
 "bench_1":
-  nproc: 896
+  tasks: 896
   components:
     icon:
-      nproc: 896
+      tasks: 896

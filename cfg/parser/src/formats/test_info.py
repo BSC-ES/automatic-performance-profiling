@@ -22,12 +22,12 @@ def load_csv(filename: str, case: str) -> dict:
         for dict_line in reader:
             component_name = dict_line.pop("component")
             # csv.DictReader returns all values as strings; convert known numeric fields
-            for numeric_key in ("nproc", "sypd", "grid_points"):
+            for numeric_key in ("tasks", "sypd", "grid_points", "threads"):
                 if numeric_key in dict_line and dict_line[numeric_key] not in (None, ""):
                     try:
                         dict_line[numeric_key] = (
                             int(dict_line[numeric_key])
-                            if numeric_key == "nproc"
+                            if numeric_key in ("tasks", "threads")
                             else float(dict_line[numeric_key])
                         )
                     except ValueError:

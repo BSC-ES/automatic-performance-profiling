@@ -114,7 +114,7 @@ def test_collect_writes_the_expected_json(nemo_dir):
     assert "nwp_convection" in saved["functions"]
 
     # a single component is flattened to the case, as the reports expect
-    assert saved["data"]["bench_1"]["nproc"] == 112
+    assert saved["data"]["bench_1"]["tasks"] == 112
     assert saved["data"]["bench_1"]["sypd"] == pytest.approx(9.572)
     assert saved["data"]["bench_1"]["number_ts"] == 240
 
@@ -133,9 +133,9 @@ def test_collect_maps_two_components_and_the_coupling_table(ecearth4_dir):
 
     assert saved["components"] == ["oifs", "nemo"]
     case_data = saved["data"]["bench_1"]
-    assert case_data["nproc"] == 28
-    assert case_data["components"]["oifs"]["nproc"] == 84
-    assert case_data["components"]["nemo"]["nproc"] == 26
+    assert case_data["tasks"] == 28
+    assert case_data["components"]["oifs"]["tasks"] == 84
+    assert case_data["components"]["nemo"]["tasks"] == 26
     # the Coupled row of the LUCIA table becomes case-level values
     assert case_data["sypd"] == pytest.approx(4.074)
     assert case_data["cpl_cost"] == pytest.approx(15.348)
@@ -156,6 +156,6 @@ def test_collect_reads_one_file_per_split(nemo_split_dir):
         saved = json.load(json_f)
 
     case_data = saved["data"]["bench_1"]
-    assert case_data["nproc"] == 112
+    assert case_data["tasks"] == 112
     assert case_data["sypd"] == pytest.approx(9.572)
     assert [split["sypd"] for split in case_data["splits"]] == pytest.approx([9.572, 9.572])

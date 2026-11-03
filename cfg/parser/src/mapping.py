@@ -36,14 +36,14 @@ class Input:
     Attributes:
         format (str): Registered loader name.
         files (tuple): Paths or globs to read.
-        nproc (int, optional): Number of processors, when the files do not report it.
+        tasks (int, optional): Number of MPI tasks, when the files do not report it.
         counter (str, optional): Counter category of ``paramedir`` and ``dimemas``.
         simulation (str, optional): Dimemas configuration name.
     """
 
     format: str
     files: tuple[str, ...]
-    nproc: int | None = None
+    tasks: int | None = None
     counter: str | None = None
     simulation: str | None = None
 
@@ -198,7 +198,7 @@ def _parse_input(case: str, component: str | None, entry) -> Input:
     return Input(
         format=file_format,
         files=tuple(files),
-        nproc=entry.get("nproc"),
+        tasks=entry.get("tasks"),
         counter=entry.get("counter"),
         simulation=entry.get("simulation"),
     )

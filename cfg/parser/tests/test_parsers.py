@@ -9,7 +9,7 @@ from conftest import FIXTURES
 def test_nemo4_timing_from_a_real_run():
     payload = nemo.parse_nemo_timing(str(FIXTURES / "nemo-4.0-bench_1-timing.output"))
 
-    assert payload["nproc"] == 112
+    assert payload["tasks"] == 112
     assert payload["number_ts"] == 240
     assert payload["sypd"] == pytest.approx(9.572)
     assert payload["ts_per_second"] == pytest.approx(1 / 1.0309792641938351)
@@ -39,7 +39,7 @@ def test_icon_timer_report_reads_the_real_total_row():
         str(FIXTURES / "icon-2024.10-bench_1-timer.log"))
 
     assert payload["time"] == pytest.approx(54.012)
-    assert payload["nproc"] == 891
+    assert payload["tasks"] == 891
     assert "splits" not in payload
 
 
@@ -57,7 +57,7 @@ def test_icon_timer_reports_of_every_split_are_averaged():
     payload = icon.load_timer_report(entry, "bench_1", "icon")
 
     assert payload["time"] == pytest.approx(54.012)
-    assert payload["nproc"] == 891
+    assert payload["tasks"] == 891
     assert payload["splits"] == [{"time": pytest.approx(54.012)}] * 2
 
 
@@ -65,25 +65,25 @@ def test_nemo_test_info_csv():
     case_data = test_info.load_csv(
         str(FIXTURES / "nemo-4.0-bench_1-test_info.csv"), "bench_1")["bench_1"]
 
-    assert case_data["nproc"] == 112
-    assert case_data["components"]["nemo"] == {"nproc": 112, "resolution": "orca1"}
+    assert case_data["tasks"] == 112
+    assert case_data["components"]["nemo"] == {"tasks": 112, "resolution": "orca1"}
 
 
 def test_ecearth4_test_info_csv_has_both_components():
     case_data = test_info.load_csv(
         str(FIXTURES / "ecearth4-nemo4.0-oifs48r1-bench_1-test_info.csv"), "bench_1")["bench_1"]
 
-    assert case_data["nproc"] == 28
+    assert case_data["tasks"] == 28
     assert case_data["resolution"] == "TL255L91+eORCA1L75"
-    assert case_data["components"]["oifs"]["nproc"] == 84
-    assert case_data["components"]["nemo"]["nproc"] == 26
+    assert case_data["components"]["oifs"]["tasks"] == 84
+    assert case_data["components"]["nemo"]["tasks"] == 26
 
 
 def test_icon_test_info_yaml():
     payload = test_info.load_yaml(
         str(FIXTURES / "icon-2024.10-bench_1-test_info.yaml"))
 
-    assert payload == {"bench_1": {"nproc": 896, "components": {"icon": {"nproc": 896}}}}
+    assert payload == {"bench_1": {"tasks": 896, "components": {"icon": {"tasks": 896}}}}
 
 
 def test_paramedir_returns_component_counters():

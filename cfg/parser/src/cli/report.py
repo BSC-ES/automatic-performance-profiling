@@ -31,8 +31,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Produce tracking report")
     parser.add_argument("--coupling-folder", default=None,
                         help="Produce coupling report")
-    parser.add_argument("--cases-component-data", default="nproc", nargs="+",
-                        help="Produce a csv file with the cases and components data. Default is 'nproc'.")
+    parser.add_argument("--cases-component-data", default="tasks", nargs="+",
+                        help="Produce a csv file with the cases and components data. Default is 'tasks'.")
     return parser
 
 

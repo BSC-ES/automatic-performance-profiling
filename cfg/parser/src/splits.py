@@ -9,7 +9,7 @@ report uses for its error bars.
 import numbers
 
 # Values that identify the run instead of measuring it, so they are never averaged
-IDENTITY_KEYS = ("nproc",)
+IDENTITY_KEYS = ("tasks",)
 
 
 def aggregate(payloads, metric: str) -> dict:

@@ -74,14 +74,14 @@ class TimingInformation:
         """
         self.data = merge_dictionaries(self.data, payload)
 
-    def add_component(self, case: str, component: str, payload: dict, nproc: int = None):
+    def add_component(self, case: str, component: str, payload: dict, tasks: int = None):
         """Merge the payload of one component into a case.
 
         Args:
             case (str): Case the payload belongs to.
             component (str): Component the payload belongs to.
             payload (dict): Values returned by the format loader.
-            nproc (int, optional): Overrides the number of processors of the component.
+            tasks (int, optional): Overrides the number of MPI tasks of the component.
         """
         existing = self.data.get(case, {}).get("components", {}).get(component, {})
         for key, value in payload.items():
@@ -93,8 +93,8 @@ class TimingInformation:
         self.data = merge_dictionaries(
             self.data, {case: {"components": {component: payload}}}
         )
-        if nproc is not None:
-            dictionary_pointer(self.data, (case, "components", component))["nproc"] = nproc
+        if tasks is not None:
+            dictionary_pointer(self.data, (case, "components", component))["tasks"] = tasks
 
         ts_per_second = payload.get("ts_per_second")
         if ts_per_second is not None:
@@ -108,10 +108,46 @@ class TimingInformation:
         """Close the merge: order the cases, flatten a single component, find functions."""
         if len(self.components) == 1:
             self._merge_single_component()
+        self._compute_total_resources()
         self._setup_cases()
         if self._has_counters():
             self._derive_function_times()
             self.functions = self.find_functions()
+
+    def _compute_total_resources(self):
+        """Set ``total_resources = tasks × threads`` on every case and component.
+
+        Threads default to 1 when the field is absent.  Users may supply
+        ``total_resources`` instead of ``tasks``; in that case ``tasks`` is
+        derived as ``total_resources / threads`` (or ``total_resources`` when
+        threads is 1).
+        """
+        for case_data in self.data.values():
+            threads = int(case_data.get("threads", 1))
+
+            if "tasks" not in case_data and "total_resources" in case_data:
+                # total_resources provided instead of tasks
+                total = int(case_data["total_resources"])
+                case_data["tasks"] = total // threads
+                case_data["total_resources"] = total
+            elif "tasks" in case_data:
+                case_data["total_resources"] = int(case_data["tasks"]) * threads
+            else:
+                # No resource info at all — skip
+                continue
+
+            for component in self.components:
+                try:
+                    comp_data = case_data["components"][component]
+                    comp_threads = int(comp_data.get("threads", 1))
+                    if "tasks" not in comp_data and "total_resources" in comp_data:
+                        total = int(comp_data["total_resources"])
+                        comp_data["tasks"] = total // comp_threads
+                        comp_data["total_resources"] = total
+                    elif "tasks" in comp_data:
+                        comp_data["total_resources"] = int(comp_data["tasks"]) * comp_threads
+                except KeyError:
+                    continue
 
     def _merge_single_component(self):
         """Copy the values of the only component to the case, as the reports expect.
@@ -152,27 +188,27 @@ class TimingInformation:
                 }
 
     def _ordered_cases(self, component: str = None):
-        """Order the loaded cases by their number of processors.
+        """Order the loaded cases by their number of tasks.
 
         Args:
-            component (str, optional): Component to take the number of processors from.
-                If not provided, the total number of processors of the case is used.
+            component (str, optional): Component to take the number of tasks from.
+                If not provided, the total number of tasks of the case is used.
 
         Returns:
-            list: Case names ordered by number of processors when every case reports it,
+            list: Case names ordered by number of tasks when every case reports it,
                   otherwise the cases in the order in which they were loaded.
         """
-        cases_nproc = []
+        cases_tasks = []
         for case, case_data in self.data.items():
             if component is not None:
                 case_data = case_data.get("components", {}).get(component, {})
-            if "nproc" not in case_data:
-                # Any input file without the number of processors keeps the cases as they
+            if "tasks" not in case_data:
+                # Any input file without the number of tasks keeps the cases as they
                 # come in, so the experiment can still be reported
                 return list(self.data.keys())
-            cases_nproc.append((int(case_data["nproc"]), case))
+            cases_tasks.append((int(case_data["tasks"]), case))
 
-        return [case for _, case in sorted(cases_nproc)]
+        return [case for _, case in sorted(cases_tasks)]
 
     def _setup_cases(self):
         """Initialize the cases, base_case and components_cases attributes."""
@@ -204,7 +240,7 @@ class TimingInformation:
                 provided, every component is reported.
 
         Returns:
-            dict: Function name mapped to ``{case: {"nproc": int, "elapsed_time": float}}``.
+            dict: Function name mapped to ``{case: {"tasks": int, "elapsed_time": float}}``.
         """
         ret_val = {}
         if component == "":
@@ -218,9 +254,9 @@ class TimingInformation:
             for function in self.functions:
                 ret_val[function] = {}
                 for case in cases:
-                    nproc = self[case]["components"][component_name]["nproc"]
+                    tasks = self[case]["components"][component_name]["tasks"]
                     ret_val[function][case] = {
-                        "nproc": nproc, "elapsed_time": 0}
+                        "tasks": tasks, "elapsed_time": 0}
                     try:
                         ret_val[function][case]["elapsed_time"] = self[case]["components"][component_name]["fastest_ts_functions_info"][function]
                     except KeyError:

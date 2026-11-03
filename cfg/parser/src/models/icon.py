@@ -17,13 +17,13 @@ def parse_icon_timing(timing_fn: str) -> dict:
         timing_fn (str): Path to the ICON timing output file.
 
     Returns:
-        dict: ``time`` in seconds, plus the neutral ``ts_per_second``, ``sypd`` and ``nproc``.
+        dict: ``time`` in seconds, plus the neutral ``ts_per_second``, ``sypd`` and ``tasks``.
     """
     data = {
         "time": 0.0,
         "ts_per_second": 1.0,
         "sypd": 0.0,
-        "nproc": 0
+        "tasks": 0
     }
     pattern = r"@hpcw-time:.*?(\d+\.\d+)elapsed"
     with open(timing_fn, "r", encoding="utf8") as f:
@@ -98,10 +98,10 @@ def parse_icon_timer_report(timer_fn: str) -> dict:
         timer_fn (str): Path to a file holding one or more ICON ``Timer report`` tables.
 
     Returns:
-        dict: Mean ``time`` in seconds, the number of ``nproc`` PEs reported and, when
+        dict: Mean ``time`` in seconds, the number of ``tasks`` PEs reported and, when
         the file holds more than one report, the per-report ``splits``.
     """
-    data = {"time": 0.0, "nproc": 0}
+    data = {"time": 0.0, "tasks": 0}
     with open(timer_fn, "r", encoding="utf8", errors="replace") as timer_f:
         text = timer_f.read()
     if "Timer report" not in text:
@@ -117,7 +117,7 @@ def parse_icon_timer_report(timer_fn: str) -> dict:
         if total_avg > 0:
             split_times.append(total_avg)
         if npes > 0:
-            data["nproc"] = npes
+            data["tasks"] = npes
 
     if split_times:
         data["time"] = sum(split_times) / len(split_times)

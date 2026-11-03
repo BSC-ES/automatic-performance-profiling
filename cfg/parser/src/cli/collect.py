@@ -71,7 +71,7 @@ def run(args) -> int:
             payload = COMPONENT_FORMATS[entry.format](
                 entry, case.name, case_input.component)
             experiment.add_component(
-                case.name, case_input.component, payload, nproc=entry.nproc)
+                case.name, case_input.component, payload, tasks=entry.tasks)
 
     for case in mapping.cases:
         for case_input in case.inputs:

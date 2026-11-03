@@ -209,12 +209,12 @@ def function_curated_summary(experiment_data: dict, filename: str):
 
             base_case = experiment_data.components_cases[component][0]
             base_result = fun_results[k][base_case]["elapsed_time"]
-            base_nproc = int(fun_results[k][base_case]["nproc"])
+            base_tasks = int(fun_results[k][base_case]["tasks"])
             for case in experiment_data.components_cases[component]:
-                case_nproc = int(fun_results[k][case]["nproc"])
+                case_tasks = int(fun_results[k][case]["tasks"])
                 case_speed = float(fun_results[k][case]["elapsed_time"])
-                resource_increase = case_nproc / base_nproc
-                resources += " %.2f" % case_nproc
+                resource_increase = case_tasks / base_tasks
+                resources += " %.2f" % case_tasks
                 speedup += " %.2f" % (base_result / (case_speed + 1e-10))
                 efficiency += " %.2f" % (
                     (base_result / (case_speed + 1e-10)) / resource_increase
@@ -304,7 +304,7 @@ def coupling_info(experiment_data: dict, coupling_folder: str):
     Notes:
         The generated CSV files contain the following columns:
         - component: name of the component or 'coupled' for the coupled model
-        - nproc: number of processes
+        - tasks: number of MPI tasks
         - chsy: chunking system information
         - cpl_cost: coupling cost
         - waiting_time: waiting time
@@ -322,7 +322,7 @@ def coupling_info(experiment_data: dict, coupling_folder: str):
         rows = len(experiment_data.components) + 2
         case_data = np.empty((rows, columns), "U25")
         case_data[0, :] = np.array(
-            ["component", "nproc", "chsy", "cpl_cost", "waiting_time", "interpo_time"],
+            ["component", "tasks", "chsy", "cpl_cost", "waiting_time", "interpo_time"],
             dtype=str,
         )
         i = 1
@@ -466,7 +466,7 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
 
     Notes:
         The CSV files will be named as '{component}_{function}.csv' and will contain:
-        - resources (nproc): Number of processors used
+        - resources (tasks): Number of MPI tasks used
         - speedup: Ratio of base case time to current case time
         - efficiency: Speedup divided by resource increase ratio
 
@@ -491,12 +491,12 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
             efficiency = []
 
             base_case = next(iter(fun_results[k]))
-            base_case_nprocs = int(fun_results[k][base_case]["nproc"])
+            base_case_tasks = int(fun_results[k][base_case]["tasks"])
             base_result = fun_results[k][base_case]["elapsed_time"]
             for case in fun_results[k].keys():
-                nproc = int(fun_results[k][case]["nproc"])
-                resource_increase = nproc / base_case_nprocs
-                resources.append(f"{nproc}")
+                tasks = int(fun_results[k][case]["tasks"])
+                resource_increase = tasks / base_case_tasks
+                resources.append(f"{tasks}")
                 case_speedup = base_result / (
                     fun_results[k][case]["elapsed_time"] + 1e-10
                 )
@@ -506,7 +506,7 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
                 speedup.append(f"{case_speedup:.2f}")
                 efficiency.append(f"{case_efficiency:.2f}")
 
-            header = np.array(["resources (nproc)", "speedup", "efficiency"], dtype=str)
+            header = np.array(["resources (tasks)", "speedup", "efficiency"], dtype=str)
 
             data = np.empty((3, len(resources)))
             data[0, :] = resources
@@ -807,17 +807,19 @@ def generate_scalability_summary(
         scalability_variable (str, optional): The name of the variable to use for the summary. Defaults to "sypd".
 
     Returns:
-        Log: A Log object containing the summary data with columns: Case, Processes, {scalability_variable.capitalize()}, SpeedUp, Efficiency.
+        Log: A Log object containing the summary data with columns: Case, Tasks, Threads, {scalability_variable.capitalize()}, SpeedUp, Efficiency.
 
         The summary includes:
         - Case: The name of the case.
-        - Processes: The number of processes used in the case.
+        - Tasks: The number of MPI tasks used in the case.
+        - Threads: The number of OpenMP threads per task (defaults to 1 when not reported).
         - {scalability_variable.capitalize()}: The {scalability_variable} value for the case,
           followed by its standard deviation across splits when the case reports them.
         - SpeedUp: The speedup factor compared to the base case. Derived from the direction of
           the metric: base/case when lower is better (e.g. "time"), case/base otherwise
           (e.g. "sypd", "sdpd").
-        - Efficiency: The efficiency of the case, calculated as speedup divided by the increase in resources.
+        - Efficiency: The efficiency of the case, calculated as speedup divided by the increase in
+          total compute resources (tasks × threads).
 
         Cases without a positive value (a run that produced no timing data) are left out of the
         summary, and so are all of them when the base case has no value to compare against.
@@ -834,11 +836,13 @@ def generate_scalability_summary(
         address = (base_case, "components", component)
         base_case_data = go_to_dictionary_address(experiment_data.data, address)
 
-    base_case_procs = int(base_case_data["nproc"])
+    base_case_tasks = int(base_case_data["tasks"])
+    base_case_threads = int(base_case_data.get("threads", 1))
     base_case_speed = float(base_case_data.get(scalability_variable, 0.0))
+    base_case_total_resources = int(base_case_data.get("total_resources", base_case_tasks))
 
     log.add(
-        "Case, Processes, "
+        "Case, Total Resources, Tasks, Threads, "
         + scalability_variable.capitalize()
         + ", SpeedUp, Efficiency"
     )
@@ -855,8 +859,10 @@ def generate_scalability_summary(
                 "it is left out of the scalability summary"
             )
             continue
-        case_procs = int(case_data["nproc"])
-        resource_increase = case_procs / base_case_procs
+        case_tasks = int(case_data["tasks"])
+        case_threads = int(case_data.get("threads", 1))
+        case_total_resources = int(case_data.get("total_resources", case_tasks))
+        resource_increase = case_total_resources / base_case_total_resources
         if higher_is_better(scalability_variable):
             speedup = speed / base_case_speed
         else:
@@ -872,7 +878,7 @@ def generate_scalability_summary(
         if split_values:
             speed_str += f" ± {np.std(split_values):.2f}"
 
-        log.add(f"{case}, {case_procs}, {speed_str}, {speedup:.1f}, {efficiency:.2f}")
+        log.add(f"{case}, {case_total_resources}, {case_tasks}, {case_threads}, {speed_str}, {speedup:.1f}, {efficiency:.2f}")
 
     return log
 
@@ -947,8 +953,8 @@ def generate_scalability_plot_data(
             address = (case, "components", component)
             case_data = go_to_dictionary_address(experiment_data.data, address)
         speed = float(case_data[scalability_variable])
-        case_procs = int(case_data["nproc"])
-        plot_data[x_label] = np.append(plot_data[x_label], case_procs)
+        case_tasks = int(case_data["tasks"])
+        plot_data[x_label] = np.append(plot_data[x_label], case_tasks)
         plot_data[y_label] = np.append(plot_data[y_label], speed)
 
     return plot_data
@@ -981,6 +987,8 @@ def scalability_plot(
         data=[experiment_data],
         error_bars=True,
         y_label=scalability_variable,
+        x_label="total_resources",
+        x_axis_label="Total resources (tasks x threads)",
         filename=filename,
         highlight_outliers=True,
     )
@@ -990,16 +998,18 @@ def scalability_plot(
             data=[experiment_data],
             error_bars=True,
             y_label=scalability_variable,
+            x_label="total_resources",
+            x_axis_label="Total resources (tasks x threads)",
             filename=component + "_" + filename,
             highlight_outliers=True,
         )
 
 
 def cases_component_data(
-    experiment_data: dict, variables_to_report: list[str] = ["nproc"]
+    experiment_data: dict, variables_to_report: list[str] = ["tasks"]
 ):
     """
-    Creates a CSV file containing information about the number of processors (nproc)
+    Creates a CSV file containing information about the number of MPI tasks
     used by each component in different experiment cases.
 
     Args:
@@ -1008,11 +1018,11 @@ def cases_component_data(
                 - components: List of component names
                 - cases: List of case names
             And dictionary-like access with structure:
-                experiment_data[case]["components"][component]["nproc"]
+                experiment_data[case]["components"][component]["tasks"]
 
     Returns:
         None. Creates a file named 'cases_info.csv' with the following format:
-            Case,COMPONENT1 nproc,COMPONENT2 nproc,...
+            Case,COMPONENT1 tasks,COMPONENT2 tasks,...
             case1,nproc1,nproc2,...
             case2,nproc1,nproc2,...
     """
@@ -1125,6 +1135,8 @@ def multiexperiment_scalability_plot(
         highlight_outliers=False,
         plot_ideal=False,
         y_label=scalability_variable,
+        x_label="total_resources",
+        x_axis_label="Total resources (tasks x threads)",
         scatter_labels=False,
         error_bars=True,
     )
@@ -1137,7 +1149,7 @@ def multiexperiment_comparison(
     Compare multiple experiment results based on a specified field.
 
     This function analyzes multiple experiments and creates a comparison table of their
-    performance metrics for cases with matching processor counts.
+    performance metrics for cases with matching total compute resources.
 
     Args:
         experiments (list): List of TimingInformation objects to compare
@@ -1149,21 +1161,22 @@ def multiexperiment_comparison(
             - Rows for each case showing the scalability_variable value for each experiment
 
     Notes:
-        - Cases are considered matching if they use the same number of processors
+        - Cases are considered matching if they use the same total resources
+          (``total_resources = tasks × threads``, with threads defaulting to 1).
     """
     log = Log()
 
     corresponding_cases = [["" for _ in experiments] for _ in experiments[0].cases]
     for i, case in enumerate(experiments[0].cases):
-        current_nproc = int(experiments[0][case]["nproc"])
+        current_resources = int(experiments[0][case]["total_resources"])
         corresponding_cases[i][0] = case
         for j, experiment in enumerate(experiments[1:]):
             for case in experiment.cases:
-                if int(experiment[case]["nproc"]) == current_nproc:
+                if int(experiment[case]["total_resources"]) == current_resources:
                     corresponding_cases[i][j + 1] = case
                     break
 
-    header = "Nproc"
+    header = "Resources (tasks x threads)"
     for i, experiment in enumerate(experiments):
         header += f", {experiment.experiment_name} {scalability_variable}"
         if i > 0:
@@ -1172,10 +1185,10 @@ def multiexperiment_comparison(
     log.add(header)
 
     for i, case in enumerate(experiments[0].cases):
-        case_row = f"{experiments[0][case]['nproc']}"
+        case_row = f"{experiments[0][case]['total_resources']}"
         for j, experiment in enumerate(experiments):
-            # If there is no corresponding case in the experiment in number of procs,
-            # set invalid value
+            # If there is no corresponding case in the experiment with the same
+            # total resources, set invalid value
             exp_speed = -1
             if corresponding_cases[i][j] != "":
                 exp_speed = float(
@@ -1188,7 +1201,7 @@ def multiexperiment_comparison(
                         [float(split[scalability_variable]) for split in experiment[corresponding_cases[i][j]]["splits"]]
                     )
                     case_row += f" ± {exp_stdev:.2f}"
-                
+
                 if j > 0:
                     base_exp_speed = float(float(experiments[0][corresponding_cases[i][0]][scalability_variable]))
                     exp_diff = (exp_speed - base_exp_speed) / base_exp_speed * 100 if base_exp_speed != 0 else 0
@@ -1242,11 +1255,11 @@ def generate_weakscaling_data(experiments: list, component_to_report: str = "") 
                 )
                 grid_points = case_metrics["grid_points"]
                 resolution = case_metrics["resolution"]
-                nproc = case_metrics["nproc"]
+                tasks = case_metrics["tasks"]
                 ts_per_second = float(case_metrics["ts_per_second"])
 
                 log.add(
-                    f"{conf}, {nproc}, {resolution}, {ts_per_second:.2f}, {grid_points}"
+                    f"{conf}, {tasks}, {resolution}, {ts_per_second:.2f}, {grid_points}"
                 )
 
     return log

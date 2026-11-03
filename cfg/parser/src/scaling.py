@@ -41,17 +41,17 @@ def higher_is_better(scalability_variable: str) -> bool:
 
 
 def ideal_value(
-    base_value: float, base_nproc: float, nproc: float, scalability_variable: str
+    base_value: float, base_tasks: float, tasks: float, scalability_variable: str
 ) -> float:
-    """Return the metric value expected at ``nproc`` processes under perfect scaling.
+    """Return the metric value expected at ``tasks`` MPI tasks under perfect scaling.
 
     Args:
         base_value (float): Metric value of the base case.
-        base_nproc (float): Number of processes of the base case.
-        nproc (float): Number of processes to evaluate.
+        base_tasks (float): Number of MPI tasks of the base case.
+        tasks (float): Number of MPI tasks to evaluate.
         scalability_variable (str): Name of the metric (e.g. "sypd", "sdpd", "time").
 
     Returns:
-        float: Ideal metric value at ``nproc``.
+        float: Ideal metric value at ``tasks``.
     """
-    return base_value * (nproc / base_nproc) ** scaling_exponent(scalability_variable)
+    return base_value * (tasks / base_tasks) ** scaling_exponent(scalability_variable)

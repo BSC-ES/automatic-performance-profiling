@@ -38,13 +38,13 @@ def go_to_dictionary_address(dictionary: dict, address: tuple[str]) -> dict:
     return dictionary
 
 
-def detect_outliers(nproc, sypd):
+def detect_outliers(tasks, sypd):
     def amdahls_law(n, ymax, p):
         return ymax / ((1 - p) + (p / n))
 
-    popt_sypd, _ = curve_fit(amdahls_law, nproc, sypd)
+    popt_sypd, _ = curve_fit(amdahls_law, tasks, sypd)
 
-    sypd_expected = amdahls_law(nproc, *popt_sypd)
+    sypd_expected = amdahls_law(tasks, *popt_sypd)
 
     sypd_residuals = sypd - sypd_expected
 
@@ -57,8 +57,8 @@ def detect_outliers(nproc, sypd):
     sypd_outliers = sypd < sypd_lower
     sypd_inliers = sypd >= sypd_lower
 
-    popt_sypd, _ = curve_fit(amdahls_law, nproc[sypd_inliers], sypd[sypd_inliers])
-    expected_sypd = amdahls_law(nproc, *popt_sypd)
+    popt_sypd, _ = curve_fit(amdahls_law, tasks[sypd_inliers], sypd[sypd_inliers])
+    expected_sypd = amdahls_law(tasks, *popt_sypd)
 
     return sypd_inliers, sypd_outliers, expected_sypd
 
@@ -66,7 +66,8 @@ def detect_outliers(nproc, sypd):
 def plotter(
     data: list,
     component: str = "",
-    x_label: str = "nproc",
+    x_label: str = "tasks",
+    x_axis_label: str = None,
     y_label: str = "sypd",
     filename=None,
     highlight_outliers=False,
@@ -75,6 +76,8 @@ def plotter(
     error_bars=False,
 ):
     multiexperiment_name = ""
+    if x_axis_label is None:
+        x_axis_label = x_label
 
     for experiment in data:
         experiment_name = experiment.experiment_name
@@ -168,7 +171,7 @@ def plotter(
                 label=f"{experiment_name} ideal speed",
             )
 
-        plt.xlabel(x_label)
+        plt.xlabel(x_axis_label)
         plt.ylabel(y_label)
 
         if len(x) > x_max_length:
