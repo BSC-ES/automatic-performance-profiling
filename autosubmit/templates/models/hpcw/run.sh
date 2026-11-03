@@ -49,11 +49,9 @@ function run_hpcw_icon()
     HPCW_SOURCE_DIR=${src_dir} HPCW_INSTALL=${src_dir}/build/icon/install \
         source ${cfg}/arch/${platform}/${model}/icon/${arch_name}.env
 
-    # The arch env pins OMP_NUM_THREADS=1, so re-apply the test thread count for hybrid runs
     export OMP_NUM_THREADS=${icon_threads}
     export ICON_THREADS=${icon_threads}
     if [ "${icon_threads}" -gt 1 ]; then
-        # Give each MPI rank its own set of threads instead of a single pinned core
         export I_MPI_PIN_DOMAIN=omp
     fi
 

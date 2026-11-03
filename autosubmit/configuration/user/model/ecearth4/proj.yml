@@ -10,6 +10,12 @@ MODEL:
   # Arch file prefixes in cfg/arch/PLATFORM/MODEL/ (e.g. O3_ompi_prod.yml)
   ARCH_NAMES: [O3_ompi_trace, O3_ompi_prod, O3_impi_prod]
 
+  # Conda env that runs Script Engine, one per ARCH_NAMES entry and in the same order:
+  # it has to match the arch MPI (Intel MPI vs OpenMPI)
+  SE_CONDA_ENVS: [/gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-main_openmpi,
+                  /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-main_openmpi,
+                  /gpfs/projects/bsc32/repository/apps/conda_envs/ece4env-trunk]
+
 # EXPERIMENT CONFIG
 EXPERIMENT:
   RESOLUTION: "TL255L91+eORCA1L75"
@@ -86,6 +92,7 @@ WEAKSCALING:
   TEST_NAMES:      [ws_1,      ws_1,      ws_1,      ws_1     ]
   NAMES:           [ws_1_1,    ws_1_2,    ws_1_3,    ws_1_4   ]
   PROCESSORS:      [1,         1,         1,         1,       ]
+  THREADS:         [1,         1,         1,         1,       ]
   XIOS_PROCS:      [1,         1,         1,         1,       ]
   AMIP_PROCS:      [1,         1,         1,         1,       ]
   RNFM_PROCS:      [1,         1,         1,         1,       ]
@@ -98,6 +105,7 @@ WEAKSCALING:
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
   TEST_NAMES: [O3_ompi_prod, O3_ompi_prod, O3_ompi_prod, O3_impi_prod, O3_impi_prod, O3_impi_prod]
+  ARCH_NAMES: [O3_ompi_prod, O3_ompi_prod, O3_ompi_prod, O3_impi_prod, O3_impi_prod, O3_impi_prod]
   NAMES:      [ompi_1,       ompi_2,       ompi_3,       impi_1,       impi_2,       impi_3      ]
   PROCESSORS: [112,          224,          336,          112,          224,          336         ]
   OIFS_PROCS: [55,           111,          167,          55,           111,          167         ]

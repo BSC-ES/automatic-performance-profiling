@@ -74,8 +74,6 @@ function compile_nemo()
 #####################################################################################################################
 function compile_ecearth4()
 {
-    local inidata=%EXPERIMENT.INIDATA%
-    local sed_inidata=${inidata//\//\\\/}
     # shellcheck source=proj/auto-performance-profiling/cfg/utils/ecearth4/se.sh
     . ${cfg}/utils/${model}/se.sh
 
@@ -83,10 +81,16 @@ function compile_ecearth4()
 
     set +u
 
-    cp ${project}/configurations/model/${model}/user-settings-${current_arch,,}.yml ${model_sources}/scripts/build/user-settings.yml
-    sed -i "s/JOBS/${build_tasks}/" ${model_sources}/scripts/build/user-settings.yml
+    echo "[INFO] ${model} release under test: $(git -C ${model_sources} describe --tags --always 2>/dev/null || echo unknown)"
 
-    se_env_${current_arch,,} trunk
+    local user_settings=${model_sources}/scripts/build/user-settings.yml
+    sed -i "s/^\( *\)jobs:.*/\1jobs: ${build_tasks}/"                    "${user_settings}"
+    sed -i "s/^\( *\)clean:.*/\1clean: no/"                              "${user_settings}"
+    sed -i "s/^\( *\)components:.*/\1components: %MODEL.COMPONENTS%/"     "${user_settings}"
+
+    local se_env_path
+    se_env_path=$(se_conda_env "${arch_name}" "%MODEL.ARCH_NAMES%" "%MODEL.SE_CONDA_ENVS%") || exit 1
+    se_env_${current_arch,,} "${se_env_path}"
 
     arch_file=${cfg}/arch/${platform}/${model}/${arch_name}.yml
     arch_dir=${compilation}/${arch_name}
@@ -96,16 +100,33 @@ function compile_ecearth4()
 
     sed -i "s/nlogprt.*/nlogprt: \"1 0 1\"/" ${arch_dir}/scripts/runtime/templates/oasis/namcouple.yml
 
-    printf "$(cat ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake)\nstring(CONCAT IFS_Fortran_FLAGS \"\${IFS_Fortran_FLAGS} -finstrument-functions -g\")" > ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake
-    printf "$(cat ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake)\nstring(CONCAT ECBUILD_SHARED_LINKER_FLAGS \"\${ECBUILD_SHARED_LINKER_FLAGS} -rdynamic\")" > ${arch_dir}/sources/oifs-48r1/ifs-source/cmake/compile_flags.cmake
-    
-    cd ${arch_dir}/sources/oifs-48r1 || exit
-    git apply ${cfg}/trace/model/${model}/sentinel.diff
-    
+    local -a components
+    components=($(sed -n 's/^ *components: *\[\(.*\)\].*/\1/p' ${arch_dir}/scripts/build/user-settings.yml | head -1 | tr ',' ' ' | tr -d "'"))
+    echo "[INFO] ${model} components to compile: ${components[*]}"
+
+    local oifs_source
+    oifs_source=$(ls -d ${arch_dir}/sources/oifs-* 2>/dev/null | head -1)
+    case " ${components[*]} " in
+    *" oifs "*)
+        if [ -z "${oifs_source}" ]; then
+            echo "[ERROR] OpenIFS sources not found under ${arch_dir}/sources" >&2
+            exit 1
+        fi
+        local oifs_flags=${oifs_source}/ifs-source/cmake/compile_flags.cmake
+
+        printf "$(cat ${oifs_flags})\nstring(CONCAT IFS_Fortran_FLAGS \"\${IFS_Fortran_FLAGS} -finstrument-functions -g\")" > ${oifs_flags}
+        printf "$(cat ${oifs_flags})\nstring(CONCAT ECBUILD_SHARED_LINKER_FLAGS \"\${ECBUILD_SHARED_LINKER_FLAGS} -rdynamic\")" > ${oifs_flags}
+
+        if ! git -C "${oifs_source}" apply ${cfg}/trace/model/${model}/sentinel.diff 2>/dev/null; then
+            if ! git -C "${oifs_source}" apply --3way ${cfg}/trace/model/${model}/sentinel.diff 2>/dev/null; then
+                echo "[WARNING] sentinel.diff does not apply to $(basename ${oifs_source}); user-function tracing may be incomplete" >&2
+            fi
+        fi
+        ;;
+    esac
+
     cd ${arch_dir}/scripts/build || exit
     cp "${arch_file}" ../platforms
-
-    sed -i "s/INIDATA/${sed_inidata}/" ../platforms/${arch_name}.yml
 
     se user-settings.yml ../platforms/${arch_name}.yml compile-components.yml
 }

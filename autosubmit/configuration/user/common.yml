@@ -42,7 +42,7 @@ TRACING:
   PARAVER:
     ENABLED: true
     # See cfg/trace_analysis/paraver_configurations/ for available views
-    CFGS: MPI_call p2p_size Average_IPC affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
+    CFGS: MPI_call p2p_size IPC_instructions affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
     COMPARE_CFGS:  MPI_call UserFunctions
 
   DIMEMAS:

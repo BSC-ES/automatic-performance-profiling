@@ -61,9 +61,9 @@ WEAKSCALING:
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
-  # For compilation efficiency the arch name is taken from the test name
-  TEST_NAMES: [O1_prod, O1_prod, O3_prod, O3_prod]
-  NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
-  PROCESSORS: [112,     224,     112,     224    ]
-  THREADS:    [1,       1,       1,       1      ]
+  TEST_NAMES: [O1_prod,   O1_prod,  O3_prod,  O3_prod]
+  ARCH_NAMES: [O1_prod,   O1_prod,  O3_prod,  O3_prod]
+  NAMES:      [O1_112,    O1_224,   O3_112,   O3_224 ]
+  PROCESSORS: [112,       224,      112,      224    ]
+  THREADS:    [1,         1,        1,        1      ]
   TEST_CONFIG: BENCH

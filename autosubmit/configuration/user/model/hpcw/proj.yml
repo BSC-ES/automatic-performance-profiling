@@ -1,17 +1,20 @@
 # MODEL CONFIG
 MODEL:
   NAME: hpcw
+  # Available components for hpcw:
+  # - icon
+  # - nemo
+  # Important: You can only use one of them at a time, so only one element in the COMPONENTS list.
   COMPONENTS: [icon]
   REPORT_COMPONENTS: [icon]
   ORIGIN: https://gitlab.dkrz.de/hpcw/hpcw.git
   BRANCH: v3.0
 
-  # Arch file prefixes in cfg/arch/PLATFORM/MODEL/ (e.g. arch-O1_prod.fcm for nemo)
+  # Arch file prefixes in cfg/arch/PLATFORM/MODEL/COMPONENT with format <ARCH_NAME>.env and <ARCH_NAME>.cmake
   ARCH_NAMES: [O1_prod, O3_prod, O3_trace]
 
   # Shared ExternalData cache (avoids re-downloading ICON/NEMO inputs per arch).
-  # Must be on a filesystem shared by the compilation platform.
-  # Leave empty for a throwaway store; populate with cfg/utils/hpcw/populate_store.sh
+  # Leave empty for a throwaway store, populate with cfg/utils/hpcw/populate_store.sh
   STORE: "/gpfs/scratch/bsc32/bsc032333/hpcw-store"
 
 # TRACE CONFIG
@@ -44,10 +47,11 @@ STRONGSCALING:
 
 # COMPILATION EFFICIENCY CONFIG
 COMPILATION_EFFICIENCY:
-  TEST_NAMES: [O1_prod, O1_prod, O1_prod, O1_prod, O3_prod, O3_prod, O3_prod, O3_prod]
-  NAMES:      [O1_896,  O1_1344, O1_1792, O1_2240, O3_896,  O3_1344, O3_1792, O3_2240 ]
-  PROCESSORS: [896,     1344,    1792,    2240,    896,     1344,    1792,    2240    ]
-  THREADS:    [1,       1,       1,       1,       1,       1,       1,       1       ]
+  ARCH_NAMES: [O3_prod, O3_prod, O3_prod, O3_prod, O3_prod, O3_prod, O3_prod, O3_prod, O3_prod, O3_prod, O3_prod, O3_prod]
+  TEST_NAMES: [t8, t8, t8, t8, t4, t4, t4, t4, t1, t1, t1, t1]
+  NAMES:      [t8_1, t8_2, t8_3, t8_4, t4_1,  t4_2, t4_3, t4_4, t1_1, t1_2, t1_3, t1_4]
+  PROCESSORS: [112, 168, 224, 280, 224, 336, 448, 560, 896, 1344, 1792, 2240]
+  THREADS:    [8, 8, 8, 8, 4, 4, 4, 4, 1, 1, 1, 1]
   SPLITS: 1
   TEST_CONFIG: NextGEMS_R2B8_2020
   TEST_STEPS: 10
