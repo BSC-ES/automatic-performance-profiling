@@ -11,7 +11,14 @@ JOBS:
     CHECK: "true"
     NOTIFY_ON: FAILED
   SCALABILITY_TRACING:
-    FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh
+    FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh configurations/model/ecearth4/experiment_config.yml.tmpl
+    ARCH_NAME: "%TRACING.ARCH_NAME%"
+    START_DATE: "%TRACING.START_DATE%"
+    END_DATE: "%TRACING.END_DATE%"
+    FREQ: "%TRACING.FREQ%"
+    INTERVAL_VAL: "%TRACING.INTERVAL%"
+    OIFS_RESOLUTION: "%EXPERIMENT.OIFS_RESOLUTION%"
+    NEMO_RESOLUTION: "%EXPERIMENT.NEMO_RESOLUTION%"
     FOR:
       TEST_NAME: "%TRACING.TEST_NAMES%"
       NAME: "%TRACING.NAMES%"

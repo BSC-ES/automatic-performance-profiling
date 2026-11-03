@@ -75,6 +75,7 @@ case "$current_member" in
         test_names=($(bashify_array "%COMPILATION_EFFICIENCY.NAMES%"))
         test_tys=($(bashify_array "%COMPILATION_EFFICIENCY.TEST_NAMES%"))
         test_procs=($(bashify_array "%COMPILATION_EFFICIENCY.PROCESSORS%"))
+        test_threads=($(bashify_array "%COMPILATION_EFFICIENCY.THREADS%"))
         test_config="%COMPILATION_EFFICIENCY.TEST_CONFIG%"
         splits="%COMPILATION_EFFICIENCY.SPLITS%"
         ;;
@@ -82,6 +83,7 @@ case "$current_member" in
         test_names=($(bashify_array "%STRONGSCALING.NAMES%"))
         test_tys=($(bashify_array "%STRONGSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%STRONGSCALING.PROCESSORS%"))
+        test_threads=($(bashify_array "%STRONGSCALING.THREADS%"))
         test_config="%STRONGSCALING.TEST_CONFIG%"
         splits="%STRONGSCALING.SPLITS%"
         ;;
@@ -89,6 +91,7 @@ case "$current_member" in
         test_names=($(bashify_array "%WEAKSCALING.NAMES%"))
         test_tys=($(bashify_array "%WEAKSCALING.TEST_NAMES%"))
         test_procs=($(bashify_array "%WEAKSCALING.PROCESSORS%"))
+        test_threads=($(bashify_array "%WEAKSCALING.THREADS%"))
         test_config="%WEAKSCALING.TEST_CONFIG%"
         splits="%WEAKSCALING.SPLITS%"
         ;;
@@ -96,6 +99,7 @@ case "$current_member" in
         test_names=($(bashify_array "%TRACING.NAMES%"))
         test_tys=($(bashify_array "%TRACING.TEST_NAMES%"))
         test_procs=($(bashify_array "%TRACING.PROCESSORS%"))
+        test_threads=($(bashify_array "%TRACING.THREADS%"))
         test_config="%TRACING.TEST_CONFIG%"
         splits=1
         ;;
@@ -105,15 +109,15 @@ if [ "${current_member}" = "hw_benchmarks" ]; then
     post_hw_benchmarks
 else
     # Source the model post template staged by Autosubmit
-model_post=%HPCLOGDIR%/post_${jobname}
+    model_post=%HPCLOGDIR%/post_${jobname}
 
-# AS stages each FILE entry as <stem>_<jobname>, so two entries with the same stem swap silently
-if ! grep -q "models/${model}/" "${model_post}"; then
-    echo "[ERROR] ${model_post} is not the ${model} template (check the job FILE list)." >&2
-    exit 1
-fi
+    # AS stages each FILE entry as <stem>_<jobname>, so two entries with the same stem swap silently
+    if ! grep -q "models/${model}/" "${model_post}"; then
+        echo "[ERROR] ${model_post} is not the ${model} template (check the job FILE list)." >&2
+        exit 1
+    fi
 
-. "${model_post}"
+    . "${model_post}"
     if ! declare -F "post_${model}" >/dev/null; then
         echo "[ERROR] post_${model} is not defined." >&2
         echo "        Add autosubmit/templates/models/${model}/post.sh to the job FILE list." >&2

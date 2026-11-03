@@ -33,6 +33,11 @@ if [ ! -f %HPCLOGDIR%/run_${jobname} ]; then
     exit 1
 fi
 . %HPCLOGDIR%/run_${jobname}
+if ! declare -F "run_${model}" >/dev/null; then
+    echo "[ERROR] run_${model} is not defined after sourcing the run template." >&2
+    echo "        Check the FILE list of this job: autosubmit/templates/models/%DEFAULT.MODEL%/run.sh" >&2
+    exit 1
+fi
 
 # Source the model utils template staged by Autosubmit
 if [ -f %HPCLOGDIR%/utils_${jobname} ]; then
@@ -49,7 +54,8 @@ current_member=${current_member,,}
 case "$current_member" in
     "compilation_efficiency")
         test_name=${current_member}/${test}
-        arch_name=${test}
+        arch_name=%CURRENT_ARCH_NAME%
+        [[ "${arch_name}" =~ ^% || -z "${arch_name}" ]] && arch_name=${test}
         test_config=%COMPILATION_EFFICIENCY.TEST_CONFIG%
         test_steps=%COMPILATION_EFFICIENCY.TEST_STEPS%
         output=%COMPILATION_EFFICIENCY.OUTPUT%

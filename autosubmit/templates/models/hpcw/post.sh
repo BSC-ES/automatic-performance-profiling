@@ -10,9 +10,6 @@
 # Note: the NEMO component reuses models/nemo/post_nemo.sh, also declared in the hpcw post jobs FILE list
 #####################################################################################################################
 
-# shellcheck source=/dev/null
-. %HPCLOGDIR%/post_nemo_${jobname}
-
 #####################################################################################################################
 # Brief: Writes the test_info files and the trace of one run
 # Global:
@@ -21,11 +18,13 @@
 #####################################################################################################################
 function post_hpcw_icon()
 {
-    model_nproc=${test_procs[$i]}
-    icon_nproc=${test_procs[$i]}
+    model_tasks=${test_procs[$i]}
+    icon_tasks=${test_procs[$i]}
+    icon_threads=${test_threads[$i]:-1}
+    model_threads=${icon_threads}
 
-    report_test_cfg "nproc" > ${run_dir}/${test}-test_info.csv
-    save_test_yaml "nproc" "nproc" "" > ${run_dir}/${test}-test_info.yaml
+    report_test_cfg tasks threads > ${run_dir}/${test}-test_info.csv
+    save_test_yaml "tasks threads" "tasks threads" "" > ${run_dir}/${test}-test_info.yaml
 
     case ${current_member} in
         "tracing")
@@ -41,6 +40,8 @@ function post_hpcw_icon()
 #####################################################################################################################
 function post_hpcw_nemo()
 {
+    # shellcheck source=/dev/null
+    . %HPCLOGDIR%/post_nemo_${jobname}
     post_nemo
 }
 

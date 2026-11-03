@@ -1,6 +1,13 @@
 JOBS:
   SCALABILITY_STRONGSCALING:
-    FILE: autosubmit/templates/scalability.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh
+    FILE: autosubmit/templates/scalability.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh configurations/model/ecearth4/experiment_config.yml.tmpl
+    ARCH_NAME: "%STRONGSCALING.ARCH_NAME%"
+    START_DATE: "%EXPERIMENT.START_DATE%"
+    END_DATE: "%EXPERIMENT.END_DATE%"
+    FREQ: "%EXPERIMENT.FREQ%"
+    INTERVAL_VAL: "%EXPERIMENT.INTERVAL%"
+    OIFS_RESOLUTION: "%EXPERIMENT.OIFS_RESOLUTION%"
+    NEMO_RESOLUTION: "%EXPERIMENT.NEMO_RESOLUTION%"
     FOR:
       TEST_NAME: "%STRONGSCALING.TEST_NAMES%"
       NAME: "%STRONGSCALING.NAMES%"

@@ -1,0 +1,12 @@
+# EC-Earth 4 job overrides.
+
+JOBS:
+  REMOTE_COMPILATION:
+    FILE: autosubmit/templates/compilation.sh
+    FOR:
+      NAME: "%MODEL.ARCH_NAMES%"
+      TEST_NAME: "%MODEL.ARCH_NAMES%"
+    DEPENDENCIES: REMOTE_INIDATA
+    PROCESSORS: "%DEFAULT.PROCESSORS_PER_NODE%"
+    WALLCLOCK: 02:00
+    NOTIFY_ON: FAILED

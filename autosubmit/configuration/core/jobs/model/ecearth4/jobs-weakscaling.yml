@@ -1,6 +1,11 @@
 JOBS:
   SCALABILITY_WEAKSCALING:
-    FILE: autosubmit/templates/scalability.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh
+    FILE: autosubmit/templates/scalability.sh autosubmit/templates/models/%DEFAULT.MODEL%/run.sh configurations/model/ecearth4/experiment_config.yml.tmpl
+    ARCH_NAME: "%WEAKSCALING.ARCH_NAME%"
+    START_DATE: "%EXPERIMENT.START_DATE%"
+    END_DATE: "%EXPERIMENT.END_DATE%"
+    FREQ: "%EXPERIMENT.FREQ%"
+    INTERVAL_VAL: "%EXPERIMENT.INTERVAL%"
     FOR:
       TEST_NAME: "%WEAKSCALING.TEST_NAMES%"
       NAME: "%WEAKSCALING.NAMES%"

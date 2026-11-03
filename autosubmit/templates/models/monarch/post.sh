@@ -84,12 +84,14 @@ function post_monarch()
     done
     declare -a monarch_split_sdpd=("${model_split_sdpd[@]}")
     model_sdpd=$(echo "scale=4; ${model_sdpd} / ${splits}" | bc -l)
-    model_nproc=${test_procs[$i]}
+    model_tasks=${test_procs[$i]}
+    monarch_threads=${test_threads[$i]:-1}
+    model_threads=${monarch_threads}
     monarch_jnpes=${jnpes_list[$i]}
     monarch_inpes=${inpes_list[$i]}
     monarch_write_groups=${write_groups_list[$i]}
     monarch_write_tasks=${write_tasks_list[$i]}
-    monarch_nproc=${model_nproc}
+    monarch_tasks=${model_tasks}
     monarch_sdpd=${model_sdpd}
-    save_test_yaml "nproc sdpd" "nproc sdpd jnpes inpes write_groups write_tasks" "sdpd" > ${run_dir}/${test}-test_info.yaml
+    save_test_yaml "tasks sdpd threads" "tasks sdpd jnpes inpes write_groups write_tasks threads" "sdpd" > ${run_dir}/${test}-test_info.yaml
 }

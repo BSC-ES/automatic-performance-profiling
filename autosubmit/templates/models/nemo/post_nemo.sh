@@ -25,8 +25,10 @@ function post_nemo()
 {
     cd ${run_dir} || exit
 
-    nemo_nproc=${test_procs[$i]}
-    model_nproc=${nemo_nproc}
+    nemo_tasks=${test_procs[$i]}
+    model_tasks=${nemo_tasks}
+    nemo_threads=${test_threads[$i]:-1}
+    model_threads=${nemo_threads}
 
     case ${current_member} in
         "weakscaling")
@@ -44,7 +46,7 @@ function post_nemo()
         ;;
     esac
 
-    variables_to_report="nproc resolution"
+    variables_to_report="tasks resolution threads"
     [ ${current_member} = "weakscaling" ] && variables_to_report+=" grid_points"
 
     # The split summary used to be written here; a leftover would mask the parsed values

@@ -42,18 +42,23 @@ function post_ecearth4()
     for component in ${!job_geometry[@]}; do
         component_geometry=${job_geometry[${component}]}
         component_geometry=${component_geometry//,/ }
-        component_nproc=${component}_nproc
-        declare ${component_nproc}=0
+        component_tasks=${component}_tasks
+        declare ${component_tasks}=0
         for procs_range in ${component_geometry}; do
             first_proc=$(echo ${procs_range} | cut -d'-' -f1)
             last_proc=$(echo ${procs_range} | cut -d'-' -f2)
-            curr_sypd=${!component_nproc}
-            declare ${component_nproc}=$((curr_sypd + (last_proc - first_proc + 1)))
+            curr_count=${!component_tasks}
+            declare ${component_tasks}=$((curr_count + (last_proc - first_proc + 1)))
         done
     done
 
-    # The multiprog total counts a process per component entry, so the requested count is used
-    model_nproc=${test_procs[$i]}
+    # The multiprog total counts a task per component entry, so the requested count is used
+    model_tasks=${test_procs[$i]}
+
+    model_threads=${test_threads[$i]:-1}
+    for component in "${report_components[@]}"; do
+        declare ${component,,}_threads=${model_threads}
+    done
 
     case ${current_member} in
         "tracing")
@@ -132,7 +137,7 @@ function post_ecearth4()
         ;;
     esac
 
-    variables_to_report="nproc resolution"
+    variables_to_report="tasks resolution threads"
     [ ${current_member} = "weakscaling" ] && variables_to_report+=" grid_points"
     [ ${current_member} != "tracing" ] && ! ${coupling_enabled} && variables_to_report+=" sypd"
     
