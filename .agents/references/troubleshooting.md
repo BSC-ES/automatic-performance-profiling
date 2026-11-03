@@ -45,7 +45,7 @@ Tests are **not** selected by members — selection is `bootstrap.yml` (the job 
 Every per-test job file now names its jobs after the test:
 
 ```
-SCALABILITY_<TEST> -> POST_<TEST> -> CONFIGURATION_JSON_<TEST>
+SCALABILITY_<TEST> -> POST_<TEST> -> ANALYSIS_<TEST>
 ```
 
 (tracing adds `FUNCTIONS_DIR`, `TRACE`, `TRACE_CUT`, `PARAMEDIR`, `PARAVER`, `MODELFACTORS`,
@@ -65,7 +65,7 @@ modes:
 Every model's per-test job files (`hpcw`, `monarch`, `nemo`, `ecearth4`) flip their `APP_TESTS` key
 to `"TRUE"`; `core/defaults.yml` keeps the `"FALSE"` defaults, and `$expid/conf` can override them.
 
-## `configuration_json.sh` finds no tests
+## `analysis.sh` finds no tests
 
 The member is recovered by pattern-matching the job name:
 
@@ -73,7 +73,7 @@ The member is recovered by pattern-matching the job name:
 current_member=$(echo "%TASKTYPE%" | grep -oE "COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS")
 ```
 
-So the test job must be named `CONFIGURATION_JSON_<MEMBER>`. Rename it and `current_member` becomes
+So the test job must be named `ANALYSIS_<MEMBER>`. Rename it and `current_member` becomes
 empty: the `case` matches nothing, `tests` is unset and the loop does nothing — no error, no output.
 
 ## HPCW re-downloads multi-GB inputs

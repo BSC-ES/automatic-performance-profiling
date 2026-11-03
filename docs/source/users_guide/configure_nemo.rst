@@ -145,11 +145,12 @@ The following list variables have to be the same length:
 Compilation Efficiency
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The configuration of the Compilation Efficiency test follows the same idea as the Weak Scaling; the test names define which arch each test should be run with:
+The configuration of the Compilation Efficiency test follows the same idea as the Weak Scaling; the arch names define which binary each test should be run with, and the test names group the runs that are compared in the same scalability table:
 
 The following list variables have to be the same length:
 
-* TEST_NAMES: List of the arch configs to run for each test; they have to be defined in MODEL.ARCH_NAMES.
+* TEST_NAMES: List of the test case names; each value groups its runs in one scalability table, so runs sharing a value are compared against each other.
+* ARCH_NAMES: List of the arch configs to run for each test; they have to be defined in MODEL.ARCH_NAMES.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors all equal to 1.
 * THREADS: List of threads used by each test.
@@ -160,10 +161,10 @@ The following list variables have to be the same length:
 
   # COMPILATION EFFICIENCY CONFIG
   COMPILATION_EFFICIENCY:
-    # For compilation efficiency the arch name is taken from the test name
-    TEST_NAMES: [O1_prod, O1_prod, O3_prod, O3_prod]
-    NAMES:      [O1_112,  O1_224,  O3_112,  O3_224 ]
-    PROCESSORS: [112,     224,     112,     224    ]
-    THREADS:    [1,       1,       1,       1      ]
+    TEST_NAMES: [O1_prod,   O1_prod,  O3_prod,  O3_prod]
+    ARCH_NAMES: [O1_prod,   O1_prod,  O3_prod,  O3_prod]
+    NAMES:      [O1_112,    O1_224,   O3_112,   O3_224 ]
+    PROCESSORS: [112,       224,      112,      224    ]
+    THREADS:    [1,         1,        1,        1      ]
     SPLITS: 1
     TEST_CONFIG: BENCH

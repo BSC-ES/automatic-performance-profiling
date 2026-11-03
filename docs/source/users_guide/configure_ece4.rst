@@ -201,11 +201,12 @@ The following list variables have to be the same length:
 Compilation Efficiency
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The configuration of the Compilation Efficiency test follows the same idea as the Weak Scaling; the test names define which arch each test should be run with:
+The configuration of the Compilation Efficiency test follows the same idea as the Weak Scaling; the arch names define which binary each test should be run with, and the test names group the runs that are compared in the same scalability table:
 
 The following list variables have to be the same length:
 
-* TEST_NAMES: List of the arch configs to run for each test; they have to be defined in MODEL.ARCH_NAMES.
+* TEST_NAMES: List of the test case names; each value groups its runs in one scalability table, so runs sharing a value are compared against each other.
+* ARCH_NAMES: List of the arch configs to run for each test; they have to be defined in MODEL.ARCH_NAMES.
 * NAMES: List of unique names for each test.
 * PROCESSORS: List of processors used in each test.
 * [COMPONENT]_PROCS: List of COMPONENT processors used in each test. The workflow will only use the processors of the components set in MODEL.COMPONENTS, but you need to define the list for all of the components because of Autosubmit limitations.
@@ -215,8 +216,8 @@ The following list variables have to be the same length:
 
   # COMPILATION EFFICIENCY CONFIG
   COMPILATION_EFFICIENCY:
-    # For compilation efficiency the arch name is taken from the test name
     TEST_NAMES: [O3_ompi_prod, O3_ompi_prod, O3_ompi_prod, O3_impi_prod, O3_impi_prod, O3_impi_prod]
+    ARCH_NAMES: [O3_ompi_prod, O3_ompi_prod, O3_ompi_prod, O3_impi_prod, O3_impi_prod, O3_impi_prod]
     NAMES:      [ompi_1,       ompi_2,       ompi_3,       impi_1,       impi_2,       impi_3      ]
     PROCESSORS: [112,          224,          336,          112,          224,          336         ]
     OIFS_PROCS: [55,           111,          167,          55,           111,          167         ]

@@ -68,7 +68,7 @@ Templates in `autosubmit/templates/` are rendered by the Autosubmit template eng
 (`%VARIABLE%`/`%SECTION.KEY%` placeholders → `.cmd` → scheduler). They cover setup (`clean.sh`,
 `synchronize.sh`, `remote_setup.sh`, `ini.sh`, `compilation.sh`, `tests.sh`), execution
 (`scalability.sh`, `osu_run.sh`, `stream.sh`), tracing (`trace_cut.sh`, `paramedir.sh`, `paraver.sh`,
-`dimemas_*.sh`, `modelfactors.sh`) and post-processing (`post.sh`, `configuration_json.sh`,
+`dimemas_*.sh`, `modelfactors.sh`) and post-processing (`post.sh`, `analysis.sh`,
 `report.sh`).
 
 - Use `%VARIABLE%`/`%SECTION.KEY%` placeholders — never hardcode paths, models, platforms or
@@ -96,22 +96,22 @@ raw outputs -> collector.py -> <TEST>.json -> reporter.py (per test) -> report.s
 
 | Tool | Key flags | What it does |
 |---|---|---|
-| `collector.py` | `-i <folders> -o <name> -p param.cfg -c <comps>` | Classifies raw files (timing outputs, `.pm`, `.dm`, LUCIA, test_info) into a `TimingInformation` JSON |
+| `collector.py` | `-m inputs.yml -o <name> -c <comps>` | Reads the input mapping (file → case/component/format) into a `TimingInformation` JSON |
 | `reporter.py` | `-j <test>.json -s <csv> -p <png> -v <metric>` | Curation: scalability CSV/PNG, function CSVs, scatter plots, Dimemas summary, coupling |
 | `comparator.py` | `-j <jsons> -s/-w --scalability-variable <metric> --out-dir <dir>` | Cross-member comparison (strong/weak scaling) |
 
 `-v` default `sypd`; `sdpd` for monarch, `time` for ICON. Tracing never passes `--scalability-*`.
 
-**Per-model collector extras:**
+**Per-model collector inputs** (`component_specs` in `analysis.sh`, written to `inputs.yml`; no file name is inspected to decide what a file contains):
 
-| Model | Extra inputs | Extra case columns |
+| Model | Declared inputs | Extra case columns |
 |---|---|---|
 | `monarch` | `*test_info.yaml` | `jnpes` `inpes` `write_groups` `write_tasks` |
-| `nemo`, `hpcw` | `*-timing.output` | — |
+| `nemo`, `hpcw` | `*-timing.output` (or `*-timer.log` for ICON) | — |
 | `ecearth4` | `*-ifs.stat` (if oifs), `*-timing.output` (if nemo), `lucia table.csv` (if coupling enabled) | — |
-| tracing (all) | `paramedir/*pm` | — |
+| tracing (all) | one `paramedir` entry per counter in `cfg/trace_analysis/paramedir_configurations/` | — |
 
-**Python style:** PEP 8, type hints, Google-style docstrings, `argparse`, Python 3.9+, vectorised NumPy/pandas over raw loops. Core logic in `cfg/parser/utils/` (`parsers.py`, `curation.py`, `plotter.py`, `histograms.py`), entry points thin.
+**Python style:** PEP 8, type hints, Google-style docstrings, `argparse`, Python 3.9+, vectorised NumPy/pandas over raw loops. The parser is a standalone package in `cfg/parser/src/` (`mapping.py`, `registry.py`, `models/`, `formats/`, `timing.py`, `curation/`); `collector.py`/`reporter.py`/`comparator.py` are shims around it. Adding a model parser = one `models/<model>.py` + one `registry.py` entry.
 
 Full detail: **`.agents/references/pipeline.md`**. API docs: `docs/source/developers_guide/`.
 
@@ -196,9 +196,9 @@ Note: MONARCH reports scalability using simulated days per day (SDPD) instead of
 
 ## Common Development Tasks
 
-**Add a test:** (1) `core/jobs/model/<MODEL>/jobs-<test>.yml` — copy `jobs-strongscaling.yml`; job must be named `CONFIGURATION_JSON_<TEST>`. (2) Runner template in `autosubmit/templates/`. (3) `<TEST>:` block in `proj.yml`. (4) `APP_TESTS.<TEST>.ENABLED: "TRUE"` in the job file. (5) `case` branch in `configuration_json.sh` for input globs + reporter flags. (6) Raw data producer in `post.sh`. (7) Register in `bootstrap.yml` + `report.sh`.
+**Add a test:** (1) `core/jobs/model/<MODEL>/jobs-<test>.yml` — copy `jobs-strongscaling.yml`; job must be named `ANALYSIS_<TEST>`. (2) Runner template in `autosubmit/templates/`. (3) `<TEST>:` block in `proj.yml`. (4) `APP_TESTS.<TEST>.ENABLED: "TRUE"` in the job file. (5) `case` branch in `analysis.sh` for input globs + reporter flags. (6) Raw data producer in `autosubmit/templates/models/<MODEL>/post.sh`. (7) Register in `bootstrap.yml` + `report.sh`.
 
-**Add a model:** (1) `user/model/<MODEL>/proj.yml`. (2) `core/jobs/model/<MODEL>/jobs-*.yml` per test. (3) Model params in `configurations/model/<MODEL>/`. (4) Arch files in `cfg/arch/<platform>/<MODEL>/`. (5) Helpers in `cfg/utils/<MODEL>/`. (6) Template dispatch: `compile_<model>`, `clone_<model>`, `ini_<model>`, `post_<model>` in the matching templates; `autosubmit/templates/models/<MODEL>/run.sh` for `run_<model>`. (7) `case` in `configuration_json.sh`.
+**Add a model:** (1) `user/model/<MODEL>/proj.yml`. (2) `core/jobs/model/<MODEL>/jobs-*.yml` per test. (3) Model params in `configurations/model/<MODEL>/`. (4) Arch files in `cfg/arch/<platform>/<MODEL>/`. (5) Helpers in `cfg/utils/<MODEL>/`. (6) Template dispatch: `compile_<model>`, `clone_<model>`, `ini_<model>`, `post_<model>` in the matching templates; `autosubmit/templates/models/<MODEL>/run.sh` for `run_<model>`. (7) `case` in `analysis.sh`.
 
 **Add an HW benchmark:** (1) Extend `HW_BENCHMARKS` in `user/common.yml` (`NAMES`/`PROCESSORS` drive the `FOR` loops). (2) Runner template. (3) Parser under `cfg/benchmarks/`. (4) Uncomment `jobs-hwbenchmarks.yml` in `bootstrap.yml` + set `ENABLED: true`.
 
@@ -210,9 +210,17 @@ Full step-by-step: **`.agents/references/extending.md`**.
 
 ## Testing and Validation
 
+- When validating a change in a test experiment, rerun only the affected jobs — but "affected" is transitive: a job is
+  also affected when it consumes what the change produces, even if none of its own files changed. In particular, a
+  change to the on-disk layout (per-split run dirs, renamed or aggregated outputs) affects every downstream job that
+  reads that layout (`POST_*`, `ANALYSIS_*`, `REPORT`)
 - Validate rendered job scripts before running: `autosubmit inspect <expid> --quick`
 - Check Bash templates with `bash -n` and `shellcheck`; templates use strict-mode tracing (`set -xv`/`set -xuve`) and `%VARIABLE%` substitution
 - Lint Python under `cfg/` (parsers, collectors, comparators, reporters) before committing
+- Parser tests: `python3 -m pytest cfg/parser/tests`. The fixtures are **real** outputs from the MN5
+experiments, named `<model>-<version>-…`; when a release changes a format, add the new versioned
+file next to the old one instead of overwriting it (`cfg/parser/tests/fixtures/README.md` has the
+provenance and versions)
 - Build docs with `make html` in `docs/` (Sphinx; dependencies in `docs/requirements.txt`)
 
 ## Workflow Guidelines
@@ -226,3 +234,4 @@ Full step-by-step: **`.agents/references/extending.md`**.
 7. DO NOT remove any files, if it is needed to continue the developments create a backup and remove it.
 8. Commits for small changes can be a short title, if there are a lot of changes use multiple line explanation commit
 9. The code, when possible, should be self-documenting, meaning that if the variables and logic are self explanatory there is no need for long comments in the code. Docstring for functions are still mandatory. This also applies to config files, env files...
+10. NEVER commit, push, or publish changes without explicit user approval. Make changes locally, present them, and wait for the user to say "commit" or "push". This includes git add/commit/push, creating merge requests, or any action writing to a remote.

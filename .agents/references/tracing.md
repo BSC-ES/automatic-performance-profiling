@@ -6,18 +6,41 @@ with Paramedir, Paraver, Dimemas and Modelfactors.
 ## Job chain
 
 ```
-TRACE (FOR) -> POST_TRACING (FOR)
+SCALABILITY_TRACING (FOR) -> POST_TRACING (FOR)
 POST_TRACING -> TRACE_CUT
 TRACE_CUT   -> PARAMEDIR, PARAVER, MODELFACTORS, DIMEMAS_TRACES
 DIMEMAS_TRACES -> DIMEMAS_IMAGES, PARADIM
-POST_TRACING, PARAMEDIR, PARADIM -> CONFIGURATION_JSON_TRACING
+POST_TRACING, PARAMEDIR, PARADIM -> ANALYSIS_TRACING
 ```
 
-`TRACE` uses `FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh
+`SCALABILITY_TRACING` uses `FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh
 autosubmit/templates/models/<MODEL>/run.sh` — i.e. `scalability.sh` sources the tracing helper (as
 `utils_<jobname>`) and the model runner (as `run_<jobname>`) — and carries
 `CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"` (only marenostrum 5) plus a
 dependency on `FUNCTIONS_DIR`.
+
+All post-processing jobs walk the cases through `%TRACING.NAMES%` (never a `run_*` glob), the same way
+`analysis.sh` builds `run_${name}/…`.
+
+## Dimemas
+
+`prv2dim` cannot parse the **intercommunicator** header records (`i:`) that Extrae writes after the
+communicator (`c:`) ones — every Dimemas build fails with *wrong communicator format*, regardless of the
+Extrae version. `dimemas_traces.sh` therefore calls the shared `sanitize_trace()` helper
+(`cfg/utils/bash/utils.sh`), which copies the trace dropping the `i:` records and rewriting the header
+record count, before `prv2dim`. `modelfactors.sh` feeds the same sanitized copies to `modelfactors.py`
+because that tool runs Dimemas internally.
+
+Dimemas traces are named `<case>_<component>` (`<case>_<component>.dim`, `<case>_<component>_<DimemasCfg>.prv`)
+because the number of processors does not identify a case (two cases can share cores and differ in threads).
+PARADIM then produces `<case>_<component>_<DimemasCfg>_<ParadimCfg>.dm`, which `parsers.parse_dimemas_filename()`
+splits as case + simulation + information type, and `dimemas_curated_summary()` lists the cases found in the
+Dimemas data (header `Case`) rather than the NEMO/ICON processor cases.
+
+`analysis.sh` collects `dimemas_traces/*dm` and, when any exist, passes `--dimemas-file
+dimemas_summary.csv` to the reporter; `report.sh::add_dimemas()` renders that table plus the
+`dimemas_images/<case>/<view>@<case>_<component>_<simulation>.png` views in a `Dimemas` section of the
+tracing part of the report.
 
 ## Config keys (`user/common.yml` → `TRACING`)
 
@@ -69,5 +92,5 @@ block; `TIMESTEP_ZERO`, `TRACE_STEPS`, `USER_FUNCTIONS_PROC`, `USER_FUNCTIONS_TH
 3. Optionally add it to `TRACING.PARAVER.COMPARE_CFGS` to get an appended cross-case image (the
    image must exist for at least one case or `report.sh` skips it with a message).
 
-Metric note: tracing has no SYPD, so `configuration_json.sh` does not pass `--scalability-*` for the
+Metric note: tracing has no SYPD, so `analysis.sh` does not pass `--scalability-*` for the
 tracing member; the report shows function/PAPI/MPI data instead.

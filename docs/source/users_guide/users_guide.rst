@@ -12,7 +12,7 @@ The current supported models IDs are:
 
 * ``nemo``: For the NEMO ocean model.
 * ``ecearth4``: For the EC-Earth multicomponent earth system model.
-* ``hpcw``: For the HPCW NEMO benchmark.
+* ``hpcw``: For the HPCW benchmarks of the ICON and NEMO components (one at a time).
 * ``monarch``: For the MONARCH atmospheric chemistry model.
 
 And the supported platforms IDs are:

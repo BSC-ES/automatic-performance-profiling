@@ -8,6 +8,12 @@ HPCW NEMO report
 
 - Report example in MN5: `report.pdf <https://gitlab.earth.bsc.es/-/project/743/uploads/c5debfcdc90b8fdbd4ecac95e1990155/report.pdf>`_
 
+HPCW ICON report
+----------------
+
+- Report example of small input in MN5: `report.pdf <https://gitlab.earth.bsc.es/-/project/743/uploads/9444549f3ca0e1fce1af9ea1a99be895/report.pdf>`_
+- Report example of medium input in MN5: `report.pdf <https://gitlab.earth.bsc.es/-/project/743/uploads/89100028188cbc1e078174c96f5089f2/report.pdf>`_
+
 NEMO report
 -----------
 

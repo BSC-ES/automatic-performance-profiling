@@ -38,7 +38,7 @@ files, which is why `REPORT`'s dependency list in `jobs-common.yml` is the one t
 | `core/jobs/jobs-execution.yml` | the model-agnostic setup chain for models not driven by their own Autosubmit config |
 | `core/jobs/jobs-hwbenchmarks.yml` | `HW_REMOTE_SETUP`, `HW_COMPILATION`, `PREPARE_TESTS`, `OSU_RUN`, `STREAM`, `POST_HW_BENCHMARKS` |
 | `core/jobs/model/<MODEL>/jobs.yml` | model-specific job overrides |
-| `core/jobs/model/<MODEL>/jobs-<test>.yml` | one per test: `SCALABILITY_<TEST>` (or `SIM_<TEST>`) → `POST_<TEST>` → `CONFIGURATION_JSON_<TEST>` |
+| `core/jobs/model/<MODEL>/jobs-<test>.yml` | one per test: `SCALABILITY_<TEST>` (or `SIM_<TEST>`) → `POST_<TEST>` → `ANALYSIS_<TEST>` |
 | `core/platforms/<HPCARCH>.yml` | platform-level Autosubmit defaults (picked up via `HPCARCH`) |
 | `core/jobs/platform/<HPCARCH>/jobs.yml` | **not loaded** by `bootstrap.yml` — dead unless something else includes it |
 | `user/autosubmit.yml` | Autosubmit runtime: `CONFIG` (`MAXWAITINGJOBS`, `TOTALJOBS`, `RETRIALS`, `OUTPUT`), `MAIL`, `COMMUNICATIONS`, `STORAGE`, `MIGRATE` |
@@ -80,10 +80,15 @@ per-type extras (`EC_QUEUE`, `CUSTOM_DIRECTIVES`, `PROCESSORS_PER_NODE`, `MAX_WA
 Common to all models:
 
 - `MODEL` — `NAME`, `COMPONENTS`, `REPORT_COMPONENTS`, `ORIGIN`, `BRANCH`, `ARCH_NAMES` (plus
-  `STORE` for `hpcw`: the shared ExternalData object cache of the model)
-- `EXPERIMENT` — `RESOLUTION`, `TEST_STEPS`, `OUTPUT` (+ model extras such as `COMPONENT`,
-  `TEST_CONFIG`)
+  `STORE` for `hpcw`: the shared ExternalData object cache of the model; `SE_CONDA_ENVS` for
+  `ecearth4`: the Script Engine conda env per arch, aligned with `ARCH_NAMES`)
+- `EXPERIMENT` — `APP_TESTS` and the Autosubmit placeholders; model-specific keys are
+  `RESOLUTION`, `TEST_STEPS`, `OUTPUT` (hpcw has no `EXPERIMENT` section: its output switch is
+  `MODEL.OUTPUT` and its step count is per test)
 - Per-test spec — `TEST_NAMES`, `NAMES`, `PROCESSORS`, `THREADS`, `TEST_CONFIG`, `ARCH_NAME`
+  (`hpcw` additionally sets `TEST_STEPS` per test). The test length is model-dependent: `nemo` and
+  `ecearth4` use `EXPERIMENT.TEST_STEPS` (overridden by `TRACING.TRACE_STEPS` while tracing) and
+  `monarch` uses `TRACING.NHOURS`
 
 Per-test extras actually present today:
 
@@ -93,7 +98,10 @@ Per-test extras actually present today:
   `TRACE_N_FUNCTIONS`
 - `STRONGSCALING`: `COUPLING_REPORT` (`ecearth4` only — enables the LUCIA coupling section)
 
-`COMPILATION_EFFICIENCY` takes its arch name **from `TEST_NAMES`**, not from `ARCH_NAME`.
+`COMPILATION_EFFICIENCY` takes its arch name **from `ARCH_NAMES`** (a per-run list, same length as
+`TEST_NAMES`); it falls back to `TEST_NAMES` only when `ARCH_NAMES` is absent (old experiments).
+`TEST_NAMES` there is a free-form test-case label that groups runs into one scalability table, so
+runs of the same binary with different `THREADS` (or of different binaries) can be compared directly.
 
 Models differ in which sections they define: `hpcw` and `monarch` carry `EXPERIMENT` (and
 `monarch` has no `WEAKSCALING` section at all).
@@ -104,7 +112,7 @@ Models differ in which sections they define: `hpcw` and `monarch` carry `EXPERIM
 build. Arch files live in `cfg/arch/<platform>/<MODEL>/`:
 
 - `hpcw`: `<component>/<ARCH_NAME>.cmake` + `<component>/<ARCH_NAME>.env`, where `<component>` is
-  `EXPERIMENT.COMPONENT` (`nemo` or `icon`)
+  the first `MODEL.COMPONENTS` entry (`nemo` or `icon`)
 - `monarch`: `<ARCH_NAME>.cmake` + `<ARCH_NAME>.env`
 - `nemo`: `arch-<ARCH_NAME>.fcm`
 

@@ -1,7 +1,7 @@
 # Report generation
 
 `autosubmit/templates/report.sh` runs as the `REPORT` job on the login platform. It consumes the
-artifacts that `configuration_json.sh` produced and emits the final PDF.
+artifacts that `analysis.sh` produced and emits the final PDF.
 
 ## Flow
 
@@ -9,9 +9,11 @@ artifacts that `configuration_json.sh` produced and emits the final PDF.
 2. `report_folder=$CURRENT_ROOTDIR/report/` — **removed with `rm -rf` and recreated**, so everything
    in it is regenerated each run. `report.pkl` is git-ignored.
 3. Repeated `ReportGenerator.py -O report.pkl …` calls accumulate sections into the pickle.
-   The introduction is always added first (`--section-title "Introduction" --section-number 1`,
-   text from `cfg/latex/Introduction.txt`), then the experiment-configuration table plus a glossary
-   are appended at the end.
+   The glossary is always added first (`--section-title "Glossary"`, text from
+   `cfg/latex/text/Glossary.txt`), then the introduction (`cfg/latex/Introduction.txt`), then the
+   experiment-configuration table, then the test sections in a fixed order
+   (`strongscaling`, `tracing`, `weakscaling`, `compilation_efficiency`), so the document structure
+   does not depend on shell hash ordering.
 4. `ReportGenerator.py -O report --dump-to-file` renders `report.tex`.
 5. `pdflatex --shell-escape report.tex && pdflatex report.tex` (twice, for cross-references). If
    `pdflatex` is absent the script prints the `.tex` path instead of failing outright.
@@ -25,7 +27,7 @@ declare -A enabled_members=(
     ["weakscaling"]="%EXPERIMENT.APP_TESTS.WEAKSCALING.ENABLED%"
     ["compilation_efficiency"]="%EXPERIMENT.APP_TESTS.COMPILATION_EFFICIENCY.ENABLED%"
 )
-for current_member in "${!enabled_members[@]}"; do
+for current_member in strongscaling tracing weakscaling compilation_efficiency; do
     if ${enabled_members[$current_member],,}; then add_${current_member,,}; fi
 done
 ```
@@ -39,13 +41,13 @@ sync.
 
 | Section | Produced by | Content |
 |---|---|---|
+| `Glossary` | inline | `cfg/latex/text/Glossary.txt` (first section) |
 | `Introduction` | inline | `cfg/latex/Introduction.txt` |
 | `Experiment configuration` | inline | `test_info.csv`: resolution, test steps, output, platform; model-specific extras (`ecearth4` resolutions/dates, `monarch` datelist/hours) |
-| `Scalability` | `add_strongscaling` | `cases_info.csv`, then `<test>_scaling.{csv,png}`; per-component `<component>_<test>_scaling.*`; `ecearth4` coupling from `coupling/*/{summary.csv,stacked_events.png}` |
-| `Tracing` | `add_tracing` | per test: `test_info.csv` (dates/steps, or `NHOURS` for monarch); then `Functions detailed report`, `${COMPONENT} Paraver`, `${COMPONENT} Model Factors`, `${COMPONENT} MPI Call Profile` |
-| `Multi Experiment` | `add_compilation_efficiency`, `add_weakscaling` | `comparator.py` output: `<name>-scaling.{csv,png}` for compilation efficiency, per-component comparisons for weak scaling |
+| `Scalability` | `add_strongscaling` | `Test configuration` subsection: test settings + `cases_info.csv`; then `<test>_scaling.{csv,png}`; per-component `<component>_<test>_scaling.*`; `ecearth4` coupling from `coupling/*/{summary.csv,stacked_events.png}` |
+| `Tracing` | `add_tracing` | per test: `Test configuration` subsection with `test_info.csv` (dates/steps, or `NHOURS` for monarch) and `cases_info.csv`; then `Whole-model functions` (multi-component only), `${COMPONENT} Functions detailed report`, `MPI Call Profile`, `Model Factors`, `Paraver` |
+| `Multi Experiment` | `add_compilation_efficiency`, `add_weakscaling` | `comparator.py` output: `<name>-scaling.{csv,png}` for compilation efficiency, per-component comparisons for weak scaling; the test settings and per-build `cases_info.csv` go in the `Test configuration` subsubsection and the `Results` subsubsection holds the comparison table and plot (subsubsections render in insertion order, so configuration comes first) |
 | `Hardware Benchmarks` | `add_hw_benchmarks` | OSU images from `run/hw_benchmarks/OSU_RUN/IMAGE/*.png`, STREAM from `run/hw_benchmarks/STREAM_RUN/<model>.png` |
-| `Glossary` | inline | `cfg/latex/text/Glossary.txt` |
 
 Tracing sub-sections are each individually gated by their `TRACING.*` switch:
 `MODELFACTORS.ENABLED`, `MPI.ENABLED`, `USER_FUNCTIONS.ENABLED`, `PARAVER.ENABLED`.
@@ -70,9 +72,15 @@ Tracing sub-sections are each individually gated by their `TRACING.*` switch:
 | `--dump-to-file` | render `report.tex` |
 
 Supporting assets: `cfg/latex/report.cfg` (`REPORT.CONFIG`), `cfg/latex/csv_formatter.py`,
-`cfg/latex/text/` (one `.txt` per section/sub-section, e.g. `Scalability.txt`, `Function.txt`,
-`ParaverViews.txt`, `ModelFactors.txt`, `OSU.txt`, `STREAM.txt`, and per-member texts keyed by the
-lowercased member name), `cfg/latex/img/`.
+`cfg/latex/Introduction.txt` plus `cfg/latex/text/` (one `.txt` per section/sub-section, e.g.
+`Scalability.txt`, `Tracing.txt`, `Function.txt`, `MPI.txt`, `ParaverViews.txt`,
+`ModelFactors.txt`, `HardwareBenchmarks.txt`, `OSU.txt`, `STREAM.txt`, and per-member texts keyed by
+the lowercased member name), `cfg/latex/img/`.
+
+Every section and subsection gets a `-T` description (what is measured, how the tables and figures
+are read); `ReportGenerator.py` skips sections and subsections that end up with no content, so an
+empty view never leaves a blank page.
 
 To add a new section: add the `add_<member>` function, a `cfg/latex/text/<member>.txt`, and register
-the member in the `enabled_members` map.
+the member in the `enabled_members` map **and** in the fixed order list that drives the section
+loop in `report.sh`.

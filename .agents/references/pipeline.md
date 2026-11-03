@@ -6,7 +6,7 @@ raw outputs -> collector.py -> <TEST_NAME>.json -> reporter.py (per test)  -> re
 ```
 
 `collector.py` + `reporter.py` are driven per test by
-[`autosubmit/templates/configuration_json.sh`](../../autosubmit/templates/configuration_json.sh);
+[`autosubmit/templates/analysis.sh`](../../autosubmit/templates/analysis.sh);
 `comparator.py` is driven per member by
 [`autosubmit/templates/report.sh`](../../autosubmit/templates/report.sh).
 
@@ -14,14 +14,21 @@ raw outputs -> collector.py -> <TEST_NAME>.json -> reporter.py (per test)  -> re
 
 | Flag | Meaning |
 |---|---|
-| `-i`, `--input-files` | required, `nargs='+'`; input **folders** to scan |
+| `-m`, `--mapping` | YAML declaring which file belongs to which case, component and format |
+| `--input` | inline mapping entry `case=...,component=...,format=...,files=...` (repeatable; `;` separates several files) |
 | `-o`, `--output-file` | output name; the script appends `.json` itself (`-o BENCH` → `BENCH.json`) |
-| `-p`, `--param-file` | `param.cfg` (key=value: `processes_per_node`, `configuration_name`) |
-| `-c`, `--components` | component names; space-separated string that the script splits |
+| `-p`, `--param-file` | `param.cfg` (key=value: `processes_per_node`, `configuration_name`); the mapping can also carry it as `parameters` |
+| `-c`, `--components` | component names; defaults to the components declared in the mapping |
+| `--test` | test name; defaults to the output file name |
 
-It classifies raw files by name (`timing.output`, `*-timing.output`, `.pm` Paramedir, `.dm` Dimemas,
-LUCIA `table.csv`, `test_info.csv`, `test_info.yaml`, `ifs.stat`) into a `TimingInformation` and
-serialises one JSON per test.
+No file name is inspected to decide what a file contains. Each mapping entry names its `format`,
+and the format selects the loader (`src/registry.py`). The formats are `nemo-timing`,
+`ifs-stat`, `icon-timing`, `icon-timer-report`, `paramedir` (needs `counter`), `dimemas` (needs
+`simulation` and `counter`) and `lucia`; `test_info` files are declared per case and loaded as
+`.csv` or `.yaml`. `-i/--input-files` was removed and is rejected with a pointer to `--mapping`.
+
+`nproc` comes from `test_info`; an optional `nproc` key in an entry overrides it (tracing used to
+decode it from the case name).
 
 ## `reporter.py` (per-test curation)
 
@@ -54,39 +61,69 @@ it deliberately does **not** pass `--scalability-*` because tracing has no SYPD.
 | `--scalability-variable` | default `sypd` |
 | `-f`, `--function-info` | compare elapsed time per function |
 | `--out-dir` | output folder; the computed quantity is appended to the filename |
+| `--file-out` | exact path of the weak scaling CSV; overrides `--out-dir` (what `report.sh` passes) |
 
-## What `configuration_json.sh` feeds in
+## What `analysis.sh` feeds in
 
 The test identity comes from the job name: `current_member` is grep'd out of `%TASKTYPE%`
 (`COMPILATION_EFFICIENCY|STRONGSCALING|WEAKSCALING|TRACING|HW_BENCHMARKS`) and lowercased.
 
-Base input glob is `run_*/*test_info.csv`, with `cases_variables` starting at `nproc`. Then, by model:
+For every test `analysis.sh` writes `inputs.yml` with `write_input_mapping`, built from
+`test_info_patterns`, `component_specs` (`"<component>|<format>|<pattern>"`) and `case_level_specs`
+(`"<format>|<pattern>"`). Patterns are relative to a single run directory and expanded per case, so
+only the `run_<name>` directories declared in `<TEST>.NAMES` are read.
 
-| Model | Extra inputs | Extra case columns |
-|---|---|---|
-| `monarch` | `run_*/*test_info.yaml` | `jnpes` `inpes` `write_groups` `write_tasks` |
-| `nemo`, `hpcw` | `run_*/*-timing.output` | — |
-| `ecearth4` | `run_*/*-ifs.stat` if `oifs` is a report component; `run_*/*-timing.output` if `nemo` is; `run_*/lucia_lite_results/table.csv` + `--coupling-folder coupling` if `STRONGSCALING.COUPLING_REPORT.ENABLED` | — |
+| Model | Declared `component_specs` | `test_info` | Extra case columns |
+|---|---|---|---|
+| `monarch` | — | `*.csv`, `*.yaml` | `jnpes` `inpes` `write_groups` `write_tasks` |
+| `nemo` | `nemo|nemo-timing|timing.output` | `*.csv` | — |
+| `hpcw` | `icon|icon-timer-report|icon_timer.log` or `nemo|nemo-timing|timing.output` | `*.csv`, `*.yaml` | — |
+| `ecearth4` | `oifs|ifs-stat|*-ifs.stat`, `nemo|nemo-timing|*-timing.output` (each if reported) | `*.csv` | — |
 
-For `tracing`, `paramedir/*pm` is added.
+Every component pattern is written twice, `run_<case>/<pattern>` and `run_<case>/*/<pattern>`,
+so the run directory layout of the model does not matter: the split folders
+(`run_<case>/1/`, `run_<case>/2/`, ...) that every model is meant to use are read when present
+and a file written straight into the run directory is read otherwise.
 
-`--scalability-variable` overrides applied here: `sdpd` for `monarch`, `time` for `hpcw` when
-`EXPERIMENT.COMPONENT` is `icon`. Everything else uses the `sypd` default.
+**Splits**: every file a pattern matches is one repetition of the same case. `src/splits.py`
+averages the numeric values of the payloads (recursing into the nested mappings), keeps `nproc`
+from the first one, and stores the per-split values of the scalability metric under `splits`
+(`[{"sypd": 9.4}, {"sypd": 9.6}]`), which is what `generate_scalability_summary()`,
+`multi_experiment_comparison()` and `plotting.py` read for their error bars. A single file means a
+single split and adds no `splits` key. `post.sh` therefore no longer concatenates the timing files
+nor averages the SYPD in bash.
 
-Loop body per test: `cd run/<member>/<TEST_NAME>/`, write `param.cfg`, run `collector.py`, then
-`reporter.py`. So each test folder ends up with `<TEST_NAME>.json`, `<TEST_NAME>_scaling.csv`,
-`<TEST_NAME>_scaling.png`, `cases_info.csv` and the function artifacts.
+`ecearth4` with `STRONGSCALING.COUPLING_REPORT.ENABLED` adds `case_level_specs+=("lucia|lucia_lite_results/table.csv")`
+and `--coupling-folder coupling`. For `tracing`, one `paramedir` entry per component and per counter in
+`cfg/trace_analysis/paramedir_configurations/` is appended, e.g.
+`"nemo|paramedir|paramedir/nemo-*-Time.pm|Time"`. Dimemas entries are not generated by the template
+(the feature is disabled and its results are meaningless); the `dimemas` format stays available for a
+hand-written mapping and `dimemas_summary` returns an empty table when the JSON has no Dimemas data.
 
-## `cfg/parser/utils/`
+`--scalability-variable` overrides applied here: `sdpd` for `monarch`, `time` for `hpcw` when the
+first `MODEL.REPORT_COMPONENTS` entry is `icon`. Everything else uses the `sypd` default.
+
+Loop body per test: `cd run/<member>/<TEST_NAME>/`, write `param.cfg` and `inputs.yml`, run
+`collector.py`, then `reporter.py`. So each test folder ends up with `<TEST_NAME>.json`,
+`<TEST_NAME>_scaling.csv`, `<TEST_NAME>_scaling.png`, `cases_info.csv` and the function artifacts.
+
+## `cfg/parser/src/`
 
 | Module | Contents |
 |---|---|
-| `parsers.py` | `TimingInformation` (the data model), the per-format parsers (`parse_nemo_timing`, `parse_ifs_file`, `parse_paramedir_files`, `parse_dimemas_files`, `parse_filename`, …), `dictionary_pointer`, `merge_dictionaries` |
+| `mapping.py` | mapping dataclasses, YAML and `--input` parsers, glob expansion |
+| `registry.py` | `COMPONENT_FORMATS`, `CASE_FORMATS`, `MODEL_DEFAULT_FORMAT`; one line per format |
+| `models/nemo.py`, `models/ifs.py`, `models/icon.py` | the parsers of each model's own outputs |
+| `formats/paramedir.py`, `formats/dimemas.py`, `formats/lucia.py`, `formats/test_info.py` | model independent formats |
+| `splits.py` | averages the repetitions of a case and keeps them under `splits` |
+| `timing.py` | `TimingInformation`: merge, case ordering, JSON save/load, curation delegation |
+| `merge.py` | `dictionary_pointer`, `merge_dictionaries` |
 | `curation.py` | statistics, scalability, weak scaling, multi-experiment comparison, coupling |
-| `plotter.py` | matplotlib helpers for plots/tables |
-| `histograms.py` | histogram helpers |
-| `model/nemo/`, `model/harmonie/` | model-specific converters |
+| `plotting.py`, `histograms.py`, `scaling.py` | matplotlib helpers, histogram helpers, metric direction |
+| `cli/` | `collect`, `report`, `compare`; `app-parser <command>` when installed |
 
-Keep logic in `utils/` and the three entry points thin. Python style: PEP 8, type hints,
-Google-style docstrings (`Args`/`Returns`), `argparse` CLIs, Python 3.9+, vectorised NumPy/pandas
-over raw loops. API docs: `docs/source/developers_guide/code/`.
+`collector.py`, `reporter.py` and `comparator.py` at the package root add `src/` to `sys.path` and
+call the CLI, so the workflow needs no installation. Tests: `cfg/parser/tests/`
+(`python3 -m pytest cfg/parser/tests`). Python style: PEP 8, type hints, Google-style docstrings
+(`Args`/`Returns`), `argparse` CLIs, Python 3.9+, vectorised NumPy/pandas over raw loops. API docs:
+`docs/source/developers_guide/code/`.

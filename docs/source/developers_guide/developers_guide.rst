@@ -320,7 +320,7 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
 
     * **Tracing**\ : Runs the model with Extrae to generate the traces.
     * **WeakScaling**\ : Uses the ``%WEAKSCALING.RESOLUTION%`` as the resolution to run the test with.
-    * **CompilationEfficiency**\ : Uses the ``%COMPILATION_EFFICIENCY.TEST_NAME%`` as what version of the compiled model to use, has to match with one of the arch prefixes in ``%MODEL.ARCH_NAMES``.
+    * **CompilationEfficiency**\ : Uses the ``%COMPILATION_EFFICIENCY.ARCH_NAMES%`` entry as what version of the compiled model to use, has to match with one of the arch prefixes in ``%MODEL.ARCH_NAMES``; ``%COMPILATION_EFFICIENCY.TEST_NAMES%`` only groups the runs compared in the same scalability table (it falls back to the test name when ``ARCH_NAMES`` is not set).
 
   **Post**\ : All the log files necessary to get the SYPD are located in the run directory.
 
