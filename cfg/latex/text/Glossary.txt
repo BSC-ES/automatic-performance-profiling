@@ -40,4 +40,16 @@
 \item[Extrae] A tracing tool used to collect and analyze performance data from parallel applications developed by Tools at BSC. It provides detailed information on the execution behavior of the application, including MPI and OMPI communication patterns, L1-3 cache misses, User Functions elapsed time... which can be used to optimize performance and identify bottlenecks.
 
 \item[Trace] A record of the execution history of an application or simulation, including information on the sequence of events, function calls, and resource utilization. Traces can be used to analyze performance, identify bottlenecks, and optimize application behavior, and in our case are create by Extrae.
+
+\item[SDPD (Simulated Days Per Day)] The equivalent of SYPD for models that are evaluated over a forecast horizon instead of a full year: the number of simulated days per day of real time. MONARCH is reported with this metric.
+
+\item[IPC (Instructions Per Cycle)] The average number of processor instructions completed per clock cycle. It indicates how well the processor pipeline is used, so higher values generally mean a better use of the core.
+
+\item[MPI Call Profile] A table produced by Paraver in which every MPI function is listed with the time spent in it over the traced window, aggregated over the threads (average, maximum, minimum and standard deviation).
+
+\item[Dimemas] A BSC tool that simulates the execution of a parallel application on a modelled system, so that properties such as network latency, bandwidth or the number of nodes can be changed without running the application again.
+
+\item[OSU Micro Benchmarks] A suite of point-to-point and collective MPI micro benchmarks used to characterise the latency and the bandwidth of the interconnect.
+
+\item[STREAM] A synthetic benchmark that measures the sustained memory bandwidth of a system.
 \end{description}

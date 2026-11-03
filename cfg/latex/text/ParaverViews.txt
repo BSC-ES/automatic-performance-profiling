@@ -1,1 +1,13 @@
-Here we present a list of different Paraver views that provide a visual support to understand the behaviour of the model.
+The Paraver views below show the fastest timestep of the traced window, so that the same portion of the execution can be compared across cases and components. The horizontal axis is time and every row is a thread of the application.
+
+\begin{itemize}
+\item \textbf{MPI call}: timeline of the MPI point-to-point calls, coloured by call type, on top of the computation of each thread. It shows how communication overlaps with computation and where the threads wait.
+\item \textbf{MPI collective call}: the same timeline restricted to collective operations. A view with no visible events means that no collective operation was recorded in the traced window, which is expected for a configuration whose communication is entirely point-to-point.
+\item \textbf{Average IPC}: instructions per cycle, averaged over the window and coloured per thread. It indicates how efficiently each core uses its pipeline.
+\item \textbf{Affinity per node}: distribution of the threads over the nodes and batches of the job. It is used to check that the mapping of the processes to the hardware is the expected one.
+\item \textbf{L3 Total cache misses}: evolution of the L3 cache misses in time. Spikes usually correspond to phases that stream data through memory.
+\item \textbf{UserFunctions}: timeline of the instrumented user functions, coloured by function. It shows which parts of the code dominate the runtime and how they are distributed over the threads.
+\end{itemize}
+
+A view is only included when the corresponding image was generated. Views that depend on a hardware counter are omitted when that counter could not be collected on the platform.
+

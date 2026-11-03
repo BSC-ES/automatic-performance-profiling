@@ -1,0 +1,5 @@
+This section analyses the execution of the model with the BSC tracing tools. The traced runs form a dedicated set of cases, chosen so that the trace size stays manageable, and each of them is traced for a limited number of timesteps. Extrae records the MPI calls, the hardware counters and the user functions of those timesteps, the fastest one is cut out of the full trace, and the cut is analysed with Paraver, modelfactors and the reporter.
+
+For every tracing case the section presents the geometry of the case, the ranking of the most time-consuming user functions, the time and hardware counters of the main user functions, the Paraver views of the fastest timestep, the modelfactors metrics obtained by comparing the traces of the different cases and the MPI call profile.
+
+The traced cases are not part of the scalability analysis: the tracing overhead changes the runtime, so their throughput is not comparable with the untraced runs.

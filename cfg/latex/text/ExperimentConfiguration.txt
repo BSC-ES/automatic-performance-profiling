@@ -1,1 +1,1 @@
-The experiment configuration is the same for all members except for WeakScaling's resolution, which is defined for each test.
+The table below lists the configuration values that are common to all the tests in this report. Values that apply to a single test are listed in the section of that test. When present, \emph{Configuration} is the name of the model configuration, \emph{Resolution} the grid resolution, \emph{Timesteps} the number of simulated steps of each run and \emph{Platform} the HPC system on which the runs were executed.

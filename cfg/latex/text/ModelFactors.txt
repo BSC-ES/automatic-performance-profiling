@@ -1,1 +1,4 @@
-This section contains performance metrics generated from a set of Paraver traces using the modelfactors tool. Comparing traces produced with a different number of resources it analyzes the evolution of communication and computation aspects of the code. 
+The modelfactors tool derives performance metrics from a set of Paraver traces produced with different numbers of processing units. By comparing those traces it separates the computational part of the execution from the communication part and reports how each of them evolves as the resources change.
+
+The figures in this section are produced by modelfactors directly. They complement the scalability plots: a case whose throughput stops growing with the number of processors usually shows a communication component that grows faster than the computational one.
+

@@ -1,2 +1,4 @@
-This section contains information that could be produced thanks to different dimemas experiments. Dimemas is capable of simulating which would be the behaviour of an application in a modeled system in which the key factors influencing the performance of an application can be modified at will. It allows us to better understand which is the importance of the different system properties.
+This section contains the views produced by Dimemas, a BSC tool that simulates the execution of an application on a modelled system. Dimemas replays the communication pattern recorded in a trace and predicts how the application would behave with a different network latency, bandwidth or number of nodes, without running the application again.
+
+The views are only present when the Dimemas simulation completes successfully. A Dimemas trace that cannot be generated is skipped, and the corresponding figures are omitted from this section.
 

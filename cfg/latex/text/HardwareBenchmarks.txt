@@ -1,1 +1,4 @@
-This section contains, for each function of the code, a series of tables that include few key metrics that can help us to see whether the different functions scale well or not and which could be the most important factor, communication or computation.
+This section characterises the hardware on which the model is run, independently of the model itself. The OSU micro benchmarks measure the latency and the bandwidth of the interconnect for point-to-point and collective MPI operations, and the STREAM benchmark measures the sustained memory bandwidth of a computing node.
+
+The benchmarks are not part of the scalability analysis of the model. They provide the reference figures needed to interpret the scalability results: an interconnect with a high latency or a low bandwidth, or a node with a low memory bandwidth per core, limits the maximum speedup that any model can reach on that platform.
+

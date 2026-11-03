@@ -23,6 +23,12 @@ root_dir=%CURRENT_ROOTDIR%
 
 components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
+# hpcw bundles several dwarfs; report the dwarf that was actually tested
+report_model=${model}
+if [ "${model}" == "hpcw" ] && [ ${#components[@]} -eq 1 ]; then
+    report_model=${components[0]}
+fi
+
 scalability_variable=""
 if [ "${model}" == "monarch" ]; then
     scalability_variable="sdpd"
@@ -43,6 +49,13 @@ function add_hw_benchmarks() {
     osu_enabled=${osu_enabled,,}
     local stream_enabled=%HW_BENCHMARKS.STREAM.ENABLED%
     stream_enabled=${stream_enabled,,}
+
+    if ${osu_enabled} || ${stream_enabled}; then
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Hardware Benchmarks" \
+            -T ${cfg}/latex/text/HardwareBenchmarks.txt
+    fi
 
     if ${osu_enabled}; then
         for osu_img in ${hardware_benchmarks_root}/OSU_RUN/IMAGE/*.png; do
@@ -94,20 +107,24 @@ function add_strongscaling() {
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Scalability" \
-            --add-csv cases_info.csv \
-            --add-caption "Cases processors configuration" \
             -T ${cfg}/latex/text/Scalability.txt
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Scalability" \
+            -s "Test configuration" \
+            --add-csv cases_info.csv \
+            --add-caption "Cases processors configuration"
 
             if [ ${#components[@]} -gt 1 ]; then
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "Scalability" \
                 --add-img ${test}_scaling.png \
-                --add-caption "Scalability plot for ${model^^}."
+                --add-caption "Scalability plot for ${report_model^^}."
             python3 ${latex_folder}/ReportGenerator.py \
                 -O ${report_full_path}.pkl \
                 -S "Scalability" \
-                --add-caption "Scalability table for ${model^^}." \
+                --add-caption "Scalability table for ${report_model^^}." \
                 --add-csv ${test}_scaling.csv
         fi
 
@@ -154,18 +171,23 @@ function add_user_functions() {
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Tracing" \
-            -s "Functions detailed report" \
+            -s "Whole-model functions" \
             -T ${cfg}/latex/text/Function.txt
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Tracing" \
-            -s "Functions detailed report" \
+            -s "Whole-model functions" \
             -ss "Most expensive function summary" \
             --add-csv most_expensive_function_summary.csv \
             --add-caption "Most time-consuming functions for the whole model." -f
     fi
 
     for component in "${components[@]}"; do
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "${component^^} Functions detailed report" \
+            -T ${cfg}/latex/text/Function.txt
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Tracing" \
@@ -305,6 +327,14 @@ function add_modelfactors() {
 }
 
 function add_mpi() {
+    for component in "${components[@]}"; do
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "${component^^} MPI Call Profile" \
+            -T ${cfg}/latex/text/MPI.txt
+    done
+
     for trace_id in "${tracing_names[@]}"; do
         for component in "${components[@]}"; do
             python3 ${latex_folder}/ReportGenerator.py \
@@ -327,6 +357,11 @@ function add_mpi() {
 #####################################################################################################################
 function add_tracing() {
     add_test_info tracing "Tracing" "Tracing" "Test configuration"
+
+    python3 ${latex_folder}/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Tracing" \
+        -T ${cfg}/latex/text/Tracing.txt
 
     local tests="%TRACING.TEST_NAMES%"
     tracing_names="%TRACING.NAMES%"
@@ -352,7 +387,7 @@ function add_tracing() {
         python3 ${latex_folder}/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Tracing" \
-            -s "Functions detailed report" \
+            -s "Test configuration" \
             --add-csv cases_info.csv \
             --add-caption "Cases processors configuration."
 
@@ -397,12 +432,19 @@ function add_compilation_efficiency() {
 
     add_test_info compilation_efficiency "CompilationEfficiency" "Multi Experiment" "${member_title}" "Test configuration"
 
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
+        -s "${member_title}" \
+        -T ${cfg}/latex/text/compilation_efficiency.txt
+
     test_folders=($run_root/$current_member/*/)
     for test_folder in "${test_folders[@]}"; do
         python3 ${cfg}/latex/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Multi Experiment" \
             -s "${member_title}" \
+            -ss "Test configuration" \
             --add-csv ${test_folder}/cases_info.csv \
             --add-caption "$(basename ${test_folder}) cases info."
     done
@@ -411,14 +453,15 @@ function add_compilation_efficiency() {
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
         -s "${member_title}" \
+        -ss "Results" \
         --add-csv ${run_root}/${current_member}/${multiexperiment_id}scaling.csv \
-        --add-caption "${member_title} case comparison scalability table." \
-        -T ${cfg}/latex/text/${current_member,,}.txt
+        --add-caption "${member_title} case comparison scalability table."
 
     python3 ${latex_folder}/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
         -s "${member_title}" \
+        -ss "Results" \
         --add-img ${run_root}/${current_member}/${multiexperiment_id}scaling.png \
         --add-caption "${member_title} case comparison scalability plot."
 }
@@ -446,17 +489,23 @@ function add_weakscaling() {
     python3 ${cfg}/latex/ReportGenerator.py \
         -O ${report_full_path}.pkl \
         -S "Multi Experiment" \
+        -s "${member_title}" \
+        -T ${cfg}/latex/text/weakscaling.txt
+
+    python3 ${cfg}/latex/ReportGenerator.py \
+        -O ${report_full_path}.pkl \
+        -S "Multi Experiment" \
         -s $member_title \
+        -ss "Results" \
         --add-csv ${run_root}/${current_member}/${current_member}.csv \
-        --add-caption "${member_title} case comparison scalability." \
-        -T ${cfg}/latex/text/${current_member,,}.txt
+        --add-caption "${member_title} case comparison scalability."
 
     for component in "${components[@]}"; do
         python3 ${cfg}/latex/ReportGenerator.py \
             -O ${report_full_path}.pkl \
             -S "Multi Experiment" \
             -s $member_title \
-            -ss "${component^^} ${member_title}" \
+            -ss "${component^^} Results" \
             --add-csv ${run_root}/${current_member}/${component}_${current_member}.csv \
             --add-caption "${component^^} ${member_title} case comparison scalability."
     done
@@ -480,15 +529,19 @@ function test_info_ecearth4()
     [ "%EXPERIMENT.RESOLUTION%" != "" ] && echo "Resolution, %EXPERIMENT.RESOLUTION%";
     [ "%EXPERIMENT.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%EXPERIMENT.TEST_STEPS%";
     [ "%EXPERIMENT.OUTPUT%" != "" ] && echo "OUTPUT,%EXPERIMENT.OUTPUT%";
-    echo "NEMO resolution,%EXPERIMENT.NEMO_RESOLUTION%";
-    echo "OIFS resolution,%EXPERIMENT.OIFS_RESOLUTION%";
+    for comp in "${components[@]}"; do
+        case "${comp,,}" in
+            nemo) echo "NEMO resolution,%EXPERIMENT.NEMO_RESOLUTION%";;
+            oifs) echo "OIFS resolution,%EXPERIMENT.OIFS_RESOLUTION%";;
+        esac
+    done
     echo "START DATE,%EXPERIMENT.START_DATE%";
     echo "END DATE,%EXPERIMENT.END_DATE%";
 }
 
 function test_info_hpcw()
 {
-    :
+    echo "DWARF,${components[0]^^}";
 }
 
 function test_info_monarch()
@@ -508,21 +561,21 @@ function test_info_nemo()
 
 function test_info_strongscaling()
 {
-    [ "%STRONGSCALING.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%STRONGSCALING.TEST_CONFIG%";
+    [ "%STRONGSCALING.TEST_CONFIG%" != "" ] && echo "CONFIGURATION,%STRONGSCALING.TEST_CONFIG%";
     [ "%STRONGSCALING.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%STRONGSCALING.TEST_STEPS%";
     [ "%STRONGSCALING.OUTPUT%" != "" ] && echo "OUTPUT,%STRONGSCALING.OUTPUT%";
 }
 
 function test_info_weakscaling()
 {
-    [ "%WEAKSCALING.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%WEAKSCALING.TEST_CONFIG%";
+    [ "%WEAKSCALING.TEST_CONFIG%" != "" ] && echo "CONFIGURATION,%WEAKSCALING.TEST_CONFIG%";
     [ "%WEAKSCALING.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%WEAKSCALING.TEST_STEPS%";
     [ "%WEAKSCALING.OUTPUT%" != "" ] && echo "OUTPUT,%WEAKSCALING.OUTPUT%";
 }
 
 function test_info_tracing()
 {
-    [ "%TRACING.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%TRACING.TEST_CONFIG%";
+    [ "%TRACING.TEST_CONFIG%" != "" ] && echo "CONFIGURATION,%TRACING.TEST_CONFIG%";
     [ "%TRACING.START_DATE%" != "" ] && echo "START DATE,%TRACING.START_DATE%";
     [ "%TRACING.END_DATE%" != "" ] && echo "END DATE,%TRACING.END_DATE%";
     [ "%TRACING.NHOURS%" != "" ] && echo "NHOURS,%TRACING.NHOURS%";
@@ -532,9 +585,20 @@ function test_info_tracing()
 
 function test_info_compilation_efficiency()
 {
-    [ "%COMPILATION_EFFICIENCY.TEST_CONFIG%" != "" ] && echo "TEST CONFIG,%COMPILATION_EFFICIENCY.TEST_CONFIG%";
+    [ "%COMPILATION_EFFICIENCY.TEST_CONFIG%" != "" ] && echo "CONFIGURATION,%COMPILATION_EFFICIENCY.TEST_CONFIG%";
     [ "%COMPILATION_EFFICIENCY.TEST_STEPS%" != "" ] && echo "TIMESTEPS,%COMPILATION_EFFICIENCY.TEST_STEPS%";
     [ "%COMPILATION_EFFICIENCY.OUTPUT%" != "" ] && echo "OUTPUT,%COMPILATION_EFFICIENCY.OUTPUT%";
+
+    local test_names=($(bashify_array "%COMPILATION_EFFICIENCY.TEST_NAMES%"))
+    local arch_names=($(bashify_array "%COMPILATION_EFFICIENCY.ARCH_NAMES%"))
+    local seen=" "
+    local i pair
+    for i in "${!test_names[@]}"; do
+        pair="${test_names[$i]}:${arch_names[$i]:-${test_names[$i]}}"
+        case "${seen}" in *" ${pair} "*) continue ;; esac
+        seen+="${pair} "
+        echo "${test_names[$i]} ARCH,${arch_names[$i]:-${test_names[$i]}}"
+    done
 }
 
 #####################################################################################################################
@@ -592,32 +656,37 @@ declare -A enabled_members=(
 
 python3 ${cfg}/latex/ReportGenerator.py \
     -O ${report_full_path}.pkl \
-    --section-title "Introduction" \
+    --section-title "Glossary" \
     --section-number 1 \
+    -T ${cfg}/latex/text/Glossary.txt
+
+python3 ${cfg}/latex/ReportGenerator.py \
+    -O ${report_full_path}.pkl \
+    --section-title "Introduction" \
+    --section-number 2 \
     -T ${cfg}/latex/Introduction.txt
 
 test_info > test_info.csv
+
+# Model-specific experiment configuration description
+experiment_config_txt=${cfg}/latex/text/ExperimentConfiguration_${model}.txt
+[ ! -f "${experiment_config_txt}" ] && experiment_config_txt=${cfg}/latex/text/ExperimentConfiguration.txt
 
 python3 ${latex_folder}/ReportGenerator.py \
     -O ${report_full_path}.pkl \
     -S "Experiment configuration" \
     --add-caption "Experiment configuration" \
     --add-csv test_info.csv \
-    -T ${cfg}/latex/text/ExperimentConfiguration.txt
+    -T ${experiment_config_txt}
 
-for current_member in "${!enabled_members[@]}"; do
+for current_member in strongscaling tracing weakscaling compilation_efficiency; do
     if ${enabled_members[$current_member],,}; then
         add_${current_member,,}
     fi
 done
 
-python3 ${cfg}/latex/ReportGenerator.py \
-    -O ${report_full_path}.pkl \
-    --section-title "Glossary" \
-    -T ${cfg}/latex/text/Glossary.txt
-
 cd ${report_folder} || exit
-echo model=${model^^} > param.cfg
+echo model=${report_model^^} > param.cfg
 echo configuration_name=${configuration_name} >> param.cfg
 title="%REPORT.TITLE%"
 authors="%REPORT.AUTHORS%"

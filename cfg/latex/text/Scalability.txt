@@ -1,7 +1,5 @@
-The Strong Scaling member consists on running a set of tests with an increasing number of processors on the same experiment configuration. This member is evaluated by the speed of the model (SYPD). 
+Strong scaling measures how the speed of the model evolves when the problem size is kept constant and the number of processing units is increased. Every case runs the same configuration with a different number of processors, and the case with the fewest resources is taken as the reference.
 
-In the best case scenario we except that the speed of the model increases proportionally to the added number of resources with respect to the base case (the base case being the case with a lower number of resources). This perfect case can be seen in the scalability plots with the dashed line.
+For each test the section presents a table with the geometry of every case (tasks, threads and total processing units) together with the throughput obtained and the derived speedup and efficiency, followed by a scalability figure that plots the throughput of every case against the number of processing units. When the model is built from more than one component, the same figure and table are also given for each component separately.
 
-The efficiency metric tells us how close the current case speed is to the perfect case, where 1 means that it scales linear, lower than 1, worse than expected and bigger that 1 better than expected, and is computed by current-case-speed * current-case- base-case-speed.
-
-The speedup metric just reports how much faster the current case is with respect to the base case.
+The throughput is expressed as simulated years per day (SYPD) for most models, as simulated days per day (SDPD) for MONARCH and as the integration time reported by the model for ICON. The dashed line of the figures is the ideal scaling extrapolated from the reference case. \emph{Speedup} is the ratio between the throughput of a case and that of the reference case, and \emph{efficiency} is the speedup divided by the ratio of processing units: a value of one means that the case scales linearly, below one that it scales worse than ideal and above one better than ideal.

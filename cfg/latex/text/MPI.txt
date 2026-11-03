@@ -1,0 +1,3 @@
+The MPI call profile summarises the MPI activity recorded in the traced window. Paraver aggregates every MPI function over all the threads of the trace and reports, for each of them, the time spent in the call as an average, a maximum, a minimum and a standard deviation across threads, together with the share of the total MPI time that the call represents.
+
+The table is used to identify which communication primitives dominate the runtime. A high average with a low standard deviation indicates a call that is evenly spread over the threads, while a high maximum with a low average indicates that a few threads are delayed in that call, which usually points to a load imbalance.

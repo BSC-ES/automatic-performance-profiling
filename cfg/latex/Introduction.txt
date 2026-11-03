@@ -1,1 +1,14 @@
-This is an automatically generated report on \Model code.
+This document is the automatically generated performance report for the \Model{} configuration, produced with the Automatic Performance Profiling (APP) tool. APP drives the model through a set of standardised experiments on an HPC platform, collects the raw output of the model and of the BSC performance tools, and renders the curated results in this report.
+
+The document is organised around the following sections, of which only the ones enabled for this experiment are present:
+\begin{itemize}
+\item \textbf{Glossary}: the metrics and the tools referenced throughout the report.
+\item \textbf{Experiment configuration}: the settings shared by all the tests presented here.
+\item \textbf{Scalability}: strong scaling experiments, in which the problem size is kept constant while the number of processing units is increased.
+\item \textbf{Tracing}: Extrae, Paraver, modelfactors and hardware counter analyses of the model execution.
+\item \textbf{Multi Experiment}: comparisons between experiments that differ in the build or in the problem size.
+\item \textbf{Hardware Benchmarks}: OSU and STREAM measurements of the platform.
+\end{itemize}
+
+Each section describes what is measured and how the following tables and figures should be read. The results themselves are not interpreted, since they depend on the configuration, the platform and the build under test.
+

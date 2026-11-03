@@ -1,1 +1,4 @@
-This section contains, for each function of the code, a series of tables that include few key metrics that can help us to see whether the different functions scale well or not and which could be the most important factor, communication or computation.
+This section reports the user functions instrumented in the trace. For each function the report presents a table with the time spent in it, the share of the total time that it represents and the hardware counters associated with it, together with a series of scalability tables that compare the values obtained in the different traced cases.
+
+The purpose is to identify the functions that dominate the runtime and to see whether they scale as the number of processing units grows. A function whose time per timestep does not decrease, or whose share of the total time grows, with more processors is a candidate bottleneck, and the communication and hardware counter columns of its table help to tell whether the cause is communication or computation.
+

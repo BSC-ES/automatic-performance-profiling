@@ -303,6 +303,24 @@ class Section:
         with open(section_text, "r") as section_text_file:
             self.text = section_text_file.read()
 
+    def _children(self):
+        """Direct child nodes, which store their children in different lists."""
+        yield from self.subsections
+        yield from getattr(self, "subsubsections", [])
+
+    def is_empty(self) -> bool:
+        """Whether this node and all its descendants hold no content.
+
+        An empty node would be rendered as a lone heading on an otherwise
+        blank page, so it is skipped when the tex is written.
+        """
+        return not (
+            self.text is not None
+            or self.csv_files
+            or self.images
+            or any(not child.is_empty() for child in self._children())
+        )
+
 
 class Subsection(Section):
     def __init__(self, _section_title, _subsect_title):
@@ -366,8 +384,7 @@ class Subsubsection(Subsection):
     ):
         super(Subsubsection, self).__init__(_section_title, _subsect_title)
         self.subsubsection_title: str = _subsubsect_title
-        print(self.subsubsection_title)
-        self.subsubsection_name = self.subsection_title.lower().replace(" ", "_")
+        self.subsubsection_name = self.subsubsection_title.lower().replace(" ", "_")
         self.subsubsection_number = 0
 
     def add_image(self, file_path, caption=None):
@@ -415,7 +432,9 @@ class LatexText:
         self.text = self.text + "\n"
 
     def clearpage(self):
-        self.add_text("\clearpage")
+        """Start a new page, unless the last command already did."""
+        if not self.text.rstrip().endswith("\\clearpage"):
+            self.add_text("\clearpage")
 
     def add_section2tex(self, section: Section):
         self.clearpage()
@@ -452,7 +471,8 @@ class LatexText:
 
         self.add_text("\\begin{figure}[H]")
         self.add_text(
-            f"\\includegraphics[width=\\linewidth]{{{image_store_relative_path}}}"
+            f"\\includegraphics[width=\\linewidth,height=\\textheight,"
+            f"keepaspectratio]{{{image_store_relative_path}}}"
         )
         self.add_text("\caption{" + image.caption + "}")
         self.add_text("\label{" + image.label + "}")
@@ -609,6 +629,8 @@ class Report:
         self.__begin_doc()
 
         for section in self.sections:
+            if section.is_empty():
+                continue
             self.text.add_section2tex(section)
             for n, csv_file in enumerate(section.csv_files):
                 if not n % 4 and not n == 0:
@@ -620,6 +642,8 @@ class Report:
                 self.text.add_image2tex(image, self.absolute_path)
 
             for subsection in section.subsections:
+                if subsection.is_empty():
+                    continue
                 self.text.add_subsection2tex(subsection)
                 for csv_file in subsection.csv_files:
                     self.text.add_csv2tex(csv_file, self.absolute_path)
@@ -629,9 +653,12 @@ class Report:
                     self.text.add_image2tex(image, self.absolute_path)
 
                 for subsubsection in subsection.subsubsections:
+                    if subsubsection.is_empty():
+                        continue
                     self.text.add_subsubsection2tex(subsubsection)
                     for csv_file in subsubsection.csv_files:
                         self.text.add_csv2tex(csv_file, self.absolute_path)
+                    self.text.end_landscape()
                     for image in subsubsection.images:
                         self.text.add_image2tex(image, self.absolute_path)
 
@@ -734,7 +761,10 @@ class Report:
             try:
                 # Return the section handler
                 return self.get_context(
-                    section_title, subsection_title=subsection_title
+                    section_title,
+                    section_number,
+                    subsection_title,
+                    subsubsection_title,
                 )
             except RecursionError:
                 raise RecursionError("In searching for section %s", section_title)
