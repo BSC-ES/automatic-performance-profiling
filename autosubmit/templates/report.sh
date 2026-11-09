@@ -179,6 +179,13 @@ function add_user_functions() {
             -ss "Most expensive function summary" \
             --add-csv most_expensive_function_summary.csv \
             --add-caption "Most time-consuming functions for the whole model." -f
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "Whole-model functions" \
+            -ss "Most expensive function summary" \
+            --add-img function_time_share.png \
+            --add-caption "Share of the fastest timestep spent in each user function for the whole model."
     fi
 
     for component in "${components[@]}"; do
@@ -194,6 +201,13 @@ function add_user_functions() {
             -ss "Most expensive function summary" \
             --add-csv ${component}_most_expensive_function_summary.csv \
             --add-caption "Most time-consuming functions for ${component^^}." -f
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "${component^^} Functions detailed report" \
+            -ss "Most expensive function summary" \
+            --add-img ${component}_function_time_share.png \
+            --add-caption "Share of the fastest timestep spent in each user function for ${component^^}."
 
         local papi_counters_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
         for papi_counter_plot in ${papi_counters_plots}; do
@@ -344,6 +358,15 @@ function add_mpi() {
                 --add-caption "${trace_id} case MPI Call profile." \
                 --csv-convert -p -r -f
         done
+    done
+
+    for component in "${components[@]}"; do
+        python3 ${latex_folder}/ReportGenerator.py \
+            -O ${report_full_path}.pkl \
+            -S "Tracing" \
+            -s "${component^^} MPI Call Profile" \
+            --add-img ${component}_mpi_profile_share.png \
+            --add-caption "Share of the MPI call time spent in each MPI call across the cases for ${component^^}."
     done
 }
 
