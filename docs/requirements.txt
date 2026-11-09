@@ -5,8 +5,11 @@ sphinx_rtd_theme
 sphinx-copybutton
 pydata_sphinx_theme
 
+numpy
 pandas
 matplotlib
+scipy
+PyYAML
 f90nml
 joblib
 pytest

@@ -2,10 +2,15 @@
 
 import os
 import sys
-# Add the package directory to sys.path
-sys.path.insert(0, os.path.abspath('../../'))
-# The parser package lives in cfg/parser/src
-sys.path.insert(0, os.path.abspath('../../cfg/parser'))
+
+source_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(source_dir, "..", ".."))
+parser_dir = os.path.join(project_root, "cfg", "parser")
+sys.path.insert(0, parser_dir)
+sys.path.insert(0, project_root)
+
+if not os.path.isdir(os.path.join(parser_dir, "src")):
+    sys.stderr.write(f"[docs] warning: {parser_dir}/src not found, the src.* API pages will be empty\n")
 
 
 # -- Project information
@@ -22,6 +27,7 @@ master_doc = 'index'
 # -- Extensions and theme
 extensions = [
     'sphinx.ext.napoleon',
+    'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx_design',
     'sphinx.ext.autosummary',
@@ -54,6 +60,6 @@ templates_path = ['_templates']
 source_suffix = '.rst'  # File extension for source files
 
 # -- Ignore external libraries
-autodoc_mock_imports = ["numpy", "tqdm", "paramiko", "networkx"]
+autodoc_mock_imports = ["tqdm", "paramiko", "networkx"]
 
 nbsphinx_execute = 'always'

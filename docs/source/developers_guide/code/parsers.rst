@@ -1,7 +1,7 @@
 parsers module
 ==============
 
-.. automodule:: src.timing
+.. autoclass:: src.timing.TimingInformation
    :members:
    :show-inheritance:
    :undoc-members:
