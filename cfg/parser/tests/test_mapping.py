@@ -10,7 +10,9 @@ def test_yaml_mapping_nested_by_case(tmp_path):
         "parameters: param.cfg\n"
         "cases:\n"
         "  bench_1:\n"
-        "    test_info: bench_1-test_info.csv\n"
+        "    inputs:\n"
+        "      - format: test_info\n"
+        "        files: bench_1-test_info.csv\n"
         "    components:\n"
         "      nemo:\n"
         "        files: run_bench_1/nemo-bench_1-timing.output\n"
@@ -26,8 +28,9 @@ def test_yaml_mapping_nested_by_case(tmp_path):
     assert mapping.components == ["nemo", "oifs"]
     (case,) = mapping.cases
     assert case.name == "bench_1"
-    assert case.test_info == ("bench_1-test_info.csv",)
+    assert [i.input.files for i in case.test_info] == [("bench_1-test_info.csv",)]
     assert [(i.component, i.input.format) for i in case.inputs] == [
+        (None, "test_info"),
         ("nemo", "nemo-timing"),
         ("oifs", "ifs-stat"),
     ]
@@ -39,8 +42,9 @@ def test_flat_inputs_list_used_by_the_template(tmp_path):
         "test: TRACING\n"
         "cases:\n"
         "  bench_1:\n"
-        "    test_info: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]\n"
         "    inputs:\n"
+        "      - format: test_info\n"
+        "        files: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]\n"
         "      - component: nemo\n"
         "        format: nemo-timing\n"
         "        files: run_bench_1/nemo-bench_1-timing.output\n"
@@ -54,16 +58,36 @@ def test_flat_inputs_list_used_by_the_template(tmp_path):
 
     (case,) = load_mapping(str(mapping_file)).cases
 
-    assert case.test_info == (
-        "run_bench_1/*test_info.csv",
-        "run_bench_1/*test_info.yaml",
-    )
+    assert [i.input.files for i in case.test_info] == [
+        ("run_bench_1/*test_info.csv", "run_bench_1/*test_info.yaml"),
+    ]
     assert [(i.component, i.input.format) for i in case.inputs] == [
+        (None, "test_info"),
         ("nemo", "nemo-timing"),
         ("nemo", "paramedir"),
         (None, "lucia"),
     ]
-    assert case.inputs[1].input.counter == "Time"
+    assert case.inputs[2].input.counter == "Time"
+
+
+def test_case_keys_other_than_inputs_are_case_data(tmp_path):
+    mapping_file = tmp_path / "inputs.yml"
+    mapping_file.write_text(
+        "cases:\n"
+        "  bench_1:\n"
+        "    tasks: 112\n"
+        "    threads: 4\n"
+        "    resolution: Tco95\n"
+        "    inputs:\n"
+        "      - component: nemo\n"
+        "        format: nemo-timing\n"
+        "        files: run_bench_1/nemo-bench_1-timing.output\n"
+    )
+
+    (case,) = load_mapping(str(mapping_file)).cases
+
+    assert case.data == {"tasks": 112, "threads": 4, "resolution": "Tco95"}
+    assert case.test_info == ()
 
 
 def test_inline_spec_adds_a_case():
@@ -132,6 +156,19 @@ def test_paramedir_needs_a_counter(tmp_path):
     )
 
     with pytest.raises(ValueError, match="needs a 'counter'"):
+        load_mapping(str(mapping_file))
+
+
+def test_dimemas_needs_a_simulation_and_a_counter(tmp_path):
+    mapping_file = tmp_path / "inputs.yml"
+    mapping_file.write_text(
+        "cases:\n"
+        "  trace_1:\n"
+        "    components:\n"
+        "      icon: {format: dimemas, files: a.dm, simulation: Original}\n"
+    )
+
+    with pytest.raises(ValueError, match="dimemas needs 'simulation' and 'counter'"):
         load_mapping(str(mapping_file))
 
 

@@ -24,8 +24,9 @@ def nemo_dir(tmp_path, monkeypatch):
         "parameters: param.cfg\n"
         "cases:\n"
         "  bench_1:\n"
-        "    test_info: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]\n"
         "    inputs:\n"
+        "      - format: test_info\n"
+        "        files: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]\n"
         "      - component: nemo\n"
         "        format: nemo-timing\n"
         "        files: run_bench_1/*-timing.output\n"
@@ -56,8 +57,9 @@ def nemo_split_dir(tmp_path, monkeypatch):
         "parameters: param.cfg\n"
         "cases:\n"
         "  bench_1:\n"
-        "    test_info: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]\n"
         "    inputs:\n"
+        "      - format: test_info\n"
+        "        files: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]\n"
         "      - component: nemo\n"
         "        format: nemo-timing\n"
         "        files: [run_bench_1/timing.output, run_bench_1/*/timing.output]\n"
@@ -85,8 +87,9 @@ def ecearth4_dir(tmp_path, monkeypatch):
         "test: BENCH\n"
         "cases:\n"
         "  bench_1:\n"
-        "    test_info: run_bench_1/*test_info.csv\n"
         "    inputs:\n"
+        "      - format: test_info\n"
+        "        files: run_bench_1/*test_info.csv\n"
         "      - component: oifs\n"
         "        format: ifs-stat\n"
         "        files: run_bench_1/*-ifs.stat\n"
@@ -147,6 +150,45 @@ def test_collect_maps_two_components_and_the_coupling_table(ecearth4_dir):
 def test_collect_rejects_the_removed_input_files_flag(nemo_dir):
     with pytest.raises(SystemExit):
         collect.main(["-i", "run_bench_1", "-o", "BENCH"])
+
+
+def test_collect_takes_the_case_values_from_the_mapping(tmp_path, monkeypatch):
+    """A case declares its values in the mapping, so it needs no test_info file."""
+    run_dir = tmp_path / "run_bench_1"
+    run_dir.mkdir()
+    shutil.copy(FIXTURES / "nemo-4.0-bench_1-timing.output",
+                run_dir / "nemo-bench_1-timing.output")
+
+    (tmp_path / "inputs.yml").write_text(
+        "test: BENCH\n"
+        "cases:\n"
+        "  bench_1:\n"
+        "    tasks: 224\n"
+        "    threads: 2\n"
+        "    resolution: ORCA25\n"
+        "    inputs:\n"
+        "      - component: nemo\n"
+        "        format: nemo-timing\n"
+        "        files: run_bench_1/*-timing.output\n"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    assert collect.main(["--mapping", "inputs.yml", "-o", "BENCH"]) == 0
+
+    with open(tmp_path / "BENCH.json", encoding="utf8") as json_f:
+        saved = json.load(json_f)
+
+    case_data = saved["data"]["bench_1"]
+    assert case_data["tasks"] == 224
+    assert case_data["threads"] == 2
+    assert case_data["resolution"] == "ORCA25"
+    assert case_data["total_resources"] == 448
+
+
+def test_collect_warns_when_a_declared_split_is_missing(nemo_dir, capsys):
+    assert collect.main(["--mapping", "inputs.yml", "-o", "BENCH", "--splits", "2"]) == 0
+
+    assert "bench_1/nemo: 1 of 2 splits found" in capsys.readouterr().err
 
 
 def test_collect_reads_one_file_per_split(nemo_split_dir):
