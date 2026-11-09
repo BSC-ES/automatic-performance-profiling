@@ -23,7 +23,6 @@ root_dir=%CURRENT_ROOTDIR%
 
 components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
-# hpcw bundles several dwarfs; report the dwarf that was actually tested
 report_model=${model}
 if [ "${model}" == "hpcw" ] && [ ${#components[@]} -eq 1 ]; then
     report_model=${components[0]}
@@ -541,7 +540,7 @@ function test_info_ecearth4()
 
 function test_info_hpcw()
 {
-    echo "DWARF,${components[0]^^}";
+    echo "MODEL,${components[0]^^}";
 }
 
 function test_info_monarch()
@@ -689,6 +688,9 @@ cd ${report_folder} || exit
 echo model=${report_model^^} > param.cfg
 echo configuration_name=${configuration_name} >> param.cfg
 title="%REPORT.TITLE%"
+# hpcw is a benchmark that bundles several models: name the model that was tested
+title=${title//${model}/${report_model}}
+title=${title//${model^^}/${report_model^^}}
 authors="%REPORT.AUTHORS%"
 logo_path="%REPORT.LOGO_PATH%"
 python3 ${cfg}/latex/ReportGenerator.py -O ${report_full_path}.pkl --add-newcommand param.cfg
