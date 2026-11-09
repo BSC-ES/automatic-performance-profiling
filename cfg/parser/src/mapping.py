@@ -7,13 +7,18 @@ name to decide what it contains. A mapping is either a YAML document:
     parameters: param.cfg
     cases:
       bench_1:
-        test_info: run_bench_1/bench_1-test_info.csv
-        components:
-          nemo:
+        inputs:
+          - format: test_info
+            files: run_bench_1/bench_1-test_info.csv
+          - component: nemo
             format: nemo-timing
             files: run_bench_1/nemo-bench_1-timing.output
 
-or the equivalent ``--input`` specifications:
+Any other key under a case (``tasks``, ``threads``, ``resolution``…) is case data and
+is stored in the JSON as it is, so a case needs no ``test_info`` file to report the
+values the mapping already declares.
+
+The mapping can also be given as ``--input`` specifications:
 
     --input case=bench_1,component=nemo,format=nemo-timing,files=run_bench_1/nemo-bench_1-timing.output
 """
@@ -67,13 +72,20 @@ class Case:
 
     Attributes:
         name (str): Case identifier.
-        test_info (tuple): ``test_info`` files of the case, in load order.
-        inputs (tuple): Every file declared for the case.
+        data (dict): Values the mapping declares for the case itself, such as
+            ``tasks`` or ``resolution``. They are stored in the JSON unchanged.
+        inputs (tuple): Every file declared for the case, ``test_info`` included.
     """
 
     name: str
-    test_info: tuple[str, ...]
+    data: dict
     inputs: tuple[CaseInput, ...]
+
+    @property
+    def test_info(self) -> tuple[CaseInput, ...]:
+        """Return the ``test_info`` inputs of the case, in load order."""
+        return tuple(case_input for case_input in self.inputs
+                     if case_input.input.format == "test_info")
 
 
 @dataclass(frozen=True)
@@ -141,8 +153,8 @@ def expand_files(patterns, warn: bool = True) -> list[str]:
 
     Args:
         patterns (Iterable[str]): Paths or globs.
-        warn (bool): Warn about a pattern without matches. ``test_info`` files are
-            optional, so they are expanded with ``warn=False``.
+        warn (bool): Warn about a pattern without matches. Optional files, such as
+            the ``test_info`` of a case, are expanded with ``warn=False``.
     """
     files: list[str] = []
     for pattern in patterns:
@@ -151,6 +163,10 @@ def expand_files(patterns, warn: bool = True) -> list[str]:
             print(f"[WARNING] no file matches {pattern}", file=sys.stderr)
         files.extend(matches)
     return files
+
+
+# Keys of a case that declare files; every other key is case data
+_CASE_FILE_KEYS = ("inputs", "case_inputs", "components", "test_info")
 
 
 def _parse_cases(document: dict) -> dict[str, Case]:
@@ -167,7 +183,12 @@ def _parse_cases(document: dict) -> dict[str, Case]:
         for component, entries in (body.get("components") or {}).items():
             for entry in _as_list(entries):
                 inputs.append(CaseInput(component, _parse_input(str(name), component, entry)))
-        cases[str(name)] = Case(str(name), _as_tuple(body.get("test_info")), tuple(inputs))
+        # ``test_info`` as a bare key is the older spelling of the format; keep it working
+        for pattern in _as_tuple(body.get("test_info")):
+            entry = {"format": "test_info", "files": pattern}
+            inputs.append(CaseInput(None, _parse_input(str(name), None, entry)))
+        data = {key: value for key, value in body.items() if key not in _CASE_FILE_KEYS}
+        cases[str(name)] = Case(str(name), data, tuple(inputs))
     return cases
 
 
@@ -222,8 +243,8 @@ def _parse_spec(spec: str) -> tuple[str, CaseInput]:
 
 
 def _add_input(cases: dict[str, Case], name: str, case_input: CaseInput) -> dict[str, Case]:
-    previous = cases.get(name) or Case(name, (), ())
-    cases[name] = Case(previous.name, previous.test_info, previous.inputs + (case_input,))
+    previous = cases.get(name) or Case(name, {}, ())
+    cases[name] = Case(previous.name, previous.data, previous.inputs + (case_input,))
     return cases
 
 

@@ -51,21 +51,6 @@ class TimingInformation:
     def __getitem__(self, item):
         return self.data[item]
 
-    def load_case_test_info(self, case: str, filename: str):
-        """Load the ``test_info`` file of one case.
-
-        Args:
-            case (str): Case the file belongs to.
-            filename (str): ``.csv`` or ``.yaml`` file, by extension.
-        """
-        from .formats.test_info import load_csv, load_yaml
-
-        if filename.endswith((".yaml", ".yml")):
-            payload = load_yaml(filename)
-        else:
-            payload = load_csv(filename, case)
-        self.data = merge_dictionaries(self.data, payload)
-
     def add_case(self, payload: dict):
         """Merge a case-level payload, as returned by the case formats.
 
@@ -87,8 +72,8 @@ class TimingInformation:
         for key, value in payload.items():
             # Nested sections merge key by key, so only scalars can be hidden
             if key in existing and not isinstance(value, dict) and existing[key] != value:
-                print(f"[WARNING] {case}/{component}: keeping {key}={existing[key]!r} from "
-                      f"test_info, the file reports {value!r}", file=sys.stderr)
+                print(f"[WARNING] {case}/{component}: keeping {key}={existing[key]!r} "
+                      f"declared for the case, the file reports {value!r}", file=sys.stderr)
 
         self.data = merge_dictionaries(
             self.data, {case: {"components": {component: payload}}}

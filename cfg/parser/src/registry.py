@@ -5,7 +5,7 @@ Adding a model is one module under :mod:`src.models` plus one entry in
 ``MODEL_DEFAULT_FORMAT``.
 """
 
-from .formats import dimemas, lucia, paramedir
+from .formats import dimemas, lucia, paramedir, test_info
 from .models import icon, ifs, nemo
 
 # Loaders for data that belongs to one component: (entry, case, component) -> dict
@@ -19,6 +19,7 @@ COMPONENT_FORMATS = {
 
 # Loaders for data that belongs to the case as a whole: (entry, case, component) -> {case: dict}
 CASE_FORMATS = {
+    "test_info": test_info.load,
     "lucia": lucia.load,
     "dimemas": dimemas.load,
 }

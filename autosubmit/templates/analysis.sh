@@ -157,8 +157,9 @@ function write_input_mapping()
             test_info_files+="\"run_${name}/${pattern}\", "
         done
         echo "  ${name}:"
-        echo "    test_info: [${test_info_files%, }]"
         echo "    inputs:"
+        echo "      - format: test_info"
+        echo "        files: [${test_info_files%, }]"
         for spec in "${case_level_specs[@]}"; do
             if [ -z "${spec}" ]; then
                 continue

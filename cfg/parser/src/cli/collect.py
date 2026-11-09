@@ -49,9 +49,9 @@ def run(args) -> int:
     )
 
     for case in mapping.cases:
-        for pattern in case.test_info:
-            for filename in expand_files([pattern], warn=False):
-                experiment.load_case_test_info(case.name, filename)
+        if case.data:
+            experiment.add_case({case.name: case.data})
+        _load_case_inputs(experiment, case, case.test_info, warn=False)
 
     # Component data is applied before case-level data so that a per-component value (e.g. the
     # NEMO SYPD of the timing file) is not replaced by the aggregate one (e.g. the LUCIA row),
@@ -74,15 +74,10 @@ def run(args) -> int:
                 case.name, case_input.component, payload, tasks=entry.tasks)
 
     for case in mapping.cases:
-        for case_input in case.inputs:
-            if case_input.component is not None:
-                continue
-            files = _expand_files(case.name, case_input)
-            if not files:
-                continue
-            entry = replace(case_input.input, files=tuple(files))
-            experiment.add_case(CASE_FORMATS[entry.format](
-                entry, case.name, case_input.component))
+        _load_case_inputs(
+            experiment, case,
+            [case_input for case_input in case.inputs
+             if case_input.component is None and case_input.input.format != "test_info"])
 
     experiment.finalize()
     experiment.save_json(args.output_file)
@@ -99,14 +94,33 @@ def main(argv=None) -> int:
     return run(args)
 
 
-def _expand_files(case: str, case_input) -> list:
+def _load_case_inputs(experiment, case, case_inputs, warn: bool = True) -> None:
+    """Apply the case-level inputs of one case, in declaration order.
+
+    Args:
+        experiment (TimingInformation): Receiver of the payloads.
+        case (Case): Case the inputs belong to.
+        case_inputs (Iterable): ``CaseInput`` entries with no component.
+        warn (bool): Warn about entries whose files match nothing. ``test_info`` files
+            are optional, so they are loaded with ``warn=False``.
+    """
+    for case_input in case_inputs:
+        files = _expand_files(case.name, case_input, warn=warn)
+        if not files:
+            continue
+        entry = replace(case_input.input, files=tuple(files))
+        experiment.add_case(CASE_FORMATS[entry.format](
+            entry, case.name, case_input.component))
+
+
+def _expand_files(case: str, case_input, warn: bool = True) -> list:
     """Expand the files of one mapping entry, warning once when none of them matches.
 
     An entry declares the run directory and the per-split folder of the same file, so a
     pattern without matches is normal and only the entry as a whole is reported.
     """
     files = expand_files(case_input.input.files, warn=False)
-    if not files:
+    if not files and warn:
         label = case if case_input.component is None else f"{case}/{case_input.component}"
         print(f"[WARNING] {label}: no file matches "
               f"{', '.join(case_input.input.files)}", file=sys.stderr)
