@@ -24,11 +24,15 @@ raw outputs -> collector.py -> <TEST_NAME>.json -> reporter.py (per test)  -> re
 No file name is inspected to decide what a file contains. Each mapping entry names its `format`,
 and the format selects the loader (`src/registry.py`). The formats are `nemo-timing`,
 `ifs-stat`, `icon-timing`, `icon-timer-report`, `paramedir` (needs `counter`), `dimemas` (needs
-`simulation` and `counter`) and `lucia`; `test_info` files are declared per case and loaded as
-`.csv` or `.yaml`. `-i/--input-files` was removed and is rejected with a pointer to `--mapping`.
+`simulation` and `counter`), `lucia` and `test_info` (`.csv` or `.yaml`). `test_info` is a normal
+case-level `inputs` entry and is optional: a missing match is not warned about. `-i/--input-files`
+was removed and is rejected with a pointer to `--mapping`.
 
-`nproc` comes from `test_info`; an optional `nproc` key in an entry overrides it (tracing used to
-decode it from the case name).
+Any other key under a case (`tasks`, `threads`, `resolution`, ...) is case data and is written to
+the JSON unchanged, so a case can declare its values in the mapping and skip the `test_info` file.
+
+`nproc` comes from `test_info` or from the case data; an optional `nproc` key in an entry overrides
+it (tracing used to decode it from the case name).
 
 ## `reporter.py` (per-test curation)
 
@@ -41,14 +45,17 @@ decode it from the case name).
 | `-f`, `--csv-folder` | per-function CSVs (used as `-f function_csv` for tracing) |
 | `--functions-file` | function summary text |
 | `-m`, `--most_expensive_function_summary` | most-expensive-function CSV |
+| `--function-time-share-plot` | stacked PNG with the share of the fastest timestep spent in each user function, one 100% bar per case |
+| `--mpi-profile-share-plot` | stacked PNG with the share of the MPI call time spent in each MPI call, one 100% bar per case |
 | `--scatter-plots` | PAPI scatter plots; the template passes the `PLOTS` list with spaces → `:` |
 | `--dimemas-file` | Dimemas summary |
 | `--tracking-folder` | tracking output folder |
 | `--coupling-folder` | coupling output folder (`ecearth4`) |
-| `--cases-component-data` | columns for `cases_info.csv`; default `nproc`, `nargs='+'` |
+| `--cases-component-data` | columns for `cases_info.csv`; default `tasks`, `nargs='+'` |
 
 For tracing the template passes `-j`, `--cases-component-data`, `-f function_csv`,
-`--functions-file`, `--most_expensive_function_summary`, `--tracking-folder`, and `--scatter-plots`;
+`--functions-file`, `--most_expensive_function_summary`, `--function-time-share-plot`,
+`--mpi-profile-share-plot`, `--tracking-folder`, and `--scatter-plots`;
 it deliberately does **not** pass `--scalability-*` because tracing has no SYPD.
 
 ## `comparator.py` (per-member comparison)
@@ -73,7 +80,7 @@ For every test `analysis.sh` writes `inputs.yml` with `write_input_mapping`, bui
 (`"<format>|<pattern>"`). Patterns are relative to a single run directory and expanded per case, so
 only the `run_<name>` directories declared in `<TEST>.NAMES` are read.
 
-| Model | Declared `component_specs` | `test_info` | Extra case columns |
+| Model | Declared `component_specs` | `test_info` globs | Extra case columns |
 |---|---|---|---|
 | `monarch` | — | `*.csv`, `*.yaml` | `jnpes` `inpes` `write_groups` `write_tasks` |
 | `nemo` | `nemo|nemo-timing|timing.output` | `*.csv` | — |

@@ -335,7 +335,7 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
   * **Post**\ :
 
     * **Tracing**\ : Cuts the model trace into the component traces and renames the files to match the naming convention (COMPONENT.prv).
-    * **CompilationEfficiency/StrongScaling/WeakScaling/Tracing**\ : It creates a CSV that includes the SYPD, nproc, and resolution information for each component named TEST_NAME-test_info.csv. Also if Lucia is enabled, it runs the tool.
+    * **CompilationEfficiency/StrongScaling/WeakScaling/Tracing**\ : It creates a CSV with the tasks, threads and, when the model reports it, the resolution of each component, named TEST_NAME-test_info.csv. Also if Lucia is enabled, it runs the tool.
 
 * ``trace_cut.sh``\ :
 
@@ -385,12 +385,14 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
 
       * **PAPI counters**\ : Plots named ``component-PAPI_ID-metric.png`` in the test folder.
       * **Most expensive functions**\ : Table named ``component_most_expensive_function_summary.csv`` in the test folder.
+      * **Function time share**\ : Stacked bar plot named ``component_function_time_share.png`` in the test folder, with one 100% bar per case split into the user functions.
+      * **MPI call profile share**\ : Stacked bar plot named ``component_mpi_profile_share.png`` in the test folder, with one 100% bar per case split into the MPI calls.
       * **User Functions time scalability**\ : Folder in the test folder called function_csv/ containing a table named ``component_function_id.csv``.
       * **User Functions MPI/PAPI scalability**\ : Folders in the test folder called tracking/MPI and tracking/counters containing tables named ``component_function_id.csv``.
 
     * **StrongScaling/CompilationEfficiency/WeakScaling**\ :
 
-      * **Scaling table**\ : Scaling table in the test folder called ``component_TEST_NAME_scaling.csv``.
+      * **Scaling table**\ : Scaling table in the test folder called ``component_TEST_NAME_scaling.csv``. Each row is a case with its total resources (tasks x threads), tasks, threads, the scalability variable, the speed-up and the efficiency. The speed-up is ``base/case`` when a lower value is better (``time``) and ``case/base`` otherwise (``sypd``, ``sdpd``), and the efficiency divides it by the increase in total resources.
       * **Scaling plot**\ : Scaling plot in the test folder called ``component_TEST_NAME_scaling.png``.
 
 * ``paraver.sh``\ :
@@ -432,8 +434,11 @@ This file is generated in the ``analysis.sh`` script using ``cfg/parser/collecto
    parameters: param.cfg
    cases:
      bench_1:
-       test_info: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]
+       tasks: 112
+       threads: 4
        inputs:
+         - format: test_info
+           files: [run_bench_1/*test_info.csv, run_bench_1/*test_info.yaml]
          - component: nemo
            format: nemo-timing
            files: run_bench_1/nemo-bench_1-timing.output
@@ -453,7 +458,9 @@ and the collector is called with:
        --output-file TEST \
        --components "component1-name component2-name"
 
-Each ``inputs`` entry declares the case (from ``cases``), the ``component`` (omit it for data that belongs to the case as a whole, such as LUCIA), the ``format`` of the file and the ``files`` to read, as a path, a glob or a list. ``test_info`` takes the ``test_info.csv``/``.yaml`` files of the case. The mapping can also be given inline with the repeatable ``--input`` option:
+Each ``inputs`` entry declares the case (from ``cases``), the ``component`` (omit it for data that belongs to the case as a whole, such as LUCIA), the ``format`` of the file and the ``files`` to read, as a path, a glob or a list. ``test_info`` is one more case-level format, so the ``test_info.csv``/``.yaml`` files of a case are declared like any other input; they are optional and a case whose files are missing is not reported as a warning.
+
+Every other key under a case (``tasks``, ``threads``, ``resolution``\ ...) is case data: it is stored in the JSON as it is, so a case that declares its values in the mapping needs no ``test_info`` file at all. The mapping can also be given inline with the repeatable ``--input`` option:
 
 .. code-block:: bash
 
@@ -472,6 +479,7 @@ icon-timer-report  ICON ``Timer report`` log                          component
 paramedir          Paraver ``paramedir`` ``*.pm``, needs ``counter``  component
 dimemas            Dimemas ``*.dm``, needs ``simulation``+``counter``  case
 lucia              LUCIA ``lucia_lite_results/table.csv``             case
+test_info          ``*test_info.csv`` / ``*test_info.yaml``           case
 =================  =================================================  ==========
 
 * ``--mapping`` / ``--input``\ : which file belongs to which case, component and format.
@@ -607,6 +615,8 @@ After the JSON file is created using the parser, all this data is used by the ``
        -j TEST.json \
        --functions-file functions_summary.txt \
        --most_expensive_function_summary most_expensive_function_summary.csv \
+       --function-time-share-plot function_time_share.png \
+       --mpi-profile-share-plot mpi_profile_share.png \
        --tracking-folder tracking \
        --scatter-plots "PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM" \
        --coupling-folder coupling \
@@ -619,6 +629,8 @@ The script takes as parameters:
 * ``-j``\ : Name of the JSON file containing the dictionary.
 * ``--functions-file``\ : Output file name of the summary of the functions. Requires function time info from the Paramedir/timing files.
 * ``--most_expensive_function_summary``\ : Output file name to store the summary of the functions. Requires function info from the Paramedir files.
+* ``--function-time-share-plot``\ : Output file name of the stacked plot with the share of the fastest timestep spent in each user function, one 100% bar per case. Requires function time info from the Paramedir files.
+* ``--mpi-profile-share-plot``\ : Output file name of the stacked plot with the share of the MPI call time spent in each MPI call, one 100% bar per case. Requires MPI info from the Paramedir files.
 * ``--tracking-folder``\ : Output folder name to store MPI functions data. Requires MPI info from the Paramedir files.
 * ``--scatter-plots``\ : List of plot combinations of PAPI counters. Requires PAPI info from the Paramedir files.
 * ``--coupling-folder``\ : Output folder name to store the coupling. Requires coupling info from the lucia output.
