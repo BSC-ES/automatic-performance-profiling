@@ -378,7 +378,7 @@ class TimingInformation:
                     0.5, 0.5, f"{x_axis} vs {y_axis} not available", ha="center", va="center")
 
             ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-            fig.savefig(output_name, bbox_inches='tight')
+            fig.savefig(output_name, bbox_inches='tight', dpi=400)
 
     def dimemas_summary(self):
         return dimemas_curated_summary(self)
