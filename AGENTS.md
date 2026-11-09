@@ -81,8 +81,7 @@ Templates in `autosubmit/templates/` are rendered by the Autosubmit template eng
 - Guard destructive commands (`rm -rf "${run_dir:?}"/*`), `cd ... || exit`, `local` variables.
 - Use strict-mode tracing (`set -xv`, `set -xuve`); wrap optional env-var exports (e.g. `PYTHONPATH`)
   in `set +u`/`set -u`.
-- Integrate `as_checkpoint` for FROM_STEP dependencies; handle I/O sync and data integrity across
-  distributed filesystems.
+- Handle I/O sync and data integrity across distributed filesystems.
 - Validate with `bash -n` and `shellcheck` before submitting.
 
 ## Analysis pipeline (`cfg/parser/`)
@@ -92,82 +91,42 @@ raw outputs -> collector.py -> <TEST>.json -> reporter.py (per test) -> report.s
                                           \-> comparator.py (per member) /
 ```
 
-**Entry points:**
+`collector.py` (`-m inputs.yml -o <name>`), `reporter.py` (`-j <test>.json`, `-s/-p/-f`, `-v <metric>`) and
+`comparator.py` (`-j <jsons> -s/-w --out-dir`) drive the three stages; each is a shim over the standalone
+package in `cfg/parser/src/`. No file name is inspected to decide what a file contains: the mapping names
+the format (`registry.py`) and the format selects the loader. Adding a model parser = one
+`models/<model>.py` + one `registry.py` entry + one `component_specs` line in `analysis.sh`.
 
-| Tool | Key flags | What it does |
-|---|---|---|
-| `collector.py` | `-m inputs.yml -o <name> -c <comps>` | Reads the input mapping (file → case/component/format) into a `TimingInformation` JSON |
-| `reporter.py` | `-j <test>.json -s <csv> -p <png> -v <metric>` | Curation: scalability CSV/PNG, function CSVs, scatter plots, Dimemas summary, coupling |
-| `comparator.py` | `-j <jsons> -s/-w --scalability-variable <metric> --out-dir <dir>` | Cross-member comparison (strong/weak scaling) |
-
-`-v` default `sypd`; `sdpd` for monarch, `time` for ICON. Tracing never passes `--scalability-*`.
-
-**Per-model collector inputs** (`component_specs` in `analysis.sh`, written to `inputs.yml`; no file name is inspected to decide what a file contains):
-
-| Model | Declared inputs | Extra case columns |
-|---|---|---|
-| `monarch` | `*test_info.yaml` | `jnpes` `inpes` `write_groups` `write_tasks` |
-| `nemo`, `hpcw` | `*-timing.output` (or `*-timer.log` for ICON) | — |
-| `ecearth4` | `*-ifs.stat` (if oifs), `*-timing.output` (if nemo), `lucia table.csv` (if coupling enabled) | — |
-| tracing (all) | one `paramedir` entry per counter in `cfg/trace_analysis/paramedir_configurations/` | — |
-
-**Python style:** PEP 8, type hints, Google-style docstrings, `argparse`, Python 3.9+, vectorised NumPy/pandas over raw loops. The parser is a standalone package in `cfg/parser/src/` (`mapping.py`, `registry.py`, `models/`, `formats/`, `timing.py`, `curation/`); `collector.py`/`reporter.py`/`comparator.py` are shims around it. Adding a model parser = one `models/<model>.py` + one `registry.py` entry.
-
-Full detail: **`.agents/references/pipeline.md`**. API docs: `docs/source/developers_guide/`.
+Full detail (every flag, the per-model input globs, the split folders): **`.agents/references/pipeline.md`**.
+Python style there: PEP 8, type hints, Google-style docstrings, Python 3.9+, vectorised NumPy/pandas.
+API docs: `docs/source/developers_guide/`.
 
 ## Workflow configuration
 
-`conf/minimal.yml` → `bootstrap.yml` merges these files **in order** (later wins):
+`conf/minimal.yml` → `bootstrap.yml` merges the shipped `core/defaults.yml`, the model `proj.yml`, the
+`user/` files, `jobs-execution.yml`, the per-model `jobs.yml`, the per-test `jobs-<test>.yml` files,
+`jobs-common.yml` and `core/platforms/<HPCARCH>.yml` **in that order (later wins)**, then
+`~/platforms_credentials.yml`. The row-by-row chain: `.agents/references/configuration.md`.
 
-| # | File | Role |
-|---|---|---|
-| 1 | `core/defaults.yml` | shipped defaults; all `APP_TESTS` = `"FALSE"` |
-| 2 | `user/model/%MODEL%/proj.yml` | model specs + per-test config |
-| 3 | `user/common.yml`, `platforms.yml`, `autosubmit.yml` | shared tool/AS settings |
-| 4 | `core/jobs/jobs-execution.yml` | model-agnostic setup chain |
-| 5 | `core/jobs/model/%MODEL%/jobs.yml` | model job overrides (ecearth4, hpcw only) |
-| 6 | `core/jobs/jobs-hwbenchmarks.yml` | **commented out by default** |
-| 7-10 | `core/jobs/model/%MODEL%/jobs-{strong,weak,compilation, tracing}.yml` | one per test |
-| 11 | `core/jobs/jobs-common.yml` | `CLEAN`, `SYNCHRONIZE`, `REPORT` |
-| 12 | `core/platforms/%HPCARCH%.yml` | platform defaults |
-| — | `~/platforms_credentials.yml` (POST) | your `PLATFORMS.*.USER` |
+**Test enable/disable** needs both layers (see **Overview**): the `jobs-<test>.yml` line in
+`bootstrap.yml` `CUSTOM_CONFIG.PRE`, *and* that file's `EXPERIMENT.APP_TESTS.<TEST>.ENABLED: "TRUE"`
+over the `"FALSE"` default in `core/defaults.yml`.
 
-**Test enable/disable** requires **both** layers:
-- **Job chain** — include/exclude the `jobs-<test>.yml` line in `bootstrap.yml` `CUSTOM_CONFIG.PRE`. The jobs-<test>.yml includes an `EXPERIMENT.APP_TESTS.<TEST>.ENABLED` setting it to TRUE, and overrides the default FALSE in `defaults.yml`.
-
-**Config traps that produce silence, not errors:**
+**Config traps that produce silence, not errors** (detail: `.agents/references/troubleshooting.md`):
 - `core/jobs/model/ecearth4/jobs.yml` uses a **lowercase `jobs:`** key — Autosubmit reads only `JOBS`, so the whole file is skipped
 - `core/jobs/platform/<HPCARCH>/jobs.yml` is **never loaded** — `bootstrap.yml` only includes `core/platforms/<HPCARCH>.yml`
 - `conf/metadata/experiment_data.yml` is Autosubmit's resolved-config dump — editing it has zero effect
 - `FOR` jobs must be fully self-contained (incl. `FILE`) in their block; a later file redefining a `FOR` job without `FILE` silently drops it
 
-Full detail: **`.agents/references/configuration.md`** and **`.agents/references/troubleshooting.md`**.
-
 ## Running and Operating the APP Workflow
 
-Full instructions for installing, creating, and configuring the workflow are in the user guide: `docs/source/users_guide/users_guide.rst` (source) or https://automatic-performance-profiling.readthedocs.io/en/latest/ (built docs).
-
-In the bsceshub load autosubmit using:
-
-```bash
-module load autosubmit
-```
-
-In local machines, it can be installed via pip, but then the user has to configure the AS experiments database.
-
-**Create the experiment** with the custom minimal-format `autosubmit expid` command:
-
-```bash
-autosubmit expid \
-  -min \
-  -H "<PLATFORM>" \
-  -d "<DESCRIPTION>" \
-  --git_as_conf autosubmit/configuration/bootstrap.yml \
-  -repo "https://earth.bsc.es/gitlab/ces/automatic_performance_profiling.git" \
-  -b "master"
-```
-
-Then, from the experiment root (`cd /esarchive/autosubmit/<expid>`), add the model to `conf/minimal.yml` (e.g. `sed -i "/HPCARCH: .*/a \ \ MODEL: ${model}" conf/minimal.yml`), configure `~/platforms_credentials.yml` with your user, and run `autosubmit create <expid>`.
+Full instructions for installing, creating, and configuring the workflow are in the user guide:
+`docs/source/users_guide/users_guide.rst` (source) or
+https://automatic-performance-profiling.readthedocs.io/en/latest/ (built docs). In short:
+`autosubmit expid -min -H "<PLATFORM>" --git_as_conf autosubmit/configuration/bootstrap.yml
+-repo <app-repo> -b master`, add `MODEL` to `conf/minimal.yml`, set your user in
+`~/platforms_credentials.yml`, then `autosubmit create <expid>`. In the bsceshub, `module load
+autosubmit` (a pip install also has to configure the AS experiments database).
 
 Operate the workflow with the Autosubmit CLI (the expid is a positional argument):
 
@@ -179,34 +138,15 @@ Operate the workflow with the Autosubmit CLI (the expid is a positional argument
 6. **Recover** failed/waiting jobs: `autosubmit recovery <expid>`
 7. **Clean up**: `autosubmit clean <expid>`, `autosubmit archive <expid>`, `autosubmit refresh <expid>`
 
-### Monarch special case
-
-Monarch is run through the Auto-Monarch workflow (which provides its own Autosubmit config and templates), so creating an experiment requires extra steps. After generating the expid with `autosubmit expid -min ...`:
-
-1. Clone the APP repository into the experiment with `autosubmit refresh ${expid}`.
-2. Run the copy script (from the experiment root, replace `SRC_EXPID`/`CURRENT_EXPID`):
-
-   `python3 proj/auto-performance-profiling/cfg/utils/monarch/copy_experiments.py --src-expid <SRC_EXPID> --current-expid <CURRENT_EXPID>`
-
-   The script rsyncs `proj/auto-monarch/` from the source experiment into the current one, symlinks the APP `autosubmit/` and `cfg/` folders into the Auto-Monarch project, sets `PROJECT.PROJECT_DESTINATION` to `auto-monarch` (and `APP_PROJECT_DESTINATION` to the original APP project) in `conf/minimal.yml`, comments out `jobs-execution.yml` in the experiment's `bootstrap.yml`, and regenerates the monarch config files (`proj_monarch.yml`, `jobs.yml`, `platforms_monarch.yml`) from the source experiment. Pass `--no-copy-source` to copy only the templates (use when rerunning the script).
-3. Update the platforms configuration (`autosubmit/configuration/user/platforms_monarch.yml`) with your user and adjust `proj_monarch.yml` if necessary.
-4. Create the experiment with `autosubmit create ${expid}`.
-
-Note: MONARCH reports scalability using simulated days per day (SDPD) instead of the default simulated years per day (SYPD), and it does not use the WeakScaling test (no `jobs-weakscaling.yml`).
+Monarch runs through the Auto-Monarch workflow — its own Autosubmit config and templates, so the expid
+needs the `cfg/utils/monarch/copy_experiments.py` steps; see
+`docs/source/users_guide/configure_monarch.rst`. It reports scalability as SDPD and has no WeakScaling
+test.
 
 ## Common Development Tasks
 
-**Add a test:** (1) `core/jobs/model/<MODEL>/jobs-<test>.yml` — copy `jobs-strongscaling.yml`; job must be named `ANALYSIS_<TEST>`. (2) Runner template in `autosubmit/templates/`. (3) `<TEST>:` block in `proj.yml`. (4) `APP_TESTS.<TEST>.ENABLED: "TRUE"` in the job file. (5) `case` branch in `analysis.sh` for input globs + reporter flags. (6) Raw data producer in `autosubmit/templates/models/<MODEL>/post.sh`. (7) Register in `bootstrap.yml` + `report.sh`.
-
-**Add a model:** (1) `user/model/<MODEL>/proj.yml`. (2) `core/jobs/model/<MODEL>/jobs-*.yml` per test. (3) Model params in `configurations/model/<MODEL>/`. (4) Arch files in `cfg/arch/<platform>/<MODEL>/`. (5) Helpers in `cfg/utils/<MODEL>/`. (6) Template dispatch: `compile_<model>`, `clone_<model>`, `ini_<model>`, `post_<model>` in the matching templates; `autosubmit/templates/models/<MODEL>/run.sh` for `run_<model>`. (7) `case` in `analysis.sh`.
-
-**Add an HW benchmark:** (1) Extend `HW_BENCHMARKS` in `user/common.yml` (`NAMES`/`PROCESSORS` drive the `FOR` loops). (2) Runner template. (3) Parser under `cfg/benchmarks/`. (4) Uncomment `jobs-hwbenchmarks.yml` in `bootstrap.yml` + set `ENABLED: true`.
-
-**Add a platform:** (1) Define in `user/platforms.yml` (real `USER` in `~/platforms_credentials.yml`). (2) `cfg/env/<platform>/environment.env`. (3) `cfg/arch/<platform>/<MODEL>/` arch files for each model.
-
-**Add a Paraver/Dimemas view:** (1) Drop `.cfg` into `cfg/trace_analysis/paraver_configurations/` (or `dimemas_configurations/`). (2) List its name in `TRACING.PARAVER.CFGS` (or `TRACING.DIMEMAS.CFGS`) in `user/common.yml`. (3) Optionally add to `COMPARE_CFGS` for cross-case comparison images.
-
-Full step-by-step: **`.agents/references/extending.md`**.
+Recipes listing every file to touch — add a test, a model, an HW benchmark, a platform, a Paraver/Dimemas
+view: **`.agents/references/extending.md`**.
 
 ## Testing and Validation
 
@@ -235,3 +175,4 @@ provenance and versions)
 8. Commits for small changes can be a short title, if there are a lot of changes use multiple line explanation commit
 9. The code, when possible, should be self-documenting, meaning that if the variables and logic are self explanatory there is no need for long comments in the code. Docstring for functions are still mandatory. This also applies to config files, env files...
 10. NEVER commit, push, or publish changes without explicit user approval. Make changes locally, present them, and wait for the user to say "commit" or "push". This includes git add/commit/push, creating merge requests, or any action writing to a remote.
+11. NEVER change, weaken or delete a test (or a fixture) so that your change passes. A failing test is information: fix the code. Edit a test only when the test itself is wrong — it encodes behaviour that was intentionally changed, or it asserts an implementation detail instead of the contract — and state in your reply which test you touched and why. Never overwrite an existing fixture to make a new format parse; add the new version next to it.

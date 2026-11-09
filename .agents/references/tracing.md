@@ -24,23 +24,17 @@ All post-processing jobs walk the cases through `%TRACING.NAMES%` (never a `run_
 
 ## Dimemas
 
-`prv2dim` cannot parse the **intercommunicator** header records (`i:`) that Extrae writes after the
-communicator (`c:`) ones — every Dimemas build fails with *wrong communicator format*, regardless of the
-Extrae version. `dimemas_traces.sh` therefore calls the shared `sanitize_trace()` helper
-(`cfg/utils/bash/utils.sh`), which copies the trace dropping the `i:` records and rewriting the header
-record count, before `prv2dim`. `modelfactors.sh` feeds the same sanitized copies to `modelfactors.py`
-because that tool runs Dimemas internally.
+`TRACING.DIMEMAS.ENABLED` is `false` by default. When enabled, `dimemas_traces.sh` runs `prv2dim` on
+each cut trace (`dimemas_traces/<case>.dim`, named after the case only, so a second component
+overwrites it) and then `Dimemas` with every view in
+`cfg/trace_analysis/dimemas_configurations/platform/<platform>/` (`<case>_<cfg>.prv`); `paradim.sh`
+runs PARADIM over those `.prv` files. `dimemas_images.sh` only echoes the `paraver` command — the
+render is commented out — so no images reach `dimemas_images/`.
 
-Dimemas traces are named `<case>_<component>` (`<case>_<component>.dim`, `<case>_<component>_<DimemasCfg>.prv`)
-because the number of processors does not identify a case (two cases can share cores and differ in threads).
-PARADIM then produces `<case>_<component>_<DimemasCfg>_<ParadimCfg>.dm`, which `parsers.parse_dimemas_filename()`
-splits as case + simulation + information type, and `dimemas_curated_summary()` lists the cases found in the
-Dimemas data (header `Case`) rather than the NEMO/ICON processor cases.
-
-`analysis.sh` collects `dimemas_traces/*dm` and, when any exist, passes `--dimemas-file
-dimemas_summary.csv` to the reporter; `report.sh::add_dimemas()` renders that table plus the
-`dimemas_images/<case>/<view>@<case>_<component>_<simulation>.png` views in a `Dimemas` section of the
-tracing part of the report.
+Dimemas is not reported today: `analysis.sh` passes no `--dimemas-file`, `report.sh` has no Dimemas
+section, and the images are never embedded. The parser keeps the `dimemas` format (`simulation` and
+`counter`, `src/formats/dimemas.py`), `reporter.py` keeps `--dimemas-file`, and
+`dimemas_curated_summary()` still summarises it, for a hand-written mapping.
 
 ## Config keys (`user/common.yml` → `TRACING`)
 

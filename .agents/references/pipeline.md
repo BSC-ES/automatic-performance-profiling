@@ -20,6 +20,7 @@ raw outputs -> collector.py -> <TEST_NAME>.json -> reporter.py (per test)  -> re
 | `-p`, `--param-file` | `param.cfg` (key=value: `processes_per_node`, `configuration_name`); the mapping can also carry it as `parameters` |
 | `-c`, `--components` | component names; defaults to the components declared in the mapping |
 | `--test` | test name; defaults to the output file name |
+| `--splits` | number of repetitions the test declares; warns when a component matches fewer files |
 
 No file name is inspected to decide what a file contains. Each mapping entry names its `format`,
 and the format selects the loader (`src/registry.py`). The formats are `nemo-timing`,
@@ -31,8 +32,8 @@ was removed and is rejected with a pointer to `--mapping`.
 Any other key under a case (`tasks`, `threads`, `resolution`, ...) is case data and is written to
 the JSON unchanged, so a case can declare its values in the mapping and skip the `test_info` file.
 
-`nproc` comes from `test_info` or from the case data; an optional `nproc` key in an entry overrides
-it (tracing used to decode it from the case name).
+`tasks` comes from `test_info` or from the case data; an optional `tasks` key in a component entry
+overrides the task count the files report.
 
 ## `reporter.py` (per-test curation)
 
@@ -93,7 +94,7 @@ so the run directory layout of the model does not matter: the split folders
 and a file written straight into the run directory is read otherwise.
 
 **Splits**: every file a pattern matches is one repetition of the same case. `src/splits.py`
-averages the numeric values of the payloads (recursing into the nested mappings), keeps `nproc`
+averages the numeric values of the payloads (recursing into the nested mappings), keeps `tasks`
 from the first one, and stores the per-split values of the scalability metric under `splits`
 (`[{"sypd": 9.4}, {"sypd": 9.6}]`), which is what `generate_scalability_summary()`,
 `multi_experiment_comparison()` and `plotting.py` read for their error bars. A single file means a

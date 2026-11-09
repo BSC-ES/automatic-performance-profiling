@@ -113,8 +113,11 @@ build. Arch files live in `cfg/arch/<platform>/<MODEL>/`:
 
 - `hpcw`: `<component>/<ARCH_NAME>.cmake` + `<component>/<ARCH_NAME>.env`, where `<component>` is
   the first `MODEL.COMPONENTS` entry (`nemo` or `icon`)
-- `monarch`: `<ARCH_NAME>.cmake` + `<ARCH_NAME>.env`
-- `nemo`: `arch-<ARCH_NAME>.fcm`
+- `nemo`: `arch-<ARCH_NAME>.fcm`, plus an optional `<ARCH_NAME>.env` that `compile_nemo` sources
+  (mn5 has it, hpc2020 does not)
+- `ecearth4`: `<ARCH_NAME>.yml` (Script Engine build)
+- `monarch`: one folder per arch — `compile.<ARCH_NAME>.sh`, `remoteconfig.<ARCH_NAME>.sh`,
+  `configure.nmmb.<ARCH_NAME>/`
 
 `MODEL.REPORT_COMPONENTS` decides which component sections the report emits and is passed to
 `collector.py --components`.
