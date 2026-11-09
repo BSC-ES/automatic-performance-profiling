@@ -94,9 +94,11 @@ case "$current_member" in
             reporter_params+=" -f function_csv"
             reporter_params+=" --functions-file functions_summary.txt"
             reporter_params+=" --most_expensive_function_summary most_expensive_function_summary.csv"
+            reporter_params+=" --function-time-share-plot function_time_share.png"
             reporter_params+=" --tracking-folder tracking"
             ${pc_enabled} && reporter_params+=" --scatter-plots ${pc_plots// /:}"
         fi
+        reporter_params+=" --mpi-profile-share-plot mpi_profile_share.png"
 
         tests="%TRACING.TEST_NAMES%"
         names="%TRACING.NAMES%"

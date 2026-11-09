@@ -348,6 +348,43 @@ def coupling_info(experiment_data: dict, coupling_folder: str):
         )
 
 
+def fastest_ts_functions(
+    experiment_data, case: str, components: list[str]
+) -> tuple[float, list[tuple[str, float]]]:
+    """Rank the user functions of one case by the time they take in its fastest timestep.
+
+    Args:
+        experiment_data: Object holding the parsed experiment data and its ``data`` dictionary.
+        case: Name of the case to inspect.
+        components: Components whose functions are merged and ranked together.
+
+    Returns:
+        tuple[float, list[tuple[str, float]]]: The length of the fastest timestep (s) and the
+        ``(function, elapsed_time)`` pairs sorted by descending elapsed time.
+    """
+    ts_length = 0.0
+    functions_elapsed_time = {}
+    for component in components:
+        component_data = go_to_dictionary_address(
+            experiment_data.data, (case, "components", component)
+        )
+        # Not every model reports the fastest timestep, so fall back to the average one
+        ts_length = max(
+            float(
+                component_data.get(
+                    "fastest_ts_time", component_data.get("avg_ts_time", 0.0)
+                )
+            ),
+            ts_length,
+        )
+        functions_elapsed_time.update(component_data["fastest_ts_functions_time"])
+
+    sorted_functions = sorted(
+        functions_elapsed_time.items(), key=lambda function: function[1], reverse=True
+    )
+    return ts_length, sorted_functions
+
+
 def generate_most_expensive_function_summary_data(
     experiment_data, out_file_name, length_summary=10, component_to_report=""
 ):
@@ -386,33 +423,14 @@ def generate_most_expensive_function_summary_data(
         components = experiment_data.components
 
     for case_idx, case in enumerate(experiment_data.cases):
-        ts_length = 0
-        for component in components:
-            ts_length = max(
-                float(
-                    experiment_data.data[case]["components"][component][
-                        "fastest_ts_time"
-                    ]
-                ),
-                ts_length,
-            )
+        ts_length, sorted_functions = fastest_ts_functions(
+            experiment_data, case, components
+        )
 
         header.append("function_name")
         header.append(case + " (percent)")
         n_function = 0
 
-        functions_elapsed_time = {}
-        for component in components:
-            functions_elapsed_time.update(
-                go_to_dictionary_address(
-                    experiment_data.data,
-                    (case, "components", component, "fastest_ts_functions_time"),
-                )
-            )
-
-        sorted_functions = list(
-            sorted(functions_elapsed_time.items(), key=lambda f: f[1], reverse=True)
-        )
         for function_name, elapsed_time in sorted_functions:
             if n_function < length_summary + 1:
                 function_names[case_idx].append(function_name)
@@ -450,6 +468,271 @@ def most_expensive_function_summary(
         generate_most_expensive_function_summary_data(
             experiment_data, component + "_" + out_file_name, length_summary, component
         )
+
+
+def function_time_share_plot(
+    experiment_data, out_file_name: str, length_summary: int = 10
+) -> None:
+    """Plot the time share of the user functions for the whole model and for each component.
+
+    Args:
+        experiment_data: Object containing the parsed experiment data.
+        out_file_name: Base name of the whole-model png; component plots are prefixed with the
+            component name, as the summaries are.
+        length_summary (int, optional): Number of most expensive functions plotted per case.
+            Defaults to 10.
+    """
+    import os
+
+    generate_function_time_share_plot(experiment_data, out_file_name, length_summary)
+
+    for component in experiment_data.components:
+        dn = os.path.dirname(out_file_name)
+        fn = component + "_" + os.path.basename(out_file_name)
+        generate_function_time_share_plot(
+            experiment_data, os.path.join(dn, fn), length_summary, component
+        )
+
+
+def mpi_profile_share_plot(
+    experiment_data, out_file_name: str, length_summary: int = 10
+) -> None:
+    """Plot the MPI call profile of every component, with one 100% bar per case.
+
+    Args:
+        experiment_data: Object containing the parsed experiment data.
+        out_file_name: Base name of the png; the component name is prefixed, as the summaries are.
+        length_summary (int, optional): Number of most expensive MPI calls plotted per case.
+            Defaults to 10.
+    """
+    import os
+
+    for component in experiment_data.components:
+        fn = component + "_" + os.path.basename(out_file_name)
+        generate_mpi_profile_share_plot(
+            experiment_data, os.path.join(os.path.dirname(out_file_name), fn),
+            component, length_summary,
+        )
+
+
+def mpi_call_times(experiment_data, case: str, component: str) -> dict[str, float]:
+    """Aggregate the average time of every MPI call over the functions of one case.
+
+    Args:
+        experiment_data: Object holding the parsed experiment data and its ``data`` dictionary.
+        case: Name of the case to inspect.
+        component: Component whose MPI call profile is read.
+
+    Returns:
+        dict[str, float]: MPI call (``Outside_MPI``, ``MPI_Recv``, ...) mapped to its time.
+
+    Raises:
+        AssertionError: If the case has no MPI call profile for that component.
+    """
+    component_data = go_to_dictionary_address(
+        experiment_data.data, (case, "components", component)
+    )
+    mpi_profile = go_to_dictionary_address(
+        component_data, ("counters", "MPIcallprofile")
+    )
+
+    call_times = {}
+    for function_data in mpi_profile.values():
+        for call, average in zip(function_data["names"], function_data["Average"]):
+            call_times[call] = call_times.get(call, 0.0) + float(average)
+    return call_times
+
+
+def generate_mpi_profile_share_plot(
+    experiment_data, out_file_name: str, component: str, length_summary: int = 10
+) -> None:
+    """Plot the share of the MPI call time spent in each MPI call, one 100% bar per case.
+
+    Each case gets one bar that adds up to 100% of the time spent in MPI calls, split into the
+    most expensive calls, so the evolution of the MPI profile across the cases can be compared.
+    The calls outside the summary are drawn as "Other".
+
+    Args:
+        experiment_data: Object containing the parsed experiment data.
+        out_file_name (str): Path of the png file to write.
+        component (str): Component to plot.
+        length_summary (int, optional): Number of most expensive MPI calls plotted per case.
+            Defaults to 10.
+    """
+    shares = {}
+    for case in experiment_data.cases:
+        try:
+            call_times = mpi_call_times(experiment_data, case, component)
+        except (AssertionError, KeyError):
+            print(
+                f"[WARNING] {case} has no MPI call profile for {component}, "
+                "it is left out of the MPI profile plot"
+            )
+            continue
+
+        total_time = sum(call_times.values())
+        if total_time <= 0:
+            print(
+                f"[WARNING] {case} has no MPI call time for {component}, "
+                "it is left out of the MPI profile plot"
+            )
+            continue
+
+        top_calls = sorted(
+            call_times.items(), key=lambda call: call[1], reverse=True
+        )[:length_summary]
+        shares[case] = {call: time / total_time * 100 for call, time in top_calls}
+
+    if not shares:
+        print("[WARNING] No MPI call profile to plot, skipping " + out_file_name)
+        return
+
+    plot_stacked_shares(
+        shares, out_file_name, "Share of the MPI call time (%)", "Other"
+    )
+
+
+def plot_stacked_shares(
+    shares: dict, out_file_name: str, x_label: str, remainder_label: str = ""
+) -> None:
+    """Draw one 100% horizontal bar per case, stacked with the given shares.
+
+    Args:
+        shares (dict): Case name mapped to ``{label: percentage}``. A label missing in a case is
+            skipped, so every bar may hold a different set of labels.
+        out_file_name (str): Path of the png file to write.
+        x_label (str): Label of the x axis.
+        remainder_label (str, optional): Label of the hatched block that fills each bar up to
+            100%. Nothing is drawn when the bars already add up to 100%. Defaults to "".
+    """
+    import os
+
+    import matplotlib
+    from matplotlib import pyplot as plt
+
+    # The same label keeps the same colour in every case, ordered by its total share
+    total_share = {}
+    for case_shares in shares.values():
+        for label, share in case_shares.items():
+            total_share[label] = total_share.get(label, 0) + share
+    labels = [
+        label
+        for label, _ in sorted(total_share.items(), key=lambda l: l[1], reverse=True)
+    ]
+
+    try:
+        color_map = matplotlib.colormaps["tab20"]
+    except AttributeError:  # matplotlib < 3.6
+        color_map = plt.get_cmap("tab20")
+    colors = {
+        label: color_map(index % color_map.N) for index, label in enumerate(labels)
+    }
+
+    fig, ax = plt.subplots(figsize=(9, 1.5 + 0.5 * len(shares)))
+    for position, (case, case_shares) in enumerate(shares.items()):
+        left = 0.0
+        for label in labels:
+            share = case_shares.get(label, 0.0)
+            if share <= 0:
+                continue
+            ax.barh(
+                position, share, left=left, color=colors[label],
+                edgecolor="white", linewidth=0.5,
+            )
+            if share >= 5:
+                ax.text(
+                    left + share / 2, position, f"{share:.1f}%",
+                    ha="center", va="center", fontsize=7,
+                )
+            left += share
+
+        remainder = 100 - left
+        if remainder <= 0 or remainder_label == "":
+            continue
+        ax.barh(
+            position, remainder, left=left, color="0.85", hatch="//",
+            edgecolor="white", linewidth=0.5,
+        )
+        if remainder >= 5:
+            ax.text(
+                left + remainder / 2, position, f"{remainder:.1f}%",
+                ha="center", va="center", fontsize=7, color="0.35",
+            )
+
+    ax.set_yticks(range(len(shares)))
+    ax.set_yticklabels(list(shares))
+    ax.invert_yaxis()
+    ax.set_xlim(0, 100)
+    ax.set_xlabel(x_label)
+    ax.set_title(os.path.splitext(os.path.basename(out_file_name))[0])
+
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels
+    ]
+    if remainder_label != "" and any(
+        100 - sum(case_shares.values()) > 0 for case_shares in shares.values()
+    ):
+        handles.append(plt.Rectangle((0, 0), 1, 1, color="0.85", hatch="//"))
+        labels.append(remainder_label)
+    ax.legend(
+        handles, labels, loc="center left", bbox_to_anchor=(1.01, 0.5),
+        fontsize=8, frameon=False,
+    )
+
+    fig.tight_layout()
+    fig.savefig(out_file_name, dpi=400, bbox_inches="tight")
+    plt.close(fig)
+
+
+def generate_function_time_share_plot(
+    experiment_data, out_file_name: str, length_summary: int = 10,
+    component_to_report: str = ""
+) -> None:
+    """Plot the share of the fastest timestep spent in each user function.
+
+    Each case gets one bar that adds up to 100% of its fastest timestep, split into the most
+    expensive user functions, so the evolution of the percentages across the cases can be
+    compared. The part of the timestep that is not covered by a user function is drawn as
+    "Not traced".
+
+    Args:
+        experiment_data: Object containing the parsed experiment data.
+        out_file_name (str): Path of the png file to write.
+        length_summary (int, optional): Number of most expensive functions plotted per case.
+            Defaults to 10.
+        component_to_report (str, optional): Component to plot. If empty string, all components
+            are merged. Defaults to "".
+    """
+    components = [component_to_report]
+    if component_to_report == "":
+        components = experiment_data.components
+
+    shares = {}
+    for case in experiment_data.cases:
+        ts_length, sorted_functions = fastest_ts_functions(
+            experiment_data, case, components
+        )
+        if ts_length <= 0:
+            print(
+                f"[WARNING] {case} has no fastest timestep time, "
+                "it is left out of the function time share plot"
+            )
+            continue
+        shares[case] = {
+            function: elapsed_time / ts_length * 100
+            for function, elapsed_time in sorted_functions[:length_summary]
+        }
+
+    if not shares:
+        print(
+            "[WARNING] No user function time to plot, skipping "
+            + out_file_name
+        )
+        return
+
+    plot_stacked_shares(
+        shares, out_file_name, "Share of the fastest timestep (%)", "Not traced"
+    )
 
 
 def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:

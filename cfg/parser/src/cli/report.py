@@ -23,6 +23,12 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Produce functions report")
     parser.add_argument("-m", "--most_expensive_function_summary", default=None,
                         help="Print a summary of the most expensive functions per core")
+    parser.add_argument("--function-time-share-plot", default=None,
+                        help="Produce a stacked plot with the share of the timestep "
+                             "spent in each user function")
+    parser.add_argument("--mpi-profile-share-plot", default=None,
+                        help="Produce a stacked plot with the share of the MPI call "
+                             "time spent in each MPI call")
     parser.add_argument("--scatter-plots", default=None,
                         help="Produce a png with L3 cache misses vs IPC in it")
     parser.add_argument("--dimemas-file", default=None,
@@ -54,6 +60,14 @@ def run(args) -> int:
     if args.most_expensive_function_summary is not None:
         experiment_results.most_expensive_function_summary(
             out_file_name=args.most_expensive_function_summary)
+
+    if args.function_time_share_plot is not None:
+        experiment_results.function_time_share_plot(
+            out_file_name=args.function_time_share_plot)
+
+    if args.mpi_profile_share_plot is not None:
+        experiment_results.mpi_profile_share_plot(
+            out_file_name=args.mpi_profile_share_plot)
 
     if args.scatter_plots:
         for scatter_plot in args.scatter_plots.split(":"):

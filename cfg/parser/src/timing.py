@@ -14,7 +14,9 @@ from .curation import (
     dimemas_curated_summary,
     function_curated_summary,
     function_info_csv,
+    function_time_share_plot,
     most_expensive_function_summary,
+    mpi_profile_share_plot,
     scalability_plot,
     scalability_summary,
     tracking,
@@ -297,6 +299,12 @@ class TimingInformation:
 
     def most_expensive_function_summary(self, out_file_name):
         return most_expensive_function_summary(self, out_file_name)
+
+    def function_time_share_plot(self, out_file_name):
+        return function_time_share_plot(self, out_file_name)
+
+    def mpi_profile_share_plot(self, out_file_name):
+        return mpi_profile_share_plot(self, out_file_name)
 
     def scatter_plots(self, x_axis: str = "L3", y_axis: str = "IPC", length_summary: int = 10):
         """Plot two counters of the tracked functions, one file per component.
