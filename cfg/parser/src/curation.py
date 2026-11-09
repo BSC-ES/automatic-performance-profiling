@@ -1,60 +1,10 @@
 """
-This module contains utility functions for curating and analyzing performance data from HPC
-experiments.
+Curation of the collected JSON: the tables and plots that make up the report.
 
-Classes:
-    Log: A simple class to store and manage text logs.
-
-Functions:
-    go_to_dictionary_address(dictionary, address): Navigate nested dictionaries using an
-        address list.
-    function_curated_summary(experiment_data, filename): Generate a summary of function scalability.
-    dimemas_curated_summary(experiment_data): Create a summary of Dimemas simulation results.
-    coupling_info(experiment_data, coupling_folder): Generate coupling information summaries.
-    generate_most_expensive_function_summary_data(experiment_data, out_file_name,
-        length_summary, component_to_report): Create summary of most time-consuming functions.
-    most_expensive_function_summary(experiment_data, out_file_name, length_summary):
-        Generate summaries for all components.
-    function_info_csv(experiment_data, csv_folder): Save function performance data as CSV files.
-    tracking_function_info(experiment_data): Generate tracking information for functions.
-    function_information_from_paramedir_outputs(experiment_data, component): Extract
-        function timing from Paraver outputs.
-    tracking(experiment_data, folder, threshold): Generate tracking information for
-        functions above threshold.
-    tracking_mpi_profile_per_function(experiment_data, function, component): Generate MPI
-        profile for specific function.
-    tracking_counters_per_function(experiment_data, function, component): Generate
-        hardware counter data for function.
-    generate_sypd_summary_data(experiment_data, component): Generate simulated years per
-        day summary.
-    simulated_years_per_day_summary(experiment_data, filename): Create SYPD summary with metrics.
-    generate_sypd_plot_data(experiment_data, component): Prepare data for SYPD plotting.
-    simulated_years_per_day_plot(experiment_data, filename): Create plots of SYPD metrics.
-    cases_component_data(experiment_data): Generate component-wise case information.
-    experiment_comparison(experiment1, experiment2): Compare metrics between two experiments.
-    multiexperiment_comparison(experiments, field1): Compare metrics across multiple
-        experiments.
-    generate_weakscaling_data(experiments, component_to_report): Generate weak scaling
-        analysis data.
-    weakscaling_compute(experiments, file_out): Compute weak scaling metrics.
-    find_common_cases_and_functions(experiments): Identify common cases and functions across
-        experiments.
-    extract_data_from_experiments(experiments): Extract performance data from experiments.
-    fit_step_time_to_model(experiments): Fit time step data to performance model.
-    my_model(individual, data): Custom performance model implementation.
-    fit_data_to_model(data, model): Fit data to specified model using optimization.
-    genetic_optimizer(data, model): Genetic algorithm implementation for model fitting.
-    custom_optimizer(data, model): Custom optimization algorithm for model fitting.
-    fit_functions_to_model(experiments, function_name): Fit function performance to model.
-    get_functions_data(experiments, function_name): Extract function-specific performance data.
-    oversimplified_memory_model(experiments): Simple memory performance model analysis.
-
-The module focuses on performance analysis of HPC applications, providing tools for:
-- Function performance analysis
-- MPI communication analysis
-- Scalability studies
-- Data visualization
-- Performance modeling
+Every function takes the ``TimingInformation`` object of one test and writes its output
+relative to the current directory, so the report template only has to ask for the file names
+it embeds. ``Log`` collects the text of the tables, and ``function_curated_summary`` and the
+``*_plot``/``*_summary`` pairs cover the user-function, MPI and scalability views.
 """
 
 import numpy as np
@@ -902,6 +852,7 @@ def tracking(experiment_data, folder, threshold=0.01):
     Creates:
         - {folder}/MPI/: Directory containing MPI profile logs per function
         - {folder}/counters/: Directory containing counter logs per function
+
         Each log is saved as CSV in format: {component}_{function}.csv
 
     Notes:
@@ -1305,6 +1256,7 @@ def cases_component_data(
 
     Returns:
         None. Creates a file named 'cases_info.csv' with the following format:
+
             Case,COMPONENT1 tasks,COMPONENT2 tasks,...
             case1,nproc1,nproc2,...
             case2,nproc1,nproc2,...
