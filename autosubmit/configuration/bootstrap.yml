@@ -11,8 +11,8 @@ DEFAULT:
     # - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-hwbenchmarks.yml'
     - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-strongscaling.yml'
     - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-compilationefficiency.yml'
-    # - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-tracing.yml'
-    # - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-weakscaling.yml'
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-tracing.yml'
+    - '%PROJDIR%/autosubmit/configuration/core/jobs/model/%DEFAULT.MODEL%/jobs-weakscaling.yml'
 
     - '%PROJDIR%/autosubmit/configuration/core/jobs/jobs-common.yml'
     - '%PROJDIR%/autosubmit/configuration/core/platforms/%DEFAULT.HPCARCH%.yml'
