@@ -78,7 +78,10 @@ function create_paraver_legend()
     # Is a graph with discrete legend
     elif ls ${current_picture_name}.code_legend.png 1>/dev/null 2>&1; then
         image_to_append=${current_picture_name}.code_legend.png
-        convert ${current_picture_name}.png ${image_to_append} -append ${current_picture_name}.png
+
+        convert ${current_picture_name}.png \
+            "(" ${image_to_append} -filter point -resize ${legend_scale}% ")" \
+            -append ${current_picture_name}.png
     fi
     # Remove the rest
     rm -f *_legend.png
@@ -90,10 +93,11 @@ function create_paraver_legend()
 function usage()
 {
     echo Usage:
-    echo ./generate_paraver_images.sh -c \"components\" [ -r root_dir -o -p \"compare_cfgs\" -d ] 
+    echo ./generate_paraver_images.sh -c \"components\" [ -r root_dir -o -p \"compare_cfgs\" -d -l legend_scale ] 
     echo "-c|--components 'components'          names of the components"
     echo "-r|--root-dir /root/dir               root relative/global path of the experiment"
     echo "-p|--compare-cfgs 'compare cfgs'      paraver cfgs to generate a compare view with"
+    echo "-l|--legend-scale 200                 percentage the legend is enlarged by (default 200)"
     echo "-o|--overwrite                        overwrite images if already created"
     echo "-d|--debug                            display debug info"
     echo "-h|--help                             display this message"
@@ -112,6 +116,7 @@ function parse_args()
     root_dir=.
     components=""
     compare_cfgs=""
+    legend_scale=200
     overwrite=false
     debug=false
 
@@ -135,6 +140,11 @@ function parse_args()
             "-p"|"--compare-cfgs")
                 if [ $((i+1)) -ge $# ] || [[ ${args[$((i+1))]} = -[a-z] ]]; then error "Invalid args for ${args[$i]}"; usage; exit 1; fi
                 compare_cfgs="${args[$((i+1))]}"
+                i=$((i+1))
+            ;;
+            "-l"|"--legend-scale")
+                if [ $((i+1)) -ge $# ] || [[ ${args[$((i+1))]} = -[a-z] ]]; then error "Invalid args for ${args[$i]}"; usage; exit 1; fi
+                legend_scale=${args[$((i+1))]}
                 i=$((i+1))
             ;;
             "-d"|"--debug")

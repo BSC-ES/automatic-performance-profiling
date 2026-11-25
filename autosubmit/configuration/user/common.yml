@@ -44,6 +44,8 @@ TRACING:
     # See cfg/trace_analysis/paraver_configurations/ for available views
     CFGS: MPI_call p2p_size IPC_instructions affinity_per_node L3_Total_cache_misses MPI_collective_call UserFunctions
     COMPARE_CFGS:  MPI_call UserFunctions
+    # Percentage the view legend is enlarged by
+    LEGEND_SCALE: 200
 
   DIMEMAS:
     ENABLED: false

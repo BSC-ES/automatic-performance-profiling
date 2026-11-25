@@ -15,9 +15,13 @@ POST_TRACING, PARAMEDIR, PARADIM -> ANALYSIS_TRACING
 
 `SCALABILITY_TRACING` uses `FILE: autosubmit/templates/scalability.sh cfg/trace/utils.sh
 autosubmit/templates/models/<MODEL>/run.sh` — i.e. `scalability.sh` sources the tracing helper (as
-`utils_<jobname>`) and the model runner (as `run_<jobname>`) — and carries
-`CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"` (only marenostrum 5) plus a
-dependency on `FUNCTIONS_DIR`.
+`utils_<jobname>`) and the model runner (as `run_<jobname>`) — plus a dependency on `FUNCTIONS_DIR`.
+
+It also sets `CUSTOM_DIRECTIVES: "%TRACING_CUSTOM_DIRECTIVES%"`. The value lives in
+`core/platforms/<HPCARCH>.yml`, because needing the nodes that expose the PAPI hardware counters is a
+property of the machine: `mn5` sets `"#SBATCH -C perfparanoid"`, `hpc2020` and `local` set `""`. Without
+a perfparanoid node Extrae records no counters, every `paramedir` counter file comes back empty and the
+counter plots of the report are blank.
 
 All post-processing jobs walk the cases through `%TRACING.NAMES%` (never a `run_*` glob), the same way
 `analysis.sh` builds `run_${name}/…`.
@@ -46,7 +50,7 @@ section, and the images are never embedded. The parser keeps the `dimemas` forma
 | `EXTRAE.USER_FUNCTIONS.{ENABLED,SAMPLING.ENABLED,LIST}` | trace a fixed function list, or discover them by sampling |
 | `EXTRAE.PAPI_COUNTERS.{ENABLED,LIST}` | comma-separated PAPI events |
 | `EXTRAE.OPENMP.ENABLED` | OpenMP instrumentation |
-| `PARAVER.{ENABLED,CFGS,COMPARE_CFGS}` | which Paraver views to render and which get cross-case comparison |
+| `PARAVER.{ENABLED,CFGS,COMPARE_CFGS,LEGEND_SCALE}` | which Paraver views to render, which get cross-case comparison, and how much the legend is enlarged before it is appended |
 | `DIMEMAS.{ENABLED,CFGS}` | which Dimemas views to render |
 | `USER_FUNCTIONS.ENABLED` | enables the function report in the report |
 | `USER_FUNCTIONS.PAPI_COUNTERS.{ENABLED,PLOTS}` | scatter plots; `PLOTS` is a space-separated list of `PC_id_1-PC_id_2` pairs (ids from `papi_avail`) |

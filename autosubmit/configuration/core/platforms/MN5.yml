@@ -1,3 +1,8 @@
 DEFAULT:
   LOGIN_PLATFORM: mn5-login
   PROCESSORS_PER_NODE: 112
+
+# Slurm constraint that the tracing jobs add so Extrae can read the PAPI hardware counters; without
+# it the counters come back empty and the counter plots of the report are blank. It is a constraint
+# of the node, so it is set here and not in the model job files.
+TRACING_CUSTOM_DIRECTIVES: "#SBATCH -C perfparanoid"

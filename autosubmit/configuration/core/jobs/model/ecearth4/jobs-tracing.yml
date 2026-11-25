@@ -33,6 +33,7 @@ JOBS:
     RUNNING: member
     WALLCLOCK: 02:00
     CHECK: "true"
+    CUSTOM_DIRECTIVES: "%TRACING_CUSTOM_DIRECTIVES%"
     NOTIFY_ON: FAILED
   POST_TRACING:
     FILE: autosubmit/templates/post.sh autosubmit/templates/models/%DEFAULT.MODEL%/post.sh

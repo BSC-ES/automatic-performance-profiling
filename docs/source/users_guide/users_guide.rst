@@ -324,6 +324,9 @@ The ``TRACING`` section selects which tracing analysis results are included in t
 ``TRACING.PARAVER.COMPARE_CFGS``
   Subset of ``CFGS`` used to generate comparison views, e.g. ``MPI_call UserFunctions``.
 
+``TRACING.PARAVER.LEGEND_SCALE``
+  Percentage the legend of the Paraver views is enlarged by before it is appended to the image, e.g. ``200``. The enlargement is a nearest-neighbour upscale, so the text stays sharp. Paraver draws the legend with a small font that does not follow the window size, so it is nearly unreadable once the image is scaled down to the report page width.
+
 ``TRACING.DIMEMAS.ENABLED``
   Enable/Disable the Dimemas simulations and their report section (``true``/``false``, default ``false``).
   Dimemas needs a trace with consistent MPI send/receive matching, which the timestep cut produced by the

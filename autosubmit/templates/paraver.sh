@@ -26,6 +26,8 @@ report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 
 #####################################################################################################################
 # Brief: Add paraver images and legends together
+# Global:
+#   - TRACING.PARAVER.LEGEND_SCALE: percentage the legend is enlarged by
 # Param:
 #   $1 - Paraver configuration file *.cfg
 #   $2 - Trace *.prv
@@ -33,6 +35,7 @@ report_components=($(bashify_array "%MODEL.REPORT_COMPONENTS%" true))
 function create_paraver_legend()
 {
     local current_picture_name=$1
+    local legend_scale=%TRACING.PARAVER.LEGEND_SCALE%
 
     if ! ls ${current_picture_name}.png 1>/dev/null 2>&1; then
         echo ${current_picture_name}.png" not found"
@@ -43,7 +46,9 @@ function create_paraver_legend()
         mv ${current_picture_name}.w_legend.png ${current_picture_name}.png
     elif ls ${current_picture_name}.code_legend.png 1>/dev/null 2>&1; then
         local image_to_append=${current_picture_name}.code_legend.png
-        convert ${current_picture_name}.png ${image_to_append} -append ${current_picture_name}.png
+        convert ${current_picture_name}.png \
+            "(" ${image_to_append} -filter point -resize ${legend_scale}% ")" \
+            -append ${current_picture_name}.png
     fi
     rm -f ./*_legend.png
 }

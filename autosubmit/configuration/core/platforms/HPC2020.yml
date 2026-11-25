@@ -1,3 +1,6 @@
 DEFAULT:
   LOGIN_PLATFORM: hpc2020
   PROCESSORS_PER_NODE: 128
+
+# hpc2020 has no node constraint for the PAPI counters, the tracing jobs add no extra directive
+TRACING_CUSTOM_DIRECTIVES: ""
