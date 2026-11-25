@@ -388,7 +388,10 @@ Under ``autosubmit/templates`` you can find the scripts used by the workflow. Fo
       * **Function time share**\ : Stacked bar plot named ``component_function_time_share.png`` in the test folder, with one 100% bar per case split into the user functions.
       * **MPI call profile share**\ : Stacked bar plot named ``component_mpi_profile_share.png`` in the test folder, with one 100% bar per case split into the MPI calls.
       * **User Functions time scalability**\ : Folder in the test folder called function_csv/ containing a table named ``component_function_id.csv``.
-      * **User Functions MPI/PAPI scalability**\ : Folders in the test folder called tracking/MPI and tracking/counters containing tables named ``component_function_id.csv``.
+      * **User Functions MPI scalability**\: Table ``tracking/MPI/component_functions.csv``, one row per user function and traced case, with the share of the time spent in each MPI call (``Outside_MPI`` is the time not spent in MPI). Only the columns with a value appear.
+      * **User Functions PAPI scalability**\: Table ``tracking/counters/component_functions.csv``, the same rows, with the IPC, the cycles and the cache misses of each level, named by their PAPI id without the ``PAPI_`` prefix (``TOT_CYC``, ``L1_DCM``, ``L2_DCM``, ``L3_TCM``).
+      * **User Functions MPI figure**\: Stacked bar plot named ``component_function_mpi_share.png``, one 100% bar per user function and case, split into its MPI calls and grouped under the function name, so the shift from computing to waiting can be read per function. It is the figure of the MPI table above.
+      * **User Functions counters figures**\: One plot per counter, named ``component_function_counters_COUNTER.png`` (``TRACING.USER_FUNCTIONS.PAPI_COUNTERS.SCALABILITY_PLOTS``, IPC and PAPI_L3_TCM by default) and titled with the counter PAPI id without the ``PAPI_`` prefix, with one line per user function and the cases on the x axis labelled by the number of processes. They are the figures of the counter table above. Cycles are deliberately left out: they fall as the work is split, so they do not show efficiency.
 
     * **StrongScaling/CompilationEfficiency/WeakScaling**\ :
 
@@ -616,6 +619,8 @@ After the JSON file is created using the parser, all this data is used by the ``
        --functions-file functions_summary.txt \
        --most_expensive_function_summary most_expensive_function_summary.csv \
        --function-time-share-plot function_time_share.png \
+       --function-mpi-share-plot function_mpi_share.png \
+       --function-counter-plot function_counters.png \
        --mpi-profile-share-plot mpi_profile_share.png \
        --tracking-folder tracking \
        --scatter-plots "PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM" \
@@ -631,6 +636,9 @@ The script takes as parameters:
 * ``--most_expensive_function_summary``\ : Output file name to store the summary of the functions. Requires function info from the Paramedir files.
 * ``--function-time-share-plot``\ : Output file name of the stacked plot with the share of the fastest timestep spent in each user function, one 100% bar per case. Requires function time info from the Paramedir files.
 * ``--mpi-profile-share-plot``\ : Output file name of the stacked plot with the share of the MPI call time spent in each MPI call, one 100% bar per case. Requires MPI info from the Paramedir files.
+* ``--function-mpi-share-plot``\ : Output file name of the stacked plot with the MPI call profile of each user function of each case, one 100% bar per function and case. Requires MPI info from the Paramedir files.
+* ``--function-counter-plot``\ : Base name of the plots of the counters of each user function along the cases, one figure per counter named ``<component>_<name>_<counter>.png``. Requires the IPC and PAPI_L3_TCM info from the Paramedir files.
+* ``--function-counters``\ : Counter keys of those plots, e.g. ``IPC PAPI_L3_TCM`` (the default). The tables and figures name them by their PAPI id without the ``PAPI_`` prefix.
 * ``--tracking-folder``\ : Output folder name to store MPI functions data. Requires MPI info from the Paramedir files.
 * ``--scatter-plots``\ : List of plot combinations of PAPI counters. Requires PAPI info from the Paramedir files.
 * ``--coupling-folder``\ : Output folder name to store the coupling. Requires coupling info from the lucia output.

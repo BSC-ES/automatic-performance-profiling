@@ -341,8 +341,11 @@ The ``TRACING`` section selects which tracing analysis results are included in t
 ``TRACING.USER_FUNCTIONS.PAPI_COUNTERS.ENABLED``
   Enable/Disable the PAPI counter plots in the report (``true``/``false``).
 
-``TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS``
+``TRACING.USER_FUNCTIONS.PAPI_COUNTERS.VS_PLOTS``
   Space-separated list of plots to generate for the user functions. Each element is a pair of PAPI counters separated by ``-``, e.g. ``PAPI_TOT_INS-PAPI_L1_DCM``. You can get the available PAPI counter IDs with the ``papi_avail`` command.
+
+``TRACING.USER_FUNCTIONS.PAPI_COUNTERS.SCALABILITY_PLOTS``
+  Space-separated list of the PAPI counters plotted along the traced cases, one figure per counter, e.g. ``IPC PAPI_L3_TCM``. The names are the counter keys of the parsed counters and the figure is ``component_function_counters_COUNTER.png``; the table and the figure title drop the ``PAPI_`` prefix.
 
 ``TRACING.AUTOMATIC_USER_FUNCTIONS.ENABLED``
   Enable/Disable generating the user functions list by sampling the traced run. When disabled, Extrae takes the list from ``TRACING.EXTRAE.USER_FUNCTIONS.LIST`` (see :ref:`Extrae configuration`).

@@ -85,7 +85,7 @@ case "$current_member" in
     "tracing")
         uf_enabled="%TRACING.USER_FUNCTIONS.ENABLED%"
         uf_enabled=${uf_enabled,,}
-        pc_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
+        pc_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.VS_PLOTS%"
         pc_enabled="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.ENABLED%"
         pc_enabled=${pc_enabled,,}
 
@@ -95,6 +95,9 @@ case "$current_member" in
             reporter_params+=" --functions-file functions_summary.txt"
             reporter_params+=" --most_expensive_function_summary most_expensive_function_summary.csv"
             reporter_params+=" --function-time-share-plot function_time_share.png"
+            reporter_params+=" --function-mpi-share-plot function_mpi_share.png"
+            reporter_params+=" --function-counter-plot function_counters.png"
+            reporter_params+=" --function-counters %TRACING.USER_FUNCTIONS.PAPI_COUNTERS.SCALABILITY_PLOTS%"
             reporter_params+=" --tracking-folder tracking"
             ${pc_enabled} && reporter_params+=" --scatter-plots ${pc_plots// /:}"
         fi

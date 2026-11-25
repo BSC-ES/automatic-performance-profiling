@@ -14,6 +14,27 @@ SCALING_EXPONENT = {
 
 DEFAULT_SCALING_EXPONENT = 1
 
+#: Name of every metric with its unit, as the report writes it in headers, axes and captions.
+SCALING_LABEL = {
+    "sypd": "SYPD (simulated years per day)",
+    "sdpd": "SDPD (simulated days per day)",
+    "time": "Integration time (s)",
+    "ts_per_second": "Timesteps per second (1/s)",
+}
+
+
+def scalability_label(scalability_variable: str) -> str:
+    """Return the name of the metric with its unit, for a header, an axis or a caption.
+
+    Args:
+        scalability_variable (str): Name of the metric (e.g. "sypd", "sdpd", "time").
+
+    Returns:
+        str: ``"Integration time (s)"`` for ``time``, ``"SYPD (simulated years per day)"``
+        for ``sypd``. An unknown metric keeps its capitalised name as it is.
+    """
+    return SCALING_LABEL.get(scalability_variable, scalability_variable.capitalize())
+
 
 def scaling_exponent(scalability_variable: str) -> int:
     """Return the exponent relating the metric to the amount of resources.

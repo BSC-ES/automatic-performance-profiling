@@ -42,12 +42,14 @@ overrides the task count the files report.
 | `-j`, `--json-file` | **required**; the `<TEST_NAME>.json` to load |
 | `-s`, `--scalability-file` | scalability CSV out |
 | `-p`, `--scalability-plot` | scalability PNG out |
-| `-v`, `--scalability-variable` | metric; default `sypd`. Others: `ts_per_second`, `sypd_per_core`, plus `sdpd` (monarch) and `time` (ICON) |
+| `-v`, `--scalability-variable` | metric; default `sypd`. Others: `ts_per_second`, plus `sdpd` (monarch) and `time` (ICON) |
 | `-f`, `--csv-folder` | per-function CSVs (used as `-f function_csv` for tracing) |
 | `--functions-file` | function summary text |
 | `-m`, `--most_expensive_function_summary` | most-expensive-function CSV |
 | `--function-time-share-plot` | stacked PNG with the share of the fastest timestep spent in each user function, one 100% bar per case |
 | `--mpi-profile-share-plot` | stacked PNG with the share of the MPI call time spent in each MPI call, one 100% bar per case |
+| `--function-mpi-share-plot` | stacked PNG with the MPI call profile of each function of each case, one 100% bar per function and case |
+| `--function-counter-plot` | PNG with one panel per counter (IPC, PAPI_L3_TCM) and one line per function along the cases |
 | `--scatter-plots` | PAPI scatter plots; the template passes the `PLOTS` list with spaces → `:` |
 | `--dimemas-file` | Dimemas summary |
 | `--tracking-folder` | tracking output folder |
@@ -56,8 +58,12 @@ overrides the task count the files report.
 
 For tracing the template passes `-j`, `--cases-component-data`, `-f function_csv`,
 `--functions-file`, `--most_expensive_function_summary`, `--function-time-share-plot`,
-`--mpi-profile-share-plot`, `--tracking-folder`, and `--scatter-plots`;
+`--function-mpi-share-plot`, `--function-counter-plot`, `--mpi-profile-share-plot`,
+`--tracking-folder`, and `--scatter-plots`;
 it deliberately does **not** pass `--scalability-*` because tracing has no SYPD.
+The tracking folder holds `MPI/<component>_functions.csv` (MPI call share of every function and
+case) and `counters/<component>_functions.csv` (IPC, cycles, cache misses per thousand
+instructions), the two tables the report embeds.
 
 ## `comparator.py` (per-member comparison)
 

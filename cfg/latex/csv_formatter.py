@@ -70,13 +70,12 @@ class ParaverFile:
         #     csv_output = csv.writer(f_output)
         data_rows = []
         if summary:
-            header = ['-'] + [field for field in self.header]
+            header = ["Statistic"] + [f"{field} (%)" for field in self.header]
             # data_rows.append(header)
             for key, val in self.summary.items():
                 data_rows.append([key] + val)
         else:
-
-            heder = self.header
+            header = self.header
             # data_rows.append(self.header)
             for data in self.data_lines:
                 data_rows.append(data[0])

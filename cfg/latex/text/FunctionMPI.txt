@@ -1,0 +1,1 @@
+The table and its figure split the time inside each tracked user function into its MPI calls and into the part that no MPI call covers, Outside MPI. The columns of a row add up to 100 percent of the function time, and the figure draws the same values as one bar per function and traced case, with the bars of a function grouped under its name.

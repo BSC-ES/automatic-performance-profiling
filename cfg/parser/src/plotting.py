@@ -69,15 +69,42 @@ def plotter(
     x_label: str = "tasks",
     x_axis_label: str = None,
     y_label: str = "sypd",
+    y_axis_label: str = None,
     filename=None,
+    title: str = None,
     highlight_outliers=False,
     plot_ideal=True,
     scatter_labels=True,
     error_bars=False,
 ):
+    """Plot one curve per experiment and annotate every case.
+
+    Args:
+        data (list): Experiments to plot.
+        component (str, optional): Component to plot; the whole model when empty.
+        x_label (str, optional): Key of the case data used on the x axis.
+        x_axis_label (str, optional): Text of the x axis, with units. Defaults to ``x_label``.
+        y_label (str, optional): Key of the case data used on the y axis.
+        y_axis_label (str, optional): Text of the y axis, with units. Defaults to ``y_label``,
+            which names the key rather than the magnitude, so pass it whenever the metric has
+            a unit.
+        filename (str, optional): Path of the png. Defaults to the experiment names.
+        title (str, optional): Title of the figure. Defaults to the name of the file, which
+            says nothing about what is plotted, so pass a descriptive one.
+        highlight_outliers (bool, optional): Mark the cases that depart from Amdahl's law.
+        plot_ideal (bool, optional): Draw the ideal scaling line. Defaults to True.
+        scatter_labels (bool, optional): Name every case beside its point.
+        error_bars (bool, optional): Draw the standard deviation of the splits.
+
+    The y axis is labelled with ``y_axis_label`` when it is given: the key names the
+    magnitude (``time``), not its unit, and the report has to say whether that is seconds,
+    days or years.
+    """
     multiexperiment_name = ""
     if x_axis_label is None:
         x_axis_label = x_label
+    if y_axis_label is None:
+        y_axis_label = y_label
 
     for experiment in data:
         experiment_name = experiment.experiment_name
@@ -172,7 +199,7 @@ def plotter(
             )
 
         plt.xlabel(x_axis_label)
-        plt.ylabel(y_label)
+        plt.ylabel(y_axis_label)
 
         if len(x) > x_max_length:
             plt.xticks(x, [int(_x) for _x in x])
@@ -185,7 +212,9 @@ def plotter(
     if filename is None:
         filename = multiexperiment_name[:-1] + ".png"
 
-    plt.title(os.path.splitext(os.path.basename(filename))[0])
+    if title is None:
+        title = os.path.splitext(os.path.basename(filename))[0]
+    plt.title(title)
     plt.legend()
     plt.savefig(filename, dpi=400)
     plt.close()

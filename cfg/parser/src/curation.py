@@ -9,7 +9,7 @@ it embeds. ``Log`` collects the text of the tables, and ``function_curated_summa
 
 import numpy as np
 from .plotting import plotter
-from .scaling import higher_is_better
+from .scaling import higher_is_better, scalability_label
 
 
 class Log:
@@ -356,46 +356,49 @@ def generate_most_expensive_function_summary_data(
     Returns:
         None. Writes results to a CSV file with the following columns:
         - function_name: Name of the function
-        - case_name (percent): Percentage of total execution time for each case
+        - case_name (%): Percentage of the fastest timestep of the case spent in the
+          function, so the caption of the table, and not its header, says what the
+          percentage is taken over
 
     Note:
-        The output CSV file will contain 'length_summary + 1' rows, with each row containing
-        a function name and its percentage of total execution time for each case.
+        Rows are the union of the per-case summaries, aligned by function name; a case that
+        does not report a given function gets a ``-`` in its column.
     """
     import csv
     from os.path import abspath
 
-    header = []
-    time_data = [[] for x in range(length_summary + 1)]
-    function_names = [[] for x in range(len(experiment_data.cases))]
     components = [component_to_report]
     if component_to_report == "":
         components = experiment_data.components
 
-    for case_idx, case in enumerate(experiment_data.cases):
+    header = ["function_name"]
+    case_percentages = []
+    for case in experiment_data.cases:
         ts_length, sorted_functions = fastest_ts_functions(
             experiment_data, case, components
         )
+        header.append(case + " (%)")
+        case_percentages.append(
+            {
+                function_name: f"{elapsed_time / ts_length * 100:.2f}"
+                for function_name, elapsed_time in sorted_functions[
+                    : length_summary + 1
+                ]
+            }
+        )
 
-        header.append("function_name")
-        header.append(case + " (percent)")
-        n_function = 0
-
-        for function_name, elapsed_time in sorted_functions:
-            if n_function < length_summary + 1:
-                function_names[case_idx].append(function_name)
-                time_data[n_function].append(function_name)
-                uf_percentage = elapsed_time / ts_length * 100
-                time_data[n_function].append(f"{uf_percentage:.2f}")
-                n_function += 1
-            else:
-                break
+    function_names = dict.fromkeys(
+        name for case_data in case_percentages for name in case_data
+    )
 
     with open(out_file_name, mode="w", encoding="utf8") as output:
         out_writer = csv.writer(output, delimiter=",")
         out_writer.writerow(header)
-        for func in range(length_summary + 1):
-            out_writer.writerow(time_data[func])
+        for function_name in function_names:
+            out_writer.writerow(
+                [function_name]
+                + [case_data.get(function_name, "-") for case_data in case_percentages]
+            )
         print("Written file in " + abspath(out_file_name))
 
 
@@ -538,12 +541,14 @@ def generate_mpi_profile_share_plot(
         return
 
     plot_stacked_shares(
-        shares, out_file_name, "Share of the MPI call time (%)", "Other"
+        shares, out_file_name, "Share of the MPI call time (%)", "Other",
+        title=f"{component}: share of the MPI call time",
     )
 
 
 def plot_stacked_shares(
-    shares: dict, out_file_name: str, x_label: str, remainder_label: str = ""
+    shares: dict, out_file_name: str, x_label: str, remainder_label: str = "",
+    groups: dict = None, dpi: int = 400, title: str = None,
 ) -> None:
     """Draw one 100% horizontal bar per case, stacked with the given shares.
 
@@ -554,6 +559,12 @@ def plot_stacked_shares(
         x_label (str): Label of the x axis.
         remainder_label (str, optional): Label of the hatched block that fills each bar up to
             100%. Nothing is drawn when the bars already add up to 100%. Defaults to "".
+        groups (dict, optional): Bar name mapped to ``(group name, bar label)``. The bars of one
+            group are drawn together, under a single group name, with a gap before the next
+            group. Every bar is named on its own when absent. Defaults to None.
+        dpi (int, optional): Resolution of the png. Defaults to 400.
+        title (str, optional): Title of the figure. Defaults to the name of the file, which
+            says nothing about what is plotted.
     """
     import os
 
@@ -578,8 +589,17 @@ def plot_stacked_shares(
         label: color_map(index % color_map.N) for index, label in enumerate(labels)
     }
 
+    # The bars of one group are kept together, with a gap before the next group
+    names = list(shares)
+    positions = []
+    offset = 0.0
+    for index, name in enumerate(names):
+        if groups is not None and index and groups[name][0] != groups[names[index - 1]][0]:
+            offset += 0.7
+        positions.append(index + offset)
+
     fig, ax = plt.subplots(figsize=(9, 1.5 + 0.5 * len(shares)))
-    for position, (case, case_shares) in enumerate(shares.items()):
+    for position, case_shares in zip(positions, shares.values()):
         left = 0.0
         for label in labels:
             share = case_shares.get(label, 0.0)
@@ -609,12 +629,44 @@ def plot_stacked_shares(
                 ha="center", va="center", fontsize=7, color="0.35",
             )
 
-    ax.set_yticks(range(len(shares)))
-    ax.set_yticklabels(list(shares))
+    if groups is None:
+        ax.set_yticks(positions)
+        ax.set_yticklabels(names)
+    else:
+        # The bar label sits beside its bar and the group name in a column of its own. A tick
+        # cannot carry the group name: matplotlib drops a minor tick on top of a major one, so
+        # the name of a group with an odd number of bars would hide the middle bar label
+        group_positions = {}
+        for position, name in zip(positions, names):
+            group_positions.setdefault(groups[name][0], []).append(position)
+        ax.set_yticks(positions)
+        bar_labels = ax.set_yticklabels([groups[name][1] for name in names], fontsize=8)
+        ax.tick_params(axis="y", length=0)
+        try:
+            renderer = fig.canvas.get_renderer()
+            bar_label_width = max(
+                label.get_window_extent(renderer).width for label in bar_labels
+            ) * 72 / fig.dpi
+        except (AttributeError, ValueError):  # a canvas that cannot measure its texts
+            bar_label_width = 45.0
+        for group, group_rows in group_positions.items():
+            ax.annotate(
+                group,
+                xy=(0, sum(group_rows) / len(group_rows)),
+                xycoords=("axes fraction", "data"),
+                xytext=(-(bar_label_width + 8), 0),
+                textcoords="offset points",
+                ha="right", va="center", fontweight="bold",
+                annotation_clip=False,
+            )
+
     ax.invert_yaxis()
     ax.set_xlim(0, 100)
     ax.set_xlabel(x_label)
-    ax.set_title(os.path.splitext(os.path.basename(out_file_name))[0])
+    ax.set_title(
+        title if title is not None
+        else os.path.splitext(os.path.basename(out_file_name))[0]
+    )
 
     handles = [
         plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels
@@ -630,7 +682,7 @@ def plot_stacked_shares(
     )
 
     fig.tight_layout()
-    fig.savefig(out_file_name, dpi=400, bbox_inches="tight")
+    fig.savefig(out_file_name, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -681,7 +733,12 @@ def generate_function_time_share_plot(
         return
 
     plot_stacked_shares(
-        shares, out_file_name, "Share of the fastest timestep (%)", "Not traced"
+        shares,
+        out_file_name,
+        "Share of the fastest timestep (%)",
+        "Not traced",
+        title=f"{component_to_report or 'Whole model'}: share of the fastest timestep "
+        "spent in each user function",
     )
 
 
@@ -699,13 +756,14 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
 
     Notes:
         The CSV files will be named as '{component}_{function}.csv' and will contain:
-        - resources (tasks): Number of MPI tasks used
-        - speedup: Ratio of base case time to current case time
-        - efficiency: Speedup divided by resource increase ratio
+        - Case: The traced case
+        - Tasks: Number of MPI tasks used
+        - SpeedUp: Ratio of base case time to current case time, a dimensionless ratio
+        - Efficiency: Speedup divided by resource increase ratio, a dimensionless ratio
 
     The base case is determined by the first case in the function results.
     """
-    import numpy as np
+    import os
     from os import mkdir
     from os.path import isdir
 
@@ -718,41 +776,28 @@ def function_info_csv(experiment_data: dict, csv_folder: str) -> Log:
         fun_results = experiment_data.get_function_info(component)
 
         for k in fun_results:
-
-            resources = []
-            speedup = []
-            efficiency = []
+            rows = ["Case, Tasks, SpeedUp, Efficiency"]
 
             base_case = next(iter(fun_results[k]))
-            base_case_tasks = int(fun_results[k][base_case]["tasks"])
             base_result = fun_results[k][base_case]["elapsed_time"]
+            base_case_tasks = int(fun_results[k][base_case]["tasks"])
             for case in fun_results[k].keys():
                 tasks = int(fun_results[k][case]["tasks"])
                 resource_increase = tasks / base_case_tasks
-                resources.append(f"{tasks}")
                 case_speedup = base_result / (
                     fun_results[k][case]["elapsed_time"] + 1e-10
                 )
-                case_efficiency = (
-                    base_result / (fun_results[k][case]["elapsed_time"] + 1e-10)
-                ) / resource_increase
-                speedup.append(f"{case_speedup:.2f}")
-                efficiency.append(f"{case_efficiency:.2f}")
+                case_efficiency = case_speedup / resource_increase
+                rows.append(
+                    f"{case}, {tasks}, {case_speedup:.2f}, {case_efficiency:.2f}"
+                )
 
-            header = np.array(["resources (tasks)", "speedup", "efficiency"], dtype=str)
-
-            data = np.empty((3, len(resources)))
-            data[0, :] = resources
-            data[1, :] = speedup
-            data[2, :] = efficiency
-
-            final_table = np.column_stack((header, data))
-            np.savetxt(
-                csv_folder + "/" + component + "_" + k + ".csv",
-                final_table,
-                delimiter=",",
-                fmt="%s",
-            )
+            with open(
+                os.path.join(csv_folder, component + "_" + k + ".csv"),
+                "w",
+                encoding="utf8",
+            ) as output:
+                output.write("\n".join(rows) + "\n")
     return log
 
 
@@ -836,196 +881,417 @@ def function_information_from_paramedir_outputs(
     return total_time, functions_time
 
 
+#: MPI call columns of the per-function scalability table, in reporting order.
+MPI_CALL_COLUMNS = (
+    "Outside_MPI",
+    "MPI_Send",
+    "MPI_Recv",
+    "MPI_Isend",
+    "MPI_Irecv",
+    "MPI_Wait",
+    "MPI_Waitall",
+    "MPI_Bcast",
+    "MPI_Barrier",
+    "MPI_Reduce",
+    "MPI_Allreduce",
+    "MPI_Iallreduce",
+    "MPI_Alltoall",
+    "MPI_Alltoallv",
+    "MPI_Gather",
+    "MPI_Allgather",
+)
+
+#: Hardware counters of the per-function table, in reporting order. ``PAPI_TOT_INS`` is left out
+#: because its paramedir configuration is a copy of ``IPC``.
+COUNTER_KEYS = ("IPC", "PAPI_TOT_CYC", "PAPI_L1_DCM", "PAPI_L2_DCM", "PAPI_L3_TCM")
+
+#: Unit of every counter, written beside its name in the tables and on the axis of the figures.
+#: The cache counters are normalised per thousand instructions, so their value is comparable
+#: across functions of different size; ``TOT_CYC`` is the plain number of cycles.
+COUNTER_UNITS = {
+    "IPC": "instructions per cycle",
+    "TOT_CYC": "cycles",
+    "L1_DCM": "misses per 1000 instructions",
+    "L2_DCM": "misses per 1000 instructions",
+    "L3_TCM": "misses per 1000 instructions",
+}
+
+
+def counter_label(counter: str) -> str:
+    """Name of a counter in the tables and figures: its PAPI id without the ``PAPI_`` prefix.
+
+    The PAPI id is kept, minus the prefix, because a friendly name such as ``L3 MPKI`` does not
+    say which cache the counter measures (``L3_TCM`` is total cache misses, ``L3_DCM`` is data
+    cache misses).
+    """
+    return counter.removeprefix("PAPI_")
+
+
+def counter_label_with_units(counter: str) -> str:
+    """Name of a counter with its unit, e.g. ``L3_TCM (misses per 1000 instructions)``.
+
+    Used wherever the magnitude is reported without any other hint of its unit, i.e. on the
+    axis of the counter figures. A counter with no unit in :data:`COUNTER_UNITS` keeps its
+    bare name.
+    """
+    label = counter_label(counter)
+    unit = COUNTER_UNITS.get(label)
+    return f"{label} ({unit})" if unit else label
+
+
+def tracked_functions(
+    experiment_data, component: str, threshold: float = 0.01
+) -> list[str]:
+    """User functions of one component that take at least ``threshold`` of the traced time.
+
+    Args:
+        experiment_data: Object containing the parsed experiment data.
+        component: Component whose functions are ranked.
+        threshold (float, optional): Minimum fraction of the traced time of the base case.
+            Defaults to 0.01 (1%).
+
+    Returns:
+        list[str]: The function names, the most expensive first.
+    """
+    total_time, functions_time = function_information_from_paramedir_outputs(
+        experiment_data, component
+    )
+    ranked = sorted(functions_time.items(), key=lambda item: item[1], reverse=True)
+    return [
+        function
+        for function, time in ranked
+        if total_time > 0 and time / total_time >= threshold
+    ]
+
+
 def tracking(experiment_data, folder, threshold=0.01):
     """
-    Process and track performance data for functions in experiment components.
-
-    This function analyzes experiment data, filters functions based on a time threshold,
-    and generates MPI and counter logs for the significant functions.
+    Write the scalability table of the traced user functions, one per MPI and counter.
 
     Args:
         experiment_data: Object containing experimental performance data and components
         folder (str): Base output directory path for storing the generated logs
-        threshold (float, optional): Minimum fraction of total time a function must represent
-            to be included in analysis. Defaults to 0.01 (1%)
+        threshold (float, optional): Minimum fraction of total time a function must
+            represent to be included in analysis. Defaults to 0.01 (1%)
 
     Creates:
-        - {folder}/MPI/: Directory containing MPI profile logs per function
-        - {folder}/counters/: Directory containing counter logs per function
-
-        Each log is saved as CSV in format: {component}_{function}.csv
+        - {folder}/MPI/{component}_functions.csv: MPI call share of each function and case
+        - {folder}/counters/{component}_functions.csv: hardware counters of each
+          function and case
 
     Notes:
-        - Only functions consuming >= threshold % of total time are analyzed
-        - Creates separate MPI and counter logs for each significant function
-        - Combines all logs into a full log (currently commented out printing)
-
-    Returns:
-        None
+        Only functions consuming >= threshold % of total time are analyzed, ordered by
+        the time they take, so the most expensive function comes first.
     """
     from os import makedirs
-    from os.path import abspath
 
     MPI_folder = folder + "/MPI"
     counters_folder = folder + "/counters"
     makedirs(MPI_folder, exist_ok=True)
     makedirs(counters_folder, exist_ok=True)
-    full_log = Log()
     for component in experiment_data.components:
-        total_time, functions_time = function_information_from_paramedir_outputs(
-            experiment_data, component
+        functions = tracked_functions(experiment_data, component, threshold)
+
+        mpi_log = tracking_mpi_scalability(experiment_data, component, functions)
+        if mpi_log.text:
+            mpi_log.save(f"{MPI_folder}/{component}_functions.csv")
+
+        counter_log = tracking_counter_scalability(
+            experiment_data, component, functions
         )
-        functions = [
-            function
-            for function, time in functions_time.items()
-            if time / total_time >= threshold
-        ]
-
-        for function in functions:
-            MPI_log = Log()
-            counters_log = Log()
-            mpi_profile = tracking_mpi_profile_per_function(
-                experiment_data, function, component
-            )
-            counters = tracking_counters_per_function(
-                experiment_data, function, component
-            )
-
-            if mpi_profile:
-                MPI_log += mpi_profile
-                MPI_log.save(f"{MPI_folder}/{component}_{function}.csv")
-                full_log += mpi_profile
-
-            if counters:
-                counters_log += counters
-                counters_log.save(f"{counters_folder}/{component}_{function}.csv")
-                full_log += counters_log
+        if counter_log.text:
+            counter_log.save(f"{counters_folder}/{component}_functions.csv")
 
 
+def case_counters(experiment_data, case: str, component: str) -> dict:
+    """Counters of one component in one case, empty when the case reports none."""
+    return go_to_dictionary_address(
+        experiment_data.data, (case, "components", component)
+    ).get("counters", {})
 
-def tracking_mpi_profile_per_function(
-    experiment_data: dict, function: str, component: str
+
+def first_average(counter_entry: dict):
+    """Average of a counter entry, or None when the function has no value for it."""
+    average = (counter_entry or {}).get("Average") or []
+    return average[0] if average else None
+
+
+def function_case_log(
+    rows: list[tuple[str, str, dict]],
+    columns: list[str],
+    formats: dict[str, str] = None,
 ) -> Log:
-    """
-    Extract and format MPI profiling data for a specific function from experiment data.
+    """Draw one row per user function and case, keeping only the columns with a value.
+
+    The user function is written on the first row of its block and left empty on the rows of
+    its other cases, so the function name reads once and the report can group the rows.
 
     Args:
-        experiment_data (dict): Dictionary containing all experiment data including MPI profiles
-        function (str): Name of the function to analyze
-        component (str): Name of the component to analyze
+        rows (list): ``(function, case, {column: value})``; a column missing from a row
+            is left blank.
+        columns (list[str]): Column headers, in reporting order.
+        formats (dict, optional): Format spec of the columns that are not two decimals,
+            e.g. ``{"TOT_CYC": ".4g"}``.
 
     Returns:
-        Log: A Log object containing formatted MPI profile data with the following format:
-            - First line: Header with "Cores" and MPI operation names
-            - Subsequent lines: Case number followed by time spent in each MPI operation
+        Log: The CSV text of the table, header included.
     """
-    base_case = experiment_data.base_case
-    address = (
-        base_case,
-        "components",
-        component,
-        "counters",
-        "MPIcallprofile",
-    )
-    mpi_dictionary = go_to_dictionary_address(experiment_data, address)
-    mpi_fields = list(mpi_dictionary[function]["names"])
-    mpi_fields_to_keep = (
-        "Outside_MPI",
-        "MPI_Recv",
-        "MPI_Isend",
-        "MPI_Wait",
-        "MPI_Bcast",
-        "MPI_Barrier",
-        "MPI_Allreduce",
-        "MPI_Iallreduce",
-    )
-
-    mpi_indices_to_keep = [
-        index for index, value in enumerate(mpi_fields) if value in mpi_fields_to_keep
+    formats = formats or {}
+    keep = [
+        column for column in columns
+        if any(values.get(column) for _, _, values in rows)
     ]
-    cases = experiment_data.cases
+    lines = [",".join(["User function", "Case"] + keep)]
+    previous_function = None
+    for function, case, values in rows:
+        cells = [
+            ""
+            if values.get(column) is None
+            else format(values[column], formats.get(column, ".2f"))
+            for column in keep
+        ]
+        name = function if function != previous_function else ""
+        lines.append(",".join([name, case] + cells))
+        previous_function = function
 
     log = Log()
-    log_txt = "Cores"
-    for index, field in enumerate(mpi_fields):
-        if index not in mpi_indices_to_keep:
-            continue
-        log_txt += f",{field}"
-    log.add(log_txt)
-    for case in cases:
-        log_txt = f"{case}"
-        address = (
-            case,
-            "components",
-            component,
-            "counters",
-            "MPIcallprofile",
-            function,
-            "Average",
-        )
-        data = go_to_dictionary_address(experiment_data, address)
-        for index, field in enumerate(mpi_fields):
-            if index not in mpi_indices_to_keep:
-                continue
-            log_txt += f",{data[index]:.2f}"
-        log.add(log_txt)
+    log.text = "\n".join(lines)
     return log
 
 
-def tracking_counters_per_function(
-    experiment_data: dict, function: str, component: str
+def tracking_mpi_scalability(
+    experiment_data, component: str, functions: list[str]
 ) -> Log:
+    """MPI call profile of every traced user function, one row per function and case.
+
+    Each value is the share (%) of the time inside the function spent in that MPI call,
+    so the rows of one function add up to 100 with ``Outside_MPI``, the time not spent in
+    MPI. The header only carries the percent sign; the caption of the table says what the
+    percentage is taken over, so no header grows into a sentence.
     """
-    Tracks and logs performance counters for a specific function within a given component across different cases in an experiment.
+    columns = [f"{call} (%)" for call in MPI_CALL_COLUMNS]
+    rows = []
+    for function in functions:
+        for case in experiment_data.cases:
+            profile = case_counters(experiment_data, case, component).get(
+                "MPIcallprofile", {}
+            ).get(function, {})
+            calls = dict(zip(profile.get("names", []), profile.get("Average", [])))
+            rows.append(
+                (
+                    function,
+                    case,
+                    {
+                        label: calls.get(call)
+                        for call, label in zip(MPI_CALL_COLUMNS, columns)
+                    },
+                )
+            )
+    return function_case_log(rows, columns)
+
+
+def tracking_counter_scalability(
+    experiment_data, component: str, functions: list[str]
+) -> Log:
+    """Hardware counters of every traced user function, one row per function and case.
+
+    The counters are the average per thread of each traced case. Every column is the PAPI id
+    of its counter without the ``PAPI_`` prefix, and the caption of the table spells out the
+    unit of each one (``IPC`` instructions per cycle, ``TOT_CYC`` cycles,
+    ``L1_DCM``/``L2_DCM``/``L3_TCM`` misses per thousand instructions), so a header stays a
+    bare id of a fixed width instead of a sentence that overflows the column.
+    """
+    cases_counters = {
+        case: case_counters(experiment_data, case, component)
+        for case in experiment_data.cases
+    }
+    keys = [
+        key for key in COUNTER_KEYS
+        if any(key in counters for counters in cases_counters.values())
+    ]
+    labels = [counter_label(key) for key in keys]
+
+    rows = []
+    for function in functions:
+        for case, counters in cases_counters.items():
+            rows.append(
+                (
+                    function,
+                    case,
+                    {
+                        label: first_average(counters.get(key, {}).get(function))
+                        for key, label in zip(keys, labels)
+                    },
+                )
+            )
+    formats = {
+        label: ".4g"
+        for key, label in zip(keys, labels)
+        if counter_label(key) == "TOT_CYC"
+    }
+    return function_case_log(rows, labels, formats)
+
+
+def function_mpi_share_plot(
+    experiment_data, out_file_name: str, length_summary: int = 10
+) -> None:
+    """Plot the MPI call profile of the user functions, one bar per function and case.
+
+    Each bar adds up to 100% of the time spent in one function of one case, split into its MPI
+    calls, so the shift from computing (``Outside_MPI``) to waiting in a call is visible for
+    every function instead of only for the whole model.
 
     Args:
-        experiment_data (dict): The data from the experiment, containing base case and cases information.
-        function (str): The name of the function to track.
-        component (str): The component within which the function resides.
-
-    Returns:
-        Log: A log object containing the tracked performance counters for the specified function and component.
-
-    Raises:
-        AssertionError: If the address within the dictionary does not exist.
+        experiment_data: Object containing the parsed experiment data.
+        out_file_name (str): Base name of the png; the component name is prefixed.
+        length_summary (int, optional): Number of most expensive functions plotted per
+            component. Defaults to 10.
     """
-    log = Log()
-    base_case = experiment_data.base_case
-    cases = experiment_data.cases
-    address = (base_case, "components", component, "counters")
-    counters_dictionary = go_to_dictionary_address(experiment_data, address)
-    available_counters = list(counters_dictionary.keys())
-    available_counters = ["Instructions", "Cycles", "IPC", "Time"]
-    labels = ["Instructions", "Cycles", "IPC", "Time(ms)"]
+    import os
 
-    log_text = "Processes"
-    for index, counter in enumerate(available_counters):
-        log_text += f",{labels[index]}"
-    log.add(log_text)
-
-    for case in cases:
-        log_text = f"{case}"
-        for counter in available_counters:
-            address = (
-                case,
-                "components",
-                component,
-                "counters",
-                counter,
-                function,
-                "Average",
+    for component in experiment_data.components:
+        try:
+            functions = tracked_functions(experiment_data, component)
+        except (AssertionError, KeyError):
+            print(
+                f"[WARNING] {component} has no user function time, "
+                "it is left out of the MPI share plot"
             )
-            try:
-                section = go_to_dictionary_address(experiment_data, address)
-            except AssertionError:
-                log_text += ","
+            continue
+
+        shares = {}
+        groups = {}
+        for function in functions[:length_summary]:
+            for case in experiment_data.cases:
+                profile = case_counters(experiment_data, case, component).get(
+                    "MPIcallprofile", {}
+                ).get(function, {})
+                calls = dict(zip(profile.get("names", []), profile.get("Average", [])))
+                calls_to_draw = {
+                    call: calls[call] for call in MPI_CALL_COLUMNS if calls.get(call)
+                }
+                if calls_to_draw:
+                    shares[f"{function} {case}"] = calls_to_draw
+                    groups[f"{function} {case}"] = (function, case)
+
+        if not shares:
+            continue
+        file_name = component + "_" + os.path.basename(out_file_name)
+        plot_stacked_shares(
+            shares,
+            os.path.join(os.path.dirname(out_file_name), file_name),
+            "Share of the user function time (%)",
+            groups=groups,
+            dpi=600,
+            title=f"{component}: MPI calls of the user functions, "
+            "share of the function time",
+        )
+
+
+def function_counter_plot(
+    experiment_data,
+    out_file_name: str,
+    counters: tuple[str, ...] = ("IPC", "PAPI_L3_TCM"),
+    length_summary: int = 10,
+) -> None:
+    """Plot the hardware counters of the user functions along the traced cases.
+
+    One figure per counter and one line per function, with the cases on the x axis labelled by
+    the number of processes that ran them, so a counter that degrades with the size of the run
+    stands out from one that stays flat. Every counter is written to a file of its own, named
+    after it. The cycles are deliberately left out: they fall as the work is split, so they say
+    nothing about the efficiency of a function.
+
+    Args:
+        experiment_data: Object containing the parsed experiment data.
+        out_file_name (str): Base name of the pngs; the component name and the counter key are
+            added, ``<component>_<name>_<counter>.png``.
+        counters (tuple, optional): Counter keys to plot, one figure each. Defaults to the IPC
+            and the L3 misses per thousand instructions.
+        length_summary (int, optional): Number of most expensive functions plotted per
+            component. Defaults to 10.
+    """
+    import os
+
+    import matplotlib
+    from matplotlib import pyplot as plt
+
+    for component in experiment_data.components:
+        try:
+            functions = tracked_functions(experiment_data, component)[
+                :length_summary
+            ]
+        except (AssertionError, KeyError):
+            print(
+                f"[WARNING] {component} has no user function time, "
+                "it is left out of the counter plot"
+            )
+            continue
+
+        cases = []
+        tick_labels = []
+        for case in experiment_data.cases:
+            cases.append(case)
+            tasks = go_to_dictionary_address(
+                experiment_data.data, (case, "components", component)
+            ).get("tasks")
+            tick_labels.append(f"{case}\n{tasks} procs" if tasks else case)
+
+        try:
+            color_map = matplotlib.colormaps["tab20"]
+        except AttributeError:  # matplotlib < 3.6
+            color_map = plt.get_cmap("tab20")
+        colors = {
+            function: color_map(index % color_map.N)
+            for index, function in enumerate(functions)
+        }
+
+        positions = list(range(len(cases)))
+        base_name = os.path.splitext(os.path.basename(out_file_name))[0]
+        for key in counters:
+            series = {}
+            for function in functions:
+                values = [
+                    first_average(
+                        case_counters(experiment_data, case, component)
+                        .get(key, {})
+                        .get(function)
+                    )
+                    for case in cases
+                ]
+                if any(value is not None for value in values):
+                    series[function] = [float("nan") if value is None else value
+                                        for value in values]
+            if not series:
                 continue
-            data = section[0]
-            log_text += f", {data:.1f}"
 
-        log.add(log_text)
+            figure, axis = plt.subplots(figsize=(6, 3.5))
+            for function, values in series.items():
+                axis.plot(
+                    positions, values, marker="o", linewidth=1.4, label=function,
+                    color=colors[function],
+                )
+            counter_name = counter_label(key)
+            axis.set_title(f"{component} {counter_name}")
+            axis.set_xlabel("Traced case (MPI tasks)")
+            axis.set_ylabel(counter_label_with_units(key))
+            axis.set_xticks(positions)
+            axis.set_xticklabels(tick_labels, fontsize=8)
+            axis.grid(axis="y", linewidth=0.3)
+            axis.legend(
+                loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=8,
+                frameon=False,
+            )
 
-    return log
+            figure.tight_layout()
+            figure.savefig(
+                os.path.join(
+                    os.path.dirname(out_file_name),
+                    f"{component}_{base_name}_{key}.png",
+                ),
+                dpi=600, bbox_inches="tight",
+            )
+            plt.close(figure)
 
 
 def generate_scalability_summary(
@@ -1041,19 +1307,21 @@ def generate_scalability_summary(
         scalability_variable (str, optional): The name of the variable to use for the summary. Defaults to "sypd".
 
     Returns:
-        Log: A Log object containing the summary data with columns: Case, Tasks, Threads, {scalability_variable.capitalize()}, SpeedUp, Efficiency.
+        Log: A Log object containing the summary data with columns: Case, Total Resources,
+        Tasks, Threads, {scalability label}, SpeedUp, Efficiency.
 
         The summary includes:
         - Case: The name of the case.
+        - Total Resources: The total processing units of the case (tasks x threads).
         - Tasks: The number of MPI tasks used in the case.
         - Threads: The number of OpenMP threads per task (defaults to 1 when not reported).
-        - {scalability_variable.capitalize()}: The {scalability_variable} value for the case,
+        - {scalability_label}: The {scalability_variable} value for the case, with its unit,
           followed by its standard deviation across splits when the case reports them.
-        - SpeedUp: The speedup factor compared to the base case. Derived from the direction of
-          the metric: base/case when lower is better (e.g. "time"), case/base otherwise
-          (e.g. "sypd", "sdpd").
-        - Efficiency: The efficiency of the case, calculated as speedup divided by the increase in
-          total compute resources (tasks × threads).
+        - SpeedUp: The speedup factor compared to the base case, a dimensionless ratio.
+          Derived from the direction of the metric: base/case when lower is better
+          (e.g. "time"), case/base otherwise (e.g. "sypd", "sdpd").
+        - Efficiency: The efficiency of the case, a dimensionless ratio calculated as speedup
+          divided by the increase in total compute resources (tasks × threads).
 
         Cases without a positive value (a run that produced no timing data) are left out of the
         summary, and so are all of them when the base case has no value to compare against.
@@ -1077,7 +1345,7 @@ def generate_scalability_summary(
 
     log.add(
         "Case, Total Resources, Tasks, Threads, "
-        + scalability_variable.capitalize()
+        + scalability_label(scalability_variable)
         + ", SpeedUp, Efficiency"
     )
     for case in cases:
@@ -1169,10 +1437,11 @@ def generate_scalability_plot_data(
     Returns:
         dict: Dictionary containing plot data with the following keys:
             - "Number of processes": numpy array of process counts
-            - "{scalability_variable.capitalize()}": numpy array of {scalability_variable} values
+            - "{scalability_label}": numpy array of {scalability_variable} values, with the unit
+              of the metric in the key so the axis cannot be read without it
     """
     x_label = "Number of processes"
-    y_label = f"{scalability_variable.capitalize()} "
+    y_label = scalability_label(scalability_variable)
     plot_data = {x_label: np.empty(0), y_label: np.empty(0)}
 
     if component == "":
@@ -1211,18 +1480,23 @@ def scalability_plot(
         experiment_data (dict): An object containing the experiment data,
             including the experiment name, cases, and components.
         filename (str): The filename to save the overall plot.
+        scalability_variable (str, optional): Metric of the y axis.
+        error_bars (bool, optional): Draw the standard deviation of the splits.
 
     Returns:
         None
     """
     from .plotting import plotter
 
+    metric = scalability_label(scalability_variable)
     plotter(
         data=[experiment_data],
         error_bars=True,
         y_label=scalability_variable,
+        y_axis_label=metric,
         x_label="total_resources",
         x_axis_label="Total resources (tasks x threads)",
+        title=f"{experiment_data.experiment_name} strong scaling (whole model)",
         filename=filename,
         highlight_outliers=True,
     )
@@ -1230,10 +1504,13 @@ def scalability_plot(
     for component in experiment_data.components:
         plotter(
             data=[experiment_data],
+            component=component,
             error_bars=True,
             y_label=scalability_variable,
+            y_axis_label=metric,
             x_label="total_resources",
             x_axis_label="Total resources (tasks x threads)",
+            title=f"{experiment_data.experiment_name} strong scaling ({component})",
             filename=component + "_" + filename,
             highlight_outliers=True,
         )
@@ -1270,7 +1547,7 @@ def cases_component_data(
                 header += f",{component.upper()} "
             else:
                 header += ","
-            header += f"{variable}"
+            header += variable.replace("_", " ")
     log.add(header)
 
     for case in experiment_data.cases:
@@ -1367,9 +1644,12 @@ def multiexperiment_scalability_plot(
     plotter(
         data=experiments,
         filename=filename,
+        title="Case comparison: "
+        + ", ".join(experiment.experiment_name for experiment in experiments),
         highlight_outliers=False,
         plot_ideal=False,
         y_label=scalability_variable,
+        y_axis_label=scalability_label(scalability_variable),
         x_label="total_resources",
         x_axis_label="Total resources (tasks x threads)",
         scatter_labels=False,
@@ -1398,6 +1678,8 @@ def multiexperiment_comparison(
     Notes:
         - Cases are considered matching if they use the same total resources
           (``total_resources = tasks × threads``, with threads defaulting to 1).
+        - Every column names the metric with its unit, and the difference of a build with
+          the first one is a percentage of the value of the first build.
     """
     log = Log()
 
@@ -1411,11 +1693,13 @@ def multiexperiment_comparison(
                     corresponding_cases[i][j + 1] = case
                     break
 
-    header = "Resources (tasks x threads)"
+    header = "Resources"
     for i, experiment in enumerate(experiments):
-        header += f", {experiment.experiment_name} {scalability_variable}"
+        header += f", {experiment.experiment_name} {scalability_label(scalability_variable)}"
         if i > 0:
-            header += " (diff percent)"
+            # No comma inside a column name: the header is a row of the csv, so a comma
+            # would split the column in two
+            header += f" (diff vs {experiments[0].experiment_name} in %)"
 
     log.add(header)
 
@@ -1460,15 +1744,20 @@ def generate_weakscaling_data(experiments: list, component_to_report: str = "") 
         The function handles two reporting modes:
         1. All components (component_to_report=""): Reports resolution and grid points for each component
         2. Single component: Reports cores, resolution, timesteps/second, and grid points
+
+        Every column names its unit where the value has one, as the header of a table is the only
+        place the report can state it.
     """
     log = Log()
 
     if component_to_report == "":
         header = "Config"
         for component in experiments[0].components:
-            header += f", {component.upper()} Res, {component.upper()} Pts"
+            header += f", {component.upper()} Resolution, {component.upper()} Grid points"
     else:
-        header = "Config, Ncores, Resolution, Ts per second, Gridpoints"
+        header = (
+            "Config, MPI Tasks, Resolution, Timesteps per second (1/s), Grid points"
+        )
 
     log.add(header)
 

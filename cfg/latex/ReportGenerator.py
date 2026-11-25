@@ -41,6 +41,64 @@ def get_files_from_path(file_path, extension=None):
                 raise AssertionError("File %s does not exist", file_path)
 
 
+def _is_number(text: str) -> bool:
+    """Whether a table cell holds a number, which decides if its column is right aligned."""
+    try:
+        float(text.replace(",", ""))
+    except ValueError:
+        return False
+    return True
+
+
+def _latex_row(row: list) -> list:
+    """Replace the underscores of a row, as the csv written to disk does, to keep LaTeX happy.
+
+    The other characters that would end a cell or a line are escaped instead of replaced, so a
+    value that holds one of them is printed and not taken for markup.
+    """
+    cells = []
+    for cell in row:
+        for special, escaped in (("&", r"\&"), ("%", r"\%"), ("#", r"\#")):
+            cell = cell.replace(special, escaped)
+        cells.append(cell.replace("_", "-"))
+    return cells
+
+
+#: LaTeX specials a header cell may hold and the text that prints them.
+_LATEX_HEADER_SPECIALS = (
+    ("\\", r"\textbackslash{}"),
+    ("&", r"\&"),
+    ("%", r"\%"),
+    ("#", r"\#"),
+    ("_", r"\_"),
+)
+
+
+def _latex_header(row: list) -> list:
+    """Escape the header cells, which are typeset as text and not as numbers."""
+    cells = []
+    for cell in row:
+        for special, escaped in _LATEX_HEADER_SPECIALS:
+            cell = cell.replace(special, escaped)
+        cells.append(cell)
+    return cells
+
+
+def _header_needs_latex(csv_file) -> bool:
+    """Whether ``\\csvautobooktabular`` cannot print the header of the table.
+
+    csvsimple reads the header cells as pgfkeys keys and typesets them as text: a percent
+    sign would start a comment, an underscore would be a math subscript and a backslash
+    breaks the keys, so such a table is typeset from its data instead, where the header
+    cells are escaped by :func:`_latex_header`.
+    """
+    return any(
+        character in cell
+        for cell in csv_file.csv_data[0]
+        for character in "\\&%#_"
+    )
+
+
 class CsvFile:
     def __init__(
         self,
@@ -52,7 +110,7 @@ class CsvFile:
         _convert=False,
         _caption=None,
         _rotate=False,
-        _fit_margins=False,
+        _group_rows=False,
     ):
         self.path = _path
         self.store_path = None
@@ -68,7 +126,7 @@ class CsvFile:
         self.subsection = _subsection_name
         self.subsubsection = _subsubsection_name
         self.rotate = _rotate
-        self.fit_margins = _fit_margins
+        self.group_rows = _group_rows
         self.store(csv_convert=_convert, csv_purge=_purge)
 
     def purge_csv_data(self):
@@ -170,7 +228,8 @@ class ImgFile:
                         continue
         else:
             self.caption = self.name
-        self.caption = self.caption.replace("_", "\\_")
+        # Captions are text mode, so the LaTeX specials must be escaped.
+        self.caption = self.caption.replace("_", "\\_").replace("%", "\\%")
 
     def store(self):
         with open(self.path, "rb") as img:
@@ -237,7 +296,7 @@ class Section:
         silent_mode=False,
         rotate=False,
         caption=None,
-        fit_margins=False,
+        group_rows=False,
     ):
         try:
             csv_files = get_files_from_path(file_path, ".csv")
@@ -247,7 +306,7 @@ class Section:
             else:
                 raise AssertionError()
         if not caption is None:
-            caption = caption.replace("_", "\\_")
+            caption = caption.replace("_", "\\_").replace("%", "\\%")
         for csv_file in csv_files:
             csv_obj = CsvFile(
                 csv_file,
@@ -258,7 +317,7 @@ class Section:
                 csv_convert,
                 caption,
                 _rotate=rotate,
-                _fit_margins=fit_margins,
+                _group_rows=group_rows,
             )
             for s_csv in self.csv_files:
                 if csv_obj.path == s_csv.path:
@@ -344,7 +403,7 @@ class Subsection(Section):
         rotate,
         subsubsection_name=None,
         caption=None,
-        fit_margins=False,
+        group_rows=False,
     ):
         super(Subsection, self).add_csv(
             file_path,
@@ -355,7 +414,7 @@ class Subsection(Section):
             silent_mode,
             rotate,
             caption,
-            fit_margins,
+            group_rows,
         )
 
     def add_text_as_csv(
@@ -400,7 +459,7 @@ class Subsubsection(Subsection):
         silent_mode,
         rotate,
         caption=None,
-        fit_margins=False,
+        group_rows=False,
     ):
         super(Subsubsection, self).add_csv(
             file_path,
@@ -410,7 +469,7 @@ class Subsubsection(Subsection):
             rotate,
             self.subsubsection_name,
             caption,
-            fit_margins,
+            group_rows,
         )
 
     def add_text_as_csv(self, csv_format_text, computed_quantity):
@@ -496,19 +555,47 @@ class LatexText:
         self.add_text("\\begin{table}[H]")
         self.add_text("\\centering")
         self.add_text("\\caption{" + csv_file.caption + "}")
-        if csv_file.fit_margins:
-            if csv_file.rotate:
-                factor = 1.5
-            else:
-                factor = 1
-            self.add_text(f"\\resizebox{{{factor}\\textwidth}}{{!}}{{")
-        self.add_text(
-            "\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}"
-        )
-        if csv_file.fit_margins:
-            self.add_text("}")
+        # \makebox centres the table on the text block; \fitpage scales it down only
+        # when it is wider than the page, otherwise it grows into both margins.
+        page_width = "\\paperheight" if csv_file.rotate else "\\paperwidth"
+        self.add_text(f"\\makebox[\\linewidth][c]{{\\fitpage{{{page_width}}}{{%")
+        if csv_file.group_rows or _header_needs_latex(csv_file):
+            self.add_data_table(csv_file)
+        else:
+            self.add_text(
+                "\csvautobooktabular{" + csv_file.store_path + "/" + csv_file.name + "}"
+            )
+        self.add_text("}}")
         self.add_text("\end{table}")
         self.new_line()
+
+    def add_data_table(self, csv_file: CsvFile) -> None:
+        """Write the table as a booktabs tabular built from its data, not read from its file.
+
+        The header is written here, and not by csvsimple, because a header cell may name a
+        percentage (``Outside-MPI (%)``) or a PAPI id (``L3_TCM``), which the file reader
+        would take for a comment or for a math subscript. When the table is grouped, a row
+        whose first cell is empty continues the group of the row above it, so the first
+        column is written once per group and a rule separates the groups. The columns whose
+        cells are all numbers are right aligned.
+        """
+        header, *rows = csv_file.csv_data
+        alignment = "@{}" + "".join(
+            "r" if all(_is_number(row[column]) for row in rows if column < len(row))
+            else "l"
+            for column in range(len(header))
+        ) + "@{}"
+
+        self.add_text("\\begin{tabular}{" + alignment + "}")
+        self.add_text("\\toprule")
+        self.add_text(" & ".join(_latex_header(header)) + " \\\\")
+        self.add_text("\\midrule")
+        for index, row in enumerate(rows):
+            if csv_file.group_rows and index and row[0]:
+                self.add_text("\\midrule")
+            self.add_text(" & ".join(_latex_row(row)) + " \\\\")
+        self.add_text("\\bottomrule")
+        self.add_text("\\end{tabular}")
 
     def end_landscape(self):
         if self.in_landscape:
@@ -536,6 +623,18 @@ class Report:
             "\\usepackage{hyperref}\n"
             "\\usepackage{float}\n"
             "\\usepackage{pdflscape}\n"
+            # article leaves \belowcaptionskip at 0pt, so a caption lands on the top rule.
+            "\\setlength\\belowcaptionskip{8pt}\n"
+            # \fitpage scales a table down only when it is wider than the page, minus its
+            # \apptablemargin on each side.
+            "\\newlength\\apptablemargin \n"
+            "\\setlength\\apptablemargin{1cm} \n"
+            "\\newsavebox\\apptablebox \n"
+            "\\newcommand\\fitpage[2]{%\n"
+            "\\sbox\\apptablebox{#2}%\n"
+            "\\ifdim\\wd\\apptablebox>\\dimexpr#1-2\\apptablemargin\\relax"
+            "\\resizebox{\\dimexpr#1-2\\apptablemargin\\relax}{!}{\\usebox\\apptablebox}"
+            "\\else\\usebox\\apptablebox\\fi}\n"
             "\\input{" + self.newcommand_file + "}\n"
             "\\title{TITLE} \n "
             "\\author{AUTHORS} \n  \date{\\today} \n"
@@ -890,7 +989,6 @@ def get_command_line_arguments():
         help="path to a csv or a folder of csv that will be added to the section",
     )
     parser.add_argument("-r", "--rotate-csv", action="store_true", default=False)
-    parser.add_argument("-f", "--fit-margins", action="store_true", default=False)
     parser.add_argument(
         "--csv-convert",
         default=False,
@@ -903,6 +1001,14 @@ def get_command_line_arguments():
         default=False,
         action="store_true",
         help="Eliminates empty columns",
+    )
+    parser.add_argument(
+        "-g",
+        "--csv-group-rows",
+        default=False,
+        action="store_true",
+        help="Groups the rows of the table: a row whose first cell is empty belongs "
+        "to the group of the row above, and a rule separates the groups",
     )
     parser.add_argument(
         "-T",
@@ -973,9 +1079,9 @@ if __name__ == "__main__":
     caption = args.add_caption
     csv_file = args.add_csv
     rotate_csv = args.rotate_csv
-    fit_margins = args.fit_margins
     csv_convert = args.csv_convert
     csv_purge = args.csv_purge
+    csv_group_rows = args.csv_group_rows
     dump_to_file = args.dump_to_file
     text_file = args.text_file
     inspect_pkl_obj = args.inspect
@@ -1019,7 +1125,7 @@ if __name__ == "__main__":
                     silent_mode=silent_mode,
                     rotate=rotate_csv,
                     caption=caption,
-                    fit_margins=fit_margins,
+                    group_rows=csv_group_rows,
                 )
             # Add text to section
             if text_file is not None:

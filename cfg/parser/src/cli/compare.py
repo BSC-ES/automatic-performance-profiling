@@ -26,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Whether you want to compute strong scaling ")
     parser.add_argument(
         "--scalability-variable", default="sypd",
-        help="Variable to use for scalability comparison. Default is sypd (seconds per year of simulation). Other options are: ts_per_second, sypd, and sypd_per_core")
+        help="Variable to use for scalability comparison. Default is sypd (seconds per year of simulation). Other options are: ts_per_second and sypd")
     parser.add_argument(
         "-f", "--function-info", default=False, action="store_true",
         help="Whether you want to compare elapsed time by function ")

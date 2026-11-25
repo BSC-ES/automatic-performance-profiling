@@ -12,8 +12,10 @@ from .curation import (
     cases_component_data,
     coupling_info,
     dimemas_curated_summary,
+    function_counter_plot,
     function_curated_summary,
     function_info_csv,
+    function_mpi_share_plot,
     function_time_share_plot,
     most_expensive_function_summary,
     mpi_profile_share_plot,
@@ -25,6 +27,30 @@ from .merge import dictionary_pointer, merge_dictionaries
 
 # Keys that only make sense under `components`, so they are not copied to the case
 _TRACE_ONLY_KEYS = ("counters", "fastest_ts_functions_info", "fastest_ts_functions_time")
+
+#: Axis label of the counters of the scatter plots, with the unit of the raw paramedir value.
+#: ``Time`` is the only one that is not a rate: paramedir reports it in milliseconds.
+_SCATTER_AXIS_LABEL = {
+    "Time": "Time (ms)",
+    "IPC": "IPC (instructions per cycle)",
+    "PAPI_TOT_INS": "TOT_INS (instructions, scaled in the trace)",
+    "PAPI_TOT_CYC": "TOT_CYC (cycles)",
+    "PAPI_L1_DCM": "L1_DCM (misses per 1000 instructions)",
+    "PAPI_L2_DCM": "L2_DCM (misses per 1000 instructions)",
+    "PAPI_L3_TCM": "L3_TCM (misses per 1000 instructions)",
+}
+
+
+def scatter_axis_label(counter: str) -> str:
+    """Axis label of a counter of the scatter plots, with its unit.
+
+    Args:
+        counter (str): Counter key, as named in the paramedir configuration.
+
+    Returns:
+        str: The counter with its unit, or the key itself when the unit is not known.
+    """
+    return _SCATTER_AXIS_LABEL.get(counter, counter)
 
 
 class TimingInformation:
@@ -306,6 +332,12 @@ class TimingInformation:
     def mpi_profile_share_plot(self, out_file_name):
         return mpi_profile_share_plot(self, out_file_name)
 
+    def function_mpi_share_plot(self, out_file_name):
+        return function_mpi_share_plot(self, out_file_name)
+
+    def function_counter_plot(self, out_file_name, counters=("IPC", "PAPI_L3_TCM")):
+        return function_counter_plot(self, out_file_name, counters)
+
     def scatter_plots(self, x_axis: str = "L3", y_axis: str = "IPC", length_summary: int = 10):
         """Plot two counters of the tracked functions, one file per component.
 
@@ -352,9 +384,10 @@ class TimingInformation:
                     case_str += " - "
                 case_str += case
             ax.set_title(
-                f"{x_axis} vs {y_axis} per 1000 instructions in {component_name}\n{case_str}")
-            ax.set_xlabel(x_axis)
-            ax.set_ylabel(y_axis)
+                f"{scatter_axis_label(x_axis)} against {scatter_axis_label(y_axis)}"
+                f" in {component_name} (one point per function and case)\n{case_str}")
+            ax.set_xlabel(scatter_axis_label(x_axis))
+            ax.set_ylabel(scatter_axis_label(y_axis))
             for i, f_name in enumerate(component_function_info):
                 if f_name[0] == "_":
                     legend_name = re.sub('^_+', "", f_name)

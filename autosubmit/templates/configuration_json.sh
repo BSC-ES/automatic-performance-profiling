@@ -85,7 +85,7 @@ case "$current_member" in
     "tracing")
         uf_enabled="%TRACING.USER_FUNCTIONS.ENABLED%"
         uf_enabled=${uf_enabled,,}
-        pc_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.PLOTS%"
+        pc_plots="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.VS_PLOTS%"
         pc_enabled="%TRACING.USER_FUNCTIONS.PAPI_COUNTERS.ENABLED%"
         pc_enabled=${pc_enabled,,}
 

@@ -29,6 +29,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--mpi-profile-share-plot", default=None,
                         help="Produce a stacked plot with the share of the MPI call "
                              "time spent in each MPI call")
+    parser.add_argument("--function-mpi-share-plot", default=None,
+                        help="Produce a stacked plot with the MPI call profile of "
+                             "each user function of each case")
+    parser.add_argument("--function-counter-plot", default=None,
+                        help="Produce a plot of the counters of each user function "
+                             "along the cases, one png per counter")
+    parser.add_argument("--function-counters", default=None, nargs="+",
+                        help="Counter keys of the user function plots, e.g. IPC PAPI_L3_TCM. "
+                             "Defaults to the IPC and the L3 misses")
     parser.add_argument("--scatter-plots", default=None,
                         help="Produce a png with L3 cache misses vs IPC in it")
     parser.add_argument("--dimemas-file", default=None,
@@ -68,6 +77,15 @@ def run(args) -> int:
     if args.mpi_profile_share_plot is not None:
         experiment_results.mpi_profile_share_plot(
             out_file_name=args.mpi_profile_share_plot)
+
+    if args.function_mpi_share_plot is not None:
+        experiment_results.function_mpi_share_plot(
+            out_file_name=args.function_mpi_share_plot)
+
+    if args.function_counter_plot is not None:
+        counters = tuple(args.function_counters or ("IPC", "PAPI_L3_TCM"))
+        experiment_results.function_counter_plot(
+            out_file_name=args.function_counter_plot, counters=counters)
 
     if args.scatter_plots:
         for scatter_plot in args.scatter_plots.split(":"):

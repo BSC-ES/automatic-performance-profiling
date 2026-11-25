@@ -54,7 +54,9 @@ TRACING:
     ENABLED: true
     PAPI_COUNTERS:
       # Format: PC_id_1-PC_id_2 (ids from papi_avail)
-      PLOTS: PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC
+      VS_PLOTS: PAPI_TOT_INS-PAPI_L1_DCM PAPI_TOT_INS-PAPI_L2_DCM PAPI_TOT_INS-PAPI_L3_TCM PAPI_TOT_INS-Time PAPI_L3_TCM-IPC
+      # Counters of the user function evolution figures, one figure per counter
+      SCALABILITY_PLOTS: IPC PAPI_L3_TCM
       ENABLED: true
 
   # EXTRAE XML OPTIONS

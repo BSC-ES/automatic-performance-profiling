@@ -1,0 +1,1 @@
+This ranking is expressed as a share: the time spent in each instrumented function is given in percent of the fastest timestep of its own case, so the values of two cases are comparable as a ranking and not as a duration. In the figure, the hatched block is the part of the timestep that no instrumented function accounts for.
