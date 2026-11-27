@@ -35,26 +35,49 @@ extensions = [
     'sphinx.ext.autosectionlabel',
 ]
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 
+# Same theme as the other BSC-ES tool docs (Autosubmit), with the APP section layout.
 html_theme_options = {
+    "header_links_before_dropdown": 4,
+    "show_nav_level": 3,
+    "navigation_depth": 3,
+    "show_toc_level": 3,
+    "use_edit_page_button": True,
     "icon_links": [
         {
-            # Label for this link
-            "name": "GitLab",
-            # URL where the link will redirect
-            "url": "https://earth.bsc.es/gitlab/ces/hpc-for-es-team/automatic_performance_profiling",  # required
-            # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
-            "icon": "fa-brands fa-square-gitlab",
-            # The type of image to be used (see below for details)
+            "name": "GitHub",
+            "url": "https://github.com/BSC-ES/automatic-performance-profiling",
+            "icon": "fa-brands fa-square-github",
             "type": "fontawesome",
-        }
-   ]
+        },
+    ],
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["navbar-icon-links"],
+    "navbar_persistent": ["search-button", "theme-switcher"],
+    "footer_start": ["copyright", "sphinx-version"],
+    "footer_end": ["theme-version"],
+    "logo": {
+        "image_light": "_static/Logo.svg",
+        "image_dark": "_static/Logo-dark.svg",
+    },
 }
+
+html_context = {
+    "github_user": "BSC-ES",
+    "github_repo": "automatic-performance-profiling",
+    "github_version": "master",
+    "doc_path": "docs/source/",
+}
+
+html_logo = "_static/Logo.svg"
+html_sidebars = {"**": ["sidebar-nav-bs"]}
 
 # -- Paths for templates and static files
 templates_path = ['_templates']
-#html_static_path = ['_static']
+html_static_path = ['_static']
+html_css_files = ['custom.css']
 
 # -- Path setup for source files
 source_suffix = '.rst'  # File extension for source files
