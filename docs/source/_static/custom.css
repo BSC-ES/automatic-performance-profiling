@@ -1,0 +1,422 @@
+/* Theme shared with the other BSC-ES tool docs (Autosubmit), palettte taken from the
+   Automatic Performance Profiling logo. */
+
+:root {
+    --as-border: #c6d9ea;
+    --as-rule: #2e74b5;
+    --as-accent-soft: rgba(46, 116, 181, .11);
+    --as-shadow: rgba(15, 33, 38, .10);
+    --as-hover: rgba(127, 127, 127, .08);
+    --as-active: rgba(127, 127, 127, .12);
+    --as-head-bg: #dce8f4;
+
+    --as-header-height: 2.5rem;
+    --as-logo-height: 2rem;
+    --as-header-font: 0.95rem;
+    --as-header-gap: 0.5rem;
+
+    --as-sidebar-width: 15rem;
+    --as-sidebar-font: 0.88rem;
+    --as-sidebar-title-font: 1rem;
+    --as-sidebar-link-pad: 0.3rem;
+    --as-sidebar-item-gap: 0.08rem;
+    --as-sidebar-pad-x: 0.34rem;
+    --as-gutter: 1rem;
+
+    --pst-header-height: var(--as-header-height);
+}
+
+html[data-theme="dark"] {
+    --as-border: #3b5c8f;
+    --as-rule: #6fa4d6;
+    --as-accent-soft: rgba(111, 164, 214, .15);
+    --as-shadow: rgba(0, 0, 0, .45);
+    --as-head-bg: var(--as-accent-soft);
+
+    --pst-color-primary: #6fa4d6;
+}
+
+html[data-theme="light"] {
+    --pst-color-primary: #2e74b5;
+    --pst-color-primary-highlight: #1f3864;
+    --pst-color-table-heading-bg: var(--as-head-bg);
+    --pst-color-table-row-zebra-low-bg: #eef4fa;
+    --pst-color-table-inner-border: var(--as-border);
+    --pst-color-table-outer-border: var(--as-border);
+}
+
+.bd-main .bd-content .bd-article-container,
+.bd-main .bd-content .bd-article {
+    max-width: 100%;
+    margin-inline: 0 auto;
+    min-width: 0;
+}
+
+.bd-main .bd-content {
+    padding-inline: 1rem;
+}
+
+.bd-container > .bd-container__inner.bd-page-width {
+    padding-top: 0;
+    padding-inline: 0;
+    margin-top: 0;
+}
+
+html[data-theme] .bd-header {
+    border-bottom: 2px solid var(--as-border);
+}
+
+.bd-header :is(.navbar-header-items, .bd-header__inner) {
+    padding: 0.25rem 0;
+    min-height: 0;
+}
+
+.bd-header .navbar-brand {
+    padding: 0;
+}
+
+.bd-header .navbar-brand :is(img, .logo__image) {
+    height: var(--as-logo-height);
+}
+
+.bd-header .navbar-nav {
+    gap: var(--as-header-gap);
+}
+
+.bd-header .navbar-nav .nav-link {
+    font-size: var(--as-header-font);
+}
+
+#pst-primary-sidebar {
+    top: var(--as-header-height);
+    width: var(--as-sidebar-width);
+    min-width: var(--as-sidebar-width);
+    max-width: var(--as-sidebar-width);
+    flex: 0 0 var(--as-sidebar-width);
+
+    padding: 1rem var(--as-sidebar-pad-x) 0.5rem var(--as-gutter);
+    margin-top: 0;
+    font-size: var(--as-sidebar-font);
+
+    overflow-y: auto;
+}
+
+#pst-primary-sidebar .bd-links__title {
+    font-size: var(--as-sidebar-title-font);
+    font-weight: 700;
+    margin: 0 0 0.8rem;
+    padding: 0;
+}
+
+#pst-primary-sidebar .sidebar-primary-item {
+    padding: 0;
+}
+
+#pst-primary-sidebar :is(ul, li) {
+    margin: 0;
+    list-style: none;
+}
+
+#pst-primary-sidebar ul.bd-sidenav > li {
+    margin-bottom: var(--as-sidebar-item-gap);
+}
+
+#pst-primary-sidebar a.reference.internal {
+    padding: var(--as-sidebar-link-pad) 0;
+    line-height: 1.3;
+    border-radius: 4px;
+    transition: background-color .15s ease;
+}
+
+#pst-primary-sidebar a.reference.internal:hover {
+    background: var(--as-hover);
+}
+
+#pst-primary-sidebar :is(li.current, li.active) > a.reference.internal,
+#pst-primary-sidebar a.reference.internal:is(.current, .active) {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: var(--as-active) !important;
+    padding-left: 0 !important;
+}
+
+#pst-primary-sidebar :is(li.current, li.active) > a::before,
+#pst-primary-sidebar :is(li.current, li.active) > a::after {
+    content: none !important;
+}
+
+#pst-primary-sidebar .current > a {
+    font-weight: 600;
+}
+
+#pst-primary-sidebar li.has-children > details > summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+}
+
+#pst-primary-sidebar li.has-children > details > summary > a.reference.internal {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#pst-primary-sidebar li.has-children > details > summary > .toctree-toggle {
+    position: static;
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+#pst-secondary-sidebar {
+    padding: 1rem var(--as-sidebar-pad-x) 0.5rem var(--as-gutter);
+}
+
+#pst-primary-sidebar,
+#pst-secondary-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--as-border) transparent;
+}
+
+.bd-article section > :is(h1, h2) {
+    display: table;
+    position: relative;
+}
+
+.bd-article section > :is(h1, h2) > a.headerlink {
+    position: absolute;
+}
+
+.bd-article section > :is(h1, h2)::after {
+    content: "";
+    display: block;
+    height: var(--as-rule-weight, 3px);
+    margin-top: var(--as-rule-gap, .7rem);
+    border-radius: 3px;
+    background: var(--as-rule);
+}
+
+.bd-article section > h1 {
+    --as-rule-weight: 4px;
+}
+
+/* -- Syntax highlighting, in the logo palette ----------------------------- */
+
+/* ponytail: recolours the token classes emitted by the theme's default pygments
+   styles (light/dark); if those defaults change, the tokens keep their old hues. */
+
+html[data-theme="light"] .highlight {
+    background: #f6f9fc;
+    color: #1f3864;
+}
+
+html[data-theme="light"] .highlight :is(.c, .c1, .cm, .ch, .cs, .cp, .cpf, .sd) {
+    color: #7f93ab;
+    font-style: italic;
+}
+
+html[data-theme="light"] .highlight :is(.k, .kc, .kd, .kn, .kp, .kr, .kt, .gh, .gu) {
+    color: #1f3864;
+    font-weight: 700;
+}
+
+html[data-theme="light"] .highlight :is(.s, .s1, .s2, .sb, .sc, .se, .sh, .si, .sr, .ss, .sx, .sa, .dl) {
+    color: #2e74b5;
+}
+
+html[data-theme="light"] .highlight :is(.m, .mi, .mf, .mh, .mo, .mb, .il, .l, .ld) {
+    color: #3b5c8f;
+}
+
+html[data-theme="light"] .highlight :is(.nf, .fm, .nc, .nn, .no) {
+    color: #2e74b5;
+}
+
+html[data-theme="light"] .highlight :is(.n, .nb, .bp, .ni, .nv, .vc, .vg, .vi, .vm, .na, .nt, .nd, .nl, .ne, .o, .p) {
+    color: #3b5c8f;
+}
+
+html[data-theme="light"] .highlight :is(.err, .gd, .ge) {
+    color: #b3261e;
+}
+
+html[data-theme="light"] .highlight :is(.gi, .go) {
+    color: #2e74b5;
+}
+
+html[data-theme="light"] .highlight .w {
+    color: inherit;
+}
+
+html[data-theme="light"] .highlight .hll {
+    background-color: #dce8f4;
+}
+
+html[data-theme="dark"] .highlight {
+    background: #111d2f;
+    color: #c6d9ea;
+}
+
+html[data-theme="dark"] .highlight :is(.c, .c1, .cm, .ch, .cs, .cp, .cpf, .sd) {
+    color: #7f93ab;
+    font-style: italic;
+}
+
+html[data-theme="dark"] .highlight :is(.k, .kc, .kd, .kn, .kp, .kr, .kt, .gh, .gu) {
+    color: #a8c1da;
+    font-weight: 700;
+}
+
+html[data-theme="dark"] .highlight :is(.s, .s1, .s2, .sb, .sc, .se, .sh, .si, .sr, .ss, .sx, .sa, .dl) {
+    color: #a8c1da;
+}
+
+html[data-theme="dark"] .highlight :is(.m, .mi, .mf, .mh, .mo, .mb, .il, .l, .ld) {
+    color: #c6d9ea;
+}
+
+html[data-theme="dark"] .highlight :is(.nf, .fm, .nc, .nn, .no) {
+    color: #c6d9ea;
+}
+
+html[data-theme="dark"] .highlight :is(.n, .nb, .bp, .ni, .nv, .vc, .vg, .vi, .vm, .na, .nt, .nd, .nl, .ne, .o, .p) {
+    color: #a8c1da;
+}
+
+html[data-theme="dark"] .highlight :is(.err, .gd, .ge) {
+    color: #ff8a80;
+}
+
+html[data-theme="dark"] .highlight :is(.gi, .go) {
+    color: #c6d9ea;
+}
+
+html[data-theme="dark"] .highlight .w {
+    color: inherit;
+}
+
+html[data-theme="dark"] .highlight .hll {
+    background-color: #1f3864;
+}
+
+/* -- Home page ------------------------------------------------------------ */
+
+/* Landing-page headings, same scale as the Autosubmit docs home page. */
+.bd-article:has(.app-hero) h2 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -.022em;
+    line-height: 1.2;
+    margin: 3.5rem 0 1.15rem;
+}
+
+.app-hero {
+    max-width: 62rem;
+    margin: 1.5rem 0 0;
+}
+
+.app-hero > p {
+    margin: 0 0 1.4rem;
+    font-size: 1.2rem;
+    line-height: 1.7;
+}
+
+.app-hero .sd-btn {
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+/* Each button-ref is wrapped in its own paragraph; keep them on one row. */
+.app-hero p:has(> .sd-btn) {
+    display: inline-block;
+    margin: 0 .5rem .5rem 0;
+}
+
+.as-lead {
+    max-width: 62rem;
+    margin: 3rem 0 0;
+}
+
+.as-lead::before {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 3px;
+    margin-bottom: 1.75rem;
+    border-radius: 3px;
+    background: var(--as-rule);
+}
+
+.as-lead > p {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    margin-bottom: 1.2rem;
+}
+
+.app-cards .sd-card {
+    --sd-color-shadow: var(--as-shadow);
+    border-radius: 14px;
+    transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+/* The theme sets the card border and the opaque body background at higher
+   specificity than sphinx-design does, so they are re-aligned here; the body
+   radius keeps the fill inside the rounded corners. */
+.bd-content .app-cards .sd-card {
+    border-color: var(--as-border);
+}
+
+.bd-content .app-cards .sd-card .sd-card-body {
+    background-color: var(--pst-color-on-background);
+    border-radius: calc(14px - 1px);
+}
+
+.bd-content .app-cards .sd-card:hover {
+    border-color: var(--as-rule);
+    transform: translateY(-3px);
+    /* The card carries the sd-shadow-sm utility, which sets !important. */
+    box-shadow: 0 10px 28px var(--as-shadow) !important;
+}
+
+.app-cards .sd-card-body {
+    padding: 1.5rem 1.35rem;
+    font-size: .95rem;
+    line-height: 1.7;
+}
+
+.app-cards .sd-card-title {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    font-size: 1.02rem;
+    font-weight: 650;
+    margin-bottom: .85rem;
+}
+
+.app-cards .sd-card-title .sd-octicon {
+    flex: none;
+    box-sizing: content-box;
+    width: 1.05rem;
+    height: 1.05rem;
+    padding: .55rem;
+    border-radius: 11px;
+    background: var(--as-accent-soft);
+    color: var(--as-rule);
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.app-cards .sd-card:hover .sd-card-title .sd-octicon {
+    background: var(--as-rule);
+    color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-cards .sd-card,
+    .app-cards .sd-card-title .sd-octicon {
+        transition: none;
+    }
+
+    .app-cards .sd-card:hover {
+        transform: none;
+    }
+}

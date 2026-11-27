@@ -1,9 +1,8 @@
 numpydoc
 sphinxcontrib-autoprogram
-sphinx_design
-sphinx_rtd_theme
+sphinx_design>=0.6
 sphinx-copybutton
-pydata_sphinx_theme
+pydata_sphinx_theme>=0.16,<0.17
 
 numpy
 pandas
